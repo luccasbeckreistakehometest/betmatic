@@ -223,12 +223,12 @@
       "scrollPasses": 6,
       "captureNetworkJson": true,
       "useVision": false,
-      "extractionHint": "Betano is a sportsbook. Pull the posted prices for the requested matchup: moneyline / 1X2, handicap, total, and any player markets shown (gols, cartões, finalizações, escanteios). Record the exact decimal odds as printed and note that the price is Betano's.",
+      "extractionHint": "Betano is read primarily through its own /danae-webapi live feed by a dedicated client (src/lib/sources/betano.ts), which needs no extraction. This hint only applies if that client returns nothing: pull posted decimal prices for the requested matchup and name Betano as the book.",
       "kind": "props"
     },
     "bet365": {
-      "enabled": true,
-      "label": "bet365",
+      "enabled": false,
+      "label": "bet365 (não renderiza em headless — desativado)",
       "requiresLogin": false,
       "loginUrl": "https://www.bet365.bet.br/",
       "targetUrl": "https://www.bet365.bet.br/#/AS/B1/",
@@ -248,7 +248,7 @@
       "scrollPasses": 8,
       "captureNetworkJson": true,
       "useVision": false,
-      "extractionHint": "bet365 renders odds into the DOM rather than clean JSON, so lean on the rendered text. Pull the posted prices for the requested matchup: 1X2 / moneyline, handicap, total, and player markets if visible. Record decimal odds exactly as printed and note the price is bet365's. If the matchup is not on the page, return empty — do not substitute another game.",
+      "extractionHint": "DISABLED. The bet365 SPA serves a 2.5KB shell to a headless browser and never hydrates the odds — verified with 5s, 8s and 12s waits, all identical, zero leaf odds in the DOM. Re-enabling would need a headful browser with a persistent profile, and would still be fragile.",
       "kind": "props"
     }
   }
