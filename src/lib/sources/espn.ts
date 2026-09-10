@@ -1,14 +1,22 @@
 import { cached } from "@/lib/cache";
-import type { Game, GameDetail, GameStatus, InjuryEntry, TeamRef, TeamStatLine } from "@/lib/types";
+import { DEFAULT_SPORT, getSport, type SportDef } from "@/lib/sports";
+import type {
+  Game, GameDetail, GameStatus, InjuryEntry, PlayerGame, PlayerHistory, TeamRef, TeamStatLine,
+} from "@/lib/types";
 
-const BASE = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba";
-const CORE = "https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba";
+const SITE = "https://site.api.espn.com/apis/site/v2/sports";
+const COMMON = "https://site.api.espn.com/apis/common/v3/sports";
+
+function base(sport: SportDef): string {
+  return `${SITE}/${sport.espnSport}/${sport.espnLeague}`;
+}
 
 const TTL = {
   scoreboardLive: 45_000,
   scoreboard: 5 * 60_000,
   summary: 3 * 60_000,
   roster: 12 * 60 * 60_000,
+  gamelog: 6 * 60 * 60_000,
 };
 
 // ESPN's payloads are deeply nested and undocumented. A loose alias keeps the mappers readable;
@@ -82,7 +90,7 @@ function mergeGames(base: Game, override: Game): Game {
   } as Game;
 }
 
-function mapGame(event: Json): Game | null {
+function mapGame(event: Json, sport: SportDef): Game | null {
   const comp = event?.competitions?.[0];
   if (!comp) return null;
   const competitors: Json[] = comp.competitors ?? [];
@@ -93,6 +101,7 @@ function mapGame(event: Json): Game | null {
   const rawOdds = comp.odds?.[0];
   return {
     id: String(event.id),
+    sportKey: sport.key,
     startsAt: event.date,
     status: mapStatus(event.status?.type?.state),
     statusDetail: event.status?.type?.shortDetail ?? event.status?.type?.detail ?? "",
@@ -113,17 +122,67 @@ function mapGame(event: Json): Game | null {
   };
 }
 
-export async function getSlate(dateKey: string, force = false): Promise<Game[]> {
+function mapTennisCompetitor(competitor: Json): TeamRef {
+  const athlete = competitor?.athlete ?? {};
+  const sets = ((competitor.linescores ?? []) as Json[]).map((l) => l.value).filter((v) => v != null);
+  return {
+    id: String(athlete.id ?? competitor.id ?? ""),
+    athleteId: athlete.id ? String(athlete.id) : undefined,
+    abbreviation: athlete.shortName ?? athlete.displayName ?? "",
+    name: athlete.displayName ?? "",
+    displayName: athlete.displayName ?? "",
+    logo: athlete.flag?.href,
+    country: athlete.flag?.alt ?? athlete.citizenship,
+    score: sets.length ? sets.filter((v: number) => Number(v) > 0).length : undefined,
+    record: sets.length ? sets.join("-") : undefined,
+  };
+}
+
+/** A tennis "event" is a tournament; the bettable unit is one match inside a grouping. */
+function mapTennisMatches(event: Json, sport: SportDef, dateKey?: string): Game[] {
+  const out: Game[] = [];
+  for (const grouping of (event.groupings ?? []) as Json[]) {
+    const groupName = grouping.grouping?.displayName ?? "";
+    // Doubles pair two athletes per side and do not fit the head-to-head model.
+    if (/doubles/i.test(groupName)) continue;
+    for (const comp of (grouping.competitions ?? []) as Json[]) {
+      const sides = (comp.competitors ?? []) as Json[];
+      if (sides.length !== 2) continue;
+      const [a, b] = sides;
+      // ESPN hands back the entire draw, so the day filter has to happen here.
+      const compDate = comp.date ?? event.date;
+      if (dateKey && compDate && espnDateKey(new Date(compDate)) !== dateKey) continue;
+      out.push({
+        id: String(comp.id),
+        sportKey: sport.key,
+        tournament: event.name ?? event.shortName,
+        round: comp.round?.displayName ?? groupName,
+        startsAt: comp.date ?? event.date,
+        status: mapStatus(comp.status?.type?.state),
+        statusDetail: comp.status?.type?.shortDetail ?? "",
+        home: mapTennisCompetitor(a),
+        away: mapTennisCompetitor(b),
+        venue: event.venue?.fullName,
+      });
+    }
+  }
+  return out;
+}
+
+export async function getSlate(dateKey: string, force = false, sportKey = DEFAULT_SPORT): Promise<Game[]> {
+  const sport = getSport(sportKey);
   const isToday = dateKey === todayKey();
   return cached(
-    `espn-scoreboard-${dateKey}`,
+    `espn-scoreboard-${sport.key}-${dateKey}`,
     isToday ? TTL.scoreboardLive : TTL.scoreboard,
     async () => {
-      const data = await getJson(`${BASE}/scoreboard?dates=${dateKey}&limit=30`);
-      return ((data.events ?? []) as Json[])
-        .map(mapGame)
-        .filter((g): g is Game => Boolean(g))
-        .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+      const data = await getJson(`${base(sport)}/scoreboard?dates=${dateKey}&limit=100`);
+      const events = (data.events ?? []) as Json[];
+      const games =
+        sport.kind === "tennis"
+          ? events.flatMap((ev) => mapTennisMatches(ev, sport, dateKey))
+          : events.map((ev) => mapGame(ev, sport)).filter((g): g is Game => Boolean(g));
+      return games.sort((a, b) => (a.startsAt ?? "").localeCompare(b.startsAt ?? ""));
     },
     force,
   );
@@ -157,46 +216,77 @@ function mapTeamStats(summary: Json, abbreviation: string): TeamStatLine[] {
     .filter((s) => s.label && s.value);
 }
 
-async function getRoster(teamId: string): Promise<string[]> {
+async function getRoster(sport: SportDef, teamId: string): Promise<{ name: string; id: string }[]> {
   if (!teamId) return [];
-  return cached(`espn-roster-${teamId}`, TTL.roster, async () => {
+  return cached(`espn-roster-${sport.key}-${teamId}`, TTL.roster, async () => {
     try {
-      const data = await getJson(`${BASE}/teams/${teamId}/roster`);
+      const data = await getJson(`${base(sport)}/teams/${teamId}/roster`);
       const groups = (data.athletes ?? []) as Json[];
       // ESPN returns either a flat athlete list or position-grouped buckets.
       const flat = groups.flatMap((g) => (Array.isArray(g.items) ? g.items : [g]));
-      return flat.map((a: Json) => a.displayName ?? a.fullName).filter(Boolean) as string[];
+      return flat
+        .map((a: Json) => ({ name: a.displayName ?? a.fullName ?? "", id: String(a.id ?? "") }))
+        .filter((a) => a.name);
     } catch {
       return [];
     }
   });
 }
 
-export async function getGameDetail(gameId: string, force = false): Promise<GameDetail | null> {
+export async function getGameDetail(
+  gameId: string,
+  force = false,
+  sportKey = DEFAULT_SPORT,
+): Promise<GameDetail | null> {
+  const sport = getSport(sportKey);
   const summary = await cached(
-    `espn-summary-${gameId}`,
+    `espn-summary-${sport.key}-${gameId}`,
     TTL.summary,
-    () => getJson(`${BASE}/summary?event=${gameId}`),
+    () => getJson(`${base(sport)}/summary?event=${gameId}`),
     force,
   );
 
+  // Tennis summaries have no header competition; the slate entry is the source of truth.
+  if (sport.kind === "tennis") {
+    let match: Game | undefined;
+    for (let offset = 0; offset <= 14 && !match; offset += 1) {
+      for (const key of offset === 0 ? [todayKey()] : [shiftKey(todayKey(), offset), shiftKey(todayKey(), -offset)]) {
+        const slate = await getSlate(key, force, sport.key).catch(() => []);
+        match = slate.find((g) => g.id === gameId);
+        if (match) break;
+      }
+    }
+    if (!match) return null;
+    return {
+      game: match, books: [], ats: [], injuries: [],
+      teamStats: { home: [], away: [] }, leaders: [], lastMeetings: [],
+      rosters: [
+        { teamAbbreviation: match.home.abbreviation, players: [match.home.displayName] },
+        { teamAbbreviation: match.away.abbreviation, players: [match.away.displayName] },
+      ],
+    };
+  }
+
   const header = summary.header ?? {};
-  const game = mapGame({
-    id: gameId,
-    date: header.competitions?.[0]?.date,
-    status: header.competitions?.[0]?.status,
-    competitions: header.competitions,
-  });
+  const game = mapGame(
+    {
+      id: gameId,
+      date: header.competitions?.[0]?.date,
+      status: header.competitions?.[0]?.status,
+      competitions: header.competitions,
+    },
+    sport,
+  );
   if (!game) return null;
 
   // The summary header omits venue/broadcast/odds; pull them from the day's scoreboard.
-  const slate = await getSlate(espnDateKey(new Date(game.startsAt)), force).catch(() => []);
+  const slate = await getSlate(espnDateKey(new Date(game.startsAt)), force, sport.key).catch(() => []);
   const fromSlate = slate.find((g) => g.id === gameId);
   const merged: Game = fromSlate ? mergeGames(fromSlate, game) : game;
 
   const [homeRoster, awayRoster] = await Promise.all([
-    getRoster(merged.home.id),
-    getRoster(merged.away.id),
+    getRoster(sport, merged.home.id),
+    getRoster(sport, merged.away.id),
   ]);
 
   const books: GameDetail["books"] = ((summary.pickcenter ?? []) as Json[]).map((p) => ({
@@ -266,13 +356,13 @@ export async function getGameDetail(gameId: string, force = false): Promise<Game
     leaders,
     lastMeetings,
     rosters: [
-      { teamAbbreviation: merged.home.abbreviation, players: homeRoster },
-      { teamAbbreviation: merged.away.abbreviation, players: awayRoster },
+      { teamAbbreviation: merged.home.abbreviation, players: homeRoster.map((p) => p.name), athletes: homeRoster },
+      { teamAbbreviation: merged.away.abbreviation, players: awayRoster.map((p) => p.name), athletes: awayRoster },
     ],
   };
 }
 
-export { CORE };
+
 
 export interface SlateResult {
   dateKey: string;
@@ -292,9 +382,9 @@ function shiftKey(dateKey: string, days: number): string {
 }
 
 /** One range query beats walking day by day — ESPN supports dates=YYYYMMDD-YYYYMMDD. */
-async function nearestGameDay(fromKey: string, toKey: string, pick: "first" | "last"): Promise<string | null> {
+async function nearestGameDay(sport: SportDef, fromKey: string, toKey: string, pick: "first" | "last"): Promise<string | null> {
   try {
-    const data = await getJson(`${BASE}/scoreboard?dates=${fromKey}-${toKey}&limit=200`);
+    const data = await getJson(`${base(sport)}/scoreboard?dates=${fromKey}-${toKey}&limit=300`);
     const dates = ((data.events ?? []) as Json[])
       .map((ev) => (ev.date ? espnDateKey(new Date(ev.date)) : null))
       .filter((d): d is string => Boolean(d))
@@ -313,13 +403,15 @@ async function nearestGameDay(fromKey: string, toKey: string, pick: "first" | "l
 export async function getSlateOrNearest(
   dateKey: string,
   force = false,
+  sportKey = DEFAULT_SPORT,
   spanDays = 150,
 ): Promise<SlateResult> {
-  const direct = await getSlate(dateKey, force);
+  const sport = getSport(sportKey);
+  const direct = await getSlate(dateKey, force, sport.key);
   if (direct.length) return { dateKey, requestedKey: dateKey, games: direct, shifted: false };
 
-  const forward = await nearestGameDay(shiftKey(dateKey, 1), shiftKey(dateKey, spanDays), "first");
-  const backward = await nearestGameDay(shiftKey(dateKey, -spanDays), shiftKey(dateKey, -1), "last");
+  const forward = await nearestGameDay(sport, shiftKey(dateKey, 1), shiftKey(dateKey, spanDays), "first");
+  const backward = await nearestGameDay(sport, shiftKey(dateKey, -spanDays), shiftKey(dateKey, -1), "last");
 
   // Prefer whichever is fewer days away; ties go to the upcoming slate.
   const distance = (key: string | null) => {
@@ -330,8 +422,65 @@ export async function getSlateOrNearest(
   const chosen = distance(forward) <= distance(backward) ? forward : backward;
   if (!chosen) return { dateKey, requestedKey: dateKey, games: [], shifted: false };
 
-  const games = await getSlate(chosen, force);
+  const games = await getSlate(chosen, force, sport.key);
   return { dateKey: chosen, requestedKey: dateKey, games, shifted: true };
 }
 
 export { shiftKey };
+
+/**
+ * Per-game stat lines for one athlete. This is what lets the app check a prop line against reality
+ * instead of trusting whatever hit rate a paid tool printed.
+ */
+export async function getPlayerHistory(
+  sportKey: string,
+  athleteId: string,
+  force = false,
+): Promise<PlayerHistory | null> {
+  const sport = getSport(sportKey);
+  if (!sport.hasPlayerGamelog || !athleteId) return null;
+
+  return cached(
+    `espn-gamelog-${sport.key}-${athleteId}`,
+    TTL.gamelog,
+    async () => {
+      try {
+        const data = await getJson(
+          `${COMMON}/${sport.espnSport}/${sport.espnLeague}/athletes/${athleteId}/gamelog`,
+        );
+        const labels: string[] = (data.labels ?? data.names ?? []) as string[];
+        const eventMeta = (data.events ?? {}) as Record<string, Json>;
+
+        const games: PlayerGame[] = [];
+        for (const seasonType of (data.seasonTypes ?? []) as Json[]) {
+          for (const category of (seasonType.categories ?? []) as Json[]) {
+            for (const entry of (category.events ?? []) as Json[]) {
+              const meta = eventMeta[String(entry.eventId)] ?? {};
+              const stats: Record<string, number | string> = {};
+              labels.forEach((label, i) => {
+                const raw = entry.stats?.[i];
+                if (raw === undefined) return;
+                const num = Number(raw);
+                stats[label] = Number.isFinite(num) && !String(raw).includes("-") ? num : raw;
+              });
+              games.push({
+                eventId: String(entry.eventId),
+                date: meta.gameDate ?? "",
+                opponent: meta.opponent?.abbreviation ?? "",
+                homeAway: meta.atVs === "@" ? "@" : meta.atVs === "vs" ? "vs" : "",
+                result: `${meta.gameResult ?? ""} ${meta.score ?? ""}`.trim(),
+                stats,
+              });
+            }
+          }
+        }
+        // Newest first so "last 5" means the most recent five.
+        games.sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
+        return { athleteId, player: "", team: "", games, availableStats: labels };
+      } catch {
+        return null;
+      }
+    },
+    force,
+  );
+}

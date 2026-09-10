@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { fillTemplate, type ScrapeSourceConfig, type SiteKey } from "@/lib/config";
 import { NeedsLoginError, capturePage } from "@/lib/browser/session";
-import { extractFromCapture } from "@/lib/ai/extract";
+import { extractFromCapture, lastUsage } from "@/lib/ai/extract";
 import { AiNotConfiguredError, describeAiError } from "@/lib/ai/client";
 import type { Game, PickRow, PropRow, SourceResult } from "@/lib/types";
 
@@ -162,7 +162,7 @@ export async function fetchProps(
         notes: extracted.notes,
       },
       fetchedAt: nowIso(),
-      meta: { finalUrl: capture.finalUrl, jsonResponses: capture.apiPayloads.length },
+      meta: { finalUrl: capture.finalUrl, jsonResponses: capture.apiPayloads.length, usage: lastUsage },
     };
   } catch (error) {
     return toResult(source, error);

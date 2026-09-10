@@ -9,9 +9,11 @@ export async function GET(
   { params }: { params: Promise<{ gameId: string }> },
 ) {
   const { gameId } = await params;
-  const force = new URL(request.url).searchParams.get("force") === "1";
+  const url = new URL(request.url);
+  const force = url.searchParams.get("force") === "1";
+  const sport = url.searchParams.get("sport") ?? undefined;
   try {
-    const detail = await getGameDetail(gameId, force);
+    const detail = await getGameDetail(gameId, force, sport);
     if (!detail) return NextResponse.json({ error: "Game not found" }, { status: 404 });
     return NextResponse.json(detail);
   } catch (error) {

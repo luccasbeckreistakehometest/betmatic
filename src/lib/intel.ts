@@ -1,22 +1,54 @@
 import { z } from "zod";
 import { cached } from "@/lib/cache";
 import { loadConfig } from "@/lib/config";
-import { getGameDetail } from "@/lib/sources/espn";
+import { getGameDetail, getPlayerHistory } from "@/lib/sources/espn";
+import { attachMeasurement, matchAthlete } from "@/lib/props/history";
+import { buildBets } from "@/lib/bets/builder";
+import { normaliseLang, type Lang } from "@/lib/i18n";
+import { DEFAULT_SPORT } from "@/lib/sports";
 import { XLoginWallError, buildXIntel, fetchInsiderTweets } from "@/lib/sources/x";
 import { fetchPicks, fetchProps, toSourceError } from "@/lib/sources/scraped";
 import { generateStructured } from "@/lib/ai/extract";
 import { aiConfigured } from "@/lib/ai/client";
 import { NeedsLoginError } from "@/lib/browser/session";
-import type { GameBrief, GameDetail, GameIntel, SourceResult, Tweet, XIntel } from "@/lib/types";
+import type {
+  BetSlate, GameBrief, GameDetail, GameIntel, PickRow, PropRow, SourceResult, Tweet, XIntel,
+} from "@/lib/types";
 
-export type SourceName = "x" | "propscash" | "mamaknowsbets" | "dimers" | "brief";
+export type SourceName = "x" | "propscash" | "mamaknowsbets" | "dimers" | "brief" | "bets";
 
 const TTL = {
   tweets: 8 * 60_000,
   xIntel: 12 * 60_000,
   scraped: 15 * 60_000,
   brief: 15 * 60_000,
+  bets: 15 * 60_000,
 };
+
+/**
+ * Enriches scraped prop rows with hit rates computed from ESPN game logs. Doing this before the
+ * brief and the bet builder run means both reason over measured numbers rather than the source
+ * tool's own claims — and a disagreement between the two becomes visible.
+ */
+async function measureProps(props: PropRow[], detail: GameDetail, force: boolean): Promise<PropRow[]> {
+  const athletes = detail.rosters.flatMap((r) => r.athletes ?? []);
+  if (!athletes.length) return props.map((p) => ({ ...p, measured: null }));
+
+  const histories = new Map<string, Awaited<ReturnType<typeof getPlayerHistory>>>();
+  const out: PropRow[] = [];
+  for (const prop of props) {
+    const match = matchAthlete(prop.player, athletes);
+    if (!match) {
+      out.push({ ...prop, measured: null });
+      continue;
+    }
+    if (!histories.has(match.id)) {
+      histories.set(match.id, await getPlayerHistory(detail.game.sportKey, match.id, force).catch(() => null));
+    }
+    out.push(attachMeasurement(prop, histories.get(match.id) ?? null));
+  }
+  return out;
+}
 
 function nowIso() {
   return new Date().toISOString();
@@ -169,17 +201,59 @@ async function briefFor(
   }
 }
 
+async function betsFor(
+  detail: GameDetail,
+  props: PropRow[],
+  picks: PickRow[],
+  dimers: PickRow[],
+  x: XIntel | null,
+  bands: string[],
+  lang: Lang,
+  force: boolean,
+): Promise<SourceResult<BetSlate>> {
+  if (!aiConfigured()) {
+    return {
+      source: "Bets",
+      status: "error",
+      data: null,
+      error: "ANTHROPIC_API_KEY is not set — add it to .env.local to build tickets.",
+      fetchedAt: nowIso(),
+    };
+  }
+  try {
+    const slate = await cached<BetSlate>(
+      `bets-${detail.game.id}-${bands.join("_")}-${lang}`,
+      TTL.bets,
+      () => buildBets({ game: detail.game, detail, props, picks, dimers, x, bands, lang }),
+      force,
+    );
+    return {
+      source: "Bets",
+      status: slate.suggestions.length ? "ok" : "empty",
+      data: slate,
+      error: slate.suggestions.length ? undefined : slate.dataNote,
+      fetchedAt: nowIso(),
+    };
+  } catch (error) {
+    return toSourceError<BetSlate>("Bets", error);
+  }
+}
+
 export interface GatherOptions {
   force?: boolean;
   only?: SourceName[];
+  sportKey?: string;
+  lang?: Lang;
+  bands?: string[];
 }
 
 export async function gatherIntel(gameId: string, opts: GatherOptions = {}): Promise<GameIntel> {
-  const { force = false, only } = opts;
+  const { force = false, only, sportKey = DEFAULT_SPORT, bands = ["value", "mid", "long", "moonshot"] } = opts;
+  const lang = normaliseLang(opts.lang);
   const wants = (name: SourceName) => !only || only.includes(name);
   const cfg = loadConfig();
 
-  const detail = await getGameDetail(gameId, force);
+  const detail = await getGameDetail(gameId, force, sportKey);
   if (!detail) throw new Error(`Game ${gameId} not found on the ESPN slate.`);
 
   const [x, propscash, mamaKnowsBets, dimers] = await Promise.all([
@@ -195,6 +269,14 @@ export async function gatherIntel(gameId: string, opts: GatherOptions = {}): Pro
       : Promise.resolve(disabled<{ picks: never[]; notes: never[] }>(cfg.dimers.label)),
   ]);
 
+  if (propscash.status === "ok" && propscash.data) {
+    const data = propscash.data as { props: PropRow[]; notes: string[] };
+    (propscash as SourceResult<unknown>).data = {
+      ...data,
+      props: await measureProps(data.props, detail, force).catch(() => data.props),
+    };
+  }
+
   const brief = wants("brief")
     ? await briefFor(
         detail,
@@ -206,6 +288,19 @@ export async function gatherIntel(gameId: string, opts: GatherOptions = {}): Pro
       )
     : disabled<GameBrief>("Synthesis");
 
+  const bets = wants("bets")
+    ? await betsFor(
+        detail,
+        (propscash.data as { props: PropRow[] } | null)?.props ?? [],
+        (mamaKnowsBets.data as { picks: PickRow[] } | null)?.picks ?? [],
+        (dimers.data as { picks: PickRow[] } | null)?.picks ?? [],
+        (x.data as XIntel | null) ?? null,
+        bands,
+        lang,
+        force,
+      )
+    : disabled<BetSlate>("Bets");
+
   return {
     game: detail.game,
     detail,
@@ -214,6 +309,7 @@ export async function gatherIntel(gameId: string, opts: GatherOptions = {}): Pro
     mamaKnowsBets: mamaKnowsBets as GameIntel["mamaKnowsBets"],
     dimers: dimers as GameIntel["dimers"],
     brief,
+    bets,
   };
 }
 
@@ -237,11 +333,12 @@ export async function* streamIntel(
   gameId: string,
   opts: GatherOptions = {},
 ): AsyncGenerator<IntelEvent> {
-  const { force = false, only } = opts;
+  const { force = false, only, sportKey = DEFAULT_SPORT, bands = ["value", "mid", "long", "moonshot"] } = opts;
+  const lang = normaliseLang(opts.lang);
   const wants = (name: SourceName) => !only || only.includes(name);
   const cfg = loadConfig();
 
-  const detail = await getGameDetail(gameId, force);
+  const detail = await getGameDetail(gameId, force, sportKey);
   if (!detail) {
     yield { type: "error", message: `Game ${gameId} not found on the ESPN slate.` };
     return;
@@ -249,7 +346,10 @@ export async function* streamIntel(
   yield { type: "detail", detail };
 
   const planned = (["x", "propscash", "mamaknowsbets", "dimers"] as const).filter(wants);
-  yield { type: "started", sources: [...planned, ...(wants("brief") ? (["brief"] as const) : [])] };
+  yield {
+    type: "started",
+    sources: [...planned, ...(wants("brief") ? (["brief"] as const) : []), ...(wants("bets") ? (["bets"] as const) : [])],
+  };
 
   const results: Record<string, SourceResult<unknown>> = {};
   const inflight = new Map<string, Promise<{ key: string; value: SourceResult<unknown> }>>();
@@ -277,6 +377,16 @@ export async function* streamIntel(
   while (inflight.size) {
     const { key, value } = await Promise.race(inflight.values());
     inflight.delete(key);
+
+    // Props get measured against game logs the moment they land, before anything reads them.
+    if (key === "propscash" && value.status === "ok") {
+      const data = value.data as { props: PropRow[]; notes: string[] };
+      const measured = await measureProps(data.props, detail, force).catch(() => data.props);
+      value.data = { ...data, props: measured } as typeof value.data;
+      const withHistory = measured.filter((p) => p.measured).length;
+      value.meta = { ...(value.meta ?? {}), measured: withHistory, ofProps: measured.length };
+    }
+
     results[key] = value;
     yield { type: "source", name: key as SourceName, result: value };
   }
@@ -291,6 +401,15 @@ export async function* streamIntel(
       force,
     );
     yield { type: "source", name: "brief", result: brief };
+  }
+
+  if (wants("bets")) {
+    const props = (results.propscash?.data as { props: PropRow[] } | undefined)?.props ?? [];
+    const picks = (results.mamaknowsbets?.data as { picks: PickRow[] } | undefined)?.picks ?? [];
+    const dimersPicks = (results.dimers?.data as { picks: PickRow[] } | undefined)?.picks ?? [];
+    const xIntel = (results.x?.data as XIntel | undefined) ?? null;
+    const bets = await betsFor(detail, props, picks, dimersPicks, xIntel, bands, lang, force);
+    yield { type: "source", name: "bets", result: bets };
   }
 
   yield { type: "done" };

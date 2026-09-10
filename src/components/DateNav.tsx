@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 
 function shift(dateKey: string, days: number): string {
@@ -15,9 +15,14 @@ function toInputValue(dateKey: string): string {
 
 export function DateNav({ dateKey, label }: { dateKey: string; label: string }) {
   const router = useRouter();
+  const search = useSearchParams();
   const [pending, startTransition] = useTransition();
 
-  const go = (next: string) => startTransition(() => router.push(`/?date=${next}`));
+  const go = (next: string) => {
+    const params = new URLSearchParams(search.toString());
+    params.set("date", next);
+    startTransition(() => router.push(`/?${params.toString()}`));
+  };
 
   return (
     <div className="flex flex-wrap items-center gap-2">

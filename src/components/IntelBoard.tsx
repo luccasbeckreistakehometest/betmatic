@@ -2,9 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Chip, Empty, Panel } from "@/components/ui";
-import type { GameBrief, PickRow, PropRow, SourceResult, SourceStatus, XIntel } from "@/lib/types";
+import { BetsPanel } from "@/components/BetsPanel";
+import { useNavState } from "@/components/Controls";
+import { ODDS_BANDS } from "@/lib/odds";
+import { makeT } from "@/lib/i18n";
+import type { BetSlate, GameBrief, PickRow, PropRow, SourceResult, SourceStatus, XIntel } from "@/lib/types";
 
-type SourceKey = "x" | "propscash" | "mamaknowsbets" | "dimers" | "brief";
+type SourceKey = "x" | "propscash" | "mamaknowsbets" | "dimers" | "brief" | "bets";
 type Slot = { status: SourceStatus | "pending" | "idle"; result: SourceResult<unknown> | null };
 
 // The board auto-gathers on mount, so it starts in the pending state rather than flipping into it
@@ -15,6 +19,7 @@ const PENDING: Record<SourceKey, Slot> = {
   mamaknowsbets: { status: "pending", result: null },
   dimers: { status: "pending", result: null },
   brief: { status: "pending", result: null },
+  bets: { status: "pending", result: null },
 };
 
 function relTime(iso?: string): string {
@@ -56,6 +61,9 @@ function SourceNote({ result }: { result: SourceResult<unknown> | null }) {
 }
 
 export function IntelBoard({ gameId }: { gameId: string }) {
+  const { lang, sport } = useNavState();
+  const t = makeT(lang);
+  const [bands, setBands] = useState<string[]>(["value", "mid", "long", "moonshot"]);
   const [slots, setSlots] = useState<Record<SourceKey, Slot>>(PENDING);
   const [running, setRunning] = useState(true);
   const [elapsed, setElapsed] = useState(0);
@@ -86,7 +94,10 @@ export function IntelBoard({ gameId }: { gameId: string }) {
 
       const params = new URLSearchParams();
       if (force) params.set("force", "1");
-      if (only) params.set("only", [...only, "brief"].join(","));
+      if (only) params.set("only", [...only, "brief", "bets"].join(","));
+      params.set("sport", sport.key);
+      params.set("lang", lang);
+      params.set("bands", bands.join(","));
 
       try {
         const response = await fetch(`/api/intel/${gameId}/stream?${params}`, {
@@ -138,7 +149,7 @@ export function IntelBoard({ gameId }: { gameId: string }) {
         }
       }
     },
-    [gameId],
+    [gameId, sport.key, lang, bands],
   );
 
   useEffect(() => {
@@ -175,7 +186,9 @@ export function IntelBoard({ gameId }: { gameId: string }) {
   const dimersData = slots.dimers.result?.data as { picks: PickRow[]; notes: string[] } | null | undefined;
   const dimersPicks = dimersData?.picks ?? [];
 
+  const betSlate = slots.bets.result?.data as BetSlate | null | undefined;
   const sortedProps = [...props].sort((a, b) => (b.edgePct ?? -Infinity) - (a.edgePct ?? -Infinity));
+  const measuredCount = props.filter((p) => p.measured).length;
 
   return (
     <div className="flex flex-col gap-4">
@@ -185,7 +198,7 @@ export function IntelBoard({ gameId }: { gameId: string }) {
           disabled={running}
           className="rounded-lg bg-signal-500 px-3.5 py-1.5 text-[13px] font-medium text-ink-950 transition hover:bg-signal-400 disabled:opacity-50"
         >
-          {running ? "Gathering…" : "Re-gather all sources"}
+          {running ? t("gathering") : t("regatherAll")}
         </button>
         {running && (
           <span className="nums text-[12px] text-mist-400">
@@ -195,8 +208,48 @@ export function IntelBoard({ gameId }: { gameId: string }) {
         {fatal && <span className="text-[12px] text-alert-400">{fatal}</span>}
       </div>
 
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[11px] uppercase tracking-wider text-mist-500">{t("oddsRange")}</span>
+        {ODDS_BANDS.map((band) => {
+          const on = bands.includes(band.key);
+          return (
+            <button
+              key={band.key}
+              onClick={() => setBands((prev) => (on ? prev.filter((b) => b !== band.key) : [...prev, band.key]))}
+              disabled={running}
+              className={`rounded-lg border px-2.5 py-1 text-[11px] transition disabled:opacity-40 ${
+                on
+                  ? "border-signal-500/50 bg-signal-500/12 text-signal-400"
+                  : "border-ink-700 bg-ink-850 text-mist-500 hover:text-mist-300"
+              }`}
+              title={band.typicalLegs}
+            >
+              {band.label[lang]}
+            </button>
+          );
+        })}
+      </div>
+
       <Panel
-        title="Synthesis brief"
+        title={t("betBuilder")}
+        status={slots.bets.status}
+        meta={betSlate?.suggestions.length ? `${betSlate.suggestions.length} ${betSlate.suggestions.length === 1 ? "ticket" : "tickets"}` : undefined}
+        action={refreshButton(["bets"])}
+      >
+        {slots.bets.status === "pending" ? (
+          <Empty>{t("waitingSources")}</Empty>
+        ) : betSlate ? (
+          <BetsPanel slate={betSlate} lang={lang} />
+        ) : (
+          <>
+            <Empty>{t("noBets")}</Empty>
+            <SourceNote result={slots.bets.result} />
+          </>
+        )}
+      </Panel>
+
+      <Panel
+        title={t("synthesisBrief")}
         status={slots.brief.status}
         meta={relTime(slots.brief.result?.fetchedAt)}
         action={refreshButton(["brief"])}
@@ -255,7 +308,7 @@ export function IntelBoard({ gameId }: { gameId: string }) {
       </Panel>
 
       <Panel
-        title="Insider reporting · X"
+        title={t("insiderReporting")}
         status={slots.x.status}
         meta={
           slots.x.result?.meta
@@ -304,9 +357,9 @@ export function IntelBoard({ gameId }: { gameId: string }) {
       </Panel>
 
       <Panel
-        title="Player props · PropsCash"
+        title={t("playerProps")}
         status={slots.propscash.status}
-        meta={props.length ? `${props.length} rows` : relTime(slots.propscash.result?.fetchedAt)}
+        meta={props.length ? `${props.length} rows · ${measuredCount} ${t("measured")}` : relTime(slots.propscash.result?.fetchedAt)}
         action={refreshButton(["propscash"])}
       >
         {sortedProps.length ? (
@@ -321,6 +374,7 @@ export function IntelBoard({ gameId }: { gameId: string }) {
                   <th className="px-1 pb-2 text-right font-medium">Odds</th>
                   <th className="px-1 pb-2 text-right font-medium">Proj</th>
                   <th className="px-1 pb-2 text-right font-medium">Edge</th>
+                  <th className="px-1 pb-2 font-medium">{t("measured")}</th>
                   <th className="px-1 pb-2 font-medium">Book</th>
                 </tr>
               </thead>
@@ -340,6 +394,25 @@ export function IntelBoard({ gameId }: { gameId: string }) {
                     >
                       {row.edgePct !== undefined ? `${row.edgePct}%` : "—"}
                     </td>
+                    <td className="nums px-1 py-1.5 text-[11px]">
+                      {row.measured ? (
+                        <span
+                          className={
+                            row.measured.impliedFair >= 0.6
+                              ? "text-edge-400"
+                              : row.measured.impliedFair <= 0.4
+                                ? "text-alert-400"
+                                : "text-mist-300"
+                          }
+                          title={row.measured.sampleNote}
+                        >
+                          {row.measured.last5.hits}/{row.measured.last5.of} · {row.measured.last10.hits}/
+                          {row.measured.last10.of} · {row.measured.season.hits}/{row.measured.season.of}
+                        </span>
+                      ) : (
+                        <span className="text-mist-600">{t("noGamelog")}</span>
+                      )}
+                    </td>
                     <td className="px-1 py-1.5 text-mist-400">{row.book ?? "—"}</td>
                   </tr>
                 ))}
@@ -357,7 +430,7 @@ export function IntelBoard({ gameId }: { gameId: string }) {
       </Panel>
 
       <Panel
-        title="Published picks · Mama Knows Bets"
+        title={t("publishedPicks")}
         status={slots.mamaknowsbets.status}
         meta={picks.length ? `${picks.length} picks` : relTime(slots.mamaknowsbets.result?.fetchedAt)}
         action={refreshButton(["mamaknowsbets"])}
@@ -375,7 +448,7 @@ export function IntelBoard({ gameId }: { gameId: string }) {
       </Panel>
 
       <Panel
-        title="Model projections · Dimers"
+        title={t("modelProjections")}
         status={slots.dimers.status}
         meta={dimersPicks.length ? `${dimersPicks.length} plays` : relTime(slots.dimers.result?.fetchedAt)}
         action={refreshButton(["dimers"])}

@@ -4,6 +4,8 @@ import { IntelBoard } from "@/components/IntelBoard";
 import { Empty, KeyValue, Panel } from "@/components/ui";
 import { tipoffET } from "@/components/GameCard";
 import { getGameDetail } from "@/lib/sources/espn";
+import { makeT, normaliseLang } from "@/lib/i18n";
+import { getSport } from "@/lib/sports";
 import type { InjuryEntry, TeamRef } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -43,7 +45,7 @@ function TeamHeading({ team, align, showScore }: { team: TeamRef; align: "left" 
 
 function InjuryList({ injuries, abbreviation }: { injuries: InjuryEntry[]; abbreviation: string }) {
   const rows = injuries.filter((i) => i.teamAbbreviation === abbreviation);
-  if (!rows.length) return <p className="text-[12px] text-mist-500">No injuries listed.</p>;
+  if (!rows.length) return <p className="text-[12px] text-mist-500">—</p>;
   return (
     <ul className="flex flex-col gap-1.5">
       {rows.map((injury, i) => (
@@ -60,17 +62,24 @@ function InjuryList({ injuries, abbreviation }: { injuries: InjuryEntry[]; abbre
   );
 }
 
-export default async function GamePage({ params }: PageProps<"/game/[gameId]">) {
+export default async function GamePage({ params, searchParams }: PageProps<"/game/[gameId]">) {
   const { gameId } = await params;
-  const detail = await getGameDetail(gameId).catch(() => null);
+  const query = await searchParams;
+  const lang = normaliseLang(typeof query.lang === "string" ? query.lang : undefined);
+  const sport = getSport(typeof query.sport === "string" ? query.sport : undefined);
+  const t = makeT(lang);
+  const detail = await getGameDetail(gameId, false, sport.key).catch(() => null);
   if (!detail) notFound();
 
   const { game, books, ats, injuries, teamStats, predictor, leaders, lastMeetings } = detail;
 
   return (
     <div className="flex flex-col gap-5">
-      <Link href="/" className="w-fit text-[12px] text-mist-500 transition hover:text-mist-300">
-        ← Slate
+      <Link
+        href={{ pathname: "/", query: { sport: sport.key, lang } }}
+        className="w-fit text-[12px] text-mist-500 transition hover:text-mist-300"
+      >
+        {t("backToSlate")}
       </Link>
 
       <section className="rounded-xl border border-ink-800 bg-ink-900/60 p-5">
@@ -84,6 +93,8 @@ export default async function GamePage({ params }: PageProps<"/game/[gameId]">) 
           <TeamHeading team={game.home} align="right" showScore={game.status !== "scheduled"} />
         </div>
         <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 border-t border-ink-800 pt-3 text-[12px] text-mist-500">
+          {game.tournament && <span className="text-mist-300">{game.tournament}</span>}
+          {game.round && <span>{game.round}</span>}
           {game.venue && <span>{game.venue}</span>}
           {game.broadcast && <span>{game.broadcast}</span>}
           {game.odds?.details && <span className="nums text-mist-300">{game.odds.details}</span>}
@@ -105,7 +116,7 @@ export default async function GamePage({ params }: PageProps<"/game/[gameId]">) 
         </div>
 
         <aside className="flex flex-col gap-4">
-          <Panel title="Injury report" meta="ESPN">
+          <Panel title={t("injuryReport")} meta="ESPN">
             <div className="flex flex-col gap-3">
               <div>
                 <h3 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-mist-500">
@@ -122,7 +133,7 @@ export default async function GamePage({ params }: PageProps<"/game/[gameId]">) 
             </div>
           </Panel>
 
-          <Panel title="Market" meta={books.length ? `${books.length} book${books.length === 1 ? "" : "s"}` : undefined}>
+          <Panel title={t("market")} meta={books.length ? `${books.length} book${books.length === 1 ? "" : "s"}` : undefined}>
             {books.length ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-[12px]">
@@ -149,12 +160,12 @@ export default async function GamePage({ params }: PageProps<"/game/[gameId]">) 
                 </table>
               </div>
             ) : (
-              <Empty>No book lines published for this game yet.</Empty>
+              <Empty>{t("noLines")}</Empty>
             )}
             {ats.length > 0 && (
               <div className="mt-3 border-t border-ink-800 pt-2.5">
                 <h3 className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-mist-500">
-                  Against the spread
+                  {t("againstSpread")}
                 </h3>
                 {ats.map((row) => (
                   <p key={row.teamAbbreviation} className="nums text-[12px] text-mist-300">
@@ -166,7 +177,7 @@ export default async function GamePage({ params }: PageProps<"/game/[gameId]">) 
           </Panel>
 
           {leaders.length > 0 && (
-            <Panel title="Leaders">
+            <Panel title={t("leaders")}>
               <KeyValue
                 rows={leaders.slice(0, 8).map((l) => ({
                   label: `${l.player} (${l.teamAbbreviation})`,
@@ -177,7 +188,7 @@ export default async function GamePage({ params }: PageProps<"/game/[gameId]">) 
           )}
 
           {(teamStats.away.length > 0 || teamStats.home.length > 0) && (
-            <Panel title="Team stats">
+            <Panel title={t("teamStats")}>
               <div className="grid grid-cols-2 gap-4">
                 {([
                   [game.away.abbreviation, teamStats.away],
@@ -193,7 +204,7 @@ export default async function GamePage({ params }: PageProps<"/game/[gameId]">) 
           )}
 
           {lastMeetings.length > 0 && (
-            <Panel title="Season series">
+            <Panel title={t("seasonSeries")}>
               <ul className="flex flex-col gap-1">
                 {lastMeetings.map((m, i) => (
                   <li key={i} className="nums text-[12px] text-mist-300">

@@ -2,8 +2,11 @@
 
 export type GameStatus = "scheduled" | "live" | "final";
 
+/** Represents a team in team sports and a single player in tennis. */
 export interface TeamRef {
   id: string;
+  athleteId?: string;
+  country?: string;
   abbreviation: string;
   name: string;
   displayName: string;
@@ -28,6 +31,10 @@ export interface OddsLine {
 
 export interface Game {
   id: string;
+  sportKey: string;
+  /** Tennis: the tournament and round this match belongs to. */
+  tournament?: string;
+  round?: string;
   startsAt: string;
   status: GameStatus;
   statusDetail: string;
@@ -62,7 +69,7 @@ export interface GameDetail {
   ats: { teamAbbreviation: string; record: string }[];
   leaders: { teamAbbreviation: string; player: string; line: string }[];
   lastMeetings: { date: string; summary: string }[];
-  rosters: { teamAbbreviation: string; players: string[] }[];
+  rosters: { teamAbbreviation: string; players: string[]; athletes?: { name: string; id: string }[] }[];
 }
 
 export interface Tweet {
@@ -94,6 +101,38 @@ export interface XIntel {
   scanned: number;
 }
 
+export interface PlayerGame {
+  eventId: string;
+  date: string;
+  opponent: string;
+  homeAway: "vs" | "@" | "";
+  result: string;
+  stats: Record<string, number | string>;
+}
+
+export interface PlayerHistory {
+  athleteId: string;
+  player: string;
+  team: string;
+  games: PlayerGame[];
+  availableStats: string[];
+}
+
+/** Measured hit rate of a prop line against real game logs. */
+export interface HitRate {
+  stat: string;
+  line: number;
+  side: "over" | "under";
+  last5: { hits: number; of: number };
+  last10: { hits: number; of: number };
+  season: { hits: number; of: number };
+  average: number;
+  median: number;
+  /** Season hit rate as a probability, used as the fair-price input. */
+  impliedFair: number;
+  sampleNote: string;
+}
+
 export interface PropRow {
   player: string;
   team?: string;
@@ -106,6 +145,8 @@ export interface PropRow {
   edgePct?: number;
   hitRate?: string;
   note?: string;
+  /** Computed from ESPN game logs, independent of whatever the source tool claimed. */
+  measured?: HitRate | null;
 }
 
 export interface PickRow {
@@ -140,6 +181,41 @@ export interface SourceResult<T> {
   meta?: Record<string, unknown>;
 }
 
+export interface BetLeg {
+  selection: string;
+  market: string;
+  odds: string;
+  oddsDecimal: number;
+  book?: string;
+  /** Why this leg, grounded in gathered data. */
+  explanation: string;
+  /** Measured support: hit rate, injury status, insider report. */
+  evidence: string;
+  fairProbability: number;
+}
+
+export interface BetSuggestion {
+  id: string;
+  kind: "single" | "parlay";
+  bandKey: string;
+  title: string;
+  /** Context for the whole ticket: what situation makes this worth looking at. */
+  background: string;
+  legs: BetLeg[];
+  combinedDecimal: number;
+  combinedAmerican: string;
+  impliedProbability: number;
+  modelledProbability: number;
+  edgePct: number;
+  riskNote: string;
+  confidence: "high" | "medium" | "low";
+}
+
+export interface BetSlate {
+  suggestions: BetSuggestion[];
+  dataNote: string;
+}
+
 export interface GameBrief {
   headline: string;
   keyAngles: { angle: string; support: string; confidence: "high" | "medium" | "low" }[];
@@ -156,5 +232,6 @@ export interface GameIntel {
   propscash: SourceResult<{ props: PropRow[]; notes: string[] }>;
   mamaKnowsBets: SourceResult<{ picks: PickRow[]; notes: string[] }>;
   dimers: SourceResult<{ picks: PickRow[]; notes: string[] }>;
+  bets: SourceResult<BetSlate>;
   brief: SourceResult<GameBrief>;
 }

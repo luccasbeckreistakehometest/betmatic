@@ -1,7 +1,10 @@
 import Anthropic from "@anthropic-ai/sdk";
 
 
+/** Judgement work: the synthesis brief. */
 export const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5";
+/** Bulk extraction from structured captures — mechanical, and ~60% cheaper per token. */
+export const EXTRACTION_MODEL = process.env.ANTHROPIC_EXTRACTION_MODEL ?? "claude-sonnet-5";
 
 let client: Anthropic | null = null;
 
@@ -46,4 +49,37 @@ export function describeAiError(error: unknown): string | null {
     return `Anthropic API error ${error.status ?? "?"}: ${error.message}`;
   }
   return null;
+}
+
+// List pricing, USD per million tokens.
+const PRICING: Record<string, { input: number; output: number; cacheRead: number; cacheWrite: number }> = {
+  "claude-opus-5": { input: 5, output: 25, cacheRead: 0.5, cacheWrite: 6.25 },
+  "claude-sonnet-5": { input: 2, output: 10, cacheRead: 0.2, cacheWrite: 2.5 },
+};
+
+export interface UsageRecord {
+  label: string;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  cacheWriteTokens: number;
+  costUsd: number;
+}
+
+/** Every model call reports what it cost, so tuning is based on measurements rather than guesses. */
+export function recordUsage(label: string, usage: Anthropic.Usage | undefined, model = MODEL): UsageRecord {
+  const price = PRICING[model] ?? PRICING["claude-opus-5"];
+  const input = usage?.input_tokens ?? 0;
+  const output = usage?.output_tokens ?? 0;
+  const cacheRead = usage?.cache_read_input_tokens ?? 0;
+  const cacheWrite = usage?.cache_creation_input_tokens ?? 0;
+  const costUsd =
+    (input * price.input + output * price.output + cacheRead * price.cacheRead + cacheWrite * price.cacheWrite) /
+    1_000_000;
+
+  const record = { label: `${label} (${model})`, inputTokens: input, outputTokens: output, cacheReadTokens: cacheRead, cacheWriteTokens: cacheWrite, costUsd };
+  console.log(
+    `[ai] ${label.padEnd(22)} in=${input} out=${output} cacheRead=${cacheRead} → $${costUsd.toFixed(4)}`,
+  );
+  return record;
 }

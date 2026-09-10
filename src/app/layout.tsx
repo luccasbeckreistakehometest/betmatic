@@ -2,14 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Suspense } from "react";
 import { SessionBar } from "@/components/SessionBar";
+import { LangPicker, SportPicker } from "@/components/Controls";
+import { Disclaimer } from "@/components/Disclaimer";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "NBA Edge — betting research desk",
-  description: "Slate view, insider reporting, prop tools and picks, gathered per game.",
+  title: "Edge — betting research desk",
+  description: "Basketball, soccer and tennis: slate view, insider reporting, measured player props and ticket building.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -23,12 +26,18 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 NE
               </span>
               <span className="text-[15px] font-semibold tracking-tight text-mist-100 group-hover:text-white">
-                NBA Edge
+                Edge
               </span>
             </Link>
-            <span className="hidden text-xs text-mist-500 sm:block">research desk</span>
-            <div className="ml-auto">
+            {/* useSearchParams needs a Suspense boundary when rendered from a server layout. */}
+            <Suspense fallback={<div className="h-8 w-36 rounded-lg bg-ink-850" />}>
+              <SportPicker />
+            </Suspense>
+            <div className="ml-auto flex items-center gap-3">
               <SessionBar />
+              <Suspense fallback={<div className="h-6 w-14 rounded-lg bg-ink-850" />}>
+                <LangPicker />
+              </Suspense>
             </div>
           </div>
         </header>
@@ -36,16 +45,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <main className="mx-auto w-full max-w-7xl flex-1 px-5 py-6">{children}</main>
 
         <footer className="border-t border-ink-800 px-5 py-5">
-          <div className="mx-auto flex max-w-7xl flex-col gap-1.5 text-xs text-mist-500">
-            <p>
-              Research tool. Aggregated data can be wrong, stale, or contradictory — verify a line at your
-              book before acting on anything here. Nothing on this page is betting advice.
-            </p>
-            <p>
-              21+ where applicable. If betting stops being fun, that&apos;s the signal to stop —
-              1-800-GAMBLER.
-            </p>
-          </div>
+          <Suspense fallback={null}>
+            <Disclaimer />
+          </Suspense>
         </footer>
       </body>
     </html>

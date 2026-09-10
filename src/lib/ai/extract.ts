@@ -1,7 +1,7 @@
 import type { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import type Anthropic from "@anthropic-ai/sdk";
-import { AiNotConfiguredError, MODEL, aiConfigured, getClient } from "@/lib/ai/client";
+import { AiNotConfiguredError, EXTRACTION_MODEL, MODEL, aiConfigured, getClient, recordUsage } from "@/lib/ai/client";
 import type { ScrapeCapture } from "@/lib/types";
 
 const LIMITS = { api: 130_000, tables: 60_000, text: 80_000 };
@@ -69,6 +69,9 @@ Rules:
 - If the capture shows a login wall, a paywall, or no data, return an empty result rather than guessing.
 - Copy player names exactly as written on the page.`;
 
+/** Set by the most recent model call so callers can attach cost to a source result. */
+export let lastUsage: ReturnType<typeof recordUsage> | null = null;
+
 export interface ExtractArgs<T extends z.ZodType> {
   schema: T;
   capture: ScrapeCapture;
@@ -103,13 +106,15 @@ export async function extractFromCapture<T extends z.ZodType>(
   });
 
   const response = await getClient().messages.parse({
-    model: MODEL,
+    model: EXTRACTION_MODEL,
     max_tokens: maxTokens,
     system: SYSTEM,
     thinking: { type: "adaptive" },
     output_config: { format: zodOutputFormat(schema) },
     messages: [{ role: "user", content }],
   });
+
+  lastUsage = recordUsage(`extract:${capture.finalUrl.slice(8, 30)}`, response.usage, EXTRACTION_MODEL);
 
   if (response.stop_reason === "refusal") {
     throw new Error(`Model declined to extract: ${response.stop_details?.explanation ?? "no explanation"}`);
@@ -136,6 +141,8 @@ export async function generateStructured<T extends z.ZodType>(args: {
     output_config: { format: zodOutputFormat(args.schema) },
     messages: [{ role: "user", content: args.prompt }],
   });
+  lastUsage = recordUsage("generate", response.usage);
+
   if (response.stop_reason === "refusal") {
     throw new Error(`Model declined: ${response.stop_details?.explanation ?? "no explanation"}`);
   }

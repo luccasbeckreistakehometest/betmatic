@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { makeT, type Lang } from "@/lib/i18n";
 import type { Game, TeamRef } from "@/lib/types";
 
 /** Tipoff is always shown in Eastern time — it is the league's own clock and avoids hydration drift. */
@@ -45,7 +46,8 @@ function TeamRow({ team, winner, showScore }: { team: TeamRef; winner: boolean; 
   );
 }
 
-export function GameCard({ game }: { game: Game }) {
+export function GameCard({ game, lang = "pt", sportKey }: { game: Game; lang?: Lang; sportKey?: string }) {
+  const t = makeT(lang);
   const isScheduled = game.status === "scheduled";
   const isFinal = game.status === "final";
   const isLive = game.status === "live";
@@ -54,10 +56,11 @@ export function GameCard({ game }: { game: Game }) {
 
   return (
     <Link
-      href={`/game/${game.id}`}
+      href={{ pathname: `/game/${game.id}`, query: { sport: sportKey ?? game.sportKey, lang } }}
       className="group flex flex-col gap-3 rounded-xl border border-ink-800 bg-ink-900/70 p-4 transition hover:-translate-y-0.5 hover:border-signal-500/50 hover:bg-ink-850"
     >
       <div className="flex items-center gap-2">
+        {game.round && <span className="truncate text-[10px] text-mist-500">{game.round}</span>}
         {isLive ? (
           <span className="live-dot flex items-center gap-1.5 rounded-full bg-alert-400/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-alert-400">
             <span className="size-1.5 rounded-full bg-alert-400" />
@@ -82,15 +85,15 @@ export function GameCard({ game }: { game: Game }) {
       {!isFinal && (
       <div className="grid grid-cols-3 gap-px overflow-hidden rounded-lg border border-ink-800 bg-ink-800 text-center">
         <div className="bg-ink-900 px-2 py-1.5">
-          <div className="text-[9px] uppercase tracking-wider text-mist-500">Spread</div>
+          <div className="text-[9px] uppercase tracking-wider text-mist-500">{t("spread")}</div>
           <div className="nums text-xs text-mist-200">{game.odds?.details ?? "—"}</div>
         </div>
         <div className="bg-ink-900 px-2 py-1.5">
-          <div className="text-[9px] uppercase tracking-wider text-mist-500">Total</div>
+          <div className="text-[9px] uppercase tracking-wider text-mist-500">{t("total")}</div>
           <div className="nums text-xs text-mist-200">{fmtLine(game.odds?.overUnder)}</div>
         </div>
         <div className="bg-ink-900 px-2 py-1.5">
-          <div className="text-[9px] uppercase tracking-wider text-mist-500">ML</div>
+          <div className="text-[9px] uppercase tracking-wider text-mist-500">{t("moneyline")}</div>
           <div className="nums text-xs text-mist-200">
             {fmtMl(game.odds?.awayMoneyline)} / {fmtMl(game.odds?.homeMoneyline)}
           </div>
