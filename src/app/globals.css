@@ -67,3 +67,6 @@ body {
 .live-dot {
   animation: pulse-ring 2s infinite;
 }
+
+/* Anchored sections must clear the sticky header. */
+section[id] { scroll-margin-top: 64px; }

@@ -62,7 +62,7 @@ function InjuryList({ injuries, abbreviation }: { injuries: InjuryEntry[]; abbre
   );
 }
 
-export default async function GamePage({ params, searchParams }: PageProps<"/game/[gameId]">) {
+export default async function GamePage({ params, searchParams }: PageProps<"/app/game/[gameId]">) {
   const { gameId } = await params;
   const query = await searchParams;
   const lang = normaliseLang(typeof query.lang === "string" ? query.lang : undefined);
@@ -76,7 +76,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/gam
   return (
     <div className="flex flex-col gap-5">
       <Link
-        href={{ pathname: "/", query: { sport: sport.key, lang } }}
+        href={{ pathname: "/app", query: { sport: sport.key, lang } }}
         className="w-fit text-[12px] text-mist-500 transition hover:text-mist-300"
       >
         {t("backToSlate")}

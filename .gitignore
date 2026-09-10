@@ -44,4 +44,5 @@ next-env.d.ts
 /.sessions
 /.cache
 /.ledger
+/data
 .env.local

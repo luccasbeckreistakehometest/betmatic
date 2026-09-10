@@ -129,6 +129,7 @@ const DICT = {
     en: "Not enough settled legs to calibrate yet. Build tickets and settle them after the games.",
   },
   recentTickets: { pt: "Bilhetes recentes", en: "Recent tickets" },
+  coins: { pt: "Coins", en: "Coins" },
   disclaimer: {
     pt: "Ferramenta de pesquisa. Dados agregados podem estar errados, desatualizados ou em conflito — confirme a linha na sua casa antes de agir. Nada aqui é recomendação de aposta.",
     en: "Research tool. Aggregated data can be wrong, stale, or contradictory — verify a line at your book before acting on anything here. Nothing on this page is betting advice.",

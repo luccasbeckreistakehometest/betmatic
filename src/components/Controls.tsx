@@ -82,9 +82,9 @@ export function T({ k }: { k: Parameters<ReturnType<typeof makeT>>[0] }) {
 }
 
 const NAV = [
-  { href: "/", key: "navSlate" },
-  { href: "/parlays", key: "navParlays" },
-  { href: "/track", key: "navTrack" },
+  { href: "/app", key: "navSlate" },
+  { href: "/app/parlays", key: "navParlays" },
+  { href: "/app/track", key: "navTrack" },
 ] as const;
 
 export function NavLinks() {

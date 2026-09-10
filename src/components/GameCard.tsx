@@ -56,7 +56,7 @@ export function GameCard({ game, lang = "pt", sportKey }: { game: Game; lang?: L
 
   return (
     <Link
-      href={{ pathname: `/game/${game.id}`, query: { sport: sportKey ?? game.sportKey, lang } }}
+      href={{ pathname: `/app/game/${game.id}`, query: { sport: sportKey ?? game.sportKey, lang } }}
       className="group flex flex-col gap-3 rounded-xl border border-ink-800 bg-ink-900/70 p-4 transition hover:-translate-y-0.5 hover:border-signal-500/50 hover:bg-ink-850"
     >
       <div className="flex items-center gap-2">

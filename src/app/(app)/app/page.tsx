@@ -17,7 +17,7 @@ function humanDate(dateKey: string): string {
   }).format(date);
 }
 
-export default async function SlatePage({ searchParams }: PageProps<"/">) {
+export default async function SlatePage({ searchParams }: PageProps<"/app">) {
   const params = await searchParams;
   const raw = typeof params.date === "string" ? params.date.replaceAll("-", "") : todayKey();
   const requested = /^\d{8}$/.test(raw) ? raw : todayKey();

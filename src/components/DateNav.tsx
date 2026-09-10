@@ -21,7 +21,7 @@ export function DateNav({ dateKey, label }: { dateKey: string; label: string }) 
   const go = (next: string) => {
     const params = new URLSearchParams(search.toString());
     params.set("date", next);
-    startTransition(() => router.push(`/?${params.toString()}`));
+    startTransition(() => router.push(`/app?${params.toString()}`));
   };
 
   return (
