@@ -84,6 +84,7 @@ export function T({ k }: { k: Parameters<ReturnType<typeof makeT>>[0] }) {
 const NAV = [
   { href: "/app", key: "navSlate" },
   { href: "/app/parlays", key: "navParlays" },
+  { href: "/app/slip", key: "mySlip" },
   { href: "/app/track", key: "navTrack" },
 ] as const;
 

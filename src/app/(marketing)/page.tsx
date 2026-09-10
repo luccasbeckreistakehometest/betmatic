@@ -3,6 +3,7 @@ import { Logo, LogoMark } from "@/components/Logo";
 import { LandingLang } from "@/components/LandingLang";
 import { LADDER, landingCopy } from "@/lib/landing-copy";
 import { normaliseLang } from "@/lib/i18n";
+import { SPORT_LANDINGS } from "@/lib/sport-landing";
 import { COIN_PACKS, PERIOD, PLANS } from "@/lib/plans";
 import { impliedProbability } from "@/lib/odds";
 
@@ -177,8 +178,9 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
           <p className="mt-2 max-w-2xl text-[14px] text-mist-400">{c.sportsSub}</p>
           <div className="mt-10 flex flex-col gap-4">
             {c.sports.map((sport) => (
-              <article
+              <Link
                 key={sport.key}
+                href={`/${SPORT_LANDINGS.find((l) => l.sportKeys.some((k) => k.startsWith(sport.key === "basketball" ? "nba" : sport.key === "soccer" ? "soccer" : "tennis")))?.slug[lang] ?? ""}`}
                 className="group grid gap-5 rounded-2xl border border-ink-800 bg-ink-900/60 p-6 transition hover:border-edge-400/30 md:grid-cols-[1fr_1.5fr]"
               >
                 <div>
@@ -189,7 +191,7 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
                   <p className="text-[13.5px] leading-relaxed text-mist-300">{sport.detail}</p>
                   <p className="nums mt-3 text-[11.5px] leading-relaxed text-mist-500">{sport.markets}</p>
                 </div>
-              </article>
+              </Link>
             ))}
           </div>
         </div>
