@@ -1,3 +1,4 @@
+import { allMarkets, marketsFor, type MarketDef } from "@/lib/sports";
 import type { HitRate, PlayerGame, PlayerHistory, PropRow } from "@/lib/types";
 
 /**
@@ -20,12 +21,56 @@ const MARKET_MAP: { pattern: RegExp; labels: string[] }[] = [
   { pattern: /^(min|minutes|minutos)$/i, labels: ["MIN"] },
   { pattern: /^(g|goals|gols)$/i, labels: ["G"] },
   { pattern: /^(a|assists)$/i, labels: ["A"] },
-  { pattern: /(sh|shots|finaliza)/i, labels: ["SH"] },
-  { pattern: /(st\b|shots on target|no alvo)/i, labels: ["ST"] },
+  { pattern: /(shots on target|no alvo|sog)/i, labels: ["SOG"] },
+  { pattern: /(shots|finaliza|chutes)/i, labels: ["SHOT"] },
+  { pattern: /(fouls committed|faltas cometidas)/i, labels: ["FC"] },
+  { pattern: /(fouls suffered|faltas sofridas)/i, labels: ["FA"] },
+  { pattern: /(offside|impedimento)/i, labels: ["OF"] },
+  { pattern: /(yellow|amarelo)/i, labels: ["YC"] },
+  { pattern: /(red card|vermelho)/i, labels: ["RC"] },
+  { pattern: /(any card|qualquer cart|cards|cart[õo]es)/i, labels: ["YC", "RC"] },
+  { pattern: /(personal foul|faltas)/i, labels: ["PF"] },
 ];
 
-export function resolveStatLabels(market: string): string[] | null {
+function matchCatalogue(needle: string, markets: MarketDef[]): string[] | null {
+  for (const m of markets) {
+    if (!m.statLabels.length) continue;
+    if (m.key === needle || m.label.en.toLowerCase() === needle || m.label.pt.toLowerCase() === needle) {
+      return m.statLabels;
+    }
+  }
+  return null;
+}
+
+/**
+ * Market names collide across sports — "Assists" is AST in basketball but A in soccer, and both
+ * sports have a fouls market. Resolution is therefore scoped to the sport whenever one is known;
+ * the global catalogue and the regex list are only fallbacks.
+ */
+export function resolveStatLabels(market: string, sportKey?: string): string[] | null {
   const clean = market.trim();
+  const needle = clean.toLowerCase();
+
+  const scoped = matchCatalogue(needle, marketsFor(sportKey));
+  if (scoped) return scoped;
+
+  if (sportKey) {
+    // A sport was named but the market is not in its catalogue: do not borrow another sport's stat.
+    const sportMarkets = marketsFor(sportKey);
+    if (sportMarkets.length) {
+      for (const entry of MARKET_MAP) {
+        if (!entry.pattern.test(clean)) continue;
+        const belongs = sportMarkets.some(
+          (m) => JSON.stringify(m.statLabels) === JSON.stringify(entry.labels),
+        );
+        if (belongs) return entry.labels;
+      }
+      return null;
+    }
+  }
+
+  const global = matchCatalogue(needle, allMarkets());
+  if (global) return global;
   for (const entry of MARKET_MAP) {
     if (entry.pattern.test(clean)) return entry.labels;
   }
@@ -76,8 +121,9 @@ export function measureProp(
   market: string,
   line: number,
   side: "over" | "under" = "over",
+  sportKey?: string,
 ): HitRate | null {
-  const labels = resolveStatLabels(market);
+  const labels = resolveStatLabels(market, sportKey);
   if (!labels || !Number.isFinite(line)) return null;
 
   const values = history.games
@@ -150,8 +196,12 @@ export function matchAthlete(
   return null;
 }
 
-export function attachMeasurement(row: PropRow, history: PlayerHistory | null): PropRow {
+export function attachMeasurement(
+  row: PropRow,
+  history: PlayerHistory | null,
+  sportKey?: string,
+): PropRow {
   if (!history || row.line === undefined) return { ...row, measured: null };
   const side = row.side === "under" ? "under" : "over";
-  return { ...row, measured: measureProp(history, row.market, row.line, side) };
+  return { ...row, measured: measureProp(history, row.market, row.line, side, sportKey) };
 }

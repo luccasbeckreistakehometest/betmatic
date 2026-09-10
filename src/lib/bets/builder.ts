@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { generateStructured } from "@/lib/ai/extract";
+import { calibrationPrompt } from "@/lib/ledger/calibrate";
+import { recordPredictions } from "@/lib/ledger/store";
 import {
   ODDS_BANDS, expectedValue, formatAmerican, getBand, impliedProbability, parlayDecimal, parseOdds,
 } from "@/lib/odds";
@@ -7,6 +9,7 @@ import type {
   BetLeg, BetSlate, BetSuggestion, Game, GameDetail, PickRow, PropRow, XIntel,
 } from "@/lib/types";
 import type { Lang } from "@/lib/i18n";
+import { getSport, marketCatalogue } from "@/lib/sports";
 
 const LegSchema = z.object({
   selection: z.string().describe("The exact bet, including the number. e.g. 'Paolo Banchero over 22.5 points'"),
@@ -16,6 +19,14 @@ const LegSchema = z.object({
   explanation: z.string().describe("Why this leg. One or two sentences."),
   evidence: z.string().describe("The specific measured fact behind it — hit rate with sample size, injury status, or the insider post. Say 'no measured support' when there is none."),
   fairProbability: z.number().describe("Your estimate of this leg actually landing, 0 to 1. Use the measured hit rate when one is given; never exceed it by much without stating why."),
+  settlementType: z.enum(["moneyline", "spread", "total", "player_prop", "other"]),
+  settlementTeam: z.string().nullable().describe("Team abbreviation for moneyline/spread legs."),
+  settlementPlayer: z.string().nullable().describe("Player name for prop legs, exactly as supplied."),
+  settlementStat: z.string().nullable().describe("Stat for prop legs: points, rebounds, assists, PRA, 3PM…"),
+  settlementLine: z.number().nullable(),
+  settlementSide: z.enum(["over", "under", "home", "away", "yes", "no"]).nullable(),
+  sourceBasis: z.string().describe("Which gathered input this leg leans on: 'measured history', 'book line', 'injury report', 'PropsCash', 'Dimers', 'Mama Knows Bets', 'insider X', or 'none'."),
+  gameId: z.string().nullable().describe("For cross-game tickets, the id of the game this leg belongs to."),
 });
 
 const SuggestionSchema = z.object({
@@ -81,6 +92,37 @@ export interface BuildArgs {
  * Compounding decimal odds across eight legs is exactly the arithmetic a language model gets
  * subtly wrong, and a wrong payout number would be the most damaging error this app could make.
  */
+/**
+ * Scores how well-evidenced a ticket actually is, separately from the model's self-reported
+ * confidence. A model can say "high" about a ticket built on nothing; this cannot.
+ */
+function scoreEvidence(legs: BetLeg[]): { score: number; notes: string[] } {
+  const notes: string[] = [];
+  let score = 100;
+
+  const unpriced = legs.filter((l) => !Number.isFinite(l.oddsDecimal) || l.oddsDecimal <= 1).length;
+  if (unpriced) {
+    score -= unpriced * 20;
+    notes.push(`${unpriced} leg${unpriced === 1 ? "" : "s"} without a verified market price`);
+  }
+
+  const measured = legs.filter((l) => /measured|hit rate|game log/i.test(l.evidence)).length;
+  const unsupported = legs.filter((l) => /no measured support|none|sem suporte/i.test(l.evidence)).length;
+  if (unsupported) {
+    score -= unsupported * 15;
+    notes.push(`${unsupported} leg${unsupported === 1 ? "" : "s"} with no measured support`);
+  }
+  if (measured) notes.push(`${measured} leg${measured === 1 ? "" : "s"} backed by measured history`);
+
+  // Every extra leg multiplies the ways a ticket can break.
+  if (legs.length > 4) {
+    score -= (legs.length - 4) * 6;
+    notes.push(`${legs.length} legs — each one is another way to lose`);
+  }
+
+  return { score: Math.max(0, Math.min(100, Math.round(score))), notes };
+}
+
 function priceSuggestion(
   raw: z.infer<typeof SuggestionSchema>,
   bandKey: string,
@@ -98,6 +140,15 @@ function priceSuggestion(
       explanation: leg.explanation,
       evidence: leg.evidence,
       fairProbability: Math.min(Math.max(leg.fairProbability, 0.001), 0.999),
+      settlement: {
+        type: leg.settlementType,
+        teamAbbreviation: leg.settlementTeam ?? undefined,
+        player: leg.settlementPlayer ?? undefined,
+        stat: leg.settlementStat ?? undefined,
+        line: leg.settlementLine ?? undefined,
+        side: leg.settlementSide ?? undefined,
+        sourceBasis: leg.sourceBasis,
+      },
     });
   }
 
@@ -108,6 +159,8 @@ function priceSuggestion(
   const combinedDecimal = parlayDecimal(priced.map((l) => l.oddsDecimal));
   const modelled = legs.reduce((acc, l) => acc * l.fairProbability, 1);
   const ev = expectedValue(priced.map((l) => l.oddsDecimal), legs.map((l) => l.fairProbability));
+
+  const evidence = scoreEvidence(legs);
 
   return {
     id: `${bandKey}-${index}`,
@@ -123,6 +176,8 @@ function priceSuggestion(
     edgePct: Number.isFinite(ev) ? ev * 100 : NaN,
     riskNote: raw.riskNote,
     confidence: raw.confidence,
+    evidenceScore: evidence.score,
+    evidenceNotes: evidence.notes,
   };
 }
 
@@ -151,6 +206,10 @@ export async function buildBets(args: BuildArgs): Promise<BetSlate> {
     "",
     `INSIDER REPORTING:\n${x?.items.length ? x.items.map((i) => `- @${i.handle} [${i.relevance}]: ${i.text.replace(/\s+/g, " ").slice(0, 250)}`).join("\n") : "- none gathered"}`,
     "",
+    `PLAYER MARKETS AVAILABLE IN THIS SPORT:\n${marketCatalogue(getSport(game.sportKey), lang)}`,
+    "",
+    calibrationPrompt(),
+    "",
     `REQUESTED ODDS BANDS — build up to ${maxPerBand} tickets per band:`,
     ...targets.map((b) => `- ${b.key}: combined ${b.min}x to ${b.max}x (${b.typicalLegs}). Set bandKey to "${b.key}".`),
     "",
@@ -177,6 +236,117 @@ export async function buildBets(args: BuildArgs): Promise<BetSlate> {
     })
     .filter((s): s is BetSuggestion => s !== null)
     .sort((a, b) => a.combinedDecimal - b.combinedDecimal);
+
+  // Log every ticket at generation time so it can be graded once the game finishes.
+  recordPredictions(game, suggestions);
+  return { suggestions, dataNote: result.dataNote };
+}
+
+const SYSTEM_SLATE_EN = `${SYSTEM_EN}
+
+You are building ACROSS SEVERAL GAMES. Extra rules:
+- Mix leg types. A ticket made only of moneylines is lazy; player props, totals and spreads all
+  belong, and props with a measured hit rate are the best-evidenced legs available.
+- Build around a THESIS, not a pile of favourites. State it in the background. Good theses look like:
+  a blowout script (big favourite + starters' unders on minutes-driven stats + the game under),
+  a pace-up script (game over + both teams' scorers over), a short-handed script (a key absence,
+  so the remaining creator's assists and the backup's minutes go over), or a role-shift script.
+- Correlation is the point of a parlay. Legs that rise and fall together turn a longer price into a
+  single bet on one story. Say explicitly which legs are correlated and why.
+- Anti-correlation is a mistake to avoid: do not pair a big favourite's spread cover with that same
+  star's heavy counting-stat over, because blowouts remove his fourth quarter.
+- A prop candidate marked "no market price" cannot be priced. You may include at most one such leg
+  per ticket, must say the price is unverified, and must not invent a number for it.
+- Every leg must name the game it belongs to via gameId, taken from the supplied list.
+- Legs from different games are independent, so their probabilities multiply cleanly — this is how a
+  ticket reaches long odds. Say plainly in the background that length comes from stacking
+  independent games, not from any single strong read.
+- Never put two legs from the same game in a cross-game ticket unless they are genuinely correlated,
+  and say why when you do.
+- The longer the ticket, the more the book's margin compounds. Reflect that in the risk note.`;
+
+const SYSTEM_SLATE_PT = `${SYSTEM_SLATE_EN}
+
+Write every user-facing string in Brazilian Portuguese. Keep names, markets and numbers as supplied.`;
+
+export interface SlateBuildArgs {
+  games: { game: Game; detail: GameDetail; props?: PropRow[] }[];
+  bands: string[];
+  lang: Lang;
+  maxPerBand?: number;
+}
+
+/**
+ * Cross-game tickets. A single game publishes three or four markets, which cannot compound past
+ * roughly 20x — reaching 100x or 400x requires stacking independent games, and independence is
+ * exactly what makes the probability maths honest here.
+ */
+export async function buildSlateBets(args: SlateBuildArgs): Promise<BetSlate> {
+  const { games, bands, lang, maxPerBand = 1 } = args;
+  const targets = bands.map((b) => getBand(b));
+
+  const gameBlocks = games
+    .map(({ game, detail, props }) => {
+      const books = detail.books.length
+        ? detail.books
+            .map((bk) => `    ${bk.provider}: ${bk.details ?? "?"}, total ${bk.overUnder ?? "?"} (o${bk.overOdds ?? "?"}/u${bk.underOdds ?? "?"}), ML ${bk.awayMoneyline ?? "?"}/${bk.homeMoneyline ?? "?"}`)
+            .join("\n")
+        : "    no published lines";
+      const outs = detail.injuries
+        .filter((i) => /out|doubtful/i.test(i.status))
+        .map((i) => `${i.player} (${i.teamAbbreviation}) ${i.status}`)
+        .join("; ");
+      return [
+        `GAME ${game.id}: ${game.away.displayName} (${game.away.record ?? "?"}) at ${game.home.displayName} (${game.home.record ?? "?"}) — ${game.startsAt}`,
+        books,
+        `    key absences: ${outs || "none listed"}`,
+        `    player prop material:\n${describeProps(props ?? []).split("\n").map((l) => `    ${l}`).join("\n")}`,
+      ].join("\n");
+    })
+    .join("\n\n");
+
+  const prompt = [
+    `SLATE: ${games.length} games available for cross-game tickets.`,
+    "",
+    gameBlocks,
+    "",
+    `PLAYER MARKETS AVAILABLE IN THIS SPORT:\n${
+      games.length ? marketCatalogue(getSport(games[0].game.sportKey), lang) : "-"
+    }`,
+    "",
+    calibrationPrompt(),
+    "",
+    `REQUESTED ODDS BANDS — build up to ${maxPerBand} tickets per band:`,
+    ...targets.map((b) => `- ${b.key}: combined ${b.min}x to ${b.max}x (${b.typicalLegs})`),
+    "",
+    "Only use prices that appear above. If a band cannot be reached with the published prices, skip it and say so in dataNote.",
+  ].join("\n");
+
+  const result = await generateStructured({
+    schema: SlateSchema,
+    system: lang === "pt" ? SYSTEM_SLATE_PT : SYSTEM_SLATE_EN,
+    prompt,
+    maxTokens: 16000,
+  });
+
+  const suggestions = result.suggestions
+    .map((s, i) => {
+      const decimalGuess = parlayDecimal(
+        s.legs.map((l) => parseOdds(l.odds)).filter((d) => Number.isFinite(d) && d > 1),
+      );
+      const band = ODDS_BANDS.find((bd) => decimalGuess >= bd.min && decimalGuess < bd.max);
+      return priceSuggestion(s, band?.key ?? "unbanded", i);
+    })
+    .filter((s): s is BetSuggestion => s !== null)
+    .sort((a, b) => a.combinedDecimal - b.combinedDecimal);
+
+  // Cross-game tickets are logged against a synthetic game id so they can still be settled per leg.
+  if (games.length) {
+    recordPredictions(
+      { ...games[0].game, id: `slate:${games.map((g) => g.game.id).join("+")}`.slice(0, 120) },
+      suggestions,
+    );
+  }
 
   return { suggestions, dataNote: result.dataNote };
 }

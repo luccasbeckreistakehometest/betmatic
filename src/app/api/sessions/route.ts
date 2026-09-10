@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { sessionSummary } from "@/lib/browser/session";
 import { aiConfigured, MODEL } from "@/lib/ai/client";
-import { loadConfig } from "@/lib/config";
+import { listExtraSources, loadConfig } from "@/lib/config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,6 +15,12 @@ export async function GET() {
     propscash: { ...saved.propscash, requiresLogin: cfg.propscash.requiresLogin, label: cfg.propscash.label },
     mamaknowsbets: { ...saved.mamaknowsbets, requiresLogin: cfg.mamaknowsbets.requiresLogin, label: cfg.mamaknowsbets.label },
     dimers: { ...saved.dimers, requiresLogin: cfg.dimers.requiresLogin, label: cfg.dimers.label },
+    ...Object.fromEntries(
+      listExtraSources(cfg).map((e) => [
+        e.key,
+        { present: false, ageMs: null, requiresLogin: e.config.requiresLogin, label: e.config.label },
+      ]),
+    ),
   };
   return NextResponse.json({
     sessions,

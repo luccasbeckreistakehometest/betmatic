@@ -181,6 +181,18 @@ export interface SourceResult<T> {
   meta?: Record<string, unknown>;
 }
 
+/** Everything needed to grade a leg automatically once the game is final. */
+export interface Settlement {
+  type: "moneyline" | "spread" | "total" | "player_prop" | "other";
+  teamAbbreviation?: string;
+  player?: string;
+  stat?: string;
+  line?: number;
+  side?: "over" | "under" | "home" | "away" | "yes" | "no";
+  /** Which gathered source the leg leaned on, so calibration can be attributed. */
+  sourceBasis: string;
+}
+
 export interface BetLeg {
   selection: string;
   market: string;
@@ -192,6 +204,57 @@ export interface BetLeg {
   /** Measured support: hit rate, injury status, insider report. */
   evidence: string;
   fairProbability: number;
+  settlement?: Settlement;
+}
+
+export type LegOutcome = "won" | "lost" | "push" | "void" | "pending";
+
+export interface SettledLeg {
+  selection: string;
+  market: string;
+  sourceBasis: string;
+  /** Kept so grading is deterministic rather than a re-parse of the prose. */
+  settlement?: Settlement;
+  predictedProbability: number;
+  oddsDecimal: number;
+  outcome: LegOutcome;
+  actual?: string;
+}
+
+export interface LedgerEntry {
+  id: string;
+  gameId: string;
+  sportKey: string;
+  matchup: string;
+  createdAt: string;
+  settledAt?: string;
+  bandKey: string;
+  kind: "single" | "parlay";
+  title: string;
+  combinedDecimal: number;
+  modelledProbability: number;
+  legs: SettledLeg[];
+  outcome: LegOutcome;
+}
+
+/** Measured track record for one slice of predictions. */
+export interface CalibrationRow {
+  key: string;
+  label: string;
+  settled: number;
+  won: number;
+  hitRate: number;
+  averagePredicted: number;
+  /** predicted minus actual: positive means the model was overconfident. */
+  calibrationError: number;
+}
+
+export interface CalibrationReport {
+  totalSettled: number;
+  bySource: CalibrationRow[];
+  byMarket: CalibrationRow[];
+  bySport: CalibrationRow[];
+  generatedAt: string;
 }
 
 export interface BetSuggestion {
@@ -208,7 +271,11 @@ export interface BetSuggestion {
   modelledProbability: number;
   edgePct: number;
   riskNote: string;
+  /** The model's own read. */
   confidence: "high" | "medium" | "low";
+  /** Computed from the evidence actually behind the legs, 0-100. Independent of the model's claim. */
+  evidenceScore: number;
+  evidenceNotes: string[];
 }
 
 export interface BetSlate {

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { cached } from "@/lib/cache";
-import { loadConfig } from "@/lib/config";
+import { listExtraSources, loadConfig } from "@/lib/config";
 import { getGameDetail, getPlayerHistory } from "@/lib/sources/espn";
 import { attachMeasurement, matchAthlete } from "@/lib/props/history";
 import { buildBets } from "@/lib/bets/builder";
@@ -15,7 +15,8 @@ import type {
   BetSlate, GameBrief, GameDetail, GameIntel, PickRow, PropRow, SourceResult, Tweet, XIntel,
 } from "@/lib/types";
 
-export type SourceName = "x" | "propscash" | "mamaknowsbets" | "dimers" | "brief" | "bets";
+/** The four named sources plus "brief"/"bets"; any other string is an extraSources key. */
+export type SourceName = string;
 
 const TTL = {
   tweets: 8 * 60_000,
@@ -45,7 +46,7 @@ async function measureProps(props: PropRow[], detail: GameDetail, force: boolean
     if (!histories.has(match.id)) {
       histories.set(match.id, await getPlayerHistory(detail.game.sportKey, match.id, force).catch(() => null));
     }
-    out.push(attachMeasurement(prop, histories.get(match.id) ?? null));
+    out.push(attachMeasurement(prop, histories.get(match.id) ?? null, detail.game.sportKey));
   }
   return out;
 }
@@ -60,6 +61,7 @@ function disabled<T>(source: string): SourceResult<T> {
 
 async function xIntelFor(
   detail: GameDetail,
+  lang: Lang,
   force: boolean,
 ): Promise<SourceResult<XIntel>> {
   const cfg = loadConfig().x;
@@ -83,9 +85,9 @@ async function xIntelFor(
       };
     }
     const intel = await cached<XIntel>(
-      `x-intel-${detail.game.id}`,
+      `x-intel-${detail.game.id}-${lang}`,
       TTL.xIntel,
-      () => buildXIntel(tweets, detail.game, detail),
+      () => buildXIntel(tweets, detail.game, detail, lang),
       force,
     );
     return {
@@ -128,12 +130,19 @@ const BRIEF_SYSTEM = `You write a pre-game research brief for someone who bets o
 - Say plainly what is missing — an empty source is information.
 - End with a one-line disclaimer that this is research, not advice, and that outcomes are uncertain.`;
 
+const BRIEF_SYSTEM_PT = `${BRIEF_SYSTEM}
+
+Write every field of your answer in Brazilian Portuguese — headline, angles, support, injuryWatch,
+conflicts, missingData and disclaimer. Keep player names, team names, market names and every number
+exactly as supplied.`;
+
 async function briefFor(
   detail: GameDetail,
   x: SourceResult<XIntel>,
   props: GameIntel["propscash"],
   picks: GameIntel["mamaKnowsBets"],
   dimers: GameIntel["dimers"],
+  lang: Lang,
   force: boolean,
 ): Promise<SourceResult<GameBrief>> {
   if (!aiConfigured()) {
@@ -190,9 +199,15 @@ async function briefFor(
 
   try {
     const brief = await cached<GameBrief>(
-      `brief-${game.id}`,
+      `brief-${game.id}-${lang}`,
       TTL.brief,
-      () => generateStructured({ schema: BriefSchema, system: BRIEF_SYSTEM, prompt, maxTokens: 8000 }),
+      () =>
+        generateStructured({
+          schema: BriefSchema,
+          system: lang === "pt" ? BRIEF_SYSTEM_PT : BRIEF_SYSTEM,
+          prompt,
+          maxTokens: 8000,
+        }),
       force,
     );
     return { source: "Synthesis", status: "ok", data: brief, fetchedAt: nowIso() };
@@ -257,7 +272,7 @@ export async function gatherIntel(gameId: string, opts: GatherOptions = {}): Pro
   if (!detail) throw new Error(`Game ${gameId} not found on the ESPN slate.`);
 
   const [x, propscash, mamaKnowsBets, dimers] = await Promise.all([
-    wants("x") ? xIntelFor(detail, force) : Promise.resolve(disabled<XIntel>("X")),
+    wants("x") ? xIntelFor(detail, lang, force) : Promise.resolve(disabled<XIntel>("X")),
     wants("propscash")
       ? cached(`propscash-${gameId}`, TTL.scraped, () => fetchProps("propscash", cfg.propscash, detail.game), force)
       : Promise.resolve(disabled<{ props: never[]; notes: never[] }>(cfg.propscash.label)),
@@ -284,6 +299,7 @@ export async function gatherIntel(gameId: string, opts: GatherOptions = {}): Pro
         propscash as GameIntel["propscash"],
         mamaKnowsBets as GameIntel["mamaKnowsBets"],
         dimers as GameIntel["dimers"],
+        lang,
         force,
       )
     : disabled<GameBrief>("Synthesis");
@@ -345,7 +361,7 @@ export async function* streamIntel(
   }
   yield { type: "detail", detail };
 
-  const planned = (["x", "propscash", "mamaknowsbets", "dimers"] as const).filter(wants);
+  const planned = ["x", "propscash", "mamaknowsbets", "dimers", ...listExtraSources(cfg).map((e) => e.key)].filter(wants);
   yield {
     type: "started",
     sources: [...planned, ...(wants("brief") ? (["brief"] as const) : []), ...(wants("bets") ? (["bets"] as const) : [])],
@@ -354,7 +370,7 @@ export async function* streamIntel(
   const results: Record<string, SourceResult<unknown>> = {};
   const inflight = new Map<string, Promise<{ key: string; value: SourceResult<unknown> }>>();
 
-  if (wants("x")) inflight.set("x", tagged("x", xIntelFor(detail, force)));
+  if (wants("x")) inflight.set("x", tagged("x", xIntelFor(detail, lang, force)));
   if (wants("propscash")) {
     inflight.set(
       "propscash",
@@ -371,6 +387,16 @@ export async function* streamIntel(
     inflight.set(
       "dimers",
       tagged("dimers", cached(`dimers-${gameId}`, TTL.scraped, () => fetchPicks("dimers", cfg.dimers, detail.game), force) as Promise<SourceResult<unknown>>),
+    );
+  }
+  for (const extra of listExtraSources(cfg)) {
+    if (!wants(extra.key)) continue;
+    inflight.set(
+      extra.key,
+      tagged(
+        extra.key,
+        cached(`${extra.key}-${gameId}`, TTL.scraped, () => fetchPicks(extra.key, extra.config, detail.game), force) as Promise<SourceResult<unknown>>,
+      ),
     );
   }
 
@@ -398,6 +424,7 @@ export async function* streamIntel(
       (results.propscash as GameIntel["propscash"]) ?? disabled("PropsCash"),
       (results.mamaknowsbets as GameIntel["mamaKnowsBets"]) ?? disabled("Mama Knows Bets"),
       (results.dimers as GameIntel["dimers"]) ?? disabled("Dimers"),
+      lang,
       force,
     );
     yield { type: "source", name: "brief", result: brief };
@@ -406,7 +433,14 @@ export async function* streamIntel(
   if (wants("bets")) {
     const props = (results.propscash?.data as { props: PropRow[] } | undefined)?.props ?? [];
     const picks = (results.mamaknowsbets?.data as { picks: PickRow[] } | undefined)?.picks ?? [];
-    const dimersPicks = (results.dimers?.data as { picks: PickRow[] } | undefined)?.picks ?? [];
+    const dimersPicks = [
+      ...((results.dimers?.data as { picks: PickRow[] } | undefined)?.picks ?? []),
+      ...listExtraSources(cfg).flatMap((e) => {
+        const picks = (results[e.key]?.data as { picks: PickRow[] } | undefined)?.picks ?? [];
+        // Tag the origin so calibration can later attribute hits to the right source.
+        return picks.map((p) => ({ ...p, book: p.book ?? e.config.label, label: `[${e.config.label}] ${p.label}` }));
+      }),
+    ];
     const xIntel = (results.x?.data as XIntel | undefined) ?? null;
     const bets = await betsFor(detail, props, picks, dimersPicks, xIntel, bands, lang, force);
     yield { type: "source", name: "bets", result: bets };

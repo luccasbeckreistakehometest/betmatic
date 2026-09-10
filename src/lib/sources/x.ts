@@ -2,6 +2,7 @@ import { z } from "zod";
 import { activeInsiders, batchHandles, type XConfig } from "@/lib/config";
 import { withPage } from "@/lib/browser/session";
 import { generateStructured } from "@/lib/ai/extract";
+import type { Lang } from "@/lib/i18n";
 import type { Game, GameDetail, Tweet, XIntel } from "@/lib/types";
 
 /** X search caps query length; `-filter:replies` keeps the feed to original reporting. */
@@ -143,14 +144,27 @@ const INTEL_SYSTEM = `You triage NBA reporting for a bettor researching one spec
 - Rank relevance by how directly it changes who plays or how a line should move.
 - Return only tweetIds present in the input.`;
 
+const INTEL_SYSTEM_PT = `${INTEL_SYSTEM}
+
+Write the summary and every bettingImpact in Brazilian Portuguese. Leave the quoted post text,
+player names and team names exactly as they appear.`;
+
 export async function buildXIntel(
   tweets: Tweet[],
   game: Game,
   detail: GameDetail | null,
+  lang: Lang = "pt",
 ): Promise<XIntel> {
   const candidates = preFilterForGame(tweets, game, detail);
   if (!candidates.length) {
-    return { summary: "No insider posts from the configured accounts mentioned this matchup.", items: [], scanned: tweets.length };
+    return {
+      summary:
+        lang === "pt"
+          ? "Nenhuma publicação das contas configuradas mencionou este confronto."
+          : "No insider posts from the configured accounts mentioned this matchup.",
+      items: [],
+      scanned: tweets.length,
+    };
   }
 
   const byId = new Map(candidates.map((t) => [t.id, t]));
@@ -166,7 +180,11 @@ export async function buildXIntel(
     .filter(Boolean)
     .join("\n");
 
-  const result = await generateStructured({ schema: IntelSchema, system: INTEL_SYSTEM, prompt });
+  const result = await generateStructured({
+    schema: IntelSchema,
+    system: lang === "pt" ? INTEL_SYSTEM_PT : INTEL_SYSTEM,
+    prompt,
+  });
 
   const items = result.items
     .map((item) => {

@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
-export type SiteKey = "x" | "propscash" | "mamaknowsbets" | "dimers";
+/** Named sites have bespoke handling; any other string is an extraSources key. */
+export type SiteKey = string;
 
 export interface Insider {
   handle: string;
@@ -43,6 +44,14 @@ export interface SourcesConfig {
   propscash: ScrapeSourceConfig;
   mamaknowsbets: ScrapeSourceConfig;
   dimers: ScrapeSourceConfig;
+  /** Open-ended: add a key here and it is gathered with no code change. */
+  extraSources?: Record<string, ScrapeSourceConfig>;
+}
+
+export function listExtraSources(cfg: SourcesConfig): { key: string; config: ScrapeSourceConfig }[] {
+  return Object.entries(cfg.extraSources ?? {})
+    .filter(([, config]) => config.enabled)
+    .map(([key, config]) => ({ key, config }));
 }
 
 let cachedConfig: SourcesConfig | null = null;

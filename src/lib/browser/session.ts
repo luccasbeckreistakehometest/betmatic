@@ -24,11 +24,10 @@ export function sessionAgeMs(site: SiteKey): number | null {
   }
 }
 
-export function sessionSummary(): Record<SiteKey, { present: boolean; ageMs: number | null }> {
-  const sites: SiteKey[] = ["x", "propscash", "mamaknowsbets", "dimers"];
-  return Object.fromEntries(
-    sites.map((s) => [s, { present: hasSession(s), ageMs: sessionAgeMs(s) }]),
-  ) as Record<SiteKey, { present: boolean; ageMs: number | null }>;
+export function sessionSummary(
+  sites: SiteKey[] = ["x", "propscash", "mamaknowsbets", "dimers"],
+): Record<string, { present: boolean; ageMs: number | null }> {
+  return Object.fromEntries(sites.map((s) => [s, { present: hasSession(s), ageMs: sessionAgeMs(s) }]));
 }
 
 export class NeedsLoginError extends Error {

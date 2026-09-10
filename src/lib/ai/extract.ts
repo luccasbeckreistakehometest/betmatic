@@ -133,19 +133,38 @@ export async function generateStructured<T extends z.ZodType>(args: {
   maxTokens?: number;
 }): Promise<z.infer<T>> {
   if (!aiConfigured()) throw new AiNotConfiguredError();
-  const response = await getClient().messages.parse({
+  const maxTokens = args.maxTokens ?? 16000;
+
+  // Streaming is required for large max_tokens and avoids HTTP timeouts on long generations.
+  const stream = getClient().messages.stream({
     model: MODEL,
-    max_tokens: args.maxTokens ?? 16000,
+    max_tokens: maxTokens,
     system: args.system,
     thinking: { type: "adaptive" },
     output_config: { format: zodOutputFormat(args.schema) },
     messages: [{ role: "user", content: args.prompt }],
   });
-  lastUsage = recordUsage("generate", response.usage);
+  const response = await stream.finalMessage();
+  lastUsage = recordUsage(`generate[${response.stop_reason}]`, response.usage);
 
   if (response.stop_reason === "refusal") {
     throw new Error(`Model declined: ${response.stop_details?.explanation ?? "no explanation"}`);
   }
-  if (!response.parsed_output) throw new Error("Model returned no parseable structured output.");
-  return response.parsed_output as z.infer<T>;
+  if (response.stop_reason === "max_tokens") {
+    // The JSON is cut mid-string; a parse error here would hide the real cause.
+    throw new Error(
+      `Output hit the ${maxTokens}-token cap and was truncated. Ask for fewer tickets, or raise maxTokens.`,
+    );
+  }
+
+  const text = response.content.filter((b) => b.type === "text").map((b) => b.text).join("");
+  try {
+    return args.schema.parse(JSON.parse(text)) as z.infer<T>;
+  } catch (error) {
+    throw new Error(
+      `Could not parse structured output (stop_reason=${response.stop_reason}, ${text.length} chars): ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
 }

@@ -31,6 +31,18 @@ function Ticket({ bet, lang }: { bet: BetSuggestion; lang: Lang }) {
       <div className="flex flex-wrap items-center gap-2 border-b border-ink-800 px-3.5 py-2.5">
         <Chip tone={bet.confidence}>{bet.kind === "parlay" ? t("parlay") : t("single")}</Chip>
         <span className="text-[13px] font-semibold text-mist-100">{bet.title}</span>
+        <span
+          className={`nums rounded px-1.5 py-0.5 text-[10px] font-semibold ${
+            bet.evidenceScore >= 70
+              ? "bg-edge-400/12 text-edge-400"
+              : bet.evidenceScore >= 45
+                ? "bg-warn-400/12 text-warn-400"
+                : "bg-alert-400/12 text-alert-400"
+          }`}
+          title={bet.evidenceNotes.join(" · ")}
+        >
+          {lang === "pt" ? "confiança" : "confidence"} {bet.evidenceScore}
+        </span>
         <span className="ml-auto flex items-center gap-2">
           <EdgeTag edgePct={bet.edgePct} />
           <span className="nums rounded-lg bg-signal-500/12 px-2 py-0.5 text-[13px] font-bold text-signal-400">
@@ -81,6 +93,15 @@ function Ticket({ bet, lang }: { bet: BetSuggestion; lang: Lang }) {
           ))}
         </div>
 
+        {bet.evidenceNotes.length > 0 && (
+          <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-0.5">
+            {bet.evidenceNotes.map((note, i) => (
+              <li key={i} className="text-[11px] text-mist-500">
+                · {note}
+              </li>
+            ))}
+          </ul>
+        )}
         <p className="mt-2.5 text-[11.5px] leading-relaxed text-warn-400/90">
           <span className="font-medium">{t("risk")}: </span>
           {bet.riskNote}

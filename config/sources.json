@@ -3,7 +3,8 @@
     "Edit this file to point the scrapers at the real pages. Nothing here is compiled in.",
     "URL templates support {team} {opponent} {date} {gameId} — values are URL-encoded on substitution.",
     "The `insiders` list below is a starter set of public NBA reporters. Replace it with your own list.",
-    "dimers is a free source — requiresLogin is false, so it scrapes with no saved session."
+    "dimers is a free source — requiresLogin is false, so it scrapes with no saved session.",
+    "extraSources is open-ended: add a key with the same shape and it is gathered automatically, no code change."
   ],
   "x": {
     "enabled": true,
@@ -114,5 +115,46 @@
     "useVision": false,
     "extractionHint": "Dimers publishes model projections and best bets. Pull the model's projected final score and win probability for each side, the projected total, and every 'best bet' or recommended play it lists for this matchup: market, exact selection with its number, price, book, and any stated confidence or model edge. Put the projected score and win probabilities in notes when they do not fit a pick row. Use only Dimers' own numbers.",
     "fallbackUrl": "https://www.dimers.com/nba/best-bets"
+  },
+  "extraSources": {
+    "covers": {
+      "enabled": true,
+      "label": "Covers",
+      "requiresLogin": false,
+      "loginUrl": "https://www.covers.com/",
+      "targetUrl": "https://www.covers.com/sport/basketball/nba/matchups",
+      "waitForSelector": "table, [class*=matchup], [class*=consensus]",
+      "loggedOutSelector": "",
+      "scrollPasses": 5,
+      "captureNetworkJson": true,
+      "useVision": false,
+      "extractionHint": "Covers publishes public betting consensus and expert picks. Pull the consensus percentages (what share of bets and money is on each side for spread, total and moneyline), any expert pick with its selection and price, and the listed injuries. Keep the site's own percentages exactly."
+    },
+    "oddsshark": {
+      "enabled": true,
+      "label": "OddsShark",
+      "requiresLogin": false,
+      "loginUrl": "https://www.oddsshark.com/",
+      "targetUrl": "https://www.oddsshark.com/nba/computer-picks",
+      "waitForSelector": "table, [class*=pick], [class*=matchup]",
+      "loggedOutSelector": "",
+      "scrollPasses": 5,
+      "captureNetworkJson": true,
+      "useVision": false,
+      "extractionHint": "OddsShark publishes computer-model picks and predicted scores. Pull the model's predicted final score for each side, the recommended side against the spread, the total recommendation, and any listed confidence. Use only the site's own numbers."
+    },
+    "teamrankings": {
+      "enabled": true,
+      "label": "TeamRankings",
+      "requiresLogin": false,
+      "loginUrl": "https://www.teamrankings.com/",
+      "targetUrl": "https://www.teamrankings.com/nba/",
+      "waitForSelector": "table, [class*=predict]",
+      "loggedOutSelector": "",
+      "scrollPasses": 5,
+      "captureNetworkJson": true,
+      "useVision": false,
+      "extractionHint": "TeamRankings publishes predicted scores and win probabilities per matchup. Pull the projected score for each side, the win probability, and any rating-based edge shown against the market line."
+    }
   }
 }
