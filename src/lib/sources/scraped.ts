@@ -2,7 +2,7 @@ import { z } from "zod";
 import { fillTemplate, type ScrapeSourceConfig, type SiteKey } from "@/lib/config";
 import { NeedsLoginError, capturePage } from "@/lib/browser/session";
 import { extractFromCapture } from "@/lib/ai/extract";
-import { AiNotConfiguredError } from "@/lib/ai/client";
+import { AiNotConfiguredError, describeAiError } from "@/lib/ai/client";
 import type { Game, PickRow, PropRow, SourceResult } from "@/lib/types";
 
 const nullableString = () => z.string().nullable();
@@ -88,7 +88,7 @@ function toResult<T>(source: string, error: unknown): SourceResult<T> {
     source,
     status: "error",
     data: null,
-    error: error instanceof Error ? error.message : String(error),
+    error: describeAiError(error) ?? (error instanceof Error ? error.message : String(error)),
     fetchedAt: nowIso(),
   };
 }
