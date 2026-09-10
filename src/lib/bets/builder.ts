@@ -178,7 +178,14 @@ function priceSuggestion(
 
   const combinedDecimal = parlayDecimal(priced.map((l) => l.oddsDecimal));
   const modelled = legs.reduce((acc, l) => acc * l.fairProbability, 1);
-  const ev = expectedValue(priced.map((l) => l.oddsDecimal), legs.map((l) => l.fairProbability));
+  // EV is only meaningful when every leg carries a price. With an unpriced leg the payout is
+  // unknown, so reporting a number here would invent precision the ticket does not have.
+  // With any leg unpriced the payout is unknown, so EV stays undefined rather than being reported
+  // for the priced subset — that would label a two-leg ticket with one leg's edge.
+  const ev =
+    priced.length === legs.length
+      ? expectedValue(priced.map((l) => l.oddsDecimal), priced.map((l) => l.fairProbability))
+      : NaN;
 
   const evidence = scoreEvidence(legs);
 

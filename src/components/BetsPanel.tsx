@@ -5,8 +5,16 @@ import { formatDecimal, formatPercent, getBand } from "@/lib/odds";
 import { makeT, type Lang } from "@/lib/i18n";
 import type { BetSlate, BetSuggestion } from "@/lib/types";
 
-function EdgeTag({ edgePct }: { edgePct: number }) {
-  if (!Number.isFinite(edgePct)) return null;
+function EdgeTag({ edgePct }: { edgePct: number | undefined }) {
+  if (edgePct === undefined || !Number.isFinite(edgePct))
+    return (
+      <span
+        className="rounded bg-ink-800 px-1.5 py-0.5 text-[10px] font-medium text-mist-500"
+        title="Alguma perna está sem preço confirmado, então o retorno da múltipla não é calculável"
+      >
+        EV n/d
+      </span>
+    );
   const positive = edgePct > 0;
   return (
     <span

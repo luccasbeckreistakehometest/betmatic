@@ -58,8 +58,15 @@ export function parlayHold(legOdds: number[], fairLegs: number[]): number {
   return 1 - fairProb / impliedProb;
 }
 
-/** Expected value per unit staked. Negative means the price is worse than the modelled chance. */
+/**
+ * Expected value per unit staked. Negative means the price is worse than the modelled chance.
+ *
+ * Both arrays must describe the SAME legs. Passing every leg's probability alongside only the
+ * priced legs' odds silently values a two-leg parlay at one-leg odds, which reads as a large
+ * negative edge when the truth is that the edge is unknown — so a length mismatch returns NaN.
+ */
 export function expectedValue(legOdds: number[], fairLegs: number[]): number {
+  if (legOdds.length !== fairLegs.length) return NaN;
   const combined = parlayDecimal(legOdds);
   const fairProb = fairLegs.reduce((acc, p) => acc * p, 1);
   if (!Number.isFinite(combined) || !Number.isFinite(fairProb)) return NaN;
