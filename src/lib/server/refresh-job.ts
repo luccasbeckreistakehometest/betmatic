@@ -3,6 +3,10 @@ import { savePrediction } from "@/lib/server/predictions";
 import { buildBets, buildSlateBets } from "@/lib/bets/builder";
 import { getGameDetail, getSlateOrNearest, todayKey } from "@/lib/sources/espn";
 import { buildPropCandidates } from "@/lib/props/candidates";
+import { refereeForMatch } from "@/lib/signals/referee";
+import { computeDvp } from "@/lib/signals/dvp";
+import { closeSofascore } from "@/lib/sources/sofascore";
+import { getSport } from "@/lib/sports";
 import { aiConfigured } from "@/lib/ai/client";
 import { lastUsage } from "@/lib/ai/extract";
 import { SPORTS } from "@/lib/sports";
@@ -71,6 +75,20 @@ export async function runRefresh(options: { sports?: string[]; maxGames?: number
       const props = await buildPropCandidates(detail).catch(() => []);
       detailed.push({ game: detail.game, detail });
 
+      // Signals are computed once per game and reused for both languages.
+      const sportDef = getSport(sportKey);
+      const referee =
+        sportDef.group === "soccer"
+          ? await refereeForMatch(detail.game.home.displayName, detail.game.away.displayName, slate.dateKey).catch(() => null)
+          : null;
+      const dvp =
+        sportDef.group === "basketball"
+          ? {
+              home: await computeDvp(sportKey, detail.game.home.id, detail.game.home.abbreviation).catch(() => null),
+              away: await computeDvp(sportKey, detail.game.away.id, detail.game.away.abbreviation).catch(() => null),
+            }
+          : undefined;
+
       for (const lang of LANGS) {
         try {
           const slateBets = await buildBets({
@@ -82,6 +100,8 @@ export async function runRefresh(options: { sports?: string[]; maxGames?: number
             x: null,
             bands: BANDS,
             lang,
+            referee,
+            dvp,
           });
           cost += lastUsage?.costUsd ?? 0;
           savePrediction({
@@ -129,6 +149,9 @@ export async function runRefresh(options: { sports?: string[]; maxGames?: number
       }
     }
   }
+
+  // The Sofascore client keeps a browser alive between calls; close it when the run ends.
+  await closeSofascore().catch(() => null);
 
   const note = notes.slice(0, 12).join(" | ");
   db.prepare(

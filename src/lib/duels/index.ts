@@ -151,6 +151,6 @@ export function duelsPrompt(duels: Duel[]): string {
         (d) =>
           `- ${d.matchup}: ${d.home.name} vs ${d.away.name} | friction ${d.friction}/100 | angle ${d.angle} | ${d.evidence} | flank confidence ${d.confidence}`,
       ),
-    "Use a duel only when its markets are actually offered, and say the duel is the reason.",
+    "A duel sharpens a card or foul lean the referee already supports; it is not a reason on its own. Ignore any duel whose flank confidence is low, and only use one whose markets are actually offered.",
   ].join("\n");
 }

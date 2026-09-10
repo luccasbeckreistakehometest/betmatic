@@ -13,6 +13,8 @@ import type { Lang } from "@/lib/i18n";
 import { getSport, marketCatalogue } from "@/lib/sports";
 import { duelsPrompt } from "@/lib/duels";
 import type { Duel } from "@/lib/duels";
+import { refereePrompt, type RefereeSignal } from "@/lib/signals/referee";
+import { dvpPrompt, type DvpProfile } from "@/lib/signals/dvp";
 
 const LegSchema = z.object({
   selection: z.string().describe("The exact bet, including the number. e.g. 'Paolo Banchero over 22.5 points'"),
@@ -55,6 +57,9 @@ Hard rules:
 - Prefer legs that are correlated in the bettor's favour when building parlays, and say so in the background.
 - If the gathered data cannot support a ticket in the requested band, return fewer tickets — or none — and explain why in dataNote. Padding the list with unsupported legs is a failure.
 - Never state or imply a guaranteed outcome, and never recommend a stake size.
+- In TENNIS, do not lean on head-to-head. Measured against the field, ranking beats the head-to-head
+  record when the two disagree; only a lopsided undefeated series on the same surface within about
+  two years carries information. Prefer surface-specific recent form.
 
 For each ticket write:
 - background: the situation. What is going on in this game that makes this angle exist.
@@ -83,6 +88,10 @@ export interface BuildArgs {
   detail: GameDetail;
   /** Positional matchups derived from lineups; empty when no lineup was available. */
   duels?: Duel[];
+  /** Card environment. The strongest evidenced angle in soccer. */
+  referee?: RefereeSignal | null;
+  /** What each defence concedes by position. The defensible form of "player vs team". */
+  dvp?: { home: DvpProfile | null; away: DvpProfile | null };
   props: PropRow[];
   picks: PickRow[];
   dimers: PickRow[];
@@ -187,7 +196,7 @@ function priceSuggestion(
 }
 
 export async function buildBets(args: BuildArgs): Promise<BetSlate> {
-  const { game, detail, props, picks, dimers, x, bands, lang, duels = [], maxPerBand = 2 } = args;
+  const { game, detail, props, picks, dimers, x, bands, lang, duels = [], referee = null, dvp, maxPerBand = 2 } = args;
   // Grade anything finished first, so this build reasons over the newest track record.
   await settlePending(10).catch(() => null);
   const targets = bands.map((b) => getBand(b));
@@ -214,6 +223,10 @@ export async function buildBets(args: BuildArgs): Promise<BetSlate> {
     `INSIDER REPORTING:\n${x?.items.length ? x.items.map((i) => `- @${i.handle} [${i.relevance}]: ${i.text.replace(/\s+/g, " ").slice(0, 250)}`).join("\n") : "- none gathered"}`,
     "",
     `PLAYER MARKETS AVAILABLE IN THIS SPORT:\n${marketCatalogue(getSport(game.sportKey), lang)}`,
+    "",
+    refereePrompt(referee),
+    "",
+    dvpPrompt(dvp?.home ?? null, dvp?.away ?? null),
     "",
     duelsPrompt(duels),
     "",
@@ -264,9 +277,18 @@ You are building ACROSS SEVERAL GAMES. Extra rules:
   single bet on one story. Say explicitly which legs are correlated and why.
 - Anti-correlation is a mistake to avoid: do not pair a big favourite's spread cover with that same
   star's heavy counting-stat over, because blowouts remove his fourth quarter.
-- A positional duel is a strong reason for a fouls or cards leg, because the market prices each
-  player's line separately and rarely prices the two meeting. Name the duel when you use one, and
-  ignore it when its flank confidence is low.
+- Weight the signals by how well evidenced they are, not by how interesting they sound:
+  - The REFEREE is the primary driver of a card or foul environment. Card markets attract little
+    sharp money, so the appointment is often the least-priced public fact in the match. A strict
+    referee is a reason on its own; a lenient one argues against card legs entirely.
+  - DEFENCE VS POSITION is the defensible form of "player versus team": it aggregates a whole
+    defence rather than the handful of times one player faced it. Use it, but only after the
+    player's minutes and role make the volume plausible.
+  - A POSITIONAL DUEL is a modifier, not a primary signal — it sharpens a card or foul lean the
+    referee already supports. There is no published study quantifying it, so never build a ticket
+    on a duel alone, and ignore any duel whose flank confidence is low.
+- Never lean on a player's personal record against one opponent. Two to four meetings is noise, and
+  regression to the mean makes it actively misleading.
 - A prop candidate marked "no market price" cannot be priced. You may include at most one such leg
   per ticket, must say the price is unverified, and must not invent a number for it.
 - Every leg must name the game it belongs to via gameId, taken from the supplied list.
