@@ -5,7 +5,8 @@
     "The `insiders` list below is a starter set of public NBA reporters. Replace it with your own list.",
     "dimers is a free source — requiresLogin is false, so it scrapes with no saved session.",
     "extraSources is open-ended: add a key with the same shape and it is gathered automatically, no code change.",
-    "betano and bet365 are sportsbooks: their pages are read to compare posted prices, never to place a bet."
+    "betano and bet365 are sportsbooks: their pages are read to compare posted prices, never to place a bet.",
+    "kind decides which extractor runs: 'props' pulls player lines with prices, 'picks' pulls recommendations."
   ],
   "x": {
     "enabled": true,
@@ -88,7 +89,8 @@
     "captureNetworkJson": true,
     "useVision": false,
     "extractionHint": "This is a player-prop value tool. Pull every prop row you can see: player, team, market (points / rebounds / assists / PRA / threes / etc.), the posted line, over or under side, the sportsbook, the model projection, and whatever edge / value / EV percentage the tool shows. Keep the tool's own numbers — never invent a projection.",
-    "requiresLogin": true
+    "requiresLogin": true,
+    "kind": "props"
   },
   "mamaknowsbets": {
     "enabled": true,
@@ -101,7 +103,8 @@
     "captureNetworkJson": true,
     "useVision": false,
     "extractionHint": "This site publishes betting picks and write-ups. Pull each pick: the market (spread / total / moneyline / player prop), the exact selection with its number, the price, the book, any stated confidence or unit size, and a one-line rationale quoted or tightly paraphrased from the page.",
-    "requiresLogin": true
+    "requiresLogin": true,
+    "kind": "picks"
   },
   "dimers": {
     "enabled": true,
@@ -119,7 +122,8 @@
     "sportUrls": {
       "nba": "https://www.dimers.com/nba/predictions",
       "wnba": "https://www.dimers.com/wnba/predictions"
-    }
+    },
+    "kind": "picks"
   },
   "extraSources": {
     "covers": {
@@ -137,7 +141,8 @@
       "sportUrls": {
         "nba": "https://www.covers.com/picks/nba",
         "wnba": "https://www.covers.com/sports/wnba/matchups"
-      }
+      },
+      "kind": "picks"
     },
     "oddsshark": {
       "enabled": false,
@@ -150,7 +155,8 @@
       "scrollPasses": 5,
       "captureNetworkJson": true,
       "useVision": false,
-      "extractionHint": "OddsShark publishes computer-model picks and predicted scores. Pull the model's predicted final score for each side, the recommended side against the spread, the total recommendation, and any listed confidence. Use only the site's own numbers."
+      "extractionHint": "OddsShark publishes computer-model picks and predicted scores. Pull the model's predicted final score for each side, the recommended side against the spread, the total recommendation, and any listed confidence. Use only the site's own numbers.",
+      "kind": "picks"
     },
     "teamrankings": {
       "enabled": true,
@@ -167,7 +173,8 @@
       "sportUrls": {
         "nba": "https://www.teamrankings.com/nba/predictions/",
         "wnba": "https://www.teamrankings.com/wnba/predictions/"
-      }
+      },
+      "kind": "picks"
     },
     "sofascore": {
       "enabled": true,
@@ -191,7 +198,8 @@
       "scrollPasses": 6,
       "captureNetworkJson": true,
       "useVision": false,
-      "extractionHint": "Sofascore exposes its own API through the page's XHRs — prefer the /api/v1/ payloads over the rendered text. Pull, for the requested matchup: the lineups with formation and each starter's position, per-player season statistics (fouls committed, fouls suffered, cards, shots, shots on target, duels), and any odds the page carries. Keep Sofascore's own numbers and note the formation string verbatim."
+      "extractionHint": "Sofascore exposes its own API through the page's XHRs — prefer the /api/v1/ payloads over the rendered text. Pull, for the requested matchup: the lineups with formation and each starter's position, per-player season statistics (fouls committed, fouls suffered, cards, shots, shots on target, duels), and any odds the page carries. Keep Sofascore's own numbers and note the formation string verbatim.",
+      "kind": "props"
     },
     "betano": {
       "enabled": true,
@@ -215,7 +223,8 @@
       "scrollPasses": 6,
       "captureNetworkJson": true,
       "useVision": false,
-      "extractionHint": "Betano is a sportsbook. Pull the posted prices for the requested matchup: moneyline / 1X2, handicap, total, and any player markets shown (gols, cartões, finalizações, escanteios). Record the exact decimal odds as printed and note that the price is Betano's."
+      "extractionHint": "Betano is a sportsbook. Pull the posted prices for the requested matchup: moneyline / 1X2, handicap, total, and any player markets shown (gols, cartões, finalizações, escanteios). Record the exact decimal odds as printed and note that the price is Betano's.",
+      "kind": "props"
     },
     "bet365": {
       "enabled": true,
@@ -239,7 +248,8 @@
       "scrollPasses": 8,
       "captureNetworkJson": true,
       "useVision": false,
-      "extractionHint": "bet365 renders odds into the DOM rather than clean JSON, so lean on the rendered text. Pull the posted prices for the requested matchup: 1X2 / moneyline, handicap, total, and player markets if visible. Record decimal odds exactly as printed and note the price is bet365's. If the matchup is not on the page, return empty — do not substitute another game."
+      "extractionHint": "bet365 renders odds into the DOM rather than clean JSON, so lean on the rendered text. Pull the posted prices for the requested matchup: 1X2 / moneyline, handicap, total, and player markets if visible. Record decimal odds exactly as printed and note the price is bet365's. If the matchup is not on the page, return empty — do not substitute another game.",
+      "kind": "props"
     }
   }
 }

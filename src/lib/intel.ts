@@ -8,6 +8,7 @@ import { normaliseLang, type Lang } from "@/lib/i18n";
 import { DEFAULT_SPORT } from "@/lib/sports";
 import { XLoginWallError, buildXIntel, fetchInsiderTweets } from "@/lib/sources/x";
 import { fetchPicks, fetchProps, toSourceError } from "@/lib/sources/scraped";
+import { buildConsensus, type SourcedProp } from "@/lib/props/consensus";
 import { generateStructured } from "@/lib/ai/extract";
 import { aiConfigured } from "@/lib/ai/client";
 import { NeedsLoginError } from "@/lib/browser/session";
@@ -225,6 +226,7 @@ async function betsFor(
   bands: string[],
   lang: Lang,
   force: boolean,
+  consensus: ReturnType<typeof buildConsensus> = [],
 ): Promise<SourceResult<BetSlate>> {
   if (!aiConfigured()) {
     return {
@@ -239,7 +241,7 @@ async function betsFor(
     const slate = await cached<BetSlate>(
       `bets-${detail.game.id}-${bands.join("_")}-${lang}`,
       TTL.bets,
-      () => buildBets({ game: detail.game, detail, props, picks, dimers, x, bands, lang }),
+      () => buildBets({ game: detail.game, detail, props, picks, dimers, x, bands, lang, consensus }),
       force,
     );
     return {
@@ -391,11 +393,15 @@ export async function* streamIntel(
   }
   for (const extra of listExtraSources(cfg)) {
     if (!wants(extra.key)) continue;
+    const run = (): Promise<SourceResult<unknown>> =>
+      extra.config.kind === "props"
+        ? (fetchProps(extra.key, extra.config, detail.game) as Promise<SourceResult<unknown>>)
+        : (fetchPicks(extra.key, extra.config, detail.game) as Promise<SourceResult<unknown>>);
     inflight.set(
       extra.key,
       tagged(
         extra.key,
-        cachedUnlessError(`${extra.key}-${gameId}`, TTL.scraped, () => fetchPicks(extra.key, extra.config, detail.game), force) as Promise<SourceResult<unknown>>,
+        cachedUnlessError(`${extra.key}-${gameId}`, TTL.scraped, run, force),
       ),
     );
   }
@@ -431,7 +437,15 @@ export async function* streamIntel(
   }
 
   if (wants("bets")) {
-    const props = (results.propscash?.data as { props: PropRow[] } | undefined)?.props ?? [];
+    const sourced: SourcedProp[] = [];
+    for (const [key, result] of Object.entries(results)) {
+      const rows = (result?.data as { props?: PropRow[] } | undefined)?.props;
+      if (!rows?.length) continue;
+      const label = key === "propscash" ? cfg.propscash.label : (cfg.extraSources?.[key]?.label ?? key);
+      sourced.push(...rows.map((r) => ({ ...r, source: label })));
+    }
+    const consensus = buildConsensus(sourced);
+    const props = (results.propscash?.data as { props: PropRow[] } | undefined)?.props ?? sourced;
     const picks = (results.mamaknowsbets?.data as { picks: PickRow[] } | undefined)?.picks ?? [];
     const dimersPicks = [
       ...((results.dimers?.data as { picks: PickRow[] } | undefined)?.picks ?? []),
@@ -442,7 +456,7 @@ export async function* streamIntel(
       }),
     ];
     const xIntel = (results.x?.data as XIntel | undefined) ?? null;
-    const bets = await betsFor(detail, props, picks, dimersPicks, xIntel, bands, lang, force);
+    const bets = await betsFor(detail, props, picks, dimersPicks, xIntel, bands, lang, force, consensus);
     yield { type: "source", name: "bets", result: bets };
   }
 

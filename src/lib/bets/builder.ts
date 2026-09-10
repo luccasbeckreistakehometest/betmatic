@@ -15,6 +15,8 @@ import { duelsPrompt } from "@/lib/duels";
 import type { Duel } from "@/lib/duels";
 import { refereePrompt, type RefereeSignal } from "@/lib/signals/referee";
 import { dvpPrompt, type DvpProfile } from "@/lib/signals/dvp";
+import { consensusPrompt, type ConsensusProp } from "@/lib/props/consensus";
+import { rolePrompt, type RoleProfile } from "@/lib/props/role";
 
 const LegSchema = z.object({
   selection: z.string().describe("The exact bet, including the number. e.g. 'Paolo Banchero over 22.5 points'"),
@@ -92,6 +94,10 @@ export interface BuildArgs {
   referee?: RefereeSignal | null;
   /** What each defence concedes by position. The defensible form of "player vs team". */
   dvp?: { home: DvpProfile | null; away: DvpProfile | null };
+  /** The same prop as posted by every source, for line shopping and disagreement. */
+  consensus?: ConsensusProp[];
+  /** Minutes and role, which gate whether any matchup edge can be reached. */
+  roles?: RoleProfile[];
   props: PropRow[];
   picks: PickRow[];
   dimers: PickRow[];
@@ -196,7 +202,7 @@ function priceSuggestion(
 }
 
 export async function buildBets(args: BuildArgs): Promise<BetSlate> {
-  const { game, detail, props, picks, dimers, x, bands, lang, duels = [], referee = null, dvp, maxPerBand = 2 } = args;
+  const { game, detail, props, picks, dimers, x, bands, lang, duels = [], referee = null, dvp, consensus = [], roles = [], maxPerBand = 2 } = args;
   // Grade anything finished first, so this build reasons over the newest track record.
   await settlePending(10).catch(() => null);
   const targets = bands.map((b) => getBand(b));
@@ -223,6 +229,10 @@ export async function buildBets(args: BuildArgs): Promise<BetSlate> {
     `INSIDER REPORTING:\n${x?.items.length ? x.items.map((i) => `- @${i.handle} [${i.relevance}]: ${i.text.replace(/\s+/g, " ").slice(0, 250)}`).join("\n") : "- none gathered"}`,
     "",
     `PLAYER MARKETS AVAILABLE IN THIS SPORT:\n${marketCatalogue(getSport(game.sportKey), lang)}`,
+    "",
+    consensusPrompt(consensus),
+    "",
+    rolePrompt(roles),
     "",
     refereePrompt(referee),
     "",
@@ -278,6 +288,11 @@ You are building ACROSS SEVERAL GAMES. Extra rules:
 - Anti-correlation is a mistake to avoid: do not pair a big favourite's spread cover with that same
   star's heavy counting-stat over, because blowouts remove his fourth quarter.
 - Weight the signals by how well evidenced they are, not by how interesting they sound:
+  - THE BEST AVAILABLE PRICE is the one edge that is free and certain. When several sources posted
+    the same bet, always quote the best of them and name where it is. Taking a worse number for an
+    identical bet is a guaranteed loss with no upside.
+  - MINUTES AND ROLE gate everything else. A soft matchup is worth nothing to a player who will not
+    be on the field long enough to reach the line — check the role before any other signal.
   - The REFEREE is the primary driver of a card or foul environment. Card markets attract little
     sharp money, so the appointment is often the least-priced public fact in the match. A strict
     referee is a reason on its own; a lenient one argues against card legs entirely.

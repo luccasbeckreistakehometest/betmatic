@@ -24,6 +24,11 @@ export interface XConfig {
 export interface ScrapeSourceConfig {
   enabled: boolean;
   label: string;
+  /**
+   * What this source actually publishes. Books and prop tools post player lines; analysis sites
+   * post recommendations. Running the wrong extractor wastes a call and returns nothing usable.
+   */
+  kind?: "props" | "picks";
   /** Free sources read fine without a saved session; paid tools do not. */
   requiresLogin: boolean;
   loginUrl: string;
