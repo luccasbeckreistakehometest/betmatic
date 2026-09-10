@@ -174,7 +174,7 @@ export function IntelBoard({ gameId }: { gameId: string }) {
       disabled={running}
       className="rounded-md border border-ink-700 px-2 py-0.5 text-[11px] text-mist-400 transition hover:border-ink-600 hover:text-mist-100 disabled:opacity-40"
     >
-      refresh
+      {t("refresh")}
     </button>
   );
 
@@ -202,7 +202,7 @@ export function IntelBoard({ gameId }: { gameId: string }) {
         </button>
         {running && (
           <span className="nums text-[12px] text-mist-400">
-            {elapsed}s — scrapes launch a real browser per source, this takes a while
+            {elapsed}s — {t("gatheringHint")}
           </span>
         )}
         {fatal && <span className="text-[12px] text-alert-400">{fatal}</span>}
@@ -232,6 +232,7 @@ export function IntelBoard({ gameId }: { gameId: string }) {
 
       <Panel
         title={t("betBuilder")}
+        lang={lang}
         status={slots.bets.status}
         meta={betSlate?.suggestions.length ? `${betSlate.suggestions.length} ${betSlate.suggestions.length === 1 ? "ticket" : "tickets"}` : undefined}
         action={refreshButton(["bets"])}
@@ -250,6 +251,7 @@ export function IntelBoard({ gameId }: { gameId: string }) {
 
       <Panel
         title={t("synthesisBrief")}
+        lang={lang}
         status={slots.brief.status}
         meta={relTime(slots.brief.result?.fetchedAt)}
         action={refreshButton(["brief"])}
@@ -274,9 +276,9 @@ export function IntelBoard({ gameId }: { gameId: string }) {
 
             <div className="grid gap-3 sm:grid-cols-3">
               {([
-                ["Injury watch", brief.injuryWatch, "text-warn-400"],
-                ["Source conflicts", brief.conflicts, "text-alert-400"],
-                ["Not covered", brief.missingData, "text-mist-500"],
+                [t("injuryWatch"), brief.injuryWatch, "text-warn-400"],
+                [t("conflicts"), brief.conflicts, "text-alert-400"],
+                [t("notCovered"), brief.missingData, "text-mist-500"],
               ] as const).map(([label, items, tone]) =>
                 items.length ? (
                   <div key={label}>
@@ -298,10 +300,10 @@ export function IntelBoard({ gameId }: { gameId: string }) {
             </p>
           </div>
         ) : slots.brief.status === "pending" ? (
-          <Empty>Waiting on the other sources…</Empty>
+          <Empty>{t("waitingSources")}</Empty>
         ) : (
           <>
-            <Empty>No brief yet.</Empty>
+            <Empty>{t("noBriefYet")}</Empty>
             <SourceNote result={slots.brief.result} />
           </>
         )}
@@ -309,6 +311,7 @@ export function IntelBoard({ gameId }: { gameId: string }) {
 
       <Panel
         title={t("insiderReporting")}
+        lang={lang}
         status={slots.x.status}
         meta={
           slots.x.result?.meta
@@ -347,10 +350,10 @@ export function IntelBoard({ gameId }: { gameId: string }) {
             </ul>
           </div>
         ) : slots.x.status === "pending" ? (
-          <Empty>Opening X and reading the insider list…</Empty>
+          <Empty>{t("statusPending")}</Empty>
         ) : (
           <>
-            <Empty>{xIntel?.summary ?? "Nothing gathered from X yet."}</Empty>
+            <Empty>{xIntel?.summary ?? t("nothingFromX")}</Empty>
             <SourceNote result={slots.x.result} />
           </>
         )}
@@ -358,6 +361,7 @@ export function IntelBoard({ gameId }: { gameId: string }) {
 
       <Panel
         title={t("playerProps")}
+        lang={lang}
         status={slots.propscash.status}
         meta={props.length ? `${props.length} rows · ${measuredCount} ${t("measured")}` : relTime(slots.propscash.result?.fetchedAt)}
         action={refreshButton(["propscash"])}
@@ -367,15 +371,15 @@ export function IntelBoard({ gameId }: { gameId: string }) {
             <table className="w-full min-w-[640px] text-left text-[12px]">
               <thead>
                 <tr className="border-b border-ink-800 text-[10px] uppercase tracking-wider text-mist-500">
-                  <th className="px-1 pb-2 font-medium">Player</th>
-                  <th className="px-1 pb-2 font-medium">Market</th>
-                  <th className="px-1 pb-2 text-right font-medium">Line</th>
-                  <th className="px-1 pb-2 font-medium">Side</th>
-                  <th className="px-1 pb-2 text-right font-medium">Odds</th>
-                  <th className="px-1 pb-2 text-right font-medium">Proj</th>
+                  <th className="px-1 pb-2 font-medium">{t("player")}</th>
+                  <th className="px-1 pb-2 font-medium">{t("market")}</th>
+                  <th className="px-1 pb-2 text-right font-medium">{t("line")}</th>
+                  <th className="px-1 pb-2 font-medium">{t("side")}</th>
+                  <th className="px-1 pb-2 text-right font-medium">{t("odds")}</th>
+                  <th className="px-1 pb-2 text-right font-medium">{t("projection")}</th>
                   <th className="px-1 pb-2 text-right font-medium">Edge</th>
                   <th className="px-1 pb-2 font-medium">{t("measured")}</th>
-                  <th className="px-1 pb-2 font-medium">Book</th>
+                  <th className="px-1 pb-2 font-medium">{t("book")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink-800/70">
@@ -420,10 +424,10 @@ export function IntelBoard({ gameId }: { gameId: string }) {
             </table>
           </div>
         ) : slots.propscash.status === "pending" ? (
-          <Empty>Loading the logged-in PropsCash page and extracting rows…</Empty>
+          <Empty>{t("statusPending")}</Empty>
         ) : (
           <>
-            <Empty>No prop rows for this matchup.</Empty>
+            <Empty>{t("noProps")}</Empty>
             <SourceNote result={slots.propscash.result} />
           </>
         )}
@@ -431,6 +435,7 @@ export function IntelBoard({ gameId }: { gameId: string }) {
 
       <Panel
         title={t("publishedPicks")}
+        lang={lang}
         status={slots.mamaknowsbets.status}
         meta={picks.length ? `${picks.length} picks` : relTime(slots.mamaknowsbets.result?.fetchedAt)}
         action={refreshButton(["mamaknowsbets"])}
@@ -438,10 +443,10 @@ export function IntelBoard({ gameId }: { gameId: string }) {
         {picks.length ? (
           <PickList picks={picks} />
         ) : slots.mamaknowsbets.status === "pending" ? (
-          <Empty>Loading the logged-in Mama Knows Bets page…</Empty>
+          <Empty>{t("statusPending")}</Empty>
         ) : (
           <>
-            <Empty>No picks for this matchup.</Empty>
+            <Empty>{t("noPicks")}</Empty>
             <SourceNote result={slots.mamaknowsbets.result} />
           </>
         )}
@@ -449,6 +454,7 @@ export function IntelBoard({ gameId }: { gameId: string }) {
 
       <Panel
         title={t("modelProjections")}
+        lang={lang}
         status={slots.dimers.status}
         meta={dimersPicks.length ? `${dimersPicks.length} plays` : relTime(slots.dimers.result?.fetchedAt)}
         action={refreshButton(["dimers"])}
@@ -467,10 +473,10 @@ export function IntelBoard({ gameId }: { gameId: string }) {
             {dimersPicks.length > 0 && <PickList picks={dimersPicks} />}
           </div>
         ) : slots.dimers.status === "pending" ? (
-          <Empty>Reading the Dimers model page…</Empty>
+          <Empty>{t("statusPending")}</Empty>
         ) : (
           <>
-            <Empty>No Dimers projections for this matchup.</Empty>
+            <Empty>{t("noProjections")}</Empty>
             <SourceNote result={slots.dimers.result} />
           </>
         )}

@@ -1,21 +1,22 @@
 import type { ReactNode } from "react";
+import { t as translate, type DictKey, type Lang } from "@/lib/i18n";
 import type { SourceStatus } from "@/lib/types";
 
-const STATUS_STYLE: Record<SourceStatus | "pending" | "idle", { label: string; className: string }> = {
-  ok: { label: "ok", className: "bg-edge-400/12 text-edge-400 border-edge-400/25" },
-  empty: { label: "no data", className: "bg-ink-800 text-mist-400 border-ink-700" },
-  "needs-login": { label: "login needed", className: "bg-warn-400/12 text-warn-400 border-warn-400/25" },
-  disabled: { label: "off", className: "bg-ink-800 text-mist-500 border-ink-700" },
-  error: { label: "error", className: "bg-alert-400/12 text-alert-400 border-alert-400/25" },
-  pending: { label: "gathering…", className: "bg-signal-400/12 text-signal-400 border-signal-400/25" },
-  idle: { label: "idle", className: "bg-ink-800 text-mist-500 border-ink-700" },
+const STATUS_STYLE: Record<SourceStatus | "pending" | "idle", { key: DictKey; className: string }> = {
+  ok: { key: "statusOk", className: "bg-edge-400/12 text-edge-400 border-edge-400/25" },
+  empty: { key: "statusEmpty", className: "bg-ink-800 text-mist-400 border-ink-700" },
+  "needs-login": { key: "loginNeeded", className: "bg-warn-400/12 text-warn-400 border-warn-400/25" },
+  disabled: { key: "statusOff", className: "bg-ink-800 text-mist-500 border-ink-700" },
+  error: { key: "statusError", className: "bg-alert-400/12 text-alert-400 border-alert-400/25" },
+  pending: { key: "statusPending", className: "bg-signal-400/12 text-signal-400 border-signal-400/25" },
+  idle: { key: "statusIdle", className: "bg-ink-800 text-mist-500 border-ink-700" },
 };
 
-export function StatusBadge({ status }: { status: SourceStatus | "pending" | "idle" }) {
+export function StatusBadge({ status, lang = "pt" }: { status: SourceStatus | "pending" | "idle"; lang?: Lang }) {
   const style = STATUS_STYLE[status] ?? STATUS_STYLE.idle;
   return (
     <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${style.className}`}>
-      {style.label}
+      {translate(style.key, lang)}
     </span>
   );
 }
@@ -25,19 +26,21 @@ export function Panel({
   status,
   meta,
   action,
+  lang = "pt",
   children,
 }: {
   title: string;
   status?: SourceStatus | "pending" | "idle";
   meta?: ReactNode;
   action?: ReactNode;
+  lang?: Lang;
   children: ReactNode;
 }) {
   return (
     <section className="rounded-xl border border-ink-800 bg-ink-900/60">
       <header className="flex flex-wrap items-center gap-2 border-b border-ink-800 px-4 py-2.5">
         <h2 className="text-[13px] font-semibold tracking-tight text-mist-100">{title}</h2>
-        {status && <StatusBadge status={status} />}
+        {status && <StatusBadge status={status} lang={lang} />}
         {meta && <span className="text-[11px] text-mist-500">{meta}</span>}
         {action && <div className="ml-auto">{action}</div>}
       </header>
