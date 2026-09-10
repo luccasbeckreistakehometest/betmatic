@@ -64,6 +64,25 @@ export async function cached<T>(
   return value;
 }
 
+/**
+ * Read-through cache that refuses to store failures. Caching an error means a transient blip — or a
+ * topped-up billing account — stays broken for the whole TTL.
+ */
+export async function cachedUnlessError<T extends { status: string }>(
+  key: string,
+  ttlMs: number,
+  producer: () => Promise<T>,
+  force = false,
+): Promise<T> {
+  if (!force) {
+    const hit = readCache<T>(key, ttlMs);
+    if (hit !== null) return hit;
+  }
+  const value = await producer();
+  if (value.status !== "error") writeCache(key, value);
+  return value;
+}
+
 export function clearCache(prefix?: string): number {
   let removed = 0;
   try {

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { cached } from "@/lib/cache";
+import { cached, cachedUnlessError } from "@/lib/cache";
 import { listExtraSources, loadConfig } from "@/lib/config";
 import { getGameDetail, getPlayerHistory } from "@/lib/sources/espn";
 import { attachMeasurement, matchAthlete } from "@/lib/props/history";
@@ -274,13 +274,13 @@ export async function gatherIntel(gameId: string, opts: GatherOptions = {}): Pro
   const [x, propscash, mamaKnowsBets, dimers] = await Promise.all([
     wants("x") ? xIntelFor(detail, lang, force) : Promise.resolve(disabled<XIntel>("X")),
     wants("propscash")
-      ? cached(`propscash-${gameId}`, TTL.scraped, () => fetchProps("propscash", cfg.propscash, detail.game), force)
+      ? cachedUnlessError(`propscash-${gameId}`, TTL.scraped, () => fetchProps("propscash", cfg.propscash, detail.game), force)
       : Promise.resolve(disabled<{ props: never[]; notes: never[] }>(cfg.propscash.label)),
     wants("mamaknowsbets")
-      ? cached(`mama-${gameId}`, TTL.scraped, () => fetchPicks("mamaknowsbets", cfg.mamaknowsbets, detail.game), force)
+      ? cachedUnlessError(`mama-${gameId}`, TTL.scraped, () => fetchPicks("mamaknowsbets", cfg.mamaknowsbets, detail.game), force)
       : Promise.resolve(disabled<{ picks: never[]; notes: never[] }>(cfg.mamaknowsbets.label)),
     wants("dimers")
-      ? cached(`dimers-${gameId}`, TTL.scraped, () => fetchPicks("dimers", cfg.dimers, detail.game), force)
+      ? cachedUnlessError(`dimers-${gameId}`, TTL.scraped, () => fetchPicks("dimers", cfg.dimers, detail.game), force)
       : Promise.resolve(disabled<{ picks: never[]; notes: never[] }>(cfg.dimers.label)),
   ]);
 
@@ -374,19 +374,19 @@ export async function* streamIntel(
   if (wants("propscash")) {
     inflight.set(
       "propscash",
-      tagged("propscash", cached(`propscash-${gameId}`, TTL.scraped, () => fetchProps("propscash", cfg.propscash, detail.game), force) as Promise<SourceResult<unknown>>),
+      tagged("propscash", cachedUnlessError(`propscash-${gameId}`, TTL.scraped, () => fetchProps("propscash", cfg.propscash, detail.game), force) as Promise<SourceResult<unknown>>),
     );
   }
   if (wants("mamaknowsbets")) {
     inflight.set(
       "mamaknowsbets",
-      tagged("mamaknowsbets", cached(`mama-${gameId}`, TTL.scraped, () => fetchPicks("mamaknowsbets", cfg.mamaknowsbets, detail.game), force) as Promise<SourceResult<unknown>>),
+      tagged("mamaknowsbets", cachedUnlessError(`mama-${gameId}`, TTL.scraped, () => fetchPicks("mamaknowsbets", cfg.mamaknowsbets, detail.game), force) as Promise<SourceResult<unknown>>),
     );
   }
   if (wants("dimers")) {
     inflight.set(
       "dimers",
-      tagged("dimers", cached(`dimers-${gameId}`, TTL.scraped, () => fetchPicks("dimers", cfg.dimers, detail.game), force) as Promise<SourceResult<unknown>>),
+      tagged("dimers", cachedUnlessError(`dimers-${gameId}`, TTL.scraped, () => fetchPicks("dimers", cfg.dimers, detail.game), force) as Promise<SourceResult<unknown>>),
     );
   }
   for (const extra of listExtraSources(cfg)) {
@@ -395,7 +395,7 @@ export async function* streamIntel(
       extra.key,
       tagged(
         extra.key,
-        cached(`${extra.key}-${gameId}`, TTL.scraped, () => fetchPicks(extra.key, extra.config, detail.game), force) as Promise<SourceResult<unknown>>,
+        cachedUnlessError(`${extra.key}-${gameId}`, TTL.scraped, () => fetchPicks(extra.key, extra.config, detail.game), force) as Promise<SourceResult<unknown>>,
       ),
     );
   }

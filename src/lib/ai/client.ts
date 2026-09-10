@@ -32,6 +32,17 @@ export class AiNotConfiguredError extends Error {
  */
 export function describeAiError(error: unknown): string | null {
   if (error instanceof AiNotConfiguredError) return error.message;
+
+  // Check the message before the subclass: this arrives as a plain 400 through the streaming
+  // helper, so an `instanceof BadRequestError` test misses it.
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  if (/credit balance is too low/i.test(message)) {
+    return "The Anthropic account has no credit left. Top it up at console.anthropic.com → Billing — the key itself is valid.";
+  }
+  if (/rate.?limit/i.test(message) && !(error instanceof Anthropic.RateLimitError)) {
+    return "Rate limited by the Anthropic API. Wait a moment and retry.";
+  }
+
   if (error instanceof Anthropic.AuthenticationError) {
     return "Anthropic rejected the API key (401). Replace ANTHROPIC_API_KEY in .env.local with a valid key from console.anthropic.com, then restart the dev server.";
   }

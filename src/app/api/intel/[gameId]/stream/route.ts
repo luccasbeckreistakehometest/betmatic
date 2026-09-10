@@ -1,10 +1,16 @@
 import { streamIntel, type SourceName } from "@/lib/intel";
+import { listExtraSources, loadConfig } from "@/lib/config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-const VALID: SourceName[] = ["x", "propscash", "mamaknowsbets", "dimers", "brief", "bets"];
+const BUILTIN: SourceName[] = ["x", "propscash", "mamaknowsbets", "dimers", "brief", "bets"];
+
+/** Extra sources are configured, not compiled in, so the valid set has to be read at request time. */
+function validSources(): Set<string> {
+  return new Set([...BUILTIN, ...listExtraSources(loadConfig()).map((e) => e.key)]);
+}
 
 export async function GET(
   request: Request,
@@ -17,9 +23,17 @@ export async function GET(
   const lang = url.searchParams.get("lang") ?? undefined;
   const bands = (url.searchParams.get("bands") ?? "").split(",").map((b) => b.trim()).filter(Boolean);
   const onlyParam = url.searchParams.get("only");
-  const only = onlyParam
-    ? onlyParam.split(",").map((s) => s.trim()).filter((s): s is SourceName => VALID.includes(s as SourceName))
-    : undefined;
+  const valid = validSources();
+  const requested = onlyParam ? onlyParam.split(",").map((s) => s.trim()).filter(Boolean) : [];
+  const unknownSources = requested.filter((s) => !valid.has(s));
+  const only = requested.filter((s) => valid.has(s));
+
+  if (unknownSources.length) {
+    return new Response(
+      JSON.stringify({ type: "error", message: `Unknown source(s): ${unknownSources.join(", ")}. Valid: ${[...valid].join(", ")}` }) + "\n",
+      { status: 400, headers: { "content-type": "application/x-ndjson" } },
+    );
+  }
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({

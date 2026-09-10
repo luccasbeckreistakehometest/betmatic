@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useTransition } from "react";
 import { LANGS, makeT, normaliseLang } from "@/lib/i18n";
 import { SPORTS, getSport } from "@/lib/sports";
@@ -78,4 +79,34 @@ export function LangPicker() {
 export function T({ k }: { k: Parameters<ReturnType<typeof makeT>>[0] }) {
   const { lang } = useNavState();
   return <>{makeT(lang)(k)}</>;
+}
+
+const NAV = [
+  { href: "/", key: "navSlate" },
+  { href: "/parlays", key: "navParlays" },
+  { href: "/track", key: "navTrack" },
+] as const;
+
+export function NavLinks() {
+  const { lang, sport } = useNavState();
+  const pathname = usePathname();
+  const t = makeT(lang);
+  return (
+    <nav className="flex items-center gap-1">
+      {NAV.map((item) => {
+        const active = pathname === item.href;
+        return (
+          <Link
+            key={item.href}
+            href={{ pathname: item.href, query: { sport: sport.key, lang } }}
+            className={`rounded-lg px-2.5 py-1 text-[12px] transition ${
+              active ? "bg-ink-800 text-mist-100" : "text-mist-500 hover:text-mist-300"
+            }`}
+          >
+            {t(item.key)}
+          </Link>
+        );
+      })}
+    </nav>
+  );
 }

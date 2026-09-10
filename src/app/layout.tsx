@@ -4,7 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Suspense } from "react";
 import { SessionBar } from "@/components/SessionBar";
-import { LangPicker, SportPicker } from "@/components/Controls";
+import { LangPicker, NavLinks, SportPicker } from "@/components/Controls";
 import { Disclaimer } from "@/components/Disclaimer";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -32,6 +32,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             {/* useSearchParams needs a Suspense boundary when rendered from a server layout. */}
             <Suspense fallback={<div className="h-8 w-36 rounded-lg bg-ink-850" />}>
               <SportPicker />
+            </Suspense>
+            <Suspense fallback={<div className="h-6 w-40 rounded-lg bg-ink-850" />}>
+              <NavLinks />
             </Suspense>
             <div className="ml-auto flex items-center gap-3">
               <SessionBar />

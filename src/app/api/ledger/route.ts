@@ -10,6 +10,11 @@ export const maxDuration = 300;
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const includeEntries = url.searchParams.get("entries") === "1";
+  // Opportunistic settlement: opening the page grades anything whose game has finished, so the
+  // calibration stays current without a scheduler. Failures here must not break the report.
+  if (url.searchParams.get("settle") !== "0") {
+    await settlePending(20).catch(() => null);
+  }
   return NextResponse.json({
     summary: ledgerSummary(),
     calibration: calibrate(),

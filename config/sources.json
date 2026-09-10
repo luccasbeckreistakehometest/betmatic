@@ -114,7 +114,11 @@
     "captureNetworkJson": true,
     "useVision": false,
     "extractionHint": "Dimers publishes model projections and best bets. Pull the model's projected final score and win probability for each side, the projected total, and every 'best bet' or recommended play it lists for this matchup: market, exact selection with its number, price, book, and any stated confidence or model edge. Put the projected score and win probabilities in notes when they do not fit a pick row. Use only Dimers' own numbers.",
-    "fallbackUrl": "https://www.dimers.com/nba/best-bets"
+    "fallbackUrl": "https://www.dimers.com/nba/best-bets",
+    "sportUrls": {
+      "nba": "https://www.dimers.com/nba/predictions",
+      "wnba": "https://www.dimers.com/wnba/predictions"
+    }
   },
   "extraSources": {
     "covers": {
@@ -122,17 +126,21 @@
       "label": "Covers",
       "requiresLogin": false,
       "loginUrl": "https://www.covers.com/",
-      "targetUrl": "https://www.covers.com/sport/basketball/nba/matchups",
+      "targetUrl": "https://www.covers.com/picks/nba",
       "waitForSelector": "table, [class*=matchup], [class*=consensus]",
       "loggedOutSelector": "",
       "scrollPasses": 5,
       "captureNetworkJson": true,
       "useVision": false,
-      "extractionHint": "Covers publishes public betting consensus and expert picks. Pull the consensus percentages (what share of bets and money is on each side for spread, total and moneyline), any expert pick with its selection and price, and the listed injuries. Keep the site's own percentages exactly."
+      "extractionHint": "Covers publishes public betting consensus and expert picks. Pull the consensus percentages (what share of bets and money is on each side for spread, total and moneyline), any expert pick with its selection and price, and the listed injuries. Keep the site's own percentages exactly.",
+      "sportUrls": {
+        "nba": "https://www.covers.com/picks/nba",
+        "wnba": "https://www.covers.com/sports/wnba/matchups"
+      }
     },
     "oddsshark": {
-      "enabled": true,
-      "label": "OddsShark",
+      "enabled": false,
+      "label": "OddsShark (redirects to Covers — disabled as duplicate)",
       "requiresLogin": false,
       "loginUrl": "https://www.oddsshark.com/",
       "targetUrl": "https://www.oddsshark.com/nba/computer-picks",
@@ -148,13 +156,17 @@
       "label": "TeamRankings",
       "requiresLogin": false,
       "loginUrl": "https://www.teamrankings.com/",
-      "targetUrl": "https://www.teamrankings.com/nba/",
+      "targetUrl": "https://www.teamrankings.com/nba/predictions/",
       "waitForSelector": "table, [class*=predict]",
       "loggedOutSelector": "",
       "scrollPasses": 5,
       "captureNetworkJson": true,
       "useVision": false,
-      "extractionHint": "TeamRankings publishes predicted scores and win probabilities per matchup. Pull the projected score for each side, the win probability, and any rating-based edge shown against the market line."
+      "extractionHint": "TeamRankings publishes predicted scores and win probabilities per matchup. Pull the projected score for each side, the win probability, and any rating-based edge shown against the market line.",
+      "sportUrls": {
+        "nba": "https://www.teamrankings.com/nba/predictions/",
+        "wnba": "https://www.teamrankings.com/wnba/predictions/"
+      }
     }
   }
 }

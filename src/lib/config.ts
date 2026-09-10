@@ -29,6 +29,11 @@ export interface ScrapeSourceConfig {
   loginUrl: string;
   /** Page holding the data. `{team}`, `{opponent}`, `{date}` and `{gameId}` are substituted. */
   targetUrl: string;
+  /**
+   * Per-sport pages. When present, a sport missing from this map is treated as unsupported and the
+   * source is skipped — scraping an NBA page for a soccer game costs an extraction to learn nothing.
+   */
+  sportUrls?: Record<string, string>;
   /** Optional second page checked when the first yields nothing. */
   fallbackUrl?: string;
   waitForSelector?: string;
@@ -74,6 +79,12 @@ export function batchHandles(insiders: Insider[], perQuery: number): Insider[][]
     batches.push(insiders.slice(i, i + perQuery));
   }
   return batches;
+}
+
+/** Returns null when the source does not cover this sport. */
+export function resolveTargetUrl(cfg: ScrapeSourceConfig, sportKey: string): string | null {
+  if (!cfg.sportUrls) return cfg.targetUrl;
+  return cfg.sportUrls[sportKey] ?? null;
 }
 
 export function fillTemplate(

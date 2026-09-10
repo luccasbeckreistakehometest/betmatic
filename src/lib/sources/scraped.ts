@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { fillTemplate, type ScrapeSourceConfig, type SiteKey } from "@/lib/config";
+import { fillTemplate, resolveTargetUrl, type ScrapeSourceConfig, type SiteKey } from "@/lib/config";
 import { NeedsLoginError, capturePage } from "@/lib/browser/session";
 import { extractFromCapture, lastUsage } from "@/lib/ai/extract";
 import { AiNotConfiguredError, describeAiError } from "@/lib/ai/client";
@@ -73,11 +73,21 @@ function gameContext(game: Game): string {
     .join("\n");
 }
 
+export class UnsupportedSportError extends Error {
+  constructor(label: string, sportKey: string) {
+    super(`${label} does not cover ${sportKey} — no page configured for this sport.`);
+    this.name = "UnsupportedSportError";
+  }
+}
+
 function nowIso() {
   return new Date().toISOString();
 }
 
 function toResult<T>(source: string, error: unknown): SourceResult<T> {
+  if (error instanceof UnsupportedSportError) {
+    return { source, status: "disabled", data: null, error: error.message, fetchedAt: nowIso() };
+  }
   if (error instanceof NeedsLoginError) {
     return { source, status: "needs-login", data: null, error: error.message, fetchedAt: nowIso() };
   }
@@ -103,7 +113,9 @@ async function captureFor(site: SiteKey, cfg: ScrapeSourceConfig, game: Game) {
     screenshot: cfg.useVision,
     requireSession: cfg.requiresLogin,
   };
-  const primary = fillTemplate(cfg.targetUrl, gameVars(game));
+  const target = resolveTargetUrl(cfg, game.sportKey);
+  if (!target) throw new UnsupportedSportError(cfg.label, game.sportKey);
+  const primary = fillTemplate(target, gameVars(game));
   const capture = await capturePage(site, primary, options);
 
   const thin = capture.text.trim().length < 400 && capture.apiPayloads.length === 0;

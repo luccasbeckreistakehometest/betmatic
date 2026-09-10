@@ -2,6 +2,7 @@ import { z } from "zod";
 import { generateStructured } from "@/lib/ai/extract";
 import { calibrationPrompt } from "@/lib/ledger/calibrate";
 import { recordPredictions } from "@/lib/ledger/store";
+import { settlePending } from "@/lib/ledger/settle";
 import {
   ODDS_BANDS, expectedValue, formatAmerican, getBand, impliedProbability, parlayDecimal, parseOdds,
 } from "@/lib/odds";
@@ -183,6 +184,8 @@ function priceSuggestion(
 
 export async function buildBets(args: BuildArgs): Promise<BetSlate> {
   const { game, detail, props, picks, dimers, x, bands, lang, maxPerBand = 2 } = args;
+  // Grade anything finished first, so this build reasons over the newest track record.
+  await settlePending(10).catch(() => null);
   const targets = bands.map((b) => getBand(b));
 
   const marketLines = detail.books.length
@@ -283,6 +286,7 @@ export interface SlateBuildArgs {
  */
 export async function buildSlateBets(args: SlateBuildArgs): Promise<BetSlate> {
   const { games, bands, lang, maxPerBand = 1 } = args;
+  await settlePending(10).catch(() => null);
   const targets = bands.map((b) => getBand(b));
 
   const gameBlocks = games
