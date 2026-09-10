@@ -30,11 +30,11 @@ function CalibrationTable({ rows, lang }: { rows: CalibrationRow[]; lang: "pt" |
       <table className="w-full min-w-[520px] text-left text-[12px]">
         <thead>
           <tr className="border-b border-ink-800 text-[10px] uppercase tracking-wider text-mist-500">
-            <th className="pb-1.5 font-medium">—</th>
-            <th className="pb-1.5 text-right font-medium">{t("sample")}</th>
-            <th className="pb-1.5 text-right font-medium">{t("hitRate")}</th>
-            <th className="pb-1.5 text-right font-medium">{t("predicted")}</th>
-            <th className="pb-1.5 font-medium">{t("calibration")}</th>
+            <th className="px-2 pb-1.5 font-medium">—</th>
+            <th className="px-2 pb-1.5 text-right font-medium">{t("sample")}</th>
+            <th className="px-2 pb-1.5 text-right font-medium">{t("hitRate")}</th>
+            <th className="px-2 pb-1.5 text-right font-medium">{t("predicted")}</th>
+            <th className="px-2 pb-1.5 pl-6 font-medium">{t("calibration")}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-ink-800/70">
@@ -43,19 +43,19 @@ function CalibrationTable({ rows, lang }: { rows: CalibrationRow[]; lang: "pt" |
             const under = row.calibrationError < -0.05;
             return (
               <tr key={row.key}>
-                <td className="py-1.5 text-mist-100">{row.label}</td>
-                <td className="nums py-1.5 text-right text-mist-300">
+                <td className="px-2 py-1.5 text-mist-100">{row.label}</td>
+                <td className="nums px-2 py-1.5 text-right text-mist-300">
                   {row.won}/{row.settled}
                 </td>
                 <td
-                  className={`nums py-1.5 text-right font-medium ${
+                  className={`nums px-2 py-1.5 text-right font-medium ${
                     row.hitRate >= 0.55 ? "text-edge-400" : row.hitRate <= 0.45 ? "text-alert-400" : "text-mist-200"
                   }`}
                 >
                   {formatPercent(row.hitRate, 0)}
                 </td>
-                <td className="nums py-1.5 text-right text-mist-400">{formatPercent(row.averagePredicted, 0)}</td>
-                <td className={`py-1.5 text-[11px] ${over ? "text-warn-400" : under ? "text-signal-400" : "text-mist-500"}`}>
+                <td className="nums px-2 py-1.5 text-right text-mist-400">{formatPercent(row.averagePredicted, 0)}</td>
+                <td className={`px-2 py-1.5 pl-6 text-[11px] ${over ? "text-warn-400" : under ? "text-signal-400" : "text-mist-500"}`}>
                   {over
                     ? `${t("overconfident")} ${(row.calibrationError * 100).toFixed(0)}pts`
                     : under
@@ -165,8 +165,14 @@ export function TrackRecord() {
                 <span className="text-[12px] text-mist-200">{entry.title}</span>
                 <span className="text-[11px] text-mist-500">{entry.matchup}</span>
                 <span className="nums ml-auto text-[11px] text-mist-400">
-                  {formatDecimal(entry.combinedDecimal)} · {entry.legs.length}
-                  {lang === "pt" ? " pernas" : " legs"}
+                  {formatDecimal(entry.combinedDecimal)} · {entry.legs.length}{" "}
+                  {lang === "pt"
+                    ? entry.legs.length === 1
+                      ? "perna"
+                      : "pernas"
+                    : entry.legs.length === 1
+                      ? "leg"
+                      : "legs"}
                 </span>
               </li>
             ))}

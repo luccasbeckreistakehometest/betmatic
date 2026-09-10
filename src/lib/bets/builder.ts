@@ -346,8 +346,15 @@ export async function buildSlateBets(args: SlateBuildArgs): Promise<BetSlate> {
 
   // Cross-game tickets are logged against a synthetic game id so they can still be settled per leg.
   if (games.length) {
+    // Label it as what it is; using the first game's matchup made a slate ticket look single-game.
+    const label = `${games.length} ${games[0].game.sportKey} games`;
     recordPredictions(
-      { ...games[0].game, id: `slate:${games.map((g) => g.game.id).join("+")}`.slice(0, 120) },
+      {
+        ...games[0].game,
+        id: `slate:${games.map((g) => g.game.id).join("+")}`.slice(0, 120),
+        home: { ...games[0].game.home, displayName: label, name: label },
+        away: { ...games[0].game.away, displayName: "cross-game", name: "cross-game" },
+      },
       suggestions,
     );
   }
