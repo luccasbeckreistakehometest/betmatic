@@ -4,7 +4,8 @@
     "URL templates support {team} {opponent} {date} {gameId} — values are URL-encoded on substitution.",
     "The `insiders` list below is a starter set of public NBA reporters. Replace it with your own list.",
     "dimers is a free source — requiresLogin is false, so it scrapes with no saved session.",
-    "extraSources is open-ended: add a key with the same shape and it is gathered automatically, no code change."
+    "extraSources is open-ended: add a key with the same shape and it is gathered automatically, no code change.",
+    "betano and bet365 are sportsbooks: their pages are read to compare posted prices, never to place a bet."
   ],
   "x": {
     "enabled": true,
@@ -167,6 +168,78 @@
         "nba": "https://www.teamrankings.com/nba/predictions/",
         "wnba": "https://www.teamrankings.com/wnba/predictions/"
       }
+    },
+    "sofascore": {
+      "enabled": true,
+      "label": "Sofascore",
+      "requiresLogin": false,
+      "loginUrl": "https://www.sofascore.com/",
+      "targetUrl": "https://www.sofascore.com/",
+      "sportUrls": {
+        "nba": "https://www.sofascore.com/basketball",
+        "wnba": "https://www.sofascore.com/basketball",
+        "soccer-bra": "https://www.sofascore.com/football",
+        "soccer-eng": "https://www.sofascore.com/football",
+        "soccer-esp": "https://www.sofascore.com/football",
+        "soccer-ucl": "https://www.sofascore.com/football",
+        "soccer-lib": "https://www.sofascore.com/football",
+        "tennis-atp": "https://www.sofascore.com/tennis",
+        "tennis-wta": "https://www.sofascore.com/tennis"
+      },
+      "waitForSelector": "a[href*='/match/'], [class*=event]",
+      "loggedOutSelector": "",
+      "scrollPasses": 6,
+      "captureNetworkJson": true,
+      "useVision": false,
+      "extractionHint": "Sofascore exposes its own API through the page's XHRs — prefer the /api/v1/ payloads over the rendered text. Pull, for the requested matchup: the lineups with formation and each starter's position, per-player season statistics (fouls committed, fouls suffered, cards, shots, shots on target, duels), and any odds the page carries. Keep Sofascore's own numbers and note the formation string verbatim."
+    },
+    "betano": {
+      "enabled": true,
+      "label": "Betano",
+      "requiresLogin": false,
+      "loginUrl": "https://www.betano.bet.br/",
+      "targetUrl": "https://www.betano.bet.br/sport/futebol/",
+      "sportUrls": {
+        "nba": "https://www.betano.bet.br/sport/basquete/",
+        "wnba": "https://www.betano.bet.br/sport/basquete/",
+        "soccer-bra": "https://www.betano.bet.br/sport/futebol/",
+        "soccer-eng": "https://www.betano.bet.br/sport/futebol/",
+        "soccer-esp": "https://www.betano.bet.br/sport/futebol/",
+        "soccer-ucl": "https://www.betano.bet.br/sport/futebol/",
+        "soccer-lib": "https://www.betano.bet.br/sport/futebol/",
+        "tennis-atp": "https://www.betano.bet.br/sport/tenis/",
+        "tennis-wta": "https://www.betano.bet.br/sport/tenis/"
+      },
+      "waitForSelector": "[class*=event], [class*=odd], [class*=selection]",
+      "loggedOutSelector": "",
+      "scrollPasses": 6,
+      "captureNetworkJson": true,
+      "useVision": false,
+      "extractionHint": "Betano is a sportsbook. Pull the posted prices for the requested matchup: moneyline / 1X2, handicap, total, and any player markets shown (gols, cartões, finalizações, escanteios). Record the exact decimal odds as printed and note that the price is Betano's."
+    },
+    "bet365": {
+      "enabled": true,
+      "label": "bet365",
+      "requiresLogin": false,
+      "loginUrl": "https://www.bet365.bet.br/",
+      "targetUrl": "https://www.bet365.bet.br/#/AS/B1/",
+      "sportUrls": {
+        "nba": "https://www.bet365.bet.br/#/AS/B18/",
+        "wnba": "https://www.bet365.bet.br/#/AS/B18/",
+        "soccer-bra": "https://www.bet365.bet.br/#/AS/B1/",
+        "soccer-eng": "https://www.bet365.bet.br/#/AS/B1/",
+        "soccer-esp": "https://www.bet365.bet.br/#/AS/B1/",
+        "soccer-ucl": "https://www.bet365.bet.br/#/AS/B1/",
+        "soccer-lib": "https://www.bet365.bet.br/#/AS/B1/",
+        "tennis-atp": "https://www.bet365.bet.br/#/AS/B13/",
+        "tennis-wta": "https://www.bet365.bet.br/#/AS/B13/"
+      },
+      "waitForSelector": "[class*=participant], [class*=odds], [class*=Participant]",
+      "loggedOutSelector": "",
+      "scrollPasses": 8,
+      "captureNetworkJson": true,
+      "useVision": false,
+      "extractionHint": "bet365 renders odds into the DOM rather than clean JSON, so lean on the rendered text. Pull the posted prices for the requested matchup: 1X2 / moneyline, handicap, total, and player markets if visible. Record decimal odds exactly as printed and note the price is bet365's. If the matchup is not on the page, return empty — do not substitute another game."
     }
   }
 }

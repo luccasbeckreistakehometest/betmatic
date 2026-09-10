@@ -11,6 +11,8 @@ import type {
 } from "@/lib/types";
 import type { Lang } from "@/lib/i18n";
 import { getSport, marketCatalogue } from "@/lib/sports";
+import { duelsPrompt } from "@/lib/duels";
+import type { Duel } from "@/lib/duels";
 
 const LegSchema = z.object({
   selection: z.string().describe("The exact bet, including the number. e.g. 'Paolo Banchero over 22.5 points'"),
@@ -79,6 +81,8 @@ function describeProps(props: PropRow[]): string {
 export interface BuildArgs {
   game: Game;
   detail: GameDetail;
+  /** Positional matchups derived from lineups; empty when no lineup was available. */
+  duels?: Duel[];
   props: PropRow[];
   picks: PickRow[];
   dimers: PickRow[];
@@ -183,7 +187,7 @@ function priceSuggestion(
 }
 
 export async function buildBets(args: BuildArgs): Promise<BetSlate> {
-  const { game, detail, props, picks, dimers, x, bands, lang, maxPerBand = 2 } = args;
+  const { game, detail, props, picks, dimers, x, bands, lang, duels = [], maxPerBand = 2 } = args;
   // Grade anything finished first, so this build reasons over the newest track record.
   await settlePending(10).catch(() => null);
   const targets = bands.map((b) => getBand(b));
@@ -210,6 +214,8 @@ export async function buildBets(args: BuildArgs): Promise<BetSlate> {
     `INSIDER REPORTING:\n${x?.items.length ? x.items.map((i) => `- @${i.handle} [${i.relevance}]: ${i.text.replace(/\s+/g, " ").slice(0, 250)}`).join("\n") : "- none gathered"}`,
     "",
     `PLAYER MARKETS AVAILABLE IN THIS SPORT:\n${marketCatalogue(getSport(game.sportKey), lang)}`,
+    "",
+    duelsPrompt(duels),
     "",
     calibrationPrompt(),
     "",
@@ -258,6 +264,9 @@ You are building ACROSS SEVERAL GAMES. Extra rules:
   single bet on one story. Say explicitly which legs are correlated and why.
 - Anti-correlation is a mistake to avoid: do not pair a big favourite's spread cover with that same
   star's heavy counting-stat over, because blowouts remove his fourth quarter.
+- A positional duel is a strong reason for a fouls or cards leg, because the market prices each
+  player's line separately and rarely prices the two meeting. Name the duel when you use one, and
+  ignore it when its flank confidence is low.
 - A prop candidate marked "no market price" cannot be priced. You may include at most one such leg
   per ticket, must say the price is unverified, and must not invent a number for it.
 - Every leg must name the game it belongs to via gameId, taken from the supplied list.
