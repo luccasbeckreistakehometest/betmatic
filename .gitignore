@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local scraper state — logged-in cookies and cached source responses. Never commit these.
+/.sessions
+/.cache
+.env.local

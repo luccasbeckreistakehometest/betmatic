@@ -1,26 +1,69 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-ink-950: #08090c;
+  --color-ink-900: #0d0f14;
+  --color-ink-850: #12151c;
+  --color-ink-800: #171b24;
+  --color-ink-700: #212734;
+  --color-ink-600: #2f3646;
+  --color-ink-500: #47506380;
+
+  --color-mist-100: #f2f5fa;
+  --color-mist-300: #b8c2d4;
+  --color-mist-400: #8a94a8;
+  --color-mist-500: #667085;
+
+  --color-edge-400: #4ade80;
+  --color-edge-500: #22c55e;
+  --color-warn-400: #fbbf24;
+  --color-alert-400: #f87171;
+  --color-signal-400: #38bdf8;
+  --color-signal-500: #0ea5e9;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(1100px 600px at 12% -8%, #16203010, transparent),
+    radial-gradient(900px 500px at 90% 0%, #0ea5e910, transparent),
+    var(--color-ink-950);
+  color: var(--color-mist-100);
+}
+
+/* Tabular numerals keep lines, odds and totals from jittering as values update. */
+.nums {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-ink-900);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-ink-700);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-ink-600);
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgb(56 189 248 / 0.35); }
+  70% { box-shadow: 0 0 0 8px rgb(56 189 248 / 0); }
+  100% { box-shadow: 0 0 0 0 rgb(56 189 248 / 0); }
+}
+.live-dot {
+  animation: pulse-ring 2s infinite;
 }

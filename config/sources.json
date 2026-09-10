@@ -1,0 +1,118 @@
+{
+  "_readme": [
+    "Edit this file to point the scrapers at the real pages. Nothing here is compiled in.",
+    "URL templates support {team} {opponent} {date} {gameId} — values are URL-encoded on substitution.",
+    "The `insiders` list below is a starter set of public NBA reporters. Replace it with your own list.",
+    "dimers is a free source — requiresLogin is false, so it scrapes with no saved session."
+  ],
+  "x": {
+    "enabled": true,
+    "loginUrl": "https://x.com/login",
+    "searchUrl": "https://x.com/search?q={query}&src=typed_query&f=live",
+    "lookbackHours": 36,
+    "handlesPerQuery": 10,
+    "maxTweetsPerQuery": 60,
+    "insiders": [
+      {
+        "handle": "ShamsCharania",
+        "label": "Shams Charania (ESPN)",
+        "tier": "tier1"
+      },
+      {
+        "handle": "wojespn",
+        "label": "Adrian Wojnarowski",
+        "tier": "tier1"
+      },
+      {
+        "handle": "ChrisBHaynes",
+        "label": "Chris Haynes",
+        "tier": "tier1"
+      },
+      {
+        "handle": "TheSteinLine",
+        "label": "Marc Stein",
+        "tier": "tier1"
+      },
+      {
+        "handle": "JakeLFischer",
+        "label": "Jake Fischer",
+        "tier": "tier2"
+      },
+      {
+        "handle": "IanBegley",
+        "label": "Ian Begley (SNY)",
+        "tier": "beat"
+      },
+      {
+        "handle": "KeithSmithNBA",
+        "label": "Keith Smith (Spotrac)",
+        "tier": "tier2"
+      },
+      {
+        "handle": "JaredWeissNBA",
+        "label": "Jared Weiss (The Athletic)",
+        "tier": "beat"
+      },
+      {
+        "handle": "InStreetClothes",
+        "label": "Jeff Stotts (injury analyst)",
+        "tier": "tier2"
+      },
+      {
+        "handle": "Underdog",
+        "label": "Underdog",
+        "tier": "aggregator"
+      },
+      {
+        "handle": "Rotoworld_BK",
+        "label": "Rotoworld Basketball",
+        "tier": "aggregator"
+      },
+      {
+        "handle": "NBABet",
+        "label": "NBA Bet",
+        "tier": "aggregator"
+      }
+    ]
+  },
+  "propscash": {
+    "enabled": true,
+    "label": "PropsCash",
+    "loginUrl": "https://propscash.com/login",
+    "targetUrl": "https://propscash.com/",
+    "waitForSelector": "table, [class*=prop], [class*=card]",
+    "loggedOutSelector": "a[href*='login'], button:has-text('Sign in')",
+    "scrollPasses": 6,
+    "captureNetworkJson": true,
+    "useVision": false,
+    "extractionHint": "This is a player-prop value tool. Pull every prop row you can see: player, team, market (points / rebounds / assists / PRA / threes / etc.), the posted line, over or under side, the sportsbook, the model projection, and whatever edge / value / EV percentage the tool shows. Keep the tool's own numbers — never invent a projection.",
+    "requiresLogin": true
+  },
+  "mamaknowsbets": {
+    "enabled": true,
+    "label": "Mama Knows Bets",
+    "loginUrl": "https://mama-knows-bets.com/login",
+    "targetUrl": "https://mama-knows-bets.com/",
+    "waitForSelector": "table, article, [class*=pick], [class*=card]",
+    "loggedOutSelector": "a[href*='login'], a[href*='signin']",
+    "scrollPasses": 6,
+    "captureNetworkJson": true,
+    "useVision": false,
+    "extractionHint": "This site publishes betting picks and write-ups. Pull each pick: the market (spread / total / moneyline / player prop), the exact selection with its number, the price, the book, any stated confidence or unit size, and a one-line rationale quoted or tightly paraphrased from the page.",
+    "requiresLogin": true
+  },
+  "dimers": {
+    "enabled": true,
+    "label": "Dimers",
+    "requiresLogin": false,
+    "loginUrl": "https://www.dimers.com/",
+    "targetUrl": "https://www.dimers.com/nba/predictions",
+    "waitForSelector": "table, [class*=game], [class*=card], article",
+    "loggedOutSelector": "",
+    "scrollPasses": 6,
+    "captureNetworkJson": true,
+    "useVision": false,
+    "extractionHint": "Dimers publishes model projections and best bets. Pull the model's projected final score and win probability for each side, the projected total, and every 'best bet' or recommended play it lists for this matchup: market, exact selection with its number, price, book, and any stated confidence or model edge. Put the projected score and win probabilities in notes when they do not fit a pick row. Use only Dimers' own numbers.",
+    "fallbackUrl": "https://www.dimers.com/nba/best-bets"
+  }
+}

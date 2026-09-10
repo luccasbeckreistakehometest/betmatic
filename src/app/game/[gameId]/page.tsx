@@ -1,0 +1,210 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { IntelBoard } from "@/components/IntelBoard";
+import { Empty, KeyValue, Panel } from "@/components/ui";
+import { tipoffET } from "@/components/GameCard";
+import { getGameDetail } from "@/lib/sources/espn";
+import type { InjuryEntry, TeamRef } from "@/lib/types";
+
+export const dynamic = "force-dynamic";
+
+function money(value?: number): string {
+  if (value === undefined || Number.isNaN(value)) return "—";
+  return value > 0 ? `+${value}` : String(value);
+}
+
+const OUT_STATUSES = ["out", "suspension", "injured reserve"];
+
+function injuryTone(status: string): string {
+  const s = status.toLowerCase();
+  if (OUT_STATUSES.some((x) => s.includes(x))) return "text-alert-400";
+  if (s.includes("doubtful")) return "text-alert-400/80";
+  if (s.includes("questionable") || s.includes("day-to-day")) return "text-warn-400";
+  return "text-mist-400";
+}
+
+function TeamHeading({ team, align, showScore }: { team: TeamRef; align: "left" | "right"; showScore: boolean }) {
+  return (
+    <div className={`flex flex-1 items-center gap-3 ${align === "right" ? "flex-row-reverse text-right" : ""}`}>
+      {team.logo && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={team.logo} alt="" width={44} height={44} className="size-11 object-contain" />
+      )}
+      <div>
+        <div className="text-[15px] font-semibold tracking-tight text-white">{team.displayName}</div>
+        <div className="nums text-[12px] text-mist-500">{team.record ?? ""}</div>
+      </div>
+      {showScore && team.score !== undefined && (
+        <div className="nums text-2xl font-semibold text-white">{team.score}</div>
+      )}
+    </div>
+  );
+}
+
+function InjuryList({ injuries, abbreviation }: { injuries: InjuryEntry[]; abbreviation: string }) {
+  const rows = injuries.filter((i) => i.teamAbbreviation === abbreviation);
+  if (!rows.length) return <p className="text-[12px] text-mist-500">No injuries listed.</p>;
+  return (
+    <ul className="flex flex-col gap-1.5">
+      {rows.map((injury, i) => (
+        <li key={`${injury.player}-${i}`}>
+          <div className="flex items-baseline gap-2">
+            <span className="text-[12px] text-mist-100">{injury.player}</span>
+            <span className="text-[10px] text-mist-500">{injury.position ?? ""}</span>
+            <span className={`ml-auto text-[11px] font-medium ${injuryTone(injury.status)}`}>{injury.status}</span>
+          </div>
+          {injury.detail && <p className="text-[11px] leading-snug text-mist-500">{injury.detail}</p>}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export default async function GamePage({ params }: PageProps<"/game/[gameId]">) {
+  const { gameId } = await params;
+  const detail = await getGameDetail(gameId).catch(() => null);
+  if (!detail) notFound();
+
+  const { game, books, ats, injuries, teamStats, predictor, leaders, lastMeetings } = detail;
+
+  return (
+    <div className="flex flex-col gap-5">
+      <Link href="/" className="w-fit text-[12px] text-mist-500 transition hover:text-mist-300">
+        ← Slate
+      </Link>
+
+      <section className="rounded-xl border border-ink-800 bg-ink-900/60 p-5">
+        <div className="flex flex-wrap items-center gap-4">
+          <TeamHeading team={game.away} align="left" showScore={game.status !== "scheduled"} />
+          <div className="flex shrink-0 flex-col items-center gap-1 px-2">
+            <span className="text-[11px] uppercase tracking-widest text-mist-500">
+              {game.status === "scheduled" ? `${tipoffET(game.startsAt)} ET` : game.statusDetail}
+            </span>
+          </div>
+          <TeamHeading team={game.home} align="right" showScore={game.status !== "scheduled"} />
+        </div>
+        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 border-t border-ink-800 pt-3 text-[12px] text-mist-500">
+          {game.venue && <span>{game.venue}</span>}
+          {game.broadcast && <span>{game.broadcast}</span>}
+          {game.odds?.details && <span className="nums text-mist-300">{game.odds.details}</span>}
+          {game.odds?.overUnder !== undefined && (
+            <span className="nums text-mist-300">O/U {game.odds.overUnder}</span>
+          )}
+          {predictor?.homeWinPct !== undefined && (
+            <span className="nums">
+              ESPN win prob: {game.away.abbreviation} {Math.round(predictor.awayWinPct ?? 0)}% ·{" "}
+              {game.home.abbreviation} {Math.round(predictor.homeWinPct ?? 0)}%
+            </span>
+          )}
+        </div>
+      </section>
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div className="flex flex-col gap-4">
+          <IntelBoard gameId={gameId} />
+        </div>
+
+        <aside className="flex flex-col gap-4">
+          <Panel title="Injury report" meta="ESPN">
+            <div className="flex flex-col gap-3">
+              <div>
+                <h3 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-mist-500">
+                  {game.away.displayName}
+                </h3>
+                <InjuryList injuries={injuries} abbreviation={game.away.abbreviation} />
+              </div>
+              <div className="border-t border-ink-800 pt-3">
+                <h3 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-mist-500">
+                  {game.home.displayName}
+                </h3>
+                <InjuryList injuries={injuries} abbreviation={game.home.abbreviation} />
+              </div>
+            </div>
+          </Panel>
+
+          <Panel title="Market" meta={books.length ? `${books.length} book${books.length === 1 ? "" : "s"}` : undefined}>
+            {books.length ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-[12px]">
+                  <thead>
+                    <tr className="border-b border-ink-800 text-[10px] uppercase tracking-wider text-mist-500">
+                      <th className="pb-1.5 font-medium">Book</th>
+                      <th className="pb-1.5 font-medium">Spread</th>
+                      <th className="pb-1.5 text-right font-medium">Total</th>
+                      <th className="pb-1.5 text-right font-medium">ML</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-ink-800/70">
+                    {books.map((book, i) => (
+                      <tr key={`${book.provider}-${i}`}>
+                        <td className="py-1.5 text-mist-300">{book.provider ?? "—"}</td>
+                        <td className="nums py-1.5 text-mist-100">{book.details ?? "—"}</td>
+                        <td className="nums py-1.5 text-right text-mist-100">{book.overUnder ?? "—"}</td>
+                        <td className="nums py-1.5 text-right text-mist-200">
+                          {money(book.awayMoneyline)} / {money(book.homeMoneyline)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <Empty>No book lines published for this game yet.</Empty>
+            )}
+            {ats.length > 0 && (
+              <div className="mt-3 border-t border-ink-800 pt-2.5">
+                <h3 className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-mist-500">
+                  Against the spread
+                </h3>
+                {ats.map((row) => (
+                  <p key={row.teamAbbreviation} className="nums text-[12px] text-mist-300">
+                    {row.teamAbbreviation} {row.record}
+                  </p>
+                ))}
+              </div>
+            )}
+          </Panel>
+
+          {leaders.length > 0 && (
+            <Panel title="Leaders">
+              <KeyValue
+                rows={leaders.slice(0, 8).map((l) => ({
+                  label: `${l.player} (${l.teamAbbreviation})`,
+                  value: l.line,
+                }))}
+              />
+            </Panel>
+          )}
+
+          {(teamStats.away.length > 0 || teamStats.home.length > 0) && (
+            <Panel title="Team stats">
+              <div className="grid grid-cols-2 gap-4">
+                {([
+                  [game.away.abbreviation, teamStats.away],
+                  [game.home.abbreviation, teamStats.home],
+                ] as const).map(([abbr, stats]) => (
+                  <div key={abbr}>
+                    <h3 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-mist-500">{abbr}</h3>
+                    <KeyValue rows={stats.slice(0, 10).map((s) => ({ label: s.label, value: s.value, hint: s.rank }))} />
+                  </div>
+                ))}
+              </div>
+            </Panel>
+          )}
+
+          {lastMeetings.length > 0 && (
+            <Panel title="Season series">
+              <ul className="flex flex-col gap-1">
+                {lastMeetings.map((m, i) => (
+                  <li key={i} className="nums text-[12px] text-mist-300">
+                    {m.summary}
+                  </li>
+                ))}
+              </ul>
+            </Panel>
+          )}
+        </aside>
+      </div>
+    </div>
+  );
+}
