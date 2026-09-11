@@ -60,6 +60,10 @@ Hard rules:
 - Prefer legs that are correlated in the bettor's favour when building parlays, and say so in the background.
 - If the gathered data cannot support a ticket in the requested band, return fewer tickets — or none — and explain why in dataNote. Padding the list with unsupported legs is a failure.
 - Never state or imply a guaranteed outcome, and never recommend a stake size.
+- Sanity-check yourself before returning: a bookmaker charges margin, so a fairly-read market yields
+  mostly slightly negative EV. If nearly every ticket you built comes out positive, your probability
+  estimates are optimistic rather than the book being wrong many times over — lower them, and say in
+  dataNote that the read skewed optimistic. Most real tickets should be negative or near zero.
 - ALWAYS pair each main ticket with at least one alternative, flagged with isAlternative, placed
   immediately after it. Markets suspend and prices move between generation and the moment someone
   reads this, so a single suggestion with no second door is of little use. A good alternative
