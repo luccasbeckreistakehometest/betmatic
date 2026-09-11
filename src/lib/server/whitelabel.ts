@@ -22,6 +22,12 @@ const SOURCE_RULES: SourceRule[] = [
   { body: "oddsshark", flags: "gi", pt: { text: "modelo estatístico", gender: "m" }, en: "statistical model" },
   { body: "teamrankings", flags: "gi", pt: { text: "modelo de ratings", gender: "m" }, en: "ratings model" },
   { body: "\\bcovers\\b", flags: "gi", pt: { text: "consenso público", gender: "m" }, en: "public consensus" },
+  // Sportsbooks. Their prices are the backbone of every ticket, so their names appear in almost
+  // every explanation and settlement basis — without these rules the whole slate attributes itself.
+  { body: "\\bbetano\\b", flags: "gi", pt: { text: "casa de apostas", gender: "f" }, en: "sportsbook" },
+  { body: "\\bbet\\s*365\\b", flags: "gi", pt: { text: "casa de apostas", gender: "f" }, en: "sportsbook" },
+  { body: "\\bdraftkings\\b", flags: "gi", pt: { text: "casa de apostas", gender: "f" }, en: "sportsbook" },
+  { body: "\\bsofascore\\b", flags: "gi", pt: { text: "base de estatísticas", gender: "f" }, en: "stats provider" },
   { body: "\\bESPN\\b", flags: "g", pt: { text: "dados oficiais", gender: "mp" }, en: "official data" },
   // Reporter handles are the most identifying signal of all.
   { body: "@[A-Za-z0-9_]{3,}", flags: "g", pt: { text: "apuração de imprensa", gender: "f" }, en: "press reporting" },
@@ -70,10 +76,13 @@ function scrub(text: string | undefined, lang: "pt" | "en"): string {
   }, text);
 }
 
+/** Non-admins get a generic label: the book name is the single most identifying field on a leg. */
+const GENERIC_BOOK = { pt: "Casa de apostas", en: "Sportsbook" } as const;
+
 function scrubLeg(leg: BetLeg, lang: "pt" | "en"): BetLeg {
   return {
     ...leg,
-    book: leg.book,
+    book: leg.book ? GENERIC_BOOK[lang] : undefined,
     explanation: scrub(leg.explanation, lang),
     evidence: scrub(leg.evidence, lang),
     settlement: leg.settlement
