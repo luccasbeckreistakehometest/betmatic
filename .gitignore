@@ -45,4 +45,5 @@ next-env.d.ts
 /.cache
 /.ledger
 /data
+/.browser-profiles
 .env.local
