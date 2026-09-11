@@ -38,6 +38,7 @@ const LegSchema = z.object({
 
 const SuggestionSchema = z.object({
   kind: z.enum(["single", "parlay"]),
+  isAlternative: z.boolean().describe("True when this ticket is a fallback for the one before it."),
   title: z.string().describe("Short label for the ticket."),
   background: z.string().describe("The situation that makes this worth a look: matchup context, injury picture, market read. Two or three sentences."),
   legs: z.array(LegSchema).min(1),
@@ -59,6 +60,14 @@ Hard rules:
 - Prefer legs that are correlated in the bettor's favour when building parlays, and say so in the background.
 - If the gathered data cannot support a ticket in the requested band, return fewer tickets — or none — and explain why in dataNote. Padding the list with unsupported legs is a failure.
 - Never state or imply a guaranteed outcome, and never recommend a stake size.
+- ALWAYS pair each main ticket with at least one alternative, flagged with isAlternative, placed
+  immediately after it. Markets suspend and prices move between generation and the moment someone
+  reads this, so a single suggestion with no second door is of little use. A good alternative
+  reaches a similar thesis through a different market — a double chance instead of the win, a
+  different total line, a different player — rather than restating the same bet at a worse price.
+- The market list you are given is the whole pool of what is actually open. Prefer a leg that
+  exists in it over a market you assume is offered; if a thesis needs a market that is not listed,
+  say so instead of inventing the leg.
 - In TENNIS, do not lean on head-to-head. Measured against the field, ranking beats the head-to-head
   record when the two disagree; only a lopsided undefeated series on the same surface within about
   two years carries information. Prefer surface-specific recent form.
@@ -190,6 +199,7 @@ function priceSuggestion(
   const evidence = scoreEvidence(legs);
 
   return {
+    alternativeFor: raw.isAlternative ? `${bandKey}-${Math.max(0, index - 1)}` : undefined,
     id: `${bandKey}-${index}`,
     kind: legs.length > 1 ? "parlay" : "single",
     bandKey,

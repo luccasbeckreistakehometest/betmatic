@@ -276,6 +276,8 @@ export interface BetSuggestion {
   /** Computed from the evidence actually behind the legs, 0-100. Independent of the model's claim. */
   evidenceScore: number;
   evidenceNotes: string[];
+  /** Id of the ticket this one is a fallback for. Markets close; a reader needs a second door. */
+  alternativeFor?: string;
 }
 
 export interface BetSlate {
