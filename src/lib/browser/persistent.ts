@@ -22,6 +22,11 @@ const PROFILE_DIR = path.join(process.cwd(), ".browser-profiles");
  *
  * Blocking also hardens with volume: early scrapes of the same site succeeded and later ones did
  * not. A caller needs rate limiting as much as it needs a session.
+ *
+ * Measured outcome of switching to headed: the Stream / Campo / Estatísticas tab bar renders and is
+ * clickable, where headless produced zero matching elements. The statistics panel itself still did
+ * not populate in testing, so the widget wants more than a headed window — treat live team stats as
+ * unavailable until that is proven, rather than assuming this unlocked them.
  */
 export async function withPersistentContext<T>(
   profile: string,
@@ -43,6 +48,22 @@ export async function withPersistentContext<T>(
   } finally {
     await ctx.close().catch(() => {});
   }
+}
+
+/**
+ * Dismisses the cookie banner, which sits above the page and silently swallows clicks meant for
+ * anything underneath. With a persistent profile this only has to happen on the first run.
+ */
+export async function acceptCookies(page: import("playwright").Page): Promise<boolean> {
+  for (const label of ["Permitir Todos", "Aceitar Todos", "Aceitar", "Allow All", "Accept All"]) {
+    const btn = page.getByText(label, { exact: true }).first();
+    if (await btn.count().catch(() => 0)) {
+      await btn.click({ force: true }).catch(() => {});
+      await page.waitForTimeout(2_000);
+      return true;
+    }
+  }
+  return false;
 }
 
 export function profileExists(profile: string): boolean {
