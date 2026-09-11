@@ -16,6 +16,7 @@ import type { Duel } from "@/lib/duels";
 import { refereePrompt, type RefereeSignal } from "@/lib/signals/referee";
 import { dvpPrompt, type DvpProfile } from "@/lib/signals/dvp";
 import { consensusPrompt, type ConsensusProp } from "@/lib/props/consensus";
+import { livePrompt, type LiveState } from "@/lib/live/state";
 import { rolePrompt, type RoleProfile } from "@/lib/props/role";
 
 const LegSchema = z.object({
@@ -60,6 +61,10 @@ Hard rules:
 - Prefer legs that are correlated in the bettor's favour when building parlays, and say so in the background.
 - If the gathered data cannot support a ticket in the requested band, return fewer tickets — or none — and explain why in dataNote. Padding the list with unsupported legs is a failure.
 - Never state or imply a guaranteed outcome, and never recommend a stake size.
+- When a LIVE block is present the match is already running, so every read is about the time that
+  REMAINS, not about 90 minutes. Re-price each line against what has already happened: a total that
+  needed three goals before kickoff may need three goals in half the time. Say the minute the read
+  was taken, quote only live prices, and never carry a pre-match estimate across unchanged.
 - Sanity-check yourself before returning: a bookmaker charges margin, so a fairly-read market yields
   mostly slightly negative EV. If nearly every ticket you built comes out positive, your probability
   estimates are optimistic rather than the book being wrong many times over — lower them, and say in
@@ -111,6 +116,8 @@ export interface BuildArgs {
   consensus?: ConsensusProp[];
   /** Minutes and role, which gate whether any matchup edge can be reached. */
   roles?: RoleProfile[];
+  /** Present once the match has kicked off; changes the question from 90 minutes to what is left. */
+  live?: LiveState | null;
   props: PropRow[];
   picks: PickRow[];
   dimers: PickRow[];
@@ -223,7 +230,7 @@ function priceSuggestion(
 }
 
 export async function buildBets(args: BuildArgs): Promise<BetSlate> {
-  const { game, detail, props, picks, dimers, x, bands, lang, duels = [], referee = null, dvp, consensus = [], roles = [], maxPerBand = 2 } = args;
+  const { game, detail, props, picks, dimers, x, bands, lang, duels = [], referee = null, dvp, consensus = [], roles = [], live = null, maxPerBand = 2 } = args;
   // Grade anything finished first, so this build reasons over the newest track record.
   await settlePending(10).catch(() => null);
   const targets = bands.map((b) => getBand(b));
@@ -250,6 +257,8 @@ export async function buildBets(args: BuildArgs): Promise<BetSlate> {
     `INSIDER REPORTING:\n${x?.items.length ? x.items.map((i) => `- @${i.handle} [${i.relevance}]: ${i.text.replace(/\s+/g, " ").slice(0, 250)}`).join("\n") : "- none gathered"}`,
     "",
     `PLAYER MARKETS AVAILABLE IN THIS SPORT:\n${marketCatalogue(getSport(game.sportKey), lang)}`,
+    live ? livePrompt(live, referee?.yellowsPerGame ?? null, lang) : "",
+    live ? "" : "",
     "",
     consensusPrompt(consensus),
     "",

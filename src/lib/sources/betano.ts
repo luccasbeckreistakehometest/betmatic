@@ -183,3 +183,18 @@ export function betanoPrompt(event: BetanoEvent | null): string {
 export function eventPoolUrl(slug: string, eventId: string): string {
   return `https://www.betano.bet.br/odds/${slug}/criar-aposta/${eventId}/?bt=10`;
 }
+
+/**
+ * In-play URL. Betano moves a fixture to /live/ once it kicks off, and the slug gains a "-vs-"
+ * separator plus the club suffix ("flamengo-rj") that the pre-match slug omits, so the pre-match URL
+ * stops resolving the moment the match starts.
+ */
+export function liveEventUrl(liveSlug: string, eventId: string, tab = 10): string {
+  return `https://www.betano.bet.br/live/${liveSlug}/criar-aposta/${eventId}/?bt=${tab}`;
+}
+
+/** True once the fixture has kicked off, which is when live pricing replaces pre-match. */
+export function isInPlay(startsAt: string | undefined): boolean {
+  if (!startsAt) return false;
+  return Date.parse(startsAt) <= Date.now();
+}
