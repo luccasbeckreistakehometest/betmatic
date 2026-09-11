@@ -169,3 +169,17 @@ export function betanoPrompt(event: BetanoEvent | null): string {
     "These are live decimal prices read from Betano's own feed. Quote them exactly and name Betano as the book.",
   ].join("\n");
 }
+
+/**
+ * Full market pool for one fixture, in bet-builder mode.
+ *
+ * Two things learned the hard way and worth keeping:
+ * - The "Todos" tab (bt=10) lists every market at once. Walking tabs one by one is slower and far
+ *   less reliable — individual tabs frequently render empty in a headless browser.
+ * - The /criar-aposta/ path segment restricts the page to markets that can actually be combined
+ *   into a slip, which is exactly the pool a parlay builder should choose from.
+ * Markets also close as kickoff approaches, so an empty result near kick-off is expected, not a bug.
+ */
+export function eventPoolUrl(slug: string, eventId: string): string {
+  return `https://www.betano.bet.br/odds/${slug}/criar-aposta/${eventId}/?bt=10`;
+}
