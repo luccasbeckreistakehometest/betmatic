@@ -4,6 +4,7 @@ import { expectedCards, cardsOverProbability, LEAGUE_CARDS_BASELINE } from "@/li
 import { expectedSaves } from "@/lib/signals/saves";
 import { poissonAtLeast } from "@/lib/live/state";
 import { scrubSlate } from "@/lib/server/whitelabel";
+import { buildRoleFromStarts, startsSupport } from "@/lib/props/role";
 import type { BetSlate } from "@/lib/types";
 
 describe("odds math", () => {
@@ -110,5 +111,26 @@ describe("whitelabel", () => {
     // "da Betano" (f) must not become "do casa de apostas".
     const out = scrubSlate(slate(), "user", "pt");
     expect(out.suggestions[0].legs[0].settlement?.sourceBasis).toBe("escada da casa de apostas");
+  });
+});
+
+describe("role gate for sports without minutes", () => {
+  it("fails a player who mostly comes off the bench", () => {
+    // Hugo Duro: one start in four. The book's ladder is priced for someone who starts.
+    const r = buildRoleFromStarts("Hugo Duro", { starts: 1, subIns: 3, appearances: 4, startShare: 0.25 });
+    expect(r?.tier).toBe("fringe");
+    expect(startsSupport(r)).toBe(false);
+  });
+
+  it("passes a every-match starter", () => {
+    const r = buildRoleFromStarts("Lucien Agoumé", { starts: 4, subIns: 0, appearances: 4, startShare: 1 });
+    expect(r?.tier).toBe("starter");
+    expect(startsSupport(r)).toBe(true);
+  });
+
+  it("reports minutes as unknown rather than zero", () => {
+    // Football game logs carry no minutes; reporting 0 would read as "did not play".
+    const r = buildRoleFromStarts("Lucien Agoumé", { starts: 4, subIns: 0, appearances: 4, startShare: 1 });
+    expect(Number.isNaN(r!.minutesPerGame)).toBe(true);
   });
 });

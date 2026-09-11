@@ -119,3 +119,39 @@ export function rolePrompt(roles: RoleProfile[]): string {
 }
 
 export { MINUTES_MARKET, measureProp };
+
+/**
+ * Role profile for a sport whose game log carries no minutes.
+ *
+ * Football is the case this exists for: buildRoleProfile needs MIN, ESPN never publishes it for
+ * football, so every football prop was priced with the volume gate silently disabled. A bookmaker's
+ * player ladder assumes a start; a player who has begun one of four matches is a different bet
+ * entirely, however good the matchup looks.
+ */
+export function buildRoleFromStarts(
+  playerName: string,
+  role: { starts: number; subIns: number; appearances: number; startShare: number } | null,
+): RoleProfile | null {
+  if (!role || !role.appearances) return null;
+  const tier: RoleTier = role.startShare >= 0.7 ? "starter" : role.startShare >= 0.4 ? "rotation" : "fringe";
+  return {
+    player: playerName,
+    // Minutes are unknown, not zero — reporting a number here would invent one.
+    minutesPerGame: NaN,
+    recentMinutes: NaN,
+    minutesTrend: 0,
+    tier,
+    reliability: role.startShare,
+    recentReliability: role.startShare,
+    games: role.appearances,
+    note: `${role.starts} de ${role.appearances} como titular${role.subIns ? `, ${role.subIns} entrando do banco` : ""}`,
+  };
+}
+
+/**
+ * Whether a player has started enough to price a ladder built for a starter. Kept separate from
+ * volumeSupports because that function reasons about minutes, which football never supplies.
+ */
+export function startsSupport(role: RoleProfile | null): boolean {
+  return !!role && role.tier === "starter";
+}

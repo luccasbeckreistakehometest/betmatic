@@ -436,17 +436,22 @@ export async function getPlayerHistory(
   sportKey: string,
   athleteId: string,
   force = false,
+  /**
+   * Without this the endpoint only returns the current season. Four games into a campaign that is
+   * not a rate, it is a rumour — the prior season is the only sample large enough to regress to.
+   */
+  season?: number,
 ): Promise<PlayerHistory | null> {
   const sport = getSport(sportKey);
   if (!sport.hasPlayerGamelog || !athleteId) return null;
 
   return cached(
-    `espn-gamelog-${sport.key}-${athleteId}`,
+    `espn-gamelog-${sport.key}-${athleteId}${season ? `-${season}` : ""}`,
     TTL.gamelog,
     async () => {
       try {
         const data = await getJson(
-          `${COMMON}/${sport.espnSport}/${sport.espnLeague}/athletes/${athleteId}/gamelog`,
+          `${COMMON}/${sport.espnSport}/${sport.espnLeague}/athletes/${athleteId}/gamelog${season ? `?season=${season}` : ""}`,
         );
         const labels: string[] = (data.labels ?? data.names ?? []) as string[];
         const eventMeta = (data.events ?? {}) as Record<string, Json>;
@@ -483,4 +488,56 @@ export async function getPlayerHistory(
     },
     force,
   );
+}
+
+
+export interface SeasonRole {
+  athleteId: string;
+  /** Matches begun in the starting eleven. */
+  starts: number;
+  /** Matches entered from the bench. */
+  subIns: number;
+  appearances: number;
+  startShare: number;
+  seasonLabel: string;
+}
+
+/**
+ * Starts and substitute appearances for the current season.
+ *
+ * The minutes gate in props/role.ts reads MIN off the game log, which works for basketball and
+ * silently returns null for football: ESPN's football game log publishes G, A, SHOT, SOG, FC, FA,
+ * OF, YC, RC and no minutes at all. The gate was therefore dead code for every football prop ever
+ * priced here. Starts-versus-substitute-appearances is the equivalent signal the API does expose,
+ * and it is the one that matters — a bookmaker's player ladder is priced for someone who starts.
+ */
+export async function getSeasonRole(sportKey: string, athleteId: string): Promise<SeasonRole | null> {
+  const sport = getSport(sportKey);
+  if (!athleteId) return null;
+  return cached(`espn-role-${sport.key}-${athleteId}`, TTL.gamelog, async () => {
+    try {
+      const data = await getJson(
+        `https://site.web.api.espn.com/apis/common/v3/sports/${sport.espnSport}/${sport.espnLeague}/athletes/${athleteId}`,
+      );
+      const summary = (data.athlete as Json | undefined)?.statsSummary as Json | undefined;
+      const entry = ((summary?.statistics ?? []) as Json[]).find((s) => s.name === "starts-subIns");
+      if (!entry) return null;
+      // displayValue reads "4 (0)" — starts, then substitute appearances in brackets.
+      const parsed = String(entry.displayValue ?? "").match(/(\d+)\s*\((\d+)\)/);
+      if (!parsed) return null;
+      const starts = Number(parsed[1]);
+      const subIns = Number(parsed[2]);
+      const appearances = starts + subIns;
+      return {
+        athleteId,
+        starts,
+        subIns,
+        appearances,
+        startShare: appearances ? Number((starts / appearances).toFixed(2)) : 0,
+        seasonLabel: String(summary?.displayName ?? ""),
+      };
+    } catch {
+      return null;
+    }
+  });
 }
