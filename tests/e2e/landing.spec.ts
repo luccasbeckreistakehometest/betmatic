@@ -1,0 +1,26 @@
+import { test, expect } from "@playwright/test";
+
+test.describe("landing", () => {
+  test("pt and en carry different copy, not translations", async ({ page }) => {
+    const errors: string[] = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+    await page.goto("/?lang=pt");
+    const pt = await page.locator("h1").first().innerText();
+    await page.goto("/?lang=en");
+    const en = await page.locator("h1").first().innerText();
+    expect(pt.length).toBeGreaterThan(8);
+    expect(en).not.toEqual(pt);
+    expect(errors).toEqual([]);
+  });
+
+  test("a funnel per sport", async ({ page }) => {
+    for (const sport of ["nba", "futebol", "tenis"]) {
+      const r = await page.goto(`/${sport}?lang=pt`);
+      if (r && r.status() === 404) continue; // slug set lives in lib/sport-landing; only assert the ones that exist
+      await expect(page.locator("h1").first()).not.toBeEmpty();
+    }
+    await page.goto("/?lang=pt");
+    const links = await page.locator("a[href^='/']").evaluateAll((as) => as.map((a) => (a as HTMLAnchorElement).getAttribute("href") ?? ""));
+    expect(links.some((h) => /\/(nba|wnba|futebol|soccer|tenis|tennis|basquete|basketball)/.test(h))).toBe(true);
+  });
+});

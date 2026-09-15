@@ -10,7 +10,9 @@
     "login": "node scripts/login.mjs",
     "sessions": "node scripts/sessions.mjs",
     "browsers:install": "playwright install chromium",
-    "test": "vitest run"
+    "test": "vitest run",
+    "e2e": "playwright test",
+    "seed:sev-val": "tsx scripts/seed-sev-val.mts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.124.0",
@@ -32,7 +34,8 @@
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
     "typescript": "^5",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.0",
+    "@playwright/test": "1.55.0"
   },
   "packageManager": "pnpm@10.6.3",
   "pnpm": {

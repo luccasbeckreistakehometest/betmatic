@@ -5,6 +5,7 @@ import { listUsers } from "@/lib/server/users";
 import { predictionStats } from "@/lib/server/predictions";
 import { recentRuns } from "@/lib/server/refresh-job";
 import { ledgerSummary } from "@/lib/ledger/calibrate";
+import { onboardingStats } from "@/lib/server/onboarding";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,5 +40,6 @@ export async function GET() {
     predictions: predictionStats(),
     jobs: recentRuns(8),
     ledger: ledgerSummary(),
+    onboarding: onboardingStats(),
   });
 }

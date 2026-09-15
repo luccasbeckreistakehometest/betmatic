@@ -29,6 +29,7 @@ export function AccountBar() {
     return (
       <Link
         href="/login"
+        data-tour="account"
         className="rounded-lg border border-ink-700 px-2.5 py-1 text-[12px] text-mist-300 transition hover:border-ink-600 hover:text-white"
       >
         {lang === "pt" ? "Entrar" : "Log in"}
@@ -37,7 +38,7 @@ export function AccountBar() {
   }
 
   return (
-    <div className="flex items-center gap-3 text-[11px]">
+    <div className="flex items-center gap-3 text-[11px]" data-tour="account" data-testid="account">
       <span className="nums flex items-center gap-1.5 text-mist-300" title={t("coins")}>
         <span className="size-1.5 rounded-full bg-edge-400" />
         {me.user.coins}

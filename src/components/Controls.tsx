@@ -39,6 +39,7 @@ export function SportPicker() {
 
   return (
     <select
+      data-tour="sport"
       value={sport.key}
       onChange={(e) => setParam("sport", e.target.value)}
       className="rounded-lg border border-ink-700 bg-ink-850 px-2.5 py-1.5 text-[13px] text-mist-100 outline-none transition focus:border-signal-500"
@@ -93,7 +94,7 @@ export function NavLinks() {
   const pathname = usePathname();
   const t = makeT(lang);
   return (
-    <nav className="flex items-center gap-1">
+    <nav className="flex items-center gap-1" data-tour="nav">
       {NAV.map((item) => {
         const active = pathname === item.href;
         return (

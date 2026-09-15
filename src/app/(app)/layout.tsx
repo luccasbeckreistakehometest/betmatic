@@ -4,6 +4,7 @@ import { LangPicker, NavLinks, SportPicker } from "@/components/Controls";
 import { Disclaimer } from "@/components/Disclaimer";
 import { Logo } from "@/components/Logo";
 import { AccountBar } from "@/components/AccountBar";
+import { Tour } from "@/components/Tour";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -30,6 +31,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         <main className="mx-auto w-full max-w-7xl flex-1 px-5 py-6">{children}</main>
+        <Suspense fallback={null}>
+          <Tour />
+        </Suspense>
 
         <footer className="border-t border-ink-800 px-5 py-5">
           <Suspense fallback={null}>

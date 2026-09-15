@@ -94,13 +94,14 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         )}
         <label className="flex flex-col gap-1.5">
           <span className="text-[12px] text-mist-400">{c.email}</span>
-          <input className={field} type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
+          <input className={field} type="email" data-testid="auth-email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
         </label>
         <label className="flex flex-col gap-1.5">
           <span className="text-[12px] text-mist-400">{c.password}</span>
           <input
             className={field}
             type="password"
+            data-testid="auth-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -114,6 +115,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
 
         <button
           type="submit"
+          data-testid="auth-submit"
           disabled={busy}
           className="mt-2 rounded-lg bg-edge-400 px-4 py-2.5 text-[14px] font-semibold text-ink-950 transition hover:bg-edge-500 disabled:opacity-50"
         >

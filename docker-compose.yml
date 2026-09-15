@@ -1,0 +1,25 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    ports: ["3000:3000"]
+    volumes:
+      - ./data:/app/data
+      - ./browser-profiles:/app/.browser-profiles   # Betano session survives restarts
+    shm_size: "1gb"                                   # Chromium needs more than Docker's 64MB default
+
+  # The background job: refreshes the inventory every 4 hours. Users never trigger generation.
+  cron:
+    image: curlimages/curl:8.10.1
+    depends_on: [app]
+    restart: unless-stopped
+    env_file: .env
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        sleep 60
+        while true; do
+          curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?maxGames=8" || true
+          sleep 14400
+        done

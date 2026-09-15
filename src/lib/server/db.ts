@@ -1,8 +1,10 @@
 import Database from "better-sqlite3";
 import fs from "node:fs";
 import path from "node:path";
+import { randomBytes } from "node:crypto";
+import { hashPassword } from "@/lib/server/auth";
 
-const DATA_DIR = path.join(process.cwd(), "data");
+const DATA_DIR = process.env.DATA_DIR ?? path.join(process.cwd(), "data");
 let db: Database.Database | null = null;
 
 /**
@@ -15,11 +17,37 @@ export function getDb(): Database.Database {
   db.pragma("journal_mode = WAL");
   db.pragma("foreign_keys = ON");
   migrate(db);
+  ensureAdmin(db);
   return db;
+}
+
+/**
+ * The admin account comes from env so nothing is committed. Outside production a known default
+ * is created so the panel opens on a fresh checkout.
+ */
+function ensureAdmin(d: Database.Database): void {
+  const prod = process.env.NODE_ENV === "production";
+  const email = (process.env.ADMIN_EMAIL ?? (prod ? "" : "admin@betmatic.app")).trim().toLowerCase();
+  const password = process.env.ADMIN_PASSWORD ?? (prod ? "" : "betmatic2026");
+  if (!email || !password) return;
+  if (d.prepare("SELECT 1 FROM users WHERE email = ?").get(email)) return;
+  // A paid plan needs an expiry to count as active; the admin's never runs out.
+  d.prepare("INSERT INTO users (id,email,name,passwordHash,role,planId,planPeriod,planExpiresAt,coins,lang,createdAt) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
+    .run(`usr_${randomBytes(10).toString("hex")}`, email, "Admin", hashPassword(password), "admin", "max", "yearly", "2099-01-01T00:00:00.000Z", 0, "pt", new Date().toISOString());
 }
 
 function migrate(d: Database.Database): void {
   d.exec(`
+    -- First access: tour progress and the first session's events, per user or anonymous cookie.
+    CREATE TABLE IF NOT EXISTS onboarding (
+      id TEXT PRIMARY KEY,
+      tourCompleted INTEGER NOT NULL DEFAULT 0,
+      tourStep INTEGER NOT NULL DEFAULT 0,
+      firstSeenAt TEXT NOT NULL,
+      completedAt TEXT,
+      events TEXT NOT NULL DEFAULT '[]'
+    );
+
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
       email TEXT NOT NULL UNIQUE,
