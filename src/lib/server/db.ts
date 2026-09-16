@@ -134,6 +134,24 @@ function migrate(d: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_genreq_created ON generation_requests(createdAt);
     CREATE INDEX IF NOT EXISTS idx_genreq_user ON generation_requests(userId, createdAt);
 
+    -- Versioned generation prompts. The code default is implicit version 0; every admin feedback or
+    -- manual edit adds a version, and exactly one per (kind, lang) is active.
+    CREATE TABLE IF NOT EXISTS prompt_versions (
+      id TEXT PRIMARY KEY,
+      kind TEXT NOT NULL,                           -- game | slate
+      lang TEXT NOT NULL,
+      version INTEGER NOT NULL,
+      content TEXT NOT NULL,
+      source TEXT NOT NULL,                         -- feedback | manual | revert
+      feedback TEXT NOT NULL DEFAULT '',
+      rationale TEXT NOT NULL DEFAULT '',
+      batch TEXT NOT NULL DEFAULT '',               -- one feedback rewrites both languages together
+      createdBy TEXT NOT NULL DEFAULT '',
+      active INTEGER NOT NULL DEFAULT 0,
+      createdAt TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_prompt_kind ON prompt_versions(kind, lang, version DESC);
+
     CREATE TABLE IF NOT EXISTS job_runs (
       id TEXT PRIMARY KEY,
       job TEXT NOT NULL,

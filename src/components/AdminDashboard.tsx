@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { Empty, Panel } from "@/components/ui";
+import { PromptPanel } from "@/components/PromptPanel";
 
 interface AdminPayload {
   error?: string;
@@ -113,6 +114,8 @@ export function AdminDashboard() {
           hint={data?.predictions.latest ? new Date(data.predictions.latest).toLocaleString() : "—"}
         />
       </div>
+
+      <PromptPanel />
 
       <Panel title="Execuções do job">
         {data?.jobs.length ? (
