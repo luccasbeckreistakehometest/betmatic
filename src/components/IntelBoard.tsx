@@ -80,7 +80,10 @@ export function IntelBoard({ gameId, dateKey }: { gameId: string; dateKey?: stri
   }, [gameId, sport.key, load]);
 
   useEffect(() => {
-    if (!loading && data?.authenticated && !mine && gen === "idle") void generate();
+    if (loading || !data?.authenticated || mine || gen !== "idle") return;
+    // Deferred so the effect itself does not set state synchronously (React Compiler rule).
+    const id = setTimeout(() => void generate(), 0);
+    return () => clearTimeout(id);
   }, [loading, data?.authenticated, mine, gen, generate]);
 
   return (
