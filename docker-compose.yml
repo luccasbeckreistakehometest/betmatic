@@ -20,6 +20,6 @@ services:
       - |
         sleep 60
         while true; do
-          curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?maxGames=8" || true
+          curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh" || true
           sleep 14400
         done

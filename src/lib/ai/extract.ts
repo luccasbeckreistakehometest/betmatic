@@ -131,21 +131,26 @@ export async function generateStructured<T extends z.ZodType>(args: {
   system: string;
   prompt: string;
   maxTokens?: number;
+  /** Defaults to the judgement model; localisation and other mechanical passes pass the cheaper one. */
+  model?: string;
 }): Promise<z.infer<T>> {
   if (!aiConfigured()) throw new AiNotConfiguredError();
   const maxTokens = args.maxTokens ?? 16000;
+  const model = args.model ?? MODEL;
 
   // Streaming is required for large max_tokens and avoids HTTP timeouts on long generations.
+  // The system prompt is the same ~3k tokens for every game in a run, so it is marked cacheable:
+  // sequential calls inside the five-minute window pay a tenth of the price for it.
   const stream = getClient().messages.stream({
-    model: MODEL,
+    model,
     max_tokens: maxTokens,
-    system: args.system,
+    system: [{ type: "text", text: args.system, cache_control: { type: "ephemeral" } }],
     thinking: { type: "adaptive" },
     output_config: { format: zodOutputFormat(args.schema) },
     messages: [{ role: "user", content: args.prompt }],
   });
   const response = await stream.finalMessage();
-  lastUsage = recordUsage(`generate[${response.stop_reason}]`, response.usage);
+  lastUsage = recordUsage(`generate[${response.stop_reason}]`, response.usage, model);
 
   if (response.stop_reason === "refusal") {
     throw new Error(`Model declined: ${response.stop_details?.explanation ?? "no explanation"}`);
