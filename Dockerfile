@@ -29,4 +29,4 @@ COPY package.json next.config.* ./
 RUN mkdir -p /app/data /app/.browser-profiles
 VOLUME ["/app/data", "/app/.browser-profiles"]
 EXPOSE 3000
-CMD ["xvfb-run", "-a", "-s", "-screen 0 1600x1100x24", "npx", "next", "start", "-p", "3000"]
+CMD ["sh", "/app/scripts/docker-entrypoint.sh"]
