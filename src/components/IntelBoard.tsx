@@ -42,6 +42,7 @@ export function IntelBoard({ gameId, dateKey }: { gameId: string; dateKey?: stri
   const t = makeT(lang);
   const [data, setData] = useState<Payload | null>(null);
   const [loading, setLoading] = useState(true);
+  const [gen, setGen] = useState<"idle" | "running" | "done" | "capUser" | "capGlobal" | "gameStarted" | "aiOff" | "generateFailed">("idle");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -65,6 +66,22 @@ export function IntelBoard({ gameId, dateKey }: { gameId: string; dateKey?: stri
   }, [load]);
 
   const mine = data?.predictions.find((p) => p.gameId === gameId) ?? null;
+
+  // Opening a game that has no tickets yet builds them. Signed-in only; the server enforces caps.
+  const generate = useCallback(async () => {
+    setGen("running");
+    try {
+      const r = await fetch(`/api/game/${gameId}/generate?sport=${sport.key}`, { method: "POST" });
+      const j = await r.json().catch(() => ({ status: "error" }));
+      const map: Record<string, typeof gen> = { generated: "done", exists: "done", cap_user: "capUser", cap_global: "capGlobal", started: "gameStarted", ai_off: "aiOff" };
+      setGen(map[j.status] ?? "generateFailed");
+      if (j.status === "generated" || j.status === "exists") await load();
+    } catch { setGen("generateFailed"); }
+  }, [gameId, sport.key, load]);
+
+  useEffect(() => {
+    if (!loading && data?.authenticated && !mine && gen === "idle") void generate();
+  }, [loading, data?.authenticated, mine, gen, generate]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -92,7 +109,16 @@ export function IntelBoard({ gameId, dateKey }: { gameId: string; dateKey?: stri
           </>
         ) : (
           <div className="flex flex-col gap-2">
-            <Empty>{data?.authenticated ? t("noTicketsYet") : t("signInForTickets")}</Empty>
+            {gen === "running" ? (
+              <div className="flex items-center gap-3 rounded-lg border border-ink-700 bg-ink-850 px-3 py-3 text-[13px] text-mist-300" data-testid="generating">
+                <span className="h-3 w-3 animate-pulse rounded-full bg-edge-400" />{t("generatingTickets")}
+              </div>
+            ) : (
+              <Empty>{!data?.authenticated ? t("signInForTickets") : gen === "idle" || gen === "done" ? t("noTicketsYet") : t(gen)}</Empty>
+            )}
+            {data?.authenticated && (gen === "generateFailed" || gen === "done") && !mine && (
+              <button onClick={() => void generate()} className="w-fit rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500">{t("generateNow")}</button>
+            )}
             {!data?.authenticated && (
               <Link href="/signup" className="w-fit rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500">
                 {t("startFreeCta")}

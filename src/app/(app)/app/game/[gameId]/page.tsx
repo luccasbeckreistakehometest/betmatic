@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { IntelBoard } from "@/components/IntelBoard";
+import { espnDateKey } from "@/lib/sources/espn";
 import { Empty, KeyValue, Panel } from "@/components/ui";
 import { tipoffET } from "@/components/GameCard";
 import { getGameDetail } from "@/lib/sources/espn";
@@ -112,7 +113,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="flex flex-col gap-4">
-          <IntelBoard gameId={gameId} />
+          <IntelBoard gameId={gameId} dateKey={espnDateKey(new Date(game.startsAt))} />
         </div>
 
         <aside className="flex flex-col gap-4">

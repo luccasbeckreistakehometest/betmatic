@@ -118,6 +118,22 @@ function migrate(d: Database.Database): void {
     );
     CREATE UNIQUE INDEX IF NOT EXISTS idx_research_unique ON game_research(sportKey, gameId, lang);
 
+    -- On-demand generations, one row per attempt: this is what the daily caps count.
+    CREATE TABLE IF NOT EXISTS generation_requests (
+      id TEXT PRIMARY KEY,
+      userId TEXT NOT NULL,
+      sportKey TEXT NOT NULL,
+      gameId TEXT NOT NULL,
+      dateKey TEXT NOT NULL,
+      status TEXT NOT NULL,                         -- running | ok
+      costUsd REAL NOT NULL DEFAULT 0,
+      note TEXT NOT NULL DEFAULT '',
+      createdAt TEXT NOT NULL,
+      finishedAt TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_genreq_created ON generation_requests(createdAt);
+    CREATE INDEX IF NOT EXISTS idx_genreq_user ON generation_requests(userId, createdAt);
+
     CREATE TABLE IF NOT EXISTS job_runs (
       id TEXT PRIMARY KEY,
       job TEXT NOT NULL,
