@@ -2,14 +2,27 @@ import fs from "node:fs";
 import path from "node:path";
 import type { BetSuggestion, Game, LedgerEntry, SettledLeg } from "@/lib/types";
 
-const LEDGER_DIR = path.join(process.cwd(), ".ledger");
+// Lives under DATA_DIR so it sits on the persistent volume in Docker: this file IS the learning
+// history, and it used to be at ./.ledger, which every container rebuild wiped.
+const LEDGER_DIR = path.join(process.env.DATA_DIR ?? path.join(process.cwd(), "data"), "ledger");
 const FILE = path.join(LEDGER_DIR, "predictions.jsonl");
+const LEGACY_FILE = path.join(process.cwd(), ".ledger", "predictions.jsonl");
+
+function migrateLegacy(): void {
+  try {
+    if (!fs.existsSync(FILE) && fs.existsSync(LEGACY_FILE)) {
+      fs.mkdirSync(LEDGER_DIR, { recursive: true });
+      fs.copyFileSync(LEGACY_FILE, FILE);
+    }
+  } catch { /* a failed migration must not stop reads; the file simply starts empty */ }
+}
 
 /**
  * Append-only JSONL. Predictions are a historical record — rewriting them would let a later run
  * quietly launder a bad call, which would make the whole calibration exercise worthless.
  */
 export function readLedger(): LedgerEntry[] {
+  migrateLegacy();
   try {
     return fs
       .readFileSync(FILE, "utf8")

@@ -152,6 +152,27 @@ function migrate(d: Database.Database): void {
     );
     CREATE INDEX IF NOT EXISTS idx_prompt_kind ON prompt_versions(kind, lang, version DESC);
 
+    -- One row per learning run: the post-mortem over recently settled tickets and, when the agent
+    -- found something to change, the prompt feedback it proposed (applied or still waiting).
+    CREATE TABLE IF NOT EXISTS learning_runs (
+      id TEXT PRIMARY KEY,
+      status TEXT NOT NULL,                         -- ok | skipped | error
+      windowStart TEXT NOT NULL,
+      windowEnd TEXT NOT NULL,
+      tickets INTEGER NOT NULL DEFAULT 0,
+      won INTEGER NOT NULL DEFAULT 0,
+      lost INTEGER NOT NULL DEFAULT 0,
+      summary TEXT NOT NULL DEFAULT '',
+      report TEXT NOT NULL DEFAULT '{}',
+      promptFeedback TEXT NOT NULL DEFAULT '',
+      applied INTEGER NOT NULL DEFAULT 0,
+      appliedBatch TEXT NOT NULL DEFAULT '',
+      costUsd REAL NOT NULL DEFAULT 0,
+      note TEXT NOT NULL DEFAULT '',
+      createdAt TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_learning_created ON learning_runs(createdAt DESC);
+
     CREATE TABLE IF NOT EXISTS job_runs (
       id TEXT PRIMARY KEY,
       job TEXT NOT NULL,

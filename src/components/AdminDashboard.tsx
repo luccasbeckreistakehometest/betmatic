@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { Empty, Panel } from "@/components/ui";
 import { PromptPanel } from "@/components/PromptPanel";
+import { LearningPanel } from "@/components/LearningPanel";
 
 interface AdminPayload {
   error?: string;
@@ -114,6 +115,8 @@ export function AdminDashboard() {
           hint={data?.predictions.latest ? new Date(data.predictions.latest).toLocaleString() : "—"}
         />
       </div>
+
+      <LearningPanel />
 
       <PromptPanel />
 

@@ -9,7 +9,8 @@ services:
       - ./browser-profiles:/app/.browser-profiles   # Betano session survives restarts
     shm_size: "1gb"                                   # Chromium needs more than Docker's 64MB default
 
-  # The background job: refreshes the inventory every 4 hours. Users never trigger generation.
+  # Scheduler: settles finished games every hour (no tokens), runs the learning post-mortem daily,
+  # and the optional background refresh every 4h (off unless CRON_ENABLED=1). Ticks every 15 min.
   cron:
     image: curlimages/curl:8.10.1
     depends_on: [app]
@@ -18,8 +19,11 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
-        sleep 60
+        sleep 90
+        t=0
         while true; do
-          curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh" || true
-          sleep 14400
+          [ $$((t % 4)) -eq 0 ]  && curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=settle" >/dev/null || true
+          [ $$((t % 16)) -eq 0 ] && curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh" >/dev/null || true
+          [ $$((t % 96)) -eq 95 ] && curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=learn" >/dev/null || true
+          t=$$((t + 1)); sleep 900
         done
