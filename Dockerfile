@@ -3,6 +3,8 @@
 # started under xvfb-run: a virtual display the job can open a window on.
 FROM mcr.microsoft.com/playwright:v1.55.0-noble AS deps
 WORKDIR /app
+# better-sqlite3 compila do fonte aqui e a imagem do Playwright não traz toolchain.
+RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ && rm -rf /var/lib/apt/lists/*
 RUN corepack enable && corepack prepare pnpm@10 --activate
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
