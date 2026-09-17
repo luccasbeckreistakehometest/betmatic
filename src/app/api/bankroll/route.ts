@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { currentUser } from "@/lib/server/session";
-import { addManual, addTicket, gradeManual, listBankroll, removeEntry } from "@/lib/server/bankroll";
+import { addManual, addTicket, addWithLegs, gradeManual, listBankroll, removeEntry } from "@/lib/server/bankroll";
+import { getDb } from "@/lib/server/db";
+import type { CustomTicketView } from "@/lib/bets/custom-writeup";
 import { currentStreak, getSettings, pauseState, stakeVerdict } from "@/lib/server/settings";
 
 export const runtime = "nodejs";
@@ -17,7 +19,20 @@ export async function GET() {
 const schema = z.union([
   z.object({ kind: z.literal("ticket"), gameId: z.string().max(40), bandKey: z.string().max(20), selections: z.array(z.string().max(200)).min(1).max(20), stake: z.number().positive().max(1_000_000) }),
   z.object({ kind: z.literal("manual"), title: z.string().trim().min(2).max(160), odds: z.number().min(1.01).max(10_000), stake: z.number().positive().max(1_000_000) }),
+  z.object({ kind: z.literal("custom"), slipId: z.string().max(40), ticketIndex: z.number().int().min(0).max(5), stake: z.number().positive().max(1_000_000) }),
 ]);
+
+/** A custom parlay the user computed: its legs come from the stored result, never from the browser. */
+function addCustom(userId: string, input: { slipId: string; ticketIndex: number; stake: number }) {
+  const row = getDb().prepare("SELECT analysis, legs FROM user_slips WHERE id=? AND userId=? AND kind='custom'").get(input.slipId, userId) as { analysis: string; legs: string } | undefined;
+  const ticket = row ? (JSON.parse(row.analysis) as CustomTicketView[])[input.ticketIndex] : undefined;
+  if (!ticket) return null;
+  const games = [...new Set(ticket.legs.map((l) => l.matchup))];
+  return addWithLegs(userId, {
+    source: "custom", title: ticket.title, matchup: games.length === 1 ? games[0] : `${games.length} jogos`, odds: Number(ticket.decimal.toFixed(2)), stake: input.stake,
+    legs: ticket.legs.map((l) => ({ selection: l.selection, market: l.market, odds: l.decimal, gameId: l.gameId, sportKey: (JSON.parse(row!.legs) as { sport?: string }).sport ?? null, settlement: l.settlement })),
+  });
+}
 
 export async function POST(request: Request) {
   const user = await currentUser();
@@ -29,7 +44,8 @@ export async function POST(request: Request) {
   if (pause.paused) return NextResponse.json({ error: "paused", pausedUntil: pause.until }, { status: 423 });
   const verdict = stakeVerdict(user.id, parsed.data.stake);
   if (!verdict.allowed) return NextResponse.json({ error: "limit", ...verdict }, { status: 422 });
-  const entry = parsed.data.kind === "ticket" ? addTicket(user.id, parsed.data) : addManual(user.id, parsed.data);
+  const data = parsed.data;
+  const entry = data.kind === "ticket" ? addTicket(user.id, data) : data.kind === "custom" ? addCustom(user.id, data) : addManual(user.id, data);
   return entry ? NextResponse.json({ entry }) : NextResponse.json({ error: "bilhete não encontrado no histórico" }, { status: 404 });
 }
 

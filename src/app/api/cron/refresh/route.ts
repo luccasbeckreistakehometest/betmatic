@@ -8,6 +8,7 @@ import { sendDailyDigest } from "@/lib/server/telegram";
 import { safeEqual } from "@/lib/server/auth";
 import { logEvent, reportError } from "@/lib/server/ops-log";
 import { runFeatured } from "@/lib/server/featured";
+import { settleBankrollLegs } from "@/lib/server/bankroll";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,8 +36,9 @@ export async function POST(request: Request) {
   try {
     if (job === "settle") {
       const result = await settlePending(500);
-      logEvent("job.settle", { ...result, ms: Date.now() - started });
-      return NextResponse.json({ job, ...result });
+      const bankroll = await settleBankrollLegs().catch((error) => { reportError("job.settle.bankroll", error); return null; });
+      logEvent("job.settle", { ...result, bankroll, ms: Date.now() - started });
+      return NextResponse.json({ job, ...result, bankroll });
     }
     if (job === "digest") {
       const date = url.searchParams.get("date") ?? undefined;

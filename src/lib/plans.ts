@@ -160,12 +160,25 @@ export function getCoinPack(id: string): CoinPack | undefined {
  */
 export const ACTION_COST = {
   analyse_slip: 8,
+  /** Deep analysis for plans below Max (Max pays the normal analyse_slip price). */
+  deep_slip: 14,
+  custom_parlay: 12,
+  /** The same custom parlay with a templated explanation, when the AI write-up is unavailable. */
+  custom_parlay_basic: 6,
+  player_read: 5,
+  /** A tipster audit beyond the plan's allowance. */
+  tipster_audit: 6,
 } as const;
 
 export type CoinAction = keyof typeof ACTION_COST;
 
 export const ACTION_LABEL: Record<CoinAction, { pt: string; en: string }> = {
   analyse_slip: { pt: "Analisar meu bilhete", en: "Analyse my slip" },
+  deep_slip: { pt: "Análise profunda do bilhete", en: "Deep slip analysis" },
+  custom_parlay: { pt: "Múltipla sob medida", en: "Custom parlay" },
+  custom_parlay_basic: { pt: "Múltipla sob medida (sem texto da IA)", en: "Custom parlay (no AI write-up)" },
+  player_read: { pt: "Leitura do analista no raio-x", en: "Analyst read on the player deep dive" },
+  tipster_audit: { pt: "Raio-x de tipster extra", en: "Extra tipster audit" },
 };
 
 /** Prepaid wording shown next to every paid price. */

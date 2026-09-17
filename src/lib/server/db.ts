@@ -429,7 +429,37 @@ function migrateRound3(d: Database.Database): void {
       PRIMARY KEY (dayKey, gameId)
     );
     CREATE INDEX IF NOT EXISTS idx_genreq_scope ON generation_requests(scope, createdAt);
+
+    -- The legs of a bankroll entry built here (custom parlay) or read from a slip print. Legs matched
+    -- to an ESPN game carry a settlement descriptor and are graded automatically.
+    CREATE TABLE IF NOT EXISTS bankroll_legs (
+      entryId TEXT NOT NULL REFERENCES bankroll_entries(id) ON DELETE CASCADE,
+      idx INTEGER NOT NULL,
+      selection TEXT NOT NULL,
+      market TEXT NOT NULL DEFAULT '',
+      odds REAL,
+      gameId TEXT,
+      sportKey TEXT,
+      startsAt TEXT,
+      settlement TEXT,
+      outcome TEXT NOT NULL DEFAULT 'pending',
+      actual TEXT NOT NULL DEFAULT '',
+      PRIMARY KEY (entryId, idx)
+    );
+    CREATE INDEX IF NOT EXISTS idx_bankroll_legs_pending ON bankroll_legs(outcome, gameId);
+
+    -- Daily/weekly/monthly allowances of per-user features (player deep dive, slip scans, tipster audits).
+    CREATE TABLE IF NOT EXISTS feature_uses (
+      userId TEXT NOT NULL,
+      feature TEXT NOT NULL,
+      dayKey TEXT NOT NULL,
+      key TEXT NOT NULL,
+      createdAt TEXT NOT NULL,
+      PRIMARY KEY (userId, feature, dayKey, key)
+    );
+    CREATE INDEX IF NOT EXISTS idx_feature_uses ON feature_uses(feature, createdAt);
   `);
+  addColumn(d, "user_slips", "kind", "TEXT NOT NULL DEFAULT 'analysis'");
 }
 
 export function nowIso(): string {

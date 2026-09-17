@@ -11,7 +11,8 @@ import { EquityChart } from "@/components/EquityChart";
 import { curvePath } from "@/lib/ledger/backtest";
 import { LossReview } from "@/components/LossReview";
 
-interface Entry { id: string; source: "ticket" | "manual"; title: string; matchup: string; combinedDecimal: number; stake: number; outcome: string; pnl: number; createdAt: string; settledAt: string | null; slug: string | null }
+interface EntryLeg { selection: string; outcome: string; actual?: string; settlement?: unknown }
+interface Entry { id: string; source: "ticket" | "manual" | "custom" | "scan"; title: string; matchup: string; combinedDecimal: number; stake: number; outcome: string; pnl: number; createdAt: string; settledAt: string | null; slug: string | null; legs?: EntryLeg[]; autoLegs?: number }
 interface Payload { entries: Entry[]; totals: { staked: number; profit: number; roi: number; won: number; lost: number; pending: number }; streak?: { streak: number; notice: boolean }; pause?: { paused: boolean; until: string | null }; error?: string }
 
 export function BankrollBoard() {
@@ -70,11 +71,23 @@ export function BankrollBoard() {
               <span className="min-w-0 flex-1 truncate text-mist-100">{e.title}<span className="text-mist-500"> {e.matchup}</span></span>
               <span className="nums text-mist-400">{formatDecimal(e.combinedDecimal)} · {money(e.stake)}</span>
               <span className={"nums w-24 text-right " + tone(e.outcome)}>{e.outcome === "won" || e.outcome === "lost" ? `${e.pnl >= 0 ? "+" : ""}${money(e.pnl)}` : ""}</span>
-              {e.source === "manual" && e.outcome === "pending" && (
+              {e.source !== "ticket" && e.outcome === "pending" && (
                 <span className="flex gap-1 text-[11px]">{(["won", "lost", "void"] as const).map((o) => <button key={o} onClick={() => grade(e.id, o)} className="rounded border border-ink-700 px-1.5 py-0.5 text-mist-400 hover:text-mist-100">{{ won: t("markWon"), lost: t("markLost"), void: t("markVoid") }[o]}</button>)}</span>
               )}
               <button onClick={() => remove(e.id)} className="text-[11px] text-mist-600 hover:text-warn-400">✕</button>
               {e.source === "ticket" && e.outcome === "lost" && e.slug && <div className="basis-full pt-1"><LossReview slug={e.slug} lang={lang} compact /></div>}
+              {(e.source === "custom" || e.source === "scan") && e.legs?.length ? (
+                <ul className="basis-full pl-16 text-[12px]" data-testid="entry-legs">
+                  {e.legs.map((l, i) => (
+                    <li key={i} className="flex flex-wrap items-baseline gap-2 py-0.5">
+                      <span className={tone(l.outcome)}>{l.outcome === "won" ? "✓" : l.outcome === "lost" ? "✗" : l.outcome === "void" ? "∅" : "·"}</span>
+                      <span className="text-mist-300">{l.selection}</span>
+                      {l.settlement ? <span className="rounded bg-edge-400/10 px-1 text-[10px] text-edge-400" data-testid="auto-grade">{lang === "pt" ? "liquidação automática" : "graded automatically"}</span> : <span className="text-[10px] text-mist-600">{lang === "pt" ? "você marca" : "you grade it"}</span>}
+                      {l.actual && <span className="text-[10.5px] text-mist-500">{l.actual}</span>}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
             </li>
           )) : <li className="py-4"><Empty>{t("bankrollEmpty")}</Empty></li>}
         </ul>
