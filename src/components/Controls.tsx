@@ -103,6 +103,8 @@ export const PRIMARY_NAV: { href: string; key: DictKey; tour?: string }[] = [
 
 export const SECONDARY_NAV: { href: string; key: DictKey; tour?: string }[] = [
   { href: "/app/alerts", key: "navAlerts", tour: "alerts" },
+  { href: "/app/tipster", key: "navTipster" },
+  { href: "/app/report", key: "navReport" },
   { href: "/app/ranking", key: "navRanking" },
   { href: "/app/referral", key: "referral" },
   { href: "/app/settings", key: "navSettings", tour: "settings" },

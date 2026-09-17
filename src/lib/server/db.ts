@@ -537,7 +537,31 @@ function migrateRound3(d: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_events_name ON events(name, ts);
     CREATE INDEX IF NOT EXISTS idx_events_anon ON events(anonId, ts);
     CREATE INDEX IF NOT EXISTS idx_events_user ON events(userId, ts);
+
+    -- Raio-x do tipster: private to its user, deletable. Only the extracted picks and the report are
+    -- kept; the pasted text and the images never reach the database.
+    CREATE TABLE IF NOT EXISTS tipster_audits (
+      id TEXT PRIMARY KEY,
+      userId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      label TEXT NOT NULL DEFAULT '',
+      sportKey TEXT NOT NULL,
+      report TEXT NOT NULL,
+      picks TEXT NOT NULL,
+      createdAt TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_tipster_user ON tipster_audits(userId, createdAt DESC);
+
+    -- Relatório semanal de disciplina: one row per user and ISO week, written once.
+    CREATE TABLE IF NOT EXISTS weekly_reports (
+      userId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      weekKey TEXT NOT NULL,
+      payload TEXT NOT NULL,
+      createdAt TEXT NOT NULL,
+      PRIMARY KEY (userId, weekKey)
+    );
   `);
+  // The bankroll a user declares (optional) so stake sizing can be read against it.
+  addColumn(d, "user_settings", "bankrollAmount", "REAL");
   addColumn(d, "user_slips", "kind", "TEXT NOT NULL DEFAULT 'analysis'");
 }
 

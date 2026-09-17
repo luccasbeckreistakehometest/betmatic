@@ -97,6 +97,8 @@ const DICT = {
 
   navSlate: { pt: "Jogos", en: "Slate" },
   navParlays: { pt: "Múltiplas", en: "Parlays" },
+  navTipster: { pt: "Raio-x do tipster", en: "Tipster audit" },
+  navReport: { pt: "Relatório da semana", en: "Weekly report" },
   navTrack: { pt: "Histórico", en: "Track record" },
   crossGame: { pt: "Múltiplas entre jogos", en: "Cross-game parlays" },
   crossGameHint: {

@@ -7,7 +7,7 @@ import { Empty, Panel } from "@/components/ui";
 import { useNavState } from "@/components/Controls";
 import { makeT } from "@/lib/i18n";
 
-interface Settings { dailyStakeCap: number | null; weeklyStakeCap: number | null; sessionReminderMinutes: number | null; lossStreakNotice: number; pausedUntil: string | null; leaderboardOptIn: boolean; handle: string | null }
+interface Settings { bankrollAmount: number | null; dailyStakeCap: number | null; weeklyStakeCap: number | null; sessionReminderMinutes: number | null; lossStreakNotice: number; pausedUntil: string | null; leaderboardOptIn: boolean; handle: string | null }
 interface Payload { settings: Settings; pause: { paused: boolean; until: string | null; daysLeft: number }; staked: { today: number; week: number }; streak: { streak: number; notice: boolean }; error?: string }
 
 /**
@@ -23,6 +23,7 @@ export function SettingsPanel() {
   const [saved, setSaved] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [confirmPause, setConfirmPause] = useState(false);
   const [optIn, setOptIn] = useState(false);
+  const [bankroll, setBankroll] = useState("");
   const [handle, setHandle] = useState("");
   const [handleError, setHandleError] = useState<string | null>(null);
   const money = (n: number) => (lang === "pt" ? `R$ ${n.toFixed(2)}` : `$${n.toFixed(2)}`);
@@ -34,6 +35,7 @@ export function SettingsPanel() {
       setDaily(j.settings.dailyStakeCap === null ? "" : String(j.settings.dailyStakeCap));
       setWeekly(j.settings.weeklyStakeCap === null ? "" : String(j.settings.weeklyStakeCap));
       setOptIn(j.settings.leaderboardOptIn);
+      setBankroll(j.settings.bankrollAmount === null || j.settings.bankrollAmount === undefined ? "" : String(j.settings.bankrollAmount));
       setHandle(j.settings.handle ?? "");
     }
   }, []);
@@ -80,6 +82,20 @@ export function SettingsPanel() {
         )}
       </Panel>
 
+      <Panel title={lang === "pt" ? "Sua banca (opcional)" : "Your bankroll (optional)"}>
+        <p className="text-[12px] text-mist-500">
+          {lang === "pt"
+            ? "Quanto você separou para apostar, no total. Serve só para o relatório da semana mostrar quando um valor apostado passou muito do tamanho sensato (¼ Kelly). Não é compartilhado."
+            : "How much you set aside for betting, in total. It only lets the weekly report show when a stake went well past a sensible size (¼ Kelly). It is never shared."}
+        </p>
+        {data && (
+          <div className="mt-3 flex flex-wrap items-end gap-3">
+            <input aria-label={lang === "pt" ? "Banca (R$)" : "Bankroll"} value={bankroll} onChange={(e) => setBankroll(e.target.value)} inputMode="decimal" placeholder={lang === "pt" ? "R$ —" : "—"} className={input} data-testid="bankroll-amount" />
+            <button onClick={() => void patch({ bankrollAmount: num(bankroll) })} disabled={saved === "saving" || (bankroll.trim() !== "" && !(Number(bankroll) > 0))} className="rounded-lg border border-ink-700 px-3 py-2 text-[12px] text-mist-300 hover:text-mist-100 disabled:opacity-50" data-testid="bankroll-amount-save">{t("save")}</button>
+          </div>
+        )}
+      </Panel>
+
       <Panel title={t("reminderTitle")}>
         <p className="text-[12px] text-mist-500">{t("reminderIntro")}</p>
         <select aria-label={t("reminderTitle")} value={s?.sessionReminderMinutes ?? 0} onChange={(e) => void patch({ sessionReminderMinutes: Number(e.target.value) || null })} className={`mt-3 ${select}`} data-testid="reminder-select">
@@ -98,6 +114,7 @@ export function SettingsPanel() {
 
       <Panel title={t("pauseTitle")}>
         <p className="text-[12px] text-mist-500">{t("pauseIntro")}</p>
+        <SelfExclusionLinks lang={lang} />
         {data?.pause.paused ? (
           <p className="mt-3 text-[13px] text-warn-400">{t("pausedUntil")} {fmtDate(data.pause.until!)}.</p>
         ) : (
@@ -123,5 +140,18 @@ export function SettingsPanel() {
         <Link href={{ pathname: "/app/ranking", query: { lang } }} className="mt-2 inline-block text-[12px] text-edge-400 hover:underline">{t("navRanking")} →</Link>
       </Panel>
     </div>
+  );
+}
+
+/** The official self-exclusion platform and CVV, shown wherever a pause is offered. */
+export function SelfExclusionLinks({ lang }: { lang: "pt" | "en" }) {
+  return (
+    <p className="mt-2 text-[12px] leading-relaxed text-mist-400" data-testid="self-exclusion">
+      {lang === "pt" ? "Quer bloquear todas as casas autorizadas de uma vez? Use a " : "Want to block every licensed Brazilian book at once? Use the "}
+      <a href="https://autoexclusaoapostas.fazenda.gov.br" target="_blank" rel="noreferrer" className="text-edge-400 underline underline-offset-2">
+        {lang === "pt" ? "Plataforma Centralizada de Autoexclusão" : "federal self-exclusion platform (Plataforma Centralizada de Autoexclusão)"}
+      </a>
+      {lang === "pt" ? " do governo. Se precisar conversar, o CVV atende de graça no 188, 24 horas." : ". If you need to talk, CVV answers for free on 188, 24 hours a day (Brazil)."}
+    </p>
   );
 }

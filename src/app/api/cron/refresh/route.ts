@@ -11,6 +11,7 @@ import { runFeatured } from "@/lib/server/featured";
 import { settleBankrollLegs } from "@/lib/server/bankroll";
 import { runLineupWatch } from "@/lib/server/lineups";
 import { runCloseJob } from "@/lib/server/leg-prices";
+import { runWeeklyReports } from "@/lib/server/weekly-report";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,6 +25,7 @@ export const dynamic = "force-dynamic";
  *             before every refresh tick, whatever CRON_ENABLED says)
  *   lineups — vigia de escalação: pending tickets starting within 100 min vs the lineup/injuries; every tick
  *   close   — CLV: the closing price of every pending leg whose game starts within 15 min; every tick
+ *   weekly  — relatório semanal de disciplina; safe every tick, writes on Mondays from 12:00 UTC (force=1 to run now)
  *   refresh — background generation (off unless CRON_ENABLED=1); every 4h
  * Protected by the x-cron-secret header (constant-time compare), or by an admin session for manual
  * runs from the panel. Every run logs one JSON summary line for `docker compose logs`.
@@ -63,6 +65,10 @@ export async function POST(request: Request) {
     }
     if (job === "close") {
       const result = await runCloseJob();
+      return NextResponse.json({ job, ...result });
+    }
+    if (job === "weekly") {
+      const result = await runWeeklyReports({ force: url.searchParams.get("force") === "1" });
       return NextResponse.json({ job, ...result });
     }
     if (job === "featured") {

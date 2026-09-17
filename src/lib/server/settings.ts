@@ -8,6 +8,7 @@ import { DAY_MS, DEFAULT_LIMITS, checkStake, isPaused, lossStreak, normaliseHand
  */
 export interface SettingsView extends Limits {
   pausedAt: string | null;
+  bankrollAmount: number | null;
   leaderboardOptIn: boolean;
   handle: string | null;
   updatedAt: string | null;
@@ -15,7 +16,7 @@ export interface SettingsView extends Limits {
 
 interface Row {
   userId: string; dailyStakeCap: number | null; weeklyStakeCap: number | null; sessionReminderMinutes: number | null; lossStreakNotice: number;
-  pausedUntil: string | null; pausedAt: string | null; leaderboardOptIn: number; handle: string | null; updatedAt: string;
+  pausedUntil: string | null; pausedAt: string | null; leaderboardOptIn: number; handle: string | null; updatedAt: string; bankrollAmount: number | null;
 }
 
 const read = (userId: string) => getDb().prepare("SELECT * FROM user_settings WHERE userId=?").get(userId) as Row | undefined;
@@ -29,14 +30,14 @@ function ensure(userId: string): Row {
 
 const view = (row: Row | undefined): SettingsView =>
   row
-    ? { dailyStakeCap: row.dailyStakeCap, weeklyStakeCap: row.weeklyStakeCap, sessionReminderMinutes: row.sessionReminderMinutes, lossStreakNotice: row.lossStreakNotice, pausedUntil: row.pausedUntil, pausedAt: row.pausedAt, leaderboardOptIn: row.leaderboardOptIn === 1, handle: row.handle, updatedAt: row.updatedAt }
-    : { ...DEFAULT_LIMITS, pausedAt: null, leaderboardOptIn: false, handle: null, updatedAt: null };
+    ? { dailyStakeCap: row.dailyStakeCap, weeklyStakeCap: row.weeklyStakeCap, sessionReminderMinutes: row.sessionReminderMinutes, lossStreakNotice: row.lossStreakNotice, pausedUntil: row.pausedUntil, pausedAt: row.pausedAt, leaderboardOptIn: row.leaderboardOptIn === 1, handle: row.handle, updatedAt: row.updatedAt, bankrollAmount: row.bankrollAmount ?? null }
+    : { ...DEFAULT_LIMITS, pausedAt: null, leaderboardOptIn: false, handle: null, updatedAt: null, bankrollAmount: null };
 
 export const getSettings = (userId: string): SettingsView => view(read(userId));
 
 export interface SettingsPatch {
   dailyStakeCap?: number | null; weeklyStakeCap?: number | null; sessionReminderMinutes?: number | null; lossStreakNotice?: number;
-  leaderboardOptIn?: boolean; handle?: string | null;
+  leaderboardOptIn?: boolean; handle?: string | null; bankrollAmount?: number | null;
 }
 
 export class HandleTakenError extends Error { constructor() { super("handle taken"); this.name = "HandleTakenError"; } }
@@ -51,13 +52,14 @@ export function updateSettings(userId: string, patch: SettingsPatch): SettingsVi
     lossStreakNotice: patch.lossStreakNotice !== undefined ? patch.lossStreakNotice : row.lossStreakNotice,
     leaderboardOptIn: patch.leaderboardOptIn !== undefined ? (patch.leaderboardOptIn ? 1 : 0) : row.leaderboardOptIn,
     handle: patch.handle !== undefined ? (patch.handle === null ? null : normaliseHandle(patch.handle)) : row.handle,
+    bankrollAmount: patch.bankrollAmount !== undefined ? patch.bankrollAmount : row.bankrollAmount ?? null,
   };
   if (patch.handle && !next.handle) throw new Error("handle inválido");
   // Consent without a name to show under is meaningless: opting in mints a pseudonym when none was chosen.
   if (next.leaderboardOptIn === 1 && !next.handle) next.handle = defaultHandle(userId);
   try {
-    db.prepare("UPDATE user_settings SET dailyStakeCap=?, weeklyStakeCap=?, sessionReminderMinutes=?, lossStreakNotice=?, leaderboardOptIn=?, handle=?, updatedAt=? WHERE userId=?")
-      .run(next.dailyStakeCap, next.weeklyStakeCap, next.sessionReminderMinutes, next.lossStreakNotice, next.leaderboardOptIn, next.handle, nowIso(), userId);
+    db.prepare("UPDATE user_settings SET dailyStakeCap=?, weeklyStakeCap=?, sessionReminderMinutes=?, lossStreakNotice=?, leaderboardOptIn=?, handle=?, bankrollAmount=?, updatedAt=? WHERE userId=?")
+      .run(next.dailyStakeCap, next.weeklyStakeCap, next.sessionReminderMinutes, next.lossStreakNotice, next.leaderboardOptIn, next.handle, next.bankrollAmount, nowIso(), userId);
   } catch (error) {
     if (error instanceof Error && /UNIQUE/.test(error.message)) throw new HandleTakenError();
     throw error;
