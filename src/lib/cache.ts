@@ -2,7 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 
-const CACHE_DIR = path.join(process.cwd(), ".cache");
+// CACHE_DIR isolates a test run (its replayed ESPN fixtures) from a developer's own cache.
+const CACHE_DIR = process.env.CACHE_DIR ? path.resolve(process.env.CACHE_DIR) : path.join(process.cwd(), ".cache");
 
 interface Envelope<T> {
   key: string;

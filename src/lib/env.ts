@@ -38,6 +38,10 @@ export function startupProblems(env: Env): { fatal: string[]; warnings: string[]
       fatal.push(`${key} holds a comment or spaces instead of a value — put comments on their own line in .env.`);
     }
   }
+  // Test switches must never reach a real server: they replace the model and ESPN with fixtures.
+  for (const key of ["AI_MOCK", "ESPN_FIXTURES"]) {
+    if ((env[key] ?? "").trim()) fatal.push(`${key} is a test switch and must not be set in production.`);
+  }
   const password = envValue("ADMIN_PASSWORD", env);
   if (password && password.length < 12) warnings.push("ADMIN_PASSWORD is shorter than 12 characters.");
   const base = [envValue("APP_URL", env), envValue("NEXT_PUBLIC_BASE_URL", env)];

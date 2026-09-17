@@ -1,5 +1,6 @@
 import { cached } from "@/lib/cache";
 import { getSport } from "@/lib/sports";
+import { espnJson, type Json } from "@/lib/sources/espn-http";
 
 const SITE = "https://site.api.espn.com/apis/site/v2/sports";
 const TTL = { dvp: 12 * 60 * 60_000 };
@@ -24,13 +25,9 @@ export interface DvpProfile {
 }
 
 // ESPN box scores are deeply nested and undocumented; every access below is optional-chained.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Json = Record<string, any>;
-
 async function getJson(url: string): Promise<Json | null> {
   try {
-    const res = await fetch(url, { headers: { accept: "application/json" }, cache: "no-store" });
-    return res.ok ? ((await res.json()) as Json) : null;
+    return await espnJson(url);
   } catch {
     return null;
   }

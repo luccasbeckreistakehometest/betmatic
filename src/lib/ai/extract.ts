@@ -1,7 +1,7 @@
 import type { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import type Anthropic from "@anthropic-ai/sdk";
-import { AiNotConfiguredError, EXTRACTION_MODEL, MODEL, aiConfigured, getClient, recordUsage } from "@/lib/ai/client";
+import { AiNotConfiguredError, EXTRACTION_MODEL, MODEL, aiConfigured, aiMockActive, getClient, recordUsage, supportsAdaptiveThinking } from "@/lib/ai/client";
 import { assertAiBudget } from "@/lib/server/ai-budget";
 import type { ScrapeCapture } from "@/lib/types";
 
@@ -127,20 +127,63 @@ export async function extractFromCapture<T extends z.ZodType>(
   return response.parsed_output as z.infer<T>;
 }
 
-/** Structured generation without a page capture (relevance filtering, synthesis briefs). */
-export async function generateStructured<T extends z.ZodType>(args: {
+export interface StructuredImage {
+  /** Base64 without the data: prefix. */
+  data: string;
+  mediaType: "image/jpeg" | "image/png" | "image/webp";
+}
+
+export interface StructuredArgs<T extends z.ZodType> {
   schema: T;
   system: string;
   prompt: string;
   maxTokens?: number;
-  /** Defaults to the judgement model; localisation and other mechanical passes pass the cheaper one. */
+  /** Defaults to the judgement model; localisation and other mechanical passes pass a cheaper one. */
   model?: string;
-}): Promise<z.infer<T>> {
+  /** Names the call in ai_usage and picks its fixture under AI_MOCK. */
+  label?: string;
+  /** Vision input, sent before the text. Processed in memory only. */
+  images?: StructuredImage[];
+  /** The deterministic answer used under AI_MOCK. A call without one fails in mock mode. */
+  mock?: () => z.infer<T>;
+}
+
+export interface StructuredResult<T> { data: T; costUsd: number; model: string }
+
+/**
+ * Structured generation that also reports what this very call cost, so concurrent calls never read
+ * each other's usage (the module-level `lastUsage` only suits sequential jobs).
+ */
+export async function generateStructuredWithUsage<T extends z.ZodType>(args: StructuredArgs<T>): Promise<StructuredResult<z.infer<T>>> {
   if (!aiConfigured()) throw new AiNotConfiguredError();
   assertAiBudget();
-  const maxTokens = args.maxTokens ?? 16000;
   const model = args.model ?? MODEL;
+  const label = args.label ?? "generate";
 
+  if (aiMockActive()) {
+    if (!args.mock) throw new Error(`AI_MOCK: no fixture for "${label}"`);
+    const data = args.schema.parse(args.mock()) as z.infer<T>;
+    lastUsage = recordUsage(`mock:${label}`, { input_tokens: 0, output_tokens: 0 } as Anthropic.Usage, model);
+    return { data, costUsd: 0, model };
+  }
+
+  try {
+    return await callModel(args, model, label);
+  } catch (error) {
+    // A cheap model that rejects the structured-output format falls back once to the extraction model.
+    if (model !== EXTRACTION_MODEL && error instanceof Error && /output_config|output format|json_schema/i.test(error.message)) {
+      return callModel(args, EXTRACTION_MODEL, `${label}:fallback`);
+    }
+    throw error;
+  }
+}
+
+async function callModel<T extends z.ZodType>(args: StructuredArgs<T>, model: string, label: string): Promise<StructuredResult<z.infer<T>>> {
+  const maxTokens = args.maxTokens ?? 16000;
+  const content: Anthropic.ContentBlockParam[] = [
+    ...(args.images ?? []).map((img): Anthropic.ContentBlockParam => ({ type: "image", source: { type: "base64", media_type: img.mediaType, data: img.data } })),
+    { type: "text", text: args.prompt },
+  ];
   // Streaming is required for large max_tokens and avoids HTTP timeouts on long generations.
   // The system prompt is the same ~3k tokens for every game in a run, so it is marked cacheable:
   // sequential calls inside the five-minute window pay a tenth of the price for it.
@@ -148,12 +191,13 @@ export async function generateStructured<T extends z.ZodType>(args: {
     model,
     max_tokens: maxTokens,
     system: [{ type: "text", text: args.system, cache_control: { type: "ephemeral" } }],
-    thinking: { type: "adaptive" },
+    ...(supportsAdaptiveThinking(model) ? { thinking: { type: "adaptive" as const } } : {}),
     output_config: { format: zodOutputFormat(args.schema) },
-    messages: [{ role: "user", content: args.prompt }],
+    messages: [{ role: "user", content }],
   });
   const response = await stream.finalMessage();
-  lastUsage = recordUsage(`generate[${response.stop_reason}]`, response.usage, model);
+  const usage = recordUsage(`${label}[${response.stop_reason}]`, response.usage, model);
+  lastUsage = usage;
 
   if (response.stop_reason === "refusal") {
     throw new Error(`Model declined: ${response.stop_details?.explanation ?? "no explanation"}`);
@@ -167,7 +211,7 @@ export async function generateStructured<T extends z.ZodType>(args: {
 
   const text = response.content.filter((b) => b.type === "text").map((b) => b.text).join("");
   try {
-    return args.schema.parse(JSON.parse(text)) as z.infer<T>;
+    return { data: args.schema.parse(JSON.parse(text)) as z.infer<T>, costUsd: usage.costUsd, model };
   } catch (error) {
     throw new Error(
       `Could not parse structured output (stop_reason=${response.stop_reason}, ${text.length} chars): ${
@@ -175,4 +219,9 @@ export async function generateStructured<T extends z.ZodType>(args: {
       }`,
     );
   }
+}
+
+/** Structured generation without a page capture (relevance filtering, synthesis briefs). */
+export async function generateStructured<T extends z.ZodType>(args: StructuredArgs<T>): Promise<z.infer<T>> {
+  return (await generateStructuredWithUsage(args)).data;
 }

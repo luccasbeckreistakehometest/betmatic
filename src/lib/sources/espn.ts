@@ -1,4 +1,5 @@
 import { cached } from "@/lib/cache";
+import { espnJson, type Json } from "@/lib/sources/espn-http";
 import { DEFAULT_SPORT, getSport, type SportDef } from "@/lib/sports";
 import type {
   Game, GameDetail, GameStatus, InjuryEntry, PlayerGame, PlayerHistory, TeamRef, TeamStatLine,
@@ -19,19 +20,8 @@ const TTL = {
   gamelog: 6 * 60 * 60_000,
 };
 
-// ESPN's payloads are deeply nested and undocumented. A loose alias keeps the mappers readable;
-// every access below is optional-chained and defaulted.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Json = Record<string, any>;
-
-async function getJson(url: string): Promise<Json> {
-  const res = await fetch(url, {
-    headers: { accept: "application/json", "user-agent": "nba-bets-dashboard/1.0" },
-    cache: "no-store",
-  });
-  if (!res.ok) throw new Error(`ESPN ${res.status} for ${url}`);
-  return (await res.json()) as Json;
-}
+// ESPN's payloads are deeply nested and undocumented; every access below is optional-chained.
+const getJson = (url: string): Promise<Json> => espnJson(url);
 
 /** ESPN's slate day is Eastern-time based; format a Date as YYYYMMDD in ET. */
 export function espnDateKey(date: Date): string {
