@@ -98,6 +98,8 @@ export interface BuildArgs {
   record?: boolean;
   /** Defaults to the judgement model. */
   model?: string;
+  /** In-play context that has no structured slot (the basketball live read). */
+  extraContext?: string;
   props: PropRow[];
   picks: PickRow[];
   dimers: PickRow[];
@@ -269,7 +271,7 @@ export async function buildBets(args: BuildArgs): Promise<BetSlate> {
     "",
     `PLAYER MARKETS AVAILABLE IN THIS SPORT:\n${marketCatalogue(getSport(game.sportKey), lang)}`,
     live ? livePrompt(live, referee?.yellowsPerGame ?? null, lang) : "",
-    live ? "" : "",
+    args.extraContext ?? "",
     "",
     consensusPrompt(consensus),
     "",

@@ -27,7 +27,8 @@ export default defineConfig({
       "APP_URL=http://localhost:3300 NEXT_PUBLIC_BASE_URL=http://localhost:3300 MP_ACCESS_TOKEN=TEST-e2e MP_API_BASE=http://localhost:3399 MP_WEBHOOK_SECRET=",
       // Replayed ESPN, an isolated cache, AI answered by fixtures only while a spec switches it on.
       "ESPN_FIXTURES=data/e2e/espn-fixtures CACHE_DIR=data/e2e/cache AI_MOCK=switch SOFASCORE_DISABLED=1",
-      "RATE_LIMIT_IP_FACTOR=100 PROOF_MIN_DECIDED=1 LEGAL_NAME= LEGAL_DOCUMENT= LEGAL_ADDRESS= LEGAL_EMAIL= SUPPORT_EMAIL=ajuda@betmatic.test SUPPORT_WHATSAPP=",
+      // The live panel polls every 1.5 s in tests instead of once a minute.
+      "NEXT_PUBLIC_LIVE_POLL_MS=1500 RATE_LIMIT_IP_FACTOR=100 PROOF_MIN_DECIDED=1 LEGAL_NAME= LEGAL_DOCUMENT= LEGAL_ADDRESS= LEGAL_EMAIL= SUPPORT_EMAIL=ajuda@betmatic.test SUPPORT_WHATSAPP=",
       "npx next dev -p 3300",
     ].join(" "),
     url: "http://localhost:3300/login",

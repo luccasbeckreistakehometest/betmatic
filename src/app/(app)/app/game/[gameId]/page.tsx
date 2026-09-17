@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { IntelBoard } from "@/components/IntelBoard";
+import { LivePanel } from "@/components/LivePanel";
 import { espnDateKey } from "@/lib/sources/espn";
 import { Empty, KeyValue, Panel } from "@/components/ui";
 import { kickoff } from "@/components/GameCard";
@@ -164,6 +165,9 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="flex flex-col gap-4">
+          {user && sportSellsTickets(sport) && game.status !== "scheduled" && (
+            <LivePanel gameId={gameId} sportKey={sport.key} dateKey={espnDateKey(new Date(game.startsAt))} lang={lang} />
+          )}
           {sportSellsTickets(sport) ? (
             <IntelBoard gameId={gameId} dateKey={espnDateKey(new Date(game.startsAt))} started={hasStarted(game)} />
           ) : (
