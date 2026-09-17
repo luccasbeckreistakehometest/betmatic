@@ -19,6 +19,7 @@ interface AdminPayload {
   onboarding?: { started: number; completed: number };
   alerts?: { linked: number; digest: number; follows: number; sent: number; inapp: number };
   reviews?: { reviews: number; costUsd: number };
+  responsible?: { withLimits: number; reminders: number; paused: number; everPaused: number; leaderboardOptIn: number };
 }
 
 function Stat({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
@@ -113,6 +114,7 @@ export function AdminDashboard() {
         <Stat label="Tour concluído" value={`${data?.onboarding?.completed ?? 0}/${data?.onboarding?.started ?? 0}`} hint="primeiros acessos" />
         <Stat label="Telegram" value={`${data?.alerts?.linked ?? 0} · ${data?.alerts?.sent ?? 0}`} hint={`contas · enviados · ${data?.alerts?.follows ?? 0} follows`} />
         <Stat label="Por que perdi?" value={data?.reviews?.reviews ?? 0} hint={`$${(data?.reviews?.costUsd ?? 0).toFixed(2)} em revisões`} />
+        <Stat label="Jogo responsável" value={`${data?.responsible?.withLimits ?? 0} · ${data?.responsible?.paused ?? 0}`} hint={`com teto · em pausa · ${data?.responsible?.reminders ?? 0} lembretes`} />
         <Stat
           label="Custo IA"
           value={`$${(data?.predictions.costUsd ?? 0).toFixed(2)}`}

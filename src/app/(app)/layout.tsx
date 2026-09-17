@@ -5,6 +5,7 @@ import { Disclaimer } from "@/components/Disclaimer";
 import { Logo } from "@/components/Logo";
 import { AccountBar } from "@/components/AccountBar";
 import { Tour } from "@/components/Tour";
+import { ResponsibleGuard } from "@/components/ResponsibleGuard";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -30,7 +31,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-7xl flex-1 px-5 py-6">{children}</main>
+        <main className="mx-auto w-full max-w-7xl flex-1 px-5 py-6">
+          <Suspense fallback={null}>
+            <ResponsibleGuard />
+          </Suspense>
+          {children}
+        </main>
         <Suspense fallback={null}>
           <Tour />
         </Suspense>

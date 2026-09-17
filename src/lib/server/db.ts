@@ -270,6 +270,21 @@ function migrate(d: Database.Database): void {
     CREATE UNIQUE INDEX IF NOT EXISTS idx_alert_dedupe ON alert_log(userId, dedupeKey);
     CREATE INDEX IF NOT EXISTS idx_alert_user ON alert_log(userId, createdAt DESC);
 
+    -- Responsible play + leaderboard consent, one row per user (defaults apply until the first write).
+    -- A pause ends on its date and nothing in the code lifts it early.
+    CREATE TABLE IF NOT EXISTS user_settings (
+      userId TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      dailyStakeCap REAL,
+      weeklyStakeCap REAL,
+      sessionReminderMinutes INTEGER,
+      lossStreakNotice INTEGER NOT NULL DEFAULT 3,
+      pausedUntil TEXT,
+      pausedAt TEXT,
+      leaderboardOptIn INTEGER NOT NULL DEFAULT 0,
+      handle TEXT UNIQUE,
+      updatedAt TEXT NOT NULL
+    );
+
     -- "Por que perdi?": the model's post-mortem of one lost ticket, generated once per language.
     CREATE TABLE IF NOT EXISTS ticket_reviews (
       ledgerId TEXT NOT NULL,

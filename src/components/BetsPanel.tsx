@@ -38,12 +38,20 @@ function Ticket({ bet, lang, gameId }: { bet: BetSuggestion; lang: Lang; gameId?
   // Quarter Kelly from the ticket's own modelled probability: the stake a disciplined bettor would size.
   const kelly = kellyFraction(bet.combinedDecimal, bet.modelledProbability);
   const [stake, setStake] = useState("");
-  const [saved, setSaved] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [saved, setSaved] = useState<"idle" | "saving" | "saved" | "error" | "limit" | "paused">("idle");
+  const [limitNote, setLimitNote] = useState("");
   async function addToBankroll() {
     if (!gameId) return;
     setSaved("saving");
     const r = await fetch("/api/bankroll", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "ticket", gameId, bandKey: bet.bandKey, selections: bet.legs.map((l) => l.selection), stake: Number(stake) }) });
-    setSaved(r.ok ? "saved" : "error");
+    if (r.status === 422) {
+      const j = await r.json().catch(() => ({}));
+      const left = j.reason === "weekly" ? j.remainingWeekly : j.remainingDaily;
+      setLimitNote((j.reason === "weekly" ? t("limitWeekly") : t("limitDaily")).replace("{left}", lang === "pt" ? `R$ ${Number(left ?? 0).toFixed(2)}` : `$${Number(left ?? 0).toFixed(2)}`));
+      setSaved("limit");
+      return;
+    }
+    setSaved(r.status === 423 ? "paused" : r.ok ? "saved" : "error");
   }
 
   return (
@@ -137,7 +145,7 @@ function Ticket({ bet, lang, gameId }: { bet: BetSuggestion; lang: Lang; gameId?
           {kelly > 0 && <span className="text-mist-400">{lang === "pt" ? "stake sugerido" : "suggested stake"}: <span className="nums text-mist-100">{(kelly * 100).toFixed(1)}%</span> {lang === "pt" ? "da banca" : "of bankroll"} <span className="text-mist-600">(¼ Kelly)</span></span>}
           {gameId && (
             <span className="ml-auto flex items-center gap-2">
-              {saved === "saved" ? <span className="text-signal-400">✓ {t("saved")}</span> : saved === "error" ? <span className="text-warn-400">{lang === "pt" ? "entre para salvar" : "sign in to save"}</span> : (
+              {saved === "saved" ? <span className="text-signal-400">✓ {t("saved")}</span> : saved === "error" ? <span className="text-warn-400">{lang === "pt" ? "entre para salvar" : "sign in to save"}</span> : saved === "limit" ? <span className="text-warn-400" data-testid="ticket-limit">{limitNote}</span> : saved === "paused" ? <span className="text-warn-400" data-testid="ticket-paused">{t("pausedHint")}</span> : (
                 <>
                   <input value={stake} onChange={(e) => setStake(e.target.value)} placeholder={t("stake")} inputMode="decimal" className="nums w-20 rounded border border-ink-700 bg-ink-900 px-2 py-1 text-[12px] text-mist-100 outline-none focus:border-edge-400" data-testid="ticket-stake" />
                   <button onClick={addToBankroll} disabled={!(Number(stake) > 0) || saved === "saving"} className="rounded border border-ink-700 px-2 py-1 text-mist-300 hover:border-ink-600 hover:text-mist-100 disabled:opacity-40" data-testid="ticket-add">{t("addToBankroll")}</button>

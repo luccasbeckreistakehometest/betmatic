@@ -20,6 +20,7 @@ interface Payload {
   predictions: Served[];
   plan: { id: string; name: string; bands: string[]; delayMinutes: number };
   authenticated: boolean;
+  paused: { until: string | null } | null;
 }
 
 function relTime(iso?: string, lang: "pt" | "en" = "pt"): string {
@@ -79,12 +80,14 @@ export function IntelBoard({ gameId, dateKey }: { gameId: string; dateKey?: stri
     } catch { setGen("generateFailed"); }
   }, [gameId, sport.key, load]);
 
+  const authenticated = data?.authenticated ?? false;
+  const paused = !!data?.paused;
   useEffect(() => {
-    if (loading || !data?.authenticated || mine || gen !== "idle") return;
+    if (loading || !authenticated || paused || mine || gen !== "idle") return;
     // Deferred so the effect itself does not set state synchronously (React Compiler rule).
     const id = setTimeout(() => void generate(), 0);
     return () => clearTimeout(id);
-  }, [loading, data?.authenticated, mine, gen, generate]);
+  }, [loading, authenticated, paused, mine, gen, generate]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -101,6 +104,10 @@ export function IntelBoard({ gameId, dateKey }: { gameId: string; dateKey?: stri
       >
         {loading ? (
           <Empty>{t("loadingTickets")}</Empty>
+        ) : data?.paused ? (
+          <p className="rounded-lg border border-warn-400/25 bg-warn-400/5 px-3 py-2 text-[13px] text-warn-400" data-testid="tickets-paused">
+            {t("pausedTickets").replace("{date}", data.paused.until ? new Date(data.paused.until).toLocaleDateString(lang === "pt" ? "pt-BR" : "en-US") : "—")}
+          </p>
         ) : mine ? (
           <>
             {mine.delayed && (

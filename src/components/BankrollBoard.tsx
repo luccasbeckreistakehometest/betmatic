@@ -11,20 +11,28 @@ import { curvePath } from "@/lib/ledger/backtest";
 import { LossReview } from "@/components/LossReview";
 
 interface Entry { id: string; source: "ticket" | "manual"; title: string; matchup: string; combinedDecimal: number; stake: number; outcome: string; pnl: number; createdAt: string; settledAt: string | null; slug: string | null }
-interface Payload { entries: Entry[]; totals: { staked: number; profit: number; roi: number; won: number; lost: number; pending: number }; error?: string }
+interface Payload { entries: Entry[]; totals: { staked: number; profit: number; roi: number; won: number; lost: number; pending: number }; streak?: { streak: number; notice: boolean }; pause?: { paused: boolean; until: string | null }; error?: string }
 
 export function BankrollBoard() {
   const { lang } = useNavState();
   const t = makeT(lang);
   const [data, setData] = useState<Payload | null>(null);
   const [title, setTitle] = useState(""); const [odds, setOdds] = useState(""); const [stake, setStake] = useState("");
+  const [addError, setAddError] = useState<string | null>(null);
   const money = (n: number) => (lang === "pt" ? `R$ ${n.toFixed(2)}` : `$${n.toFixed(2)}`);
+  /** 422 = over a stake ceiling, 423 = paused; anything else is a generic failure. */
+  const explainAddError = (status: number, j: { reason?: string; remainingDaily?: number | null; remainingWeekly?: number | null; pausedUntil?: string | null }) =>
+    status === 423 ? t("pausedBlock").replace("{date}", j.pausedUntil ? new Date(j.pausedUntil).toLocaleDateString(lang === "pt" ? "pt-BR" : "en-US") : "—")
+    : status === 422 ? (j.reason === "weekly" ? t("limitWeekly") : t("limitDaily")).replace("{left}", money(j.reason === "weekly" ? j.remainingWeekly ?? 0 : j.remainingDaily ?? 0))
+    : t("generateFailed");
 
   const load = useCallback(async () => { const r = await fetch("/api/bankroll", { cache: "no-store" }); setData(await r.json()); }, []);
   useEffect(() => { const id = setTimeout(() => void load(), 0); return () => clearTimeout(id); }, [load]);
 
   async function addManual() {
-    await fetch("/api/bankroll", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "manual", title, odds: Number(odds), stake: Number(stake) }) });
+    setAddError(null);
+    const r = await fetch("/api/bankroll", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "manual", title, odds: Number(odds), stake: Number(stake) }) });
+    if (!r.ok) { setAddError(explainAddError(r.status, await r.json().catch(() => ({})))); return; }
     setTitle(""); setOdds(""); setStake(""); await load();
   }
   const grade = async (id: string, outcome: string) => { await fetch("/api/bankroll", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, outcome }) }); await load(); };
@@ -40,6 +48,11 @@ export function BankrollBoard() {
 
   return (
     <div className="flex flex-col gap-4" data-testid="bankroll">
+      {data?.streak?.notice && (
+        <div className="rounded-xl border border-warn-400/30 bg-warn-400/5 px-4 py-3 text-[13px] text-warn-400" data-testid="streak-notice">
+          {t("streakNoticeText").replace("{n}", String(data.streak.streak))}
+        </div>
+      )}
       <Panel title={t("bankroll")} meta={data ? `${data.totals.won}W ${data.totals.lost}L · ${data.totals.pending} ${lang === "pt" ? "pendentes" : "pending"}` : undefined}>
         <p className="text-[12px] text-mist-500">{t("bankrollIntro")}</p>
         {data && (
@@ -81,8 +94,9 @@ export function BankrollBoard() {
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={lang === "pt" ? "ex.: Flamengo vence @ Bet365" : "e.g. Lakers ML @ DraftKings"} className="rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-[13px] text-mist-100 outline-none focus:border-edge-400" data-testid="manual-title" />
           <input value={odds} onChange={(e) => setOdds(e.target.value)} placeholder="odd 1.85" inputMode="decimal" className="nums rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-[13px] text-mist-100 outline-none focus:border-edge-400" data-testid="manual-odds" />
           <input value={stake} onChange={(e) => setStake(e.target.value)} placeholder={t("stake")} inputMode="decimal" className="nums rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-[13px] text-mist-100 outline-none focus:border-edge-400" data-testid="manual-stake" />
-          <button onClick={addManual} disabled={!title.trim() || !(Number(odds) > 1) || !(Number(stake) > 0)} className="rounded-lg bg-edge-400 px-3.5 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500 disabled:opacity-50" data-testid="manual-add">{t("addToBankroll")}</button>
+          <button onClick={addManual} disabled={!title.trim() || !(Number(odds) > 1) || !(Number(stake) > 0) || !!data?.pause?.paused} className="rounded-lg bg-edge-400 px-3.5 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500 disabled:opacity-50" data-testid="manual-add">{t("addToBankroll")}</button>
         </div>
+        {addError && <p className="mt-2 text-[12px] text-warn-400" data-testid="add-error">{addError}</p>}
       </Panel>
     </div>
   );

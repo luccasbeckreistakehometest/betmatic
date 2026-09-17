@@ -10,6 +10,7 @@ export function Disclaimer() {
     <div className="mx-auto flex max-w-7xl flex-col gap-1.5 text-xs text-mist-500">
       <p>{t("disclaimer")}</p>
       <p>{t("responsible")}</p>
+      <p className="text-mist-400" data-testid="not-investment">{t("notInvestment")}</p>
     </div>
   );
 }

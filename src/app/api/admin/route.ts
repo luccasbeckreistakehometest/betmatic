@@ -8,6 +8,7 @@ import { ledgerSummary } from "@/lib/ledger/calibrate";
 import { onboardingStats } from "@/lib/server/onboarding";
 import { alertStats } from "@/lib/server/telegram";
 import { reviewStats } from "@/lib/ledger/review";
+import { responsibleStats } from "@/lib/server/settings";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,5 +46,6 @@ export async function GET() {
     onboarding: onboardingStats(),
     alerts: alertStats(),
     reviews: reviewStats(),
+    responsible: responsibleStats(),
   });
 }

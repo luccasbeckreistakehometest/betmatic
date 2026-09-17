@@ -91,6 +91,7 @@ const NAV: { href: string; key: DictKey; tour?: string }[] = [
   { href: "/app/bankroll", key: "bankroll", tour: "bankroll" },
   { href: "/app/alerts", key: "navAlerts", tour: "alerts" },
   { href: "/app/referral", key: "referral" },
+  { href: "/app/settings", key: "navSettings", tour: "settings" },
 ];
 
 export function NavLinks() {

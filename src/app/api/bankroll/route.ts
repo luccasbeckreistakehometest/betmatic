@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { currentUser } from "@/lib/server/session";
 import { addManual, addTicket, gradeManual, listBankroll, removeEntry } from "@/lib/server/bankroll";
+import { currentStreak, getSettings, pauseState, stakeVerdict } from "@/lib/server/settings";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,7 +10,8 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const user = await currentUser();
   if (!user) return NextResponse.json({ error: "não autorizado" }, { status: 401 });
-  return NextResponse.json(listBankroll(user.id));
+  const s = getSettings(user.id);
+  return NextResponse.json({ ...listBankroll(user.id), streak: currentStreak(user.id), pause: pauseState(user.id), limits: { dailyStakeCap: s.dailyStakeCap, weeklyStakeCap: s.weeklyStakeCap } });
 }
 
 const schema = z.union([
@@ -22,6 +24,11 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: "não autorizado" }, { status: 401 });
   const parsed = schema.safeParse(await request.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: "pedido inválido" }, { status: 400 });
+  // Responsible play is enforced here, not in the UI: a pause locks the bankroll, a ceiling caps it.
+  const pause = pauseState(user.id);
+  if (pause.paused) return NextResponse.json({ error: "paused", pausedUntil: pause.until }, { status: 423 });
+  const verdict = stakeVerdict(user.id, parsed.data.stake);
+  if (!verdict.allowed) return NextResponse.json({ error: "limit", ...verdict }, { status: 422 });
   const entry = parsed.data.kind === "ticket" ? addTicket(user.id, parsed.data) : addManual(user.id, parsed.data);
   return entry ? NextResponse.json({ entry }) : NextResponse.json({ error: "bilhete não encontrado no histórico" }, { status: 404 });
 }

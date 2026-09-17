@@ -4,6 +4,7 @@ import { servePredictions } from "@/lib/server/predictions";
 import { getPlan } from "@/lib/plans";
 import { normaliseLang } from "@/lib/i18n";
 import { todayKey } from "@/lib/sources/espn";
+import { pauseState } from "@/lib/server/settings";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,10 +25,13 @@ export async function GET(request: Request) {
   const plan = user?.planActive ? user.plan : getPlan("free");
   const role = user?.role === "admin" ? "admin" : "user";
 
-  const predictions = servePredictions({ scope, sportKey, dateKey, lang, plan, role });
+  // A self-exclusion pause hides every ticket until its date; the plan's view resumes after.
+  const pause = user ? pauseState(user.id) : { paused: false, until: null, daysLeft: 0 };
+  const predictions = pause.paused ? [] : servePredictions({ scope, sportKey, dateKey, lang, plan, role });
 
   return NextResponse.json({
     predictions,
+    paused: pause.paused ? { until: pause.until } : null,
     plan: { id: plan.id, name: plan.name, gamesPerDay: plan.gamesPerDay, bands: plan.bands, crossGame: plan.crossGame, delayMinutes: plan.delayMinutes },
     authenticated: Boolean(user),
     dateKey,

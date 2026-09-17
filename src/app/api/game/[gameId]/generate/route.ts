@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/server/session";
 import { ensureGameGenerated } from "@/lib/server/on-demand";
+import { pauseState } from "@/lib/server/settings";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,6 +13,8 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request, ctx: { params: Promise<{ gameId: string }> }) {
   const user = await currentUser();
   if (!user) return NextResponse.json({ status: "unauthenticated" }, { status: 401 });
+  const pause = pauseState(user.id);
+  if (pause.paused) return NextResponse.json({ status: "paused", pausedUntil: pause.until }, { status: 423 });
   const { gameId } = await ctx.params;
   const sportKey = new URL(request.url).searchParams.get("sport") ?? "nba";
   const result = await ensureGameGenerated({ sportKey, gameId, user });
