@@ -39,7 +39,7 @@ export function startupProblems(env: Env): { fatal: string[]; warnings: string[]
     }
   }
   // Test switches must never reach a real server: they replace the model and ESPN with fixtures.
-  for (const key of ["AI_MOCK", "ESPN_FIXTURES"]) {
+  for (const key of ["AI_MOCK", "ESPN_FIXTURES", "ANALYTICS_ALLOW_HEADLESS"]) {
     if ((env[key] ?? "").trim()) fatal.push(`${key} is a test switch and must not be set in production.`);
   }
   const password = envValue("ADMIN_PASSWORD", env);
