@@ -8,6 +8,7 @@ import { PromptPanel } from "@/components/PromptPanel";
 import { LearningPanel } from "@/components/LearningPanel";
 import { AdminUsers } from "@/components/AdminUsers";
 import { AdminHealth, AdminInbox, AdminPayments, type OpsPayload } from "@/components/AdminOps";
+import { AdminFeatured } from "@/components/AdminFeatured";
 
 interface AdminPayload extends OpsPayload {
   contact?: Record<string, number>;
@@ -131,6 +132,8 @@ export function AdminDashboard() {
       </div>
 
       <AdminHealth data={data} />
+
+      <AdminFeatured />
 
       <AdminUsers />
 

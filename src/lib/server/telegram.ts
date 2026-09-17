@@ -17,6 +17,7 @@ import {
 } from "@/lib/alerts";
 import type { BetSlate, BetSuggestion } from "@/lib/types";
 import { baseUrlOrEmpty } from "@/lib/base-url";
+import { recentFeaturedIds } from "@/lib/server/featured-store";
 
 /**
  * Telegram alerts. The bot only ever receives `/start <code>` and `/stop`; everything else is
@@ -286,6 +287,7 @@ export async function sendDailyDigest(opts: { dateKey?: string; base?: string; f
   const base = opts.base ?? baseUrlOrEmpty();
   const primaryLang = refreshConfig(process.env, SPORTS.map((s) => s.key)).langs[0] as Lang;
   const subscribers = getDb().prepare("SELECT userId FROM telegram_links WHERE digest=1").all() as { userId: string }[];
+  const featured = recentFeaturedIds(now);
 
   for (const { userId } of subscribers) {
     const row = findById(userId);
@@ -293,15 +295,16 @@ export async function sendDailyDigest(opts: { dateKey?: string; base?: string; f
     const user = toPublic(row);
     const lang = normaliseLang(user.lang);
     const collect = (readLang: Lang): DigestItem[] => {
-      const items: DigestItem[] = [];
+      const items: (DigestItem & { featured: boolean })[] = [];
       for (const sport of SPORTS) {
         for (const p of servePredictions({ scope: "game", sportKey: sport.key, dateKey, lang: readLang, plan: user.plan, role: "user" })) {
           const best = [...p.slate.suggestions].sort((a, b) => b.evidenceScore - a.evidenceScore)[0];
           if (!best || !p.gameId) continue;
-          items.push({ matchup: p.matchup, title: best.title, odds: best.combinedDecimal, evidenceScore: best.evidenceScore, slug: slugFor(sport.key, p.gameId, dateKey, primaryLang, best) });
+          items.push({ featured: featured.has(p.gameId), matchup: p.matchup, title: best.title, odds: best.combinedDecimal, evidenceScore: best.evidenceScore, slug: slugFor(sport.key, p.gameId, dateKey, primaryLang, best) });
         }
       }
-      return items;
+      // The day's featured games lead the digest; the rest follow.
+      return items.sort((a, b) => Number(b.featured) - Number(a.featured)).map(({ featured: _f, ...item }) => { void _f; return item; });
     };
     // A day whose derived-language pass failed still has the primary text: better that than silence.
     let items = collect(lang);

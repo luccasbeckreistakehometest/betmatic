@@ -406,10 +406,29 @@ function migrate(d: Database.Database): void {
   addColumn(d, "referrals", "creditedAt", "TEXT");
   addColumn(d, "referrals", "paymentRowId", "TEXT");
   addColumn(d, "generation_requests", "scope", "TEXT NOT NULL DEFAULT 'game'");
+  migrateRound3(d);
   d.exec(`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_provider_payment ON payments(providerPaymentId) WHERE providerPaymentId IS NOT NULL;
     CREATE INDEX IF NOT EXISTS idx_payments_preference ON payments(preferenceId);
     CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals(referrerId, status, creditedAt);
+  `);
+}
+
+/** Round 3 tables. Every statement is idempotent; the caller runs inside an immediate transaction. */
+function migrateRound3(d: Database.Database): void {
+  d.exec(`
+    -- Destaques do dia: the few games the system generates by itself so the record is never empty.
+    CREATE TABLE IF NOT EXISTS featured_games (
+      dayKey TEXT NOT NULL,
+      sportKey TEXT NOT NULL,
+      gameId TEXT NOT NULL,
+      rank INTEGER NOT NULL DEFAULT 0,
+      matchup TEXT NOT NULL DEFAULT '',
+      startsAt TEXT,
+      createdAt TEXT NOT NULL,
+      PRIMARY KEY (dayKey, gameId)
+    );
+    CREATE INDEX IF NOT EXISTS idx_genreq_scope ON generation_requests(scope, createdAt);
   `);
 }
 

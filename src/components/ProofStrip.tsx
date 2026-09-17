@@ -9,6 +9,7 @@ import { formatDecimal } from "@/lib/odds";
 import type { Lang } from "@/lib/i18n";
 import type { BetSuggestion } from "@/lib/types";
 import { legsLabel, pickTeaser, teaserHeadline } from "@/lib/teaser";
+import { recentFeaturedIds } from "@/lib/server/featured-store";
 
 /**
  * The landing's honesty strip: live numbers from the public ledger and, when there is one, today's
@@ -30,7 +31,10 @@ function bestFor(dateKey: string, lang: Lang, sportKeys?: string[]): (TopPick & 
       for (const bet of p.slate.suggestions) all.push({ bet, matchup: p.matchup, gameId: p.gameId, sportKey: s.key });
     }
   }
-  return pickTeaser(all);
+  // The day's featured games come first: they are the ones picked to be shown.
+  const featured = recentFeaturedIds();
+  const fromFeatured = all.filter((p) => p.gameId && featured.has(p.gameId));
+  return pickTeaser(fromFeatured.length ? fromFeatured : all);
 }
 
 /** Today's best-evidenced ticket; before today has one, the latest day's, labelled as such. */

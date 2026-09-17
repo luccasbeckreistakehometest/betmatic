@@ -25,12 +25,13 @@ export type OnDemandResult =
 const inflight = new Map<string, Promise<OnDemandResult>>();
 
 /** Counted per Brasília calendar day, the same day the plan's game allowance uses. */
-const todayCounts = (userId: string) => {
+export const todayCounts = (userId: string) => {
   const db = getDb();
   const since = brasiliaDayStart();
   return {
-    user: (db.prepare("SELECT COUNT(*) n FROM generation_requests WHERE userId = ? AND createdAt > ?").get(userId, since) as { n: number }).n,
-    global: (db.prepare("SELECT COUNT(*) n FROM generation_requests WHERE createdAt > ?").get(since) as { n: number }).n,
+    user: (db.prepare("SELECT COUNT(*) n FROM generation_requests WHERE userId = ? AND createdAt > ? AND scope = 'game'").get(userId, since) as { n: number }).n,
+    // Featured, slate, live and refresh generations have caps of their own.
+    global: (db.prepare("SELECT COUNT(*) n FROM generation_requests WHERE createdAt > ? AND scope = 'game'").get(since) as { n: number }).n,
   };
 };
 
