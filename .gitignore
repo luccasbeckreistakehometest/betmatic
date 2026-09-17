@@ -47,3 +47,7 @@ next-env.d.ts
 /data
 /.browser-profiles
 .env.local
+
+# test artefacts
+/playwright-report
+/test-results
