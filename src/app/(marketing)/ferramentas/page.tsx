@@ -1,22 +1,27 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Logo } from "@/components/Logo";
 import { Calculators } from "@/components/Calculators";
-import { normaliseLang } from "@/lib/i18n";
+import { MarketingPage } from "@/components/MarketingShell";
+import { langFrom, langPaths, pageMetadata, type SearchProps } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
-  title: "Calculadoras de aposta grátis — EV, múltipla, margem da casa | Betmatic",
-  description: "Calculadora de valor esperado (+EV), calculadora de múltipla com margem real da casa e conversor de odds. Grátis, sem cadastro.",
-};
 
-export default async function ToolsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const q = await searchParams;
-  const lang = normaliseLang(typeof q.lang === "string" ? q.lang : undefined);
+export async function generateMetadata({ searchParams }: SearchProps): Promise<Metadata> {
+  const lang = await langFrom(searchParams);
+  return pageMetadata({
+    lang,
+    title: lang === "pt" ? "Calculadoras de aposta grátis: EV, múltipla e margem da casa" : "Free betting calculators: EV, parlays and the book's hold",
+    description: lang === "pt"
+      ? "Calculadora de valor esperado (+EV), calculadora de múltipla com a margem real da casa e conversor de odds. Grátis, sem cadastro."
+      : "Expected-value calculator, parlay calculator with the book's real hold, and an odds converter. Free, no signup.",
+    paths: langPaths("/ferramentas"),
+  });
+}
+
+export default async function ToolsPage({ searchParams }: SearchProps) {
+  const lang = await langFrom(searchParams);
   return (
-    <main className="min-h-screen bg-ink-950 text-mist-100">
-      <header className="border-b border-ink-800/80"><div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4"><Logo /><Link href={{ pathname: "/", query: { lang } }} className="text-[13px] text-mist-400 hover:text-mist-100">← Betmatic</Link></div></header>
+    <MarketingPage lang={lang} langHrefs={langPaths("/ferramentas")} wide>
       <Calculators lang={lang} />
-    </main>
+    </MarketingPage>
   );
 }

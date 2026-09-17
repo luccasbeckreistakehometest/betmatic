@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Logo } from "@/components/Logo";
+import { MarketingFooter, MarketingHeader } from "@/components/MarketingShell";
 import { readLedger } from "@/lib/ledger/store";
-import { proofStats } from "@/lib/ledger/proof";
+import { proofPublishable, proofStats } from "@/lib/ledger/proof";
 import { findGameInfo, servePredictions } from "@/lib/server/predictions";
 import { gamePageUrl } from "@/lib/server/sitemap-games";
 import { scrubText } from "@/lib/server/whitelabel";
@@ -30,6 +30,7 @@ const C = {
     legsLocked: (n: number) => `${n} ${n === 1 ? "perna" : "pernas"} — a seleção e a chance real de cada uma abrem com uma conta grátis.`, cta: "Criar conta grátis e ver as pernas", open: "Abrir no app",
     confidence: "confiança", proof: "Histórico público deste esporte", generated: "gerados", hit: "acerto", roi: "ROI a 1 unidade", all: "ver todos os bilhetes →", kickoff: "Bola rola",
     injuries: "Desfalques e dúvidas", line: "Linha", total: "Total", faq: "Perguntas frequentes", back: "← Betmatic", funnel: "Mais palpites de",
+    method: "Todo bilhete gerado é registrado e conferido depois do jogo contra o placar oficial. Os números de acerto aparecem quando a amostra for grande o bastante para dizer alguma coisa.",
     footer: "Ferramenta de pesquisa. Dados agregados podem estar errados ou desatualizados — confirme a linha na sua casa antes de apostar. Nada aqui é recomendação.",
     responsible: "18+. Aposta não é investimento. Só aposte o que você pode perder sem que faça falta. Se deixar de ser diversão, esse é o sinal de parar.",
   },
@@ -38,6 +39,7 @@ const C = {
     legsLocked: (n: number) => `${n} ${n === 1 ? "leg" : "legs"} — each selection and its real chance open with a free account.`, cta: "Create a free account and see the legs", open: "Open in the app",
     confidence: "confidence", proof: "This sport's public record", generated: "generated", hit: "hit rate", roi: "ROI at 1 unit", all: "see every ticket →", kickoff: "Kickoff",
     injuries: "Injuries and doubts", line: "Line", total: "Total", faq: "Frequently asked", back: "← Betmatic", funnel: "More predictions for",
+    method: "Every generated ticket is logged and graded after the game against the official score. Hit-rate numbers appear once the sample is large enough to mean something.",
     footer: "Research tool. Aggregated data can be wrong or stale — verify a line at your book before acting. Nothing here is advice.",
     responsible: "21+ where applicable. Betting is not investing. Only stake what you can lose without missing it. If it stops being fun, that is the signal to stop.",
   },
@@ -78,10 +80,11 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
   const teams = { away: sc(data.teams.away), home: sc(data.teams.home) };
   const title = gamePageTitle(teams, formatKickoff(data.startsAt, lang).date, lang);
   const description = gamePageDescription(teams, getSport(data.sportKey).label[lang], lang, data.best ? { title: sc(data.best.title), odds: formatDecimal(data.best.combinedDecimal) } : null);
+  const en = gamePageUrl(base, gameId, data.sportKey, "en");
   return {
-    title: `${title} | Betmatic`, description,
-    alternates: { canonical, languages: { "pt-BR": canonical, en: gamePageUrl(base, gameId, data.sportKey, "en") } },
-    openGraph: { title, description, url: gamePageUrl(base, gameId, data.sportKey, lang), type: "article", siteName: "Betmatic" },
+    title: { absolute: `${title} | Betmatic` }, description,
+    alternates: { canonical: lang === "en" ? en : canonical, languages: { "pt-BR": canonical, en, "x-default": canonical } },
+    openGraph: { title, description, url: gamePageUrl(base, gameId, data.sportKey, lang), type: "article", siteName: "Betmatic", locale: lang === "pt" ? "pt_BR" : "en_US" },
   };
 }
 
@@ -102,6 +105,9 @@ export default async function GamePublicPage({ params, searchParams }: { params:
   const proof = proofStats(readLedger().filter((e) => e.sportKey === data.sportKey));
   const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
   const best = data.best;
+  const appPath = `/app/game/${gameId}?sport=${data.sportKey}&lang=${lang}`;
+  const signup = { pathname: "/signup", query: { lang, next: appPath } };
+  const showProof = proofPublishable(proof);
   const teaser = best ? { title: sc(best.title), odds: formatDecimal(best.combinedDecimal), legs: best.legs.length } : null;
   const faq = gameFaq({ teams, league, lang, teaser, proof: { settled: proof.settled, hitRate: proof.hitRate, roi: proof.roi } });
   const funnel = SPORT_LANDINGS.find((l) => l.sportKeys.includes(data.sportKey));
@@ -112,15 +118,7 @@ export default async function GamePublicPage({ params, searchParams }: { params:
     <main className="min-h-screen bg-ink-950 text-mist-100">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqJsonLd(faq) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: eventJsonLd({ teams, league, startsAt: data.startsAt, url, venue: data.detail?.game.venue ? sc(data.detail.game.venue) : null }) }} />
-      <header className="border-b border-ink-800/80">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-5 py-4">
-          <Link href={{ pathname: "/", query: { lang } }}><Logo /></Link>
-          <div className="flex items-center gap-3 text-[13px]">
-            <Link href={{ pathname: "/prova", query: { lang } }} className="text-mist-400 hover:text-mist-100">{lang === "pt" ? "Prova" : "Track record"}</Link>
-            <Link href={{ pathname: "/signup", query: { lang } }} className="rounded-lg bg-edge-400 px-3.5 py-1.5 font-semibold text-ink-950 hover:bg-edge-500">{lang === "pt" ? "Criar conta grátis" : "Create free account"}</Link>
-          </div>
-        </div>
-      </header>
+      <MarketingHeader lang={lang} langHrefs={{ pt: `/jogo/${gameId}?sport=${data.sportKey}`, en: `/jogo/${gameId}?sport=${data.sportKey}&lang=en` }} />
 
       <article className="mx-auto max-w-3xl px-5 py-10" data-testid="game-page">
         <p className="text-[11px] uppercase tracking-[0.18em] text-edge-400">{c.eyebrow} · {league}</p>
@@ -148,25 +146,29 @@ export default async function GamePublicPage({ params, searchParams }: { params:
               <p className="mt-3 text-[14px] leading-relaxed text-mist-300">{sc(best.background)}</p>
               <p className="mt-3 text-[13px] text-mist-500">🔒 {c.legsLocked(best.legs.length)}</p>
               <div className="mt-4 flex flex-wrap gap-3">
-                <Link href={{ pathname: "/signup", query: { lang } }} className="rounded-lg bg-edge-400 px-4 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500">{c.cta}</Link>
+                <Link href={signup} className="rounded-lg bg-edge-400 px-4 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500">{c.cta}</Link>
                 <Link href={{ pathname: `/app/game/${gameId}`, query: { sport: data.sportKey, lang } }} className="rounded-lg border border-ink-700 px-4 py-2 text-[13px] text-mist-300 hover:text-mist-100">{c.open}</Link>
               </div>
             </>
           ) : (
             <>
               <p className="mt-2 text-[14px] text-mist-400">{c.noTeaser}</p>
-              <Link href={{ pathname: "/signup", query: { lang } }} className="mt-4 inline-block rounded-lg bg-edge-400 px-4 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500">{c.cta}</Link>
+              <Link href={signup} className="mt-4 inline-block rounded-lg bg-edge-400 px-4 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500">{c.cta}</Link>
             </>
           )}
         </section>
 
         <section className="mt-8 rounded-xl border border-ink-800 bg-ink-900/60 p-5" data-testid="game-proof">
           <p className="text-[11px] uppercase tracking-[0.18em] text-mist-500">{c.proof}</p>
-          <div className="mt-3 flex flex-wrap gap-8">
-            {[[c.generated, String(proof.generated)], [c.hit, proof.settled ? pct(proof.hitRate) : "—"], [c.roi, proof.settled ? `${proof.roi >= 0 ? "+" : ""}${pct(proof.roi)}` : "—"]].map(([k, v]) => (
-              <div key={k}><div className="nums text-2xl font-semibold text-white">{v}</div><div className="text-[12px] text-mist-500">{k}</div></div>
-            ))}
-          </div>
+          {showProof ? (
+            <div className="mt-3 flex flex-wrap gap-8">
+              {[[c.generated, String(proof.generated)], [c.hit, pct(proof.hitRate)], [c.roi, `${proof.roi >= 0 ? "+" : ""}${pct(proof.roi)}`]].map(([k, v]) => (
+                <div key={k}><div className="nums text-2xl font-semibold text-white">{v}</div><div className="text-[12px] text-mist-500">{k}</div></div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-2 text-[13.5px] leading-relaxed text-mist-400">{c.method}</p>
+          )}
           <Link href={{ pathname: "/prova", query: { lang } }} className="mt-3 inline-block text-[13px] text-edge-400 hover:underline">{c.all}</Link>
         </section>
 
@@ -201,13 +203,7 @@ export default async function GamePublicPage({ params, searchParams }: { params:
         )}
       </article>
 
-      <footer className="border-t border-ink-800/80 px-5 py-8">
-        <div className="mx-auto flex max-w-3xl flex-col gap-2 text-[11.5px] leading-relaxed text-mist-500">
-          <Logo size={20} />
-          <p className="mt-2">{c.footer}</p>
-          <p>{c.responsible}</p>
-        </div>
-      </footer>
+      <MarketingFooter lang={lang} />
     </main>
   );
 }

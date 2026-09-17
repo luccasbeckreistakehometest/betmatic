@@ -7,6 +7,8 @@ import { getSlate, shiftKey, todayKey } from "@/lib/sources/espn";
 import { SPORTS } from "@/lib/sports";
 import { publicBaseUrl } from "@/lib/base-url";
 
+const LEGAL_PATHS = ["/termos", "/terms", "/privacidade", "/privacy", "/reembolso", "/refunds", "/cookies", "/jogo-responsavel", "/responsible-gambling", "/contato"];
+
 // The game pages come from the database and the live slates, so this is rendered per request.
 export const dynamic = "force-dynamic";
 
@@ -29,11 +31,17 @@ async function scheduledGames(days: string[]): Promise<SitemapGame[]> {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = publicBaseUrl();
   const now = new Date();
-  const pages = ["", "/prova", "/ferramentas", "/signup", ...SPORT_LANDINGS.map((s) => `/${s.slug.pt}`), ...SPORT_LANDINGS.map((s) => `/${s.slug.en}`)];
-  const fixed = pages.flatMap((p) => [
-    { url: `${base}${p}`, lastModified: now, changeFrequency: "daily" as const, priority: p === "" ? 1 : 0.7 },
-    { url: `${base}${p}?lang=en`, lastModified: now, changeFrequency: "daily" as const, priority: 0.5 },
-  ]);
+  // Pages that switch language with ?lang=en are listed in both; pages with their own English slug
+  // (sport funnels, legal pages) are listed once per slug — never a ?lang=en copy of a Portuguese slug.
+  const bilingual = ["", "/prova", "/ferramentas", "/planos"];
+  const fixed = [
+    ...bilingual.flatMap((p) => [
+      { url: `${base}${p || "/"}`, lastModified: now, changeFrequency: "daily" as const, priority: p === "" ? 1 : 0.7 },
+      { url: `${base}${p || "/"}?lang=en`, lastModified: now, changeFrequency: "daily" as const, priority: 0.5 },
+    ]),
+    ...SPORT_LANDINGS.flatMap((s) => [s.slug.pt, s.slug.en]).map((slug) => ({ url: `${base}/${slug}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 })),
+    ...LEGAL_PATHS.map((p) => ({ url: `${base}${p}`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.2 })),
+  ];
   // "Palpite X x Y": every scheduled game on today's and tomorrow's slates, with or without tickets.
   const today = todayKey();
   const days = [today, shiftKey(today, 1)];

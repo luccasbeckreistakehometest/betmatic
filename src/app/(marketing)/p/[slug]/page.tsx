@@ -1,6 +1,8 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Logo } from "@/components/Logo";
+import { MarketingFooter, MarketingHeader } from "@/components/MarketingShell";
+import { formatDateTime } from "@/lib/format";
 import { readLedger } from "@/lib/ledger/store";
 import { findBySlug } from "@/lib/ledger/proof";
 import { scrubText } from "@/lib/server/whitelabel";
@@ -22,6 +24,22 @@ const C = {
     wa: (t: string, o: string, odds: string, url: string) => `Betmatic ticket — ${t}\n${odds} · ${o}\n${url}` },
 };
 
+export async function generateMetadata({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }): Promise<Metadata> {
+  const { slug } = await params;
+  const lang = normaliseLang(typeof (await searchParams).lang === "string" ? ((await searchParams).lang as string) : undefined);
+  const e = findBySlug(readLedger(), slug);
+  if (!e) return { title: lang === "pt" ? "Bilhete não encontrado" : "Ticket not found", robots: { index: false } };
+  const title = `${scrubText(e.title, lang)} — ${C[lang].outcome[e.outcome]}`;
+  const description = `${scrubText(e.matchup, lang)} · ${formatDecimal(e.combinedDecimal)} · ${e.legs.length} ${lang === "pt" ? "pernas" : "legs"}. ${C[lang].copy}`;
+  const path = `/p/${slug}`;
+  return {
+    title,
+    description,
+    alternates: { canonical: lang === "en" ? `${path}?lang=en` : path, languages: { "pt-BR": path, en: `${path}?lang=en`, "x-default": path } },
+    openGraph: { title, description, url: lang === "en" ? `${path}?lang=en` : path, type: "article", siteName: "Betmatic" },
+  };
+}
+
 export default async function TicketPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { slug } = await params;
   const q = await searchParams;
@@ -35,12 +53,14 @@ export default async function TicketPage({ params, searchParams }: { params: Pro
   const base = publicBaseUrl();
   const url = `${base}/p/${slug}?lang=${lang}`;
   const tone: Record<string, string> = { won: "text-signal-400 border-signal-400/30", lost: "text-warn-400 border-warn-400/30", push: "text-mist-300 border-ink-700", void: "text-mist-500 border-ink-700", pending: "text-mist-400 border-ink-700" };
-  const fmt = (iso?: string) => (iso ? new Date(iso).toLocaleString(lang === "pt" ? "pt-BR" : "en-US") : "—");
+  const fmt = (iso?: string) => (iso ? formatDateTime(iso, lang) : "—");
 
   return (
-    <main className="min-h-screen bg-ink-950 text-mist-100">
-      <header className="border-b border-ink-800/80"><div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-4"><Logo /><Link href={{ pathname: "/prova", query: { lang } }} className="text-[13px] text-mist-400 hover:text-mist-100">{c.back}</Link></div></header>
-      <section className="mx-auto max-w-3xl px-5 py-12" data-testid="ticket-page">
+    <div className="flex min-h-full flex-col bg-ink-950 text-mist-100">
+      <MarketingHeader lang={lang} langHrefs={{ pt: `/p/${slug}`, en: `/p/${slug}?lang=en` }} />
+      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-12 sm:px-5" data-testid="ticket-page">
+        <Link href={{ pathname: "/prova", query: { lang } }} className="mb-6 inline-block text-[13px] text-mist-400 hover:text-mist-100">{c.back}</Link>
+        <div>
         <div className={"inline-block rounded-full border px-3 py-1 text-[12px] font-semibold tracking-wider " + tone[e.outcome]}>{c.outcome[e.outcome]}</div>
         <h1 className="mt-4 text-3xl font-semibold tracking-tight">{scrubText(e.title, lang)}</h1>
         <p className="mt-1 text-[15px] text-mist-400">{scrubText(e.matchup, lang)}</p>
@@ -63,9 +83,11 @@ export default async function TicketPage({ params, searchParams }: { params: Pro
         <p className="mt-6 text-[13px] text-mist-500">{c.copy}</p>
         <div className="mt-6 flex flex-wrap gap-3">
           <a href={`https://wa.me/?text=${encodeURIComponent(c.wa(scrubText(e.title, lang), c.outcome[e.outcome], formatDecimal(e.combinedDecimal), url))}`} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-signal-400/40 px-4 py-2 text-[13px] font-semibold text-signal-400 hover:bg-signal-400/10" data-testid="share-wa">{c.share}</a>
-          <Link href="/signup" className="rounded-lg bg-edge-400 px-4 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500">{c.cta}</Link>
+          <Link href={`/signup?lang=${lang}`} className="rounded-lg bg-edge-400 px-4 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500">{c.cta}</Link>
         </div>
-      </section>
-    </main>
+        </div>
+      </main>
+      <MarketingFooter lang={lang} />
+    </div>
   );
 }

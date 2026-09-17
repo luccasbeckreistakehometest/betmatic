@@ -52,3 +52,17 @@ export function recentTickets(entries: LedgerEntry[], limit = 30): LedgerEntry[]
   const pending = entries.filter((e) => e.outcome === "pending").sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   return [...settled, ...pending].slice(0, limit);
 }
+
+/**
+ * Aggregate numbers (hit rate, ROI, counts) are published only once enough tickets are decided:
+ * three wins in a row is noise, and "0 tickets" is not a pitch. Below the bar the pages explain the
+ * method instead. PROOF_MIN_DECIDED overrides the bar (tests use 1).
+ */
+export function proofMinDecided(env: Record<string, string | undefined> = process.env): number {
+  const n = Number(env.PROOF_MIN_DECIDED);
+  return Number.isFinite(n) && n >= 1 ? Math.floor(n) : 30;
+}
+
+export function proofPublishable(stats: Pick<ProofStats, "won" | "lost">, env: Record<string, string | undefined> = process.env): boolean {
+  return stats.won + stats.lost >= proofMinDecided(env);
+}
