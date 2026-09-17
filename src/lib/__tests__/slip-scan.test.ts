@@ -80,8 +80,8 @@ const listFiles = (dir: string): string[] => fs.existsSync(dir) ? fs.readdirSync
 
 describe("scan route", async () => {
   const row = await createUser({ email: `scan${Date.now()}@example.com`, name: "s", password: "password123" });
-  const jpeg = () => new Uint8Array([0xff, 0xd8, 0xff, 0xe0, ...new Array(200).fill(7)]);
-  const req = (body: Uint8Array) => new Request("http://x/api/slip/scan?sport=soccer-bra&lang=pt", { method: "POST", headers: { "content-type": "image/jpeg" }, body });
+  const jpeg = () => Buffer.from([0xff, 0xd8, 0xff, 0xe0, ...new Array(200).fill(7)]);
+  const req = (body: Buffer) => new Request("http://x/api/slip/scan?sport=soccer-bra&lang=pt", { method: "POST", headers: { "content-type": "image/jpeg" }, body: new Blob([new Uint8Array(body)]) });
 
   it("returns the read legs, writes no file, and caps a free account at 3 a day", async () => {
     sessionUser = toPublic(findById(row.id)!);
@@ -102,8 +102,8 @@ describe("scan route", async () => {
 
   it("refuses non-images and oversized bodies before any model call", async () => {
     sessionUser = toPublic(findById(row.id)!);
-    expect((await POST(req(new TextEncoder().encode("GIF89a not allowed")))).status).toBe(415);
-    const big = new Request("http://x/api/slip/scan?sport=soccer-bra", { method: "POST", headers: { "content-length": String(2_000_000) }, body: jpeg() });
+    expect((await POST(req(Buffer.from("GIF89a not allowed")))).status).toBe(415);
+    const big = new Request("http://x/api/slip/scan?sport=soccer-bra", { method: "POST", headers: { "content-length": String(2_000_000) }, body: new Blob([new Uint8Array(jpeg())]) });
     expect((await POST(big)).status).toBe(413);
   });
 });
