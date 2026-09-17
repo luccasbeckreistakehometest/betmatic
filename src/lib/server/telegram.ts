@@ -15,6 +15,7 @@ import {
   parseStartCommand, ticketAlertText, type DigestItem, type FollowKind, type FollowRef,
 } from "@/lib/alerts";
 import type { BetSlate, BetSuggestion } from "@/lib/types";
+import { baseUrlOrEmpty } from "@/lib/base-url";
 
 /**
  * Telegram alerts. The bot only ever receives `/start <code>` and `/stop`; everything else is
@@ -281,7 +282,7 @@ export async function sendDailyDigest(opts: { dateKey?: string; base?: string; f
   const now = opts.now ?? new Date();
   if (!opts.force && !digestDue(now, Number(process.env.TELEGRAM_DIGEST_HOUR ?? 9))) { out.note = "before digest hour"; return out; }
   const dateKey = opts.dateKey ?? todayKey();
-  const base = opts.base ?? process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  const base = opts.base ?? baseUrlOrEmpty();
   const primaryLang = refreshConfig(process.env, SPORTS.map((s) => s.key)).langs[0] as Lang;
   const subscribers = getDb().prepare("SELECT userId FROM telegram_links WHERE digest=1").all() as { userId: string }[];
 

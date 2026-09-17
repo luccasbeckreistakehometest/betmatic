@@ -15,6 +15,7 @@ import { formatDecimal, getBand } from "@/lib/odds";
 import { normaliseLang, type Lang } from "@/lib/i18n";
 import { eventJsonLd, faqJsonLd, formatKickoff, gameFaq, gamePageDescription, gamePageTitle, parseMatchup, type Teams } from "@/lib/seo/game-page";
 import type { BetSuggestion, GameDetail } from "@/lib/types";
+import { publicBaseUrl } from "@/lib/base-url";
 
 export const dynamic = "force-dynamic";
 
@@ -70,7 +71,7 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
   const lang = langOf(q);
   const data = await load(gameId, sportOf(q), lang);
   if (!data) return {};
-  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  const base = publicBaseUrl();
   // The sport is part of the canonical: without stored tickets it is the only way the page resolves.
   const canonical = gamePageUrl(base, gameId, data.sportKey);
   const sc = (s: string) => scrubText(s, lang);
@@ -96,7 +97,7 @@ export default async function GamePublicPage({ params, searchParams }: { params:
   const league = sport.label[lang];
   const teams = { away: sc(data.teams.away), home: sc(data.teams.home) };
   const kickoff = formatKickoff(data.startsAt, lang);
-  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  const base = publicBaseUrl();
   const url = gamePageUrl(base, gameId, data.sportKey);
   const proof = proofStats(readLedger().filter((e) => e.sportKey === data.sportKey));
   const pct = (n: number) => `${(n * 100).toFixed(1)}%`;

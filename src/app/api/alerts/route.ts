@@ -32,7 +32,7 @@ const schema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("digest"), on: z.boolean() }),
   z.object({ action: z.literal("follow"), kind: z.enum(["team", "league"]), sportKey, key: z.string().max(40).default(""), label: z.string().max(80).default("") }),
   z.object({ action: z.literal("unfollow"), kind: z.enum(["team", "league"]), sportKey, key: z.string().max(40).default("") }),
-  z.object({ action: z.literal("read"), ids: z.array(z.string()).nullable().default(null) }),
+  z.object({ action: z.literal("read"), ids: z.array(z.string().max(80)).max(500).nullable().default(null) }),
 ]);
 
 export async function POST(request: Request) {

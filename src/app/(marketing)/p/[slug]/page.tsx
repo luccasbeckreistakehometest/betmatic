@@ -9,6 +9,7 @@ import { formatDecimal } from "@/lib/odds";
 import { LossReview } from "@/components/LossReview";
 import { currentUser } from "@/lib/server/session";
 import { userHasTicket } from "@/lib/server/bankroll";
+import { publicBaseUrl } from "@/lib/base-url";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,7 @@ export default async function TicketPage({ params, searchParams }: { params: Pro
   // "Why did it lose?" is for the people who followed the ticket: the admin, or anyone with it in their bankroll.
   const viewer = await currentUser();
   const canReview = e.outcome === "lost" && !!viewer && (viewer.role === "admin" || userHasTicket(viewer.id, e.id));
-  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  const base = publicBaseUrl();
   const url = `${base}/p/${slug}?lang=${lang}`;
   const tone: Record<string, string> = { won: "text-signal-400 border-signal-400/30", lost: "text-warn-400 border-warn-400/30", push: "text-mist-300 border-ink-700", void: "text-mist-500 border-ink-700", pending: "text-mist-400 border-ink-700" };
   const fmt = (iso?: string) => (iso ? new Date(iso).toLocaleString(lang === "pt" ? "pt-BR" : "en-US") : "—");

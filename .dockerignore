@@ -1,0 +1,29 @@
+# Secrets and local state never enter the build context.
+.env
+.env.*
+!.env.example
+data
+.sessions
+.cache
+.ledger
+.browser-profiles
+browser-profiles
+
+# Build output and dependencies are produced inside the image.
+node_modules
+.next
+out
+*.tsbuildinfo
+
+# Tests and their artefacts.
+test-results
+playwright-report
+coverage
+
+# Tooling and VCS.
+.git
+.github
+.vscode
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*

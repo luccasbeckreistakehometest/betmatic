@@ -11,6 +11,7 @@ import { announceTickets } from "@/lib/server/webhook";
 import { notifyFollowers } from "@/lib/server/telegram";
 import type { BetSlate } from "@/lib/types";
 import type { Lang } from "@/lib/i18n";
+import { baseUrlOrEmpty } from "@/lib/base-url";
 
 export const BANDS = ["safe", "value", "mid", "long", "moonshot"];
 export type Detail = NonNullable<Awaited<ReturnType<typeof getGameDetail>>>;
@@ -38,7 +39,7 @@ export async function generateGame(args: { sportKey: string; dateKey: string; de
     : undefined;
 
   const matchup = `${detail.game.away.displayName} @ ${detail.game.home.displayName}`;
-  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  const base = baseUrlOrEmpty();
   const save = (lang: Lang, slate: BetSlate, costUsd: number) =>
     savePrediction({ scope: "game", sportKey, gameId: detail.game.id, dateKey, lang, matchup, startsAt: detail.game.startsAt, slate, costUsd });
 

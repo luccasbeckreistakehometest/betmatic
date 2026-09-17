@@ -283,6 +283,7 @@ const DICT = {
   sentOnTelegram: { pt: "enviado no Telegram", en: "sent on Telegram" },
   signInForAlerts: { pt: "Entre na sua conta para configurar alertas.", en: "Sign in to set up alerts." },
   openTicket: { pt: "abrir bilhete", en: "open ticket" },
+  networkError: { pt: "Sem conexão. Confira sua internet e tente de novo.", en: "No connection. Check your internet and try again." },
 } as const;
 
 export type DictKey = keyof typeof DICT;

@@ -62,12 +62,12 @@ export function SlipBuilder() {
       });
       const result = await response.json();
       if (!response.ok) {
-        setError(response.status === 402 ? `${t("notEnoughCoins")}: ${result.error}` : result.error);
+        setError(result.message ?? t("generateFailed"));
         return;
       }
       setAnalysis(result.analysis);
     } catch {
-      setError("Erro de rede");
+      setError(t("networkError"));
     } finally {
       setBusy(false);
     }
@@ -138,7 +138,7 @@ export function SlipBuilder() {
           {error && (
             <p className="text-[12.5px] text-alert-400">
               {error}{" "}
-              <Link href="/#planos" className="underline">
+              <Link href={`/planos?lang=${lang}`} className="underline">
                 {t("seePlans")}
               </Link>
             </p>

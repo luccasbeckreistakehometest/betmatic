@@ -1,13 +1,14 @@
 import { readLedger } from "@/lib/ledger/store";
 import { ticketSlug } from "@/lib/ledger/proof";
 import { scrubText } from "@/lib/server/whitelabel";
+import { baseUrlOrEmpty } from "@/lib/base-url";
 
 export const dynamic = "force-dynamic";
 
 /** The whole public record as a spreadsheet. Whitelabelled like the page; anyone can audit it. */
 export async function GET(request: Request) {
   const lang = new URL(request.url).searchParams.get("lang") === "en" ? "en" : "pt";
-  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  const base = baseUrlOrEmpty();
   const q = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const rows = [["created_at", "settled_at", "sport", "matchup", "title", "kind", "band", "odds", "modelled_probability", "outcome", "legs", "link"].join(",")];
   for (const e of readLedger()) {

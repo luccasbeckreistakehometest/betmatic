@@ -5,7 +5,11 @@ import { readLedger } from "@/lib/ledger/store";
 import { findBySlug } from "@/lib/ledger/proof";
 import { userHasTicket } from "@/lib/server/bankroll";
 import { cachedReview, getOrCreateReview, reviewForViewer, settledLegLines } from "@/lib/ledger/review";
-import { aiConfigured, describeAiError } from "@/lib/ai/client";
+import { aiConfigured } from "@/lib/ai/client";
+import { AiBudgetExceededError } from "@/lib/server/ai-budget";
+import { apiError, rateLimited } from "@/lib/server/api";
+import { accountKey, hit } from "@/lib/server/rate-limit";
+import { reportError } from "@/lib/server/ops-log";
 import { scrubText } from "@/lib/server/whitelabel";
 import { normaliseLang } from "@/lib/i18n";
 
@@ -31,7 +35,7 @@ async function resolve(request: Request) {
   const role = user.role === "admin" ? "admin" : "user";
   if (role !== "admin" && !userHasTicket(user.id, entry.id)) return { error: NextResponse.json({ error: "esse bilhete não está na sua banca" }, { status: 403 }) };
   const lang = normaliseLang(parsed.data.lang ?? user.lang);
-  return { entry, role, lang } as const;
+  return { entry, role, lang, userId: user.id } as const;
 }
 
 const legsFor = (entry: NonNullable<Awaited<ReturnType<typeof resolve>>["entry"]>, role: "user" | "admin", lang: "pt" | "en") =>
@@ -48,11 +52,17 @@ export async function POST(request: Request) {
   const r = await resolve(request);
   if ("error" in r) return r.error;
   const legs = legsFor(r.entry, r.role, r.lang);
+  const cached = cachedReview(r.entry.id, r.lang);
+  if (!cached) {
+    const limit = hit("reviewAccount", accountKey(r.userId));
+    if (!limit.ok) return rateLimited(limit, r.lang);
+  }
   if (!aiConfigured() && !cachedReview(r.entry.id, r.lang)) return NextResponse.json({ available: false, cached: false, review: null, createdAt: null, legs });
   try {
     const out = await getOrCreateReview(r.entry, r.lang);
     return NextResponse.json({ available: true, cached: out.cached, review: reviewForViewer(out.review, r.role, r.lang), createdAt: out.createdAt, legs });
   } catch (error) {
-    return NextResponse.json({ error: describeAiError(error) ?? (error instanceof Error ? error.message : "falhou"), legs }, { status: 502 });
+    reportError("ai.review", error, { ledgerId: r.entry.id });
+    return apiError(error instanceof AiBudgetExceededError ? "ai_budget" : "ai_unavailable", r.lang, 502, { legs });
   }
 }

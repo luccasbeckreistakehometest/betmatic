@@ -5,6 +5,7 @@ import { refreshConfig } from "@/lib/server/refresh-policy";
 import { gamePageUrl, mergeSitemapGames, type SitemapGame } from "@/lib/server/sitemap-games";
 import { getSlate, shiftKey, todayKey } from "@/lib/sources/espn";
 import { SPORTS } from "@/lib/sports";
+import { publicBaseUrl } from "@/lib/base-url";
 
 // The game pages come from the database and the live slates, so this is rendered per request.
 export const dynamic = "force-dynamic";
@@ -26,7 +27,7 @@ async function scheduledGames(days: string[]): Promise<SitemapGame[]> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "https://betmatic.marqa.online";
+  const base = publicBaseUrl();
   const now = new Date();
   const pages = ["", "/prova", "/ferramentas", "/signup", ...SPORT_LANDINGS.map((s) => `/${s.slug.pt}`), ...SPORT_LANDINGS.map((s) => `/${s.slug.en}`)];
   const fixed = pages.flatMap((p) => [

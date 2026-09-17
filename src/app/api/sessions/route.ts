@@ -2,11 +2,14 @@ import { NextResponse } from "next/server";
 import { sessionSummary } from "@/lib/browser/session";
 import { aiConfigured, MODEL } from "@/lib/ai/client";
 import { listExtraSources, loadConfig } from "@/lib/config";
+import { requireAdmin } from "@/lib/server/session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+/** Scraper session health and source configuration: operator-only (names the sources). */
 export async function GET() {
+  if (!(await requireAdmin())) return NextResponse.json({ error: "forbidden" }, { status: 403 });
   const cfg = loadConfig();
   const saved = sessionSummary();
   // Sources that need no login should not read as "session missing" in the header.

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
+import { publicBaseUrl } from "@/lib/base-url";
 export default function robots(): MetadataRoute.Robots {
-  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "https://betmatic.marqa.online";
+  const base = publicBaseUrl();
   return { rules: [{ userAgent: "*", allow: ["/", "/prova", "/p/", "/jogo/", "/ferramentas"], disallow: ["/app", "/admin", "/api"] }], sitemap: `${base}/sitemap.xml` };
 }

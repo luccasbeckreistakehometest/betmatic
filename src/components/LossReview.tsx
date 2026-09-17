@@ -4,7 +4,7 @@ import { useState } from "react";
 import { makeT, type Lang } from "@/lib/i18n";
 
 interface Review { assumed: string; happened: string; verdict: "variance" | "repeatable_error" | "mixed"; reasoning: string; keyLeg: string | null; watchNext: string[] }
-interface Payload { available: boolean; cached: boolean; review: Review | null; createdAt: string | null; legs: string[]; error?: string }
+interface Payload { available: boolean; cached: boolean; review: Review | null; createdAt: string | null; legs: string[]; error?: string; message?: string }
 
 /**
  * One click on a lost ticket: what the model assumed, what happened, variance or a repeatable
@@ -34,7 +34,7 @@ export function LossReview({ slug, lang, compact = false }: { slug: string; lang
   const legs = data?.legs ?? [];
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-ink-800 bg-ink-900/70 p-3.5 text-[13px]" data-testid="loss-review">
-      {state === "error" && <p className="text-warn-400">{t("reviewFailed")}{data?.error ? ` — ${data.error}` : ""}</p>}
+      {state === "error" && <p className="text-warn-400">{data?.message ?? t("reviewFailed")}</p>}
       {state === "done" && data && !data.available && <p className="text-[12px] text-mist-500" data-testid="review-fallback">{t("reviewUnavailable")}</p>}
       {data?.review ? (
         <>

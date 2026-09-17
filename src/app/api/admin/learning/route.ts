@@ -16,7 +16,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "não autorizado" }, { status: 403 });
-  const parsed = z.object({ id: z.string() }).safeParse(await request.json().catch(() => ({})));
+  const parsed = z.object({ id: z.string().max(80) }).safeParse(await request.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: "pedido inválido" }, { status: 400 });
   try {
     const out = await applyLearningRun(parsed.data.id, admin.email);
