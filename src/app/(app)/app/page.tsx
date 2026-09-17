@@ -9,6 +9,8 @@ import { getSport } from "@/lib/sports";
 import { formatDayKey } from "@/lib/format";
 import { SPORT_COOKIE, defaultSportKey, soldSportKey } from "@/lib/server/default-sport";
 import { reportError } from "@/lib/server/ops-log";
+import { currentUser } from "@/lib/server/session";
+import { scrubGame } from "@/lib/server/whitelabel";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +41,9 @@ export default async function SlatePage({ searchParams }: PageProps<"/app">) {
     reportError("data.slate", e, { sport: sport.key, date: requested }, "warn");
   }
 
-  const games = slate?.games ?? [];
+  const viewer = await currentUser();
+  const role = viewer?.role === "admin" ? "admin" : "user";
+  const games = (slate?.games ?? []).map((g) => scrubGame(g, role, lang));
 
   return (
     <div className="flex flex-col gap-6">
