@@ -104,10 +104,48 @@ export function gameForEvent(event: string, games: GameContext[]): GameContext |
 const GAME_TOTAL = /\b(gols|goals|pontos|points|total)\b/;
 
 /**
+ * Words that take a leg out of "full-time result" or "full-game total": a period, an either/or pick,
+ * a handicap. The grader only settles those two plain markets, so these stay manual (or unverifiable
+ * in a tipster audit) instead of being graded as something they are not. Matched on normaliseName text.
+ */
+const PERIOD = /\b(1|2|primeiro|segundo)\s*o?\s*tempo\b|\b[12]\s*t\b|\bintervalo\b|\bhalf\b|\bht\b|\bquartos?\b|\bquarters?\b|\b[1-4]\s*q\b|\bperiodos?\b|\bperiods?\b|\binnings?\b|\bsets?\b/;
+const EITHER = /\bou\b|\bor\b|\bdupla\b|double chance/;
+const NOT_RESULT = new RegExp([
+  "empate anula", "draw no bet", "\\bdnb\\b", "handicap", "\\bspread\\b", "(^|\\s)[+-]\\s?\\d", "\\bambas\\b", "\\bbtts\\b", "both teams",
+  "placar", "correct score", "resultado correto", "classifica", "qualify", "avanca", "\\badvance", "\\bmetodo\\b", "\\bmargem\\b", "\\bmargin\\b",
+  "sem sofrer", "clean sheet", "to nil", "escanteio", "\\bcorners?\\b", "\\bcart(ao|oes)\\b", "\\bcards?\\b", "\\bfaltas?\\b", "\\bfouls?\\b",
+  "\\bchutes?\\b", "finaliza", "\\bshots?\\b", "impedimento", "offside", "primeiro gol", "first goal", "\\bmarcam?\\b", "\\bscore\\b",
+  "rebote", "rebound", "assist", "\\btriplos?\\b", "three", "\\bpar\\b", "\\bimpar\\b", "\\bgames?\\b", "\\bodd\\b", "\\beven\\b",
+].join("|"));
+/** A market or selection that clearly names the match result (1X2 / moneyline). */
+const MATCH_RESULT = /resultado (final|da partida|do jogo)|\bresultado\b|\b1x2\b|vencedor|moneyline|money line|\bml\b|match result|full time result|match winner|\bwinner\b|\bto win\b|para vencer|\bvencer?\b|\bvitoria\b|\bganha\b|\bwins?\b/;
+
+/**
+ * The resolver's guess only stands when the grader can settle it truthfully: no period or either/or
+ * pick on any leg, whole or half lines only (quarter lines settle half-won), and a team leg must be
+ * the plain match result or the full-game total. Everything else becomes unknown, never guessed.
+ */
+function gradeableOrUnknown(r: ResolvedLeg, leg: ScanLeg): ResolvedLeg {
+  if (r.kind === "unknown") return r;
+  const text = normaliseName(`${leg.selection} ${leg.market}`).replace(/(\d),(\d)/g, "$1.$2");
+  const unknown: ResolvedLeg = { ...r, kind: "unknown", athleteId: null, player: null, team: null, marketKey: null, line: null, side: null };
+  if (PERIOD.test(text) || EITHER.test(text)) return unknown;
+  if (r.line !== null && !Number.isInteger(r.line * 2)) return unknown;
+  if (r.kind === "player") return r;
+  if (NOT_RESULT.test(text)) return unknown;
+  if (r.kind === "moneyline" && normaliseName(leg.market) && !MATCH_RESULT.test(text)) return unknown;
+  return r;
+}
+
+/**
  * A printed leg placed on a game: the event line picks the game, then the pick is read within it
  * (a player, a team to win, or the game total). Anything uncertain stays unknown and manual.
  */
 export function resolveScanLeg(leg: ScanLeg, index: number, games: GameContext[]): ResolvedLeg {
+  return gradeableOrUnknown(placeScanLeg(leg, index, games), leg);
+}
+
+function placeScanLeg(leg: ScanLeg, index: number, games: GameContext[]): ResolvedLeg {
   const game = gameForEvent(leg.event, games);
   if (!game) return resolveTypedLeg({ selection: `${leg.selection} ${leg.event}`, market: leg.market, odds: "" }, index, games);
   const within = resolveTypedLeg({ selection: leg.selection, market: leg.market, odds: "" }, index, [game]);
@@ -120,5 +158,5 @@ export function resolveScanLeg(leg: ScanLeg, index: number, games: GameContext[]
   if (line && !home && !away && GAME_TOTAL.test(normaliseName(text))) return { ...base, kind: "total", team: null, line: line.line, side: line.side };
   if (mentionsDraw(text) && !home && !away) return { ...base, kind: "draw", team: null };
   if ((home || away) && !line && (mentionsWin(text) || home !== away)) return { ...base, kind: "moneyline", team: home >= away ? game.home.abbreviation : game.away.abbreviation };
-  return within.kind === "unknown" ? { ...within } : within;
+  return within;
 }

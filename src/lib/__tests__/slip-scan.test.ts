@@ -68,6 +68,54 @@ describe("placing printed legs", () => {
     expect(resolveScanLeg(leg("Palmeiras vence", "", "Palmeiras x Santos"), 4, games).kind).toBe("unknown");
   });
 
+  it("never grades double chance, draw-no-bet, handicaps, periods or quarter lines as a plain result or total", () => {
+    const leg = (selection: string, market: string, event = "Atlético-MG x Flamengo") => ({ event, selection, market, odds: 2, startsAt: null });
+    const manual = [
+      leg("Flamengo ou empate", "Dupla Chance"),
+      leg("Flamengo", "Empate anula aposta"),
+      leg("Atlético-MG +1.5", "Handicap Asiático"),
+      leg("Atlético-MG +1,5", ""),
+      leg("Flamengo", "Resultado 1º Tempo"),
+      leg("Flamengo vence", "Intervalo/Final"),
+      leg("Mais de 1,5 gols", "Total de gols - 1º tempo"),
+      leg("Mais de 2,25", "Total de gols asiático"),
+      leg("Mais de 9,5", "Total de escanteios"),
+      leg("Mais de 4,5", "Total de cartões"),
+      leg("Flamengo", "Para se classificar"),
+      leg("Flamengo", "Marca primeiro gol"),
+      leg("Flamengo or Draw", "Double Chance"),
+      leg("Rafa Moura 1+ gols", "Jogador - 1º tempo", "Tupi FC x Ipê EC"),
+    ];
+    for (const [i, l] of manual.entries()) {
+      const r = resolveScanLeg(l, i, games);
+      expect(settlementFor(r, "CAM"), `${l.selection} / ${l.market}`).toBeNull();
+    }
+    // the plain markets still resolve
+    expect(resolveScanLeg(leg("Flamengo", "Resultado Final"), 0, games)).toMatchObject({ kind: "moneyline", team: "FLA" });
+    expect(resolveScanLeg(leg("Flamengo", "1X2"), 0, games)).toMatchObject({ kind: "moneyline", team: "FLA" });
+    expect(resolveScanLeg(leg("Menos de 2.5 gols", "Total de gols"), 0, games)).toMatchObject({ kind: "total", line: 2.5, side: "under" });
+  });
+
+  it("a 1-1 draw loses only a genuine match-result pick; the other markets stay unverifiable", async () => {
+    const { gradeLegAgainst } = await import("@/lib/ledger/settle");
+    const detail = {
+      game: { id: "203", sportKey: "soccer-bra", startsAt: games[1].startsAt, status: "final", home: { ...games[1].home, score: 1 }, away: { ...games[1].away, score: 1 } },
+      injuries: [], teamStats: { home: [], away: [] }, books: [], ats: [], leaders: [], lastMeetings: [], rosters: [],
+    } as unknown as import("@/lib/types").GameDetail;
+    const grade = async (selection: string, market: string) => {
+      const r = resolveScanLeg({ event: "Atlético-MG x Flamengo", selection, market, odds: 2, startsAt: null }, 0, games);
+      const settlement = settlementFor(r, "CAM");
+      if (!settlement) return "unverifiable";
+      return (await gradeLegAgainst({ selection, market: settlement.type, sourceBasis: "test", settlement, predictedProbability: 0, oddsDecimal: 2, outcome: "pending" }, detail, "soccer-bra")).outcome;
+    };
+    expect(await grade("Flamengo vence", "Resultado Final")).toBe("lost");
+    expect(await grade("Mais de 1,5 gols", "Total de gols")).toBe("won");
+    expect(await grade("Flamengo ou empate", "Dupla Chance")).toBe("unverifiable");
+    expect(await grade("Flamengo", "Empate anula aposta")).toBe("unverifiable");
+    expect(await grade("Atlético-MG +1.5", "Handicap Asiático")).toBe("unverifiable");
+    expect(await grade("Flamengo", "Resultado 1º Tempo")).toBe("unverifiable");
+  });
+
   it("sniffs the three accepted image types and nothing else", () => {
     expect(sniffImage(new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0]))).toBe("image/jpeg");
     expect(sniffImage(new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0]))).toBe("image/png");
