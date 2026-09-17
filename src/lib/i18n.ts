@@ -148,6 +148,7 @@ const DICT = {
   mySlip: { pt: "meu bilhete", en: "my slip" },
   loadingTickets: { pt: "Carregando os bilhetes…", en: "Loading tickets…" },
   bankroll: { pt: "Minha banca", en: "My bankroll" },
+  referral: { pt: "Indique", en: "Invite" },
   bankrollIntro: { pt: "Bilhetes que você salvou com o valor apostado. Os gerados aqui são liquidados sozinhos quando o jogo acaba; os de fora você marca.", en: "Tickets you saved with a stake. Ones generated here settle themselves when the game ends; outside bets you grade yourself." },
   addToBankroll: { pt: "Adicionar à banca", en: "Add to bankroll" },
   stake: { pt: "Valor", en: "Stake" },

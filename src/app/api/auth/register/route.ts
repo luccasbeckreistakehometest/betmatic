@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { cookies } from "next/headers";
 import { createUser } from "@/lib/server/users";
+import { REF_COOKIE, creditReferral } from "@/lib/server/referral";
 import { SESSION_COOKIE, signSession } from "@/lib/server/auth";
 
 export const runtime = "nodejs";
@@ -21,7 +22,10 @@ export async function POST(request: Request) {
   }
   try {
     const user = createUser(parsed.data);
-    (await cookies()).set(SESSION_COOKIE, signSession({ userId: user.id, role: user.role }), {
+    const jar = await cookies();
+    // A referral cookie set by /r/[code] credits both sides once; the cookie is then spent.
+    if (creditReferral(user.id, jar.get(REF_COOKIE)?.value)) jar.set(REF_COOKIE, "", { path: "/", maxAge: 0 });
+    jar.set(SESSION_COOKIE, signSession({ userId: user.id, role: user.role }), {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",

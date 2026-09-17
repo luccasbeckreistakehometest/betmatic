@@ -190,6 +190,14 @@ function migrate(d: Database.Database): void {
     );
     CREATE INDEX IF NOT EXISTS idx_bankroll_user ON bankroll_entries(userId, createdAt DESC);
 
+    -- Who brought whom; both sides are credited once when the referred account is created.
+    CREATE TABLE IF NOT EXISTS referrals (
+      referrerId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      referredId TEXT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+      coins INTEGER NOT NULL DEFAULT 0,
+      createdAt TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS job_runs (
       id TEXT PRIMARY KEY,
       job TEXT NOT NULL,

@@ -88,6 +88,7 @@ const NAV = [
   { href: "/app/slip", key: "mySlip" },
   { href: "/app/track", key: "navTrack" },
   { href: "/app/bankroll", key: "bankroll" },
+  { href: "/app/referral", key: "referral" },
 ] as const;
 
 export function NavLinks() {
