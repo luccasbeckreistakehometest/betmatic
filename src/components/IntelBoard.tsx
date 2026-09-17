@@ -141,7 +141,7 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
         {mine.delayed && (
           <p className="mb-3 rounded-lg border border-warn-400/25 bg-warn-400/5 px-3 py-2 text-[12px] text-warn-400">{t("delayedNotice")}</p>
         )}
-        <BetsPanel slate={mine.slate} lang={lang} gameId={gameId} />
+        <BetsPanel slate={mine.slate} lang={lang} gameId={gameId} sportKey={sport.key} />
       </>
     );
   } else if (delayed) {

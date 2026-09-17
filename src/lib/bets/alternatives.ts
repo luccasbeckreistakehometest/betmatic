@@ -49,20 +49,4 @@ export function linkAlternatives(items: LinkInput[], max = MAX_ALTERNATIVES): Be
   return out.sort((a, b) => a.combinedDecimal - b.combinedDecimal);
 }
 
-/** Main tickets with their alternatives attached, in display order. */
-export function groupAlternatives<T extends Pick<BetSuggestion, "id" | "alternativeFor">>(bets: T[]): { main: T; alternatives: T[] }[] {
-  const ids = new Set(bets.map((b) => b.id));
-  const mains = bets.filter((b) => !b.alternativeFor || !ids.has(b.alternativeFor));
-  return mains.map((main) => ({ main, alternatives: bets.filter((b) => b.alternativeFor === main.id) }));
-}
-
-/** What an alternative changes: legs dropped from the main, and legs it adds. */
-export function legDiff(main: { legs: { selection: string }[] }, alt: { legs: { selection: string }[] }): { removed: string[]; added: string[]; kept: string[] } {
-  const a = new Set(main.legs.map((l) => l.selection));
-  const b = new Set(alt.legs.map((l) => l.selection));
-  return {
-    removed: [...a].filter((s) => !b.has(s)),
-    added: [...b].filter((s) => !a.has(s)),
-    kept: [...a].filter((s) => b.has(s)),
-  };
-}
+export { groupAlternatives, legDiff } from "@/lib/bets/alternatives-view";

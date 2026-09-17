@@ -51,3 +51,13 @@ describe("public tickets", () => {
     expect(proofStats(list).generated).toBe(3);
   });
 });
+
+describe("main tickets only", async () => {
+  const { mainTickets, proofStats } = await import("@/lib/ledger/proof");
+  it("leaves alternatives out of the counts unless asked", () => {
+    const base = { gameId: "g", sportKey: "nba", matchup: "a @ b", createdAt: "2026-09-01", bandKey: "value", kind: "single" as const, title: "t", combinedDecimal: 2, modelledProbability: 0.5, legs: [], outcome: "won" as const };
+    const entries: import("@/lib/types").LedgerEntry[] = [{ ...base, id: "m" }, { ...base, id: "a", alternativeOf: "m", outcome: "lost" }];
+    expect(proofStats(mainTickets(entries)).generated).toBe(1);
+    expect(proofStats(mainTickets(entries, true)).generated).toBe(2);
+  });
+});

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { readLedger } from "@/lib/ledger/store";
-import { proofMinDecided, proofPublishable, proofStats } from "@/lib/ledger/proof";
+import { mainTickets, proofMinDecided, proofPublishable, proofStats } from "@/lib/ledger/proof";
 import { latestPredictionDateKey, servePredictions } from "@/lib/server/predictions";
 import { getPlan } from "@/lib/plans";
 import { SOLD_SPORTS } from "@/lib/sports";
@@ -44,7 +44,7 @@ function bestToday(lang: Lang, sportKeys?: string[]): { pick: ReturnType<typeof 
 /** `sportKeys` narrows both the numbers and the ticket to one sport funnel. */
 export function ProofStrip({ lang, sportKeys }: { lang: Lang; sportKeys?: string[] }) {
   const c = C[lang];
-  const s = proofStats(readLedger().filter((e) => !sportKeys || sportKeys.includes(e.sportKey)));
+  const s = proofStats(mainTickets(readLedger()).filter((e) => !sportKeys || sportKeys.includes(e.sportKey)));
   const { pick: top, isToday } = bestToday(lang, sportKeys);
   const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
   const publish = proofPublishable(s);

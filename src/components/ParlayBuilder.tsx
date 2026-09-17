@@ -112,7 +112,7 @@ export function ParlayBuilder() {
             </Link>
           </div>
         ) : slate ? (
-          <BetsPanel slate={slate.slate} lang={lang} />
+          <BetsPanel slate={slate.slate} lang={lang} sportKey={sport.key} />
         ) : build === "running" ? (
           <div className="flex items-center gap-3 rounded-lg border border-ink-700 bg-ink-850 px-3 py-3 text-[13px] text-mist-300" data-testid="generating-slate">
             <span className="h-3 w-3 animate-pulse rounded-full bg-edge-400" />{t("generatingSlate")}
