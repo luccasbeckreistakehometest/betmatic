@@ -13,7 +13,7 @@ async function noSideScroll(page: Page, path: string) {
 test.describe.configure({ timeout: 300_000 });
 
 test("public pages fit a phone and show 'Entrar'", async ({ page }) => {
-  for (const path of ["/?lang=pt", "/?lang=en", "/futebol", "/basketball", "/planos", "/prova", "/ferramentas", "/contato", "/termos", "/privacy", "/jogo-responsavel", "/login", "/signup"]) {
+  for (const path of ["/?lang=pt", "/?lang=en", "/futebol", "/basketball", "/planos", "/prova", "/ferramentas", "/contato", "/termos", "/privacy", "/jogo-responsavel", "/login", "/signup", "/raio-x-tipster", "/tipster-audit", "/basquete"]) {
     await noSideScroll(page, path);
   }
   await page.goto("/?lang=pt");
@@ -25,7 +25,8 @@ test("the signed-in app fits a phone, and the menu holds navigation and logout",
   await registerUser(page, "celular");
   await skipTour(page);
   const q = "sport=soccer-esp&lang=pt";
-  for (const path of [`/app?${q}&date=20260911`, `/app/game/401882878?${q}`, `/app/parlays?${q}`, `/app/slip?${q}`, `/app/track?${q}`, `/app/bankroll?${q}`, `/app/alerts?${q}`, `/app/ranking?${q}`, `/app/referral?${q}`, `/app/settings?${q}`, `/app/conta?${q}`]) {
+  for (const path of [`/app?${q}&date=20260911`, `/app/game/401882878?${q}`, `/app/parlays?${q}`, `/app/slip?${q}`, `/app/track?${q}`, `/app/bankroll?${q}`, `/app/alerts?${q}`, `/app/ranking?${q}`, `/app/referral?${q}`, `/app/settings?${q}`, `/app/conta?${q}`,
+    `/app/tipster?${q}`, `/app/report?${q}`, `/app/parlays/custom?${q}`, "/app/player/7101?sport=wnba&game=990000101&lang=pt", "/app/game/990000102?sport=wnba&lang=pt"]) {
     await noSideScroll(page, path);
   }
   await page.goto(`/app?${q}&date=20260911`);
@@ -33,6 +34,7 @@ test("the signed-in app fits a phone, and the menu holds navigation and logout",
   const menu = page.getByTestId("app-menu");
   await expect(menu.getByRole("link", { name: "Minha banca" })).toBeVisible();
   await expect(menu.getByRole("link", { name: "Minha conta" })).toBeVisible();
+  await expect(menu.getByRole("link", { name: "Raio-x do tipster" })).toBeVisible();
   await expect(page.getByTestId("logout")).toBeVisible();
   const box = await menu.boundingBox();
   const width = await page.evaluate(() => window.innerWidth);
