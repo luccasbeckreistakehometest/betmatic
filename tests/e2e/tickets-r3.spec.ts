@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
-import { registerUser, setPlan, skipTour, useAiMock } from "./helpers";
+import { registerUser, setPlan, skipTour, withAiMock } from "./helpers";
 
-useAiMock();
+withAiMock();
 
 const generated = async (page: import("@playwright/test").Page) =>
   Number((await page.getByTestId("proof-stats").locator("div.nums").first().textContent())?.trim() ?? "0");

@@ -5,7 +5,7 @@ import { expect, request as pwRequest, test, type APIRequestContext, type Page }
 const MOCK_FLAG = path.join(process.cwd(), "data", "e2e", "ai-mock.on");
 
 /** The dev server answers model calls from fixtures while this spec file runs (AI_MOCK=switch). */
-export function useAiMock() {
+export function withAiMock() {
   test.beforeAll(() => { fs.writeFileSync(MOCK_FLAG, ""); });
   test.afterAll(() => { fs.rmSync(MOCK_FLAG, { force: true }); });
 }

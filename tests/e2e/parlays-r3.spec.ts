@@ -1,9 +1,9 @@
 import path from "node:path";
 import Database from "better-sqlite3";
 import { test, expect } from "@playwright/test";
-import { registerUser, setPlan, skipTour, useAiMock } from "./helpers";
+import { registerUser, setPlan, skipTour, withAiMock } from "./helpers";
 
-useAiMock();
+withAiMock();
 
 const slateRows = () => {
   const db = new Database(path.join(process.cwd(), "data", "e2e", "betmatic.db"), { readonly: true });
