@@ -187,6 +187,7 @@ const DICT = {
     en: "Long parlays are low-probability tickets and the book's margin compounds with every leg. The numbers below show that plainly.",
   },
 
+  ownCurve: { pt: "Sua banca ao longo do tempo", en: "Your bankroll over time" },
   // ---- alerts ----
   navAlerts: { pt: "Alertas", en: "Alerts" },
   alertsTitle: { pt: "Alertas no Telegram", en: "Telegram alerts" },

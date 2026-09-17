@@ -62,6 +62,7 @@ export function recordPredictions(game: Game, suggestions: BetSuggestion[]): num
       title: s.title,
       combinedDecimal: s.combinedDecimal,
       modelledProbability: s.modelledProbability,
+      evidenceScore: s.evidenceScore,
       outcome: "pending",
       legs: s.legs.map<SettledLeg>((l) => ({
         selection: l.selection,

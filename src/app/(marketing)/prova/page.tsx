@@ -4,6 +4,8 @@ import { Logo } from "@/components/Logo";
 import { readLedger } from "@/lib/ledger/store";
 import { proofStats, recentTickets, ticketSlug } from "@/lib/ledger/proof";
 import { scrubText } from "@/lib/server/whitelabel";
+import { EquityChart } from "@/components/EquityChart";
+import { toRows } from "@/lib/ledger/backtest";
 import { normaliseLang } from "@/lib/i18n";
 import { formatDecimal } from "@/lib/odds";
 
@@ -50,6 +52,8 @@ export default async function ProofPage({ searchParams }: { searchParams: Promis
           ))}
         </div>
         {s.settled > 0 && s.settled < 30 && <p className="mt-3 text-[12px] text-mist-500">{c.small}</p>}
+
+        <div className="mt-8"><EquityChart rows={toRows(entries, (e) => ticketSlug(e.id))} lang={lang} /></div>
 
         {s.settled > 0 && (
           <div className="mt-10 grid gap-5 md:grid-cols-3">

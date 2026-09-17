@@ -233,6 +233,8 @@ export interface LedgerEntry {
   title: string;
   combinedDecimal: number;
   modelledProbability: number;
+  /** The generator's 0–100 evidence score at creation; absent on tickets logged before it was recorded. */
+  evidenceScore?: number;
   legs: SettledLeg[];
   outcome: LegOutcome;
 }
