@@ -168,3 +168,19 @@ describe("webhook signature", () => {
     expect(mp.verifyWebhookSignature({ signature: null, requestId: null, dataId: null }, "")).toBe(true);
   });
 });
+
+describe("plan expiry on purchase", () => {
+  it("extends the same plan, converts time left when switching, starts fresh when lapsed", async () => {
+    const { nextPlanExpiry } = await import("@/lib/server/users");
+    const now = new Date("2026-09-17T12:00:00Z");
+    const in30 = new Date(now.getTime() + 30 * 86_400_000).toISOString();
+    expect(nextPlanExpiry({ planId: "pro", planExpiresAt: in30 }, "pro", "monthly", now).toISOString()).toBe("2026-11-17T12:00:00.000Z");
+    // 30 days of Pro (89) are worth 13.4 days of Max (199), then one month is added.
+    const switched = nextPlanExpiry({ planId: "pro", planExpiresAt: in30 }, "max", "monthly", now);
+    const days = (switched.getTime() - now.getTime()) / 86_400_000;
+    expect(days).toBeGreaterThan(30 + 13);
+    expect(days).toBeLessThan(31 + 14);
+    const lapsed = nextPlanExpiry({ planId: "pro", planExpiresAt: "2026-01-01T00:00:00Z" }, "pro", "quarterly", now);
+    expect(lapsed.toISOString()).toBe("2026-12-17T12:00:00.000Z");
+  });
+});

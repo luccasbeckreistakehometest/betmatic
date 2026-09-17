@@ -202,24 +202,32 @@ export function adjustCoins(
   return run();
 }
 
+/**
+ * The new expiry after a purchase. Same plan: the period is added to what is left. Different plan
+ * while one is active: the days left are converted at the ratio of the monthly prices, then the
+ * period is added from now — nobody loses paid time by upgrading or downgrading.
+ */
+export function nextPlanExpiry(current: Pick<UserRow, "planId" | "planExpiresAt"> | undefined, planId: string, period: BillingPeriod, now = new Date()): Date {
+  const months = (PERIOD[period] ?? PERIOD.monthly).months;
+  const active = !!current?.planExpiresAt && current.planExpiresAt > now.toISOString() && current.planId !== "free";
+  let base = new Date(now);
+  if (active && current!.planId === planId) {
+    base = new Date(current!.planExpiresAt!);
+  } else if (active) {
+    const oldPrice = getPlan(current!.planId).monthlyPrice;
+    const newPrice = getPlan(planId).monthlyPrice;
+    const leftMs = Date.parse(current!.planExpiresAt!) - now.getTime();
+    if (oldPrice > 0 && newPrice > 0 && leftMs > 0) base = new Date(now.getTime() + Math.round(leftMs * (oldPrice / newPrice)));
+  }
+  base.setMonth(base.getMonth() + months);
+  return base;
+}
+
 export function activatePlan(userId: string, planId: string, period: BillingPeriod, meta: Record<string, unknown> = {}): void {
   const db = getDb();
   const plan = getPlan(planId);
-  const months = (PERIOD[period] ?? PERIOD.monthly).months;
-  const current = findById(userId);
-  // Renewing early extends from the existing expiry rather than truncating paid time.
-  const base =
-    current?.planExpiresAt && current.planExpiresAt > nowIso() && current.planId === planId
-      ? new Date(current.planExpiresAt)
-      : new Date();
-  base.setMonth(base.getMonth() + months);
-
-  db.prepare("UPDATE users SET planId = ?, planPeriod = ?, planExpiresAt = ? WHERE id = ?").run(
-    planId,
-    period,
-    base.toISOString(),
-    userId,
-  );
+  const expiry = nextPlanExpiry(findById(userId), plan.id, period);
+  db.prepare("UPDATE users SET planId = ?, planPeriod = ?, planExpiresAt = ? WHERE id = ?").run(plan.id, period, expiry.toISOString(), userId);
   if (plan.coinsPerPeriod > 0) {
     adjustCoins(userId, plan.coinsPerPeriod, `plan:${planId}:${period}`, meta);
   }
