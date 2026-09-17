@@ -2,12 +2,15 @@ import { test, expect, type Page } from "@playwright/test";
 import { registerUser, skipTour } from "./helpers";
 
 async function noSideScroll(page: Page, path: string) {
-  const r = await page.goto(path);
+  const r = await page.goto(path, { waitUntil: "load" });
   expect(r?.status(), path).toBeLessThan(400);
-  await page.waitForLoadState("networkidle").catch(() => {});
+  await page.waitForTimeout(250); // client components (header, panels) have rendered
   const { scroll, inner } = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, inner: window.innerWidth }));
   expect(scroll, `${path} is ${scroll}px wide on a ${inner}px screen`).toBeLessThanOrEqual(inner + 1);
 }
+
+// The dev server compiles each page on first visit; a dozen pages need more than the default budget.
+test.describe.configure({ timeout: 300_000 });
 
 test("public pages fit a phone and show 'Entrar'", async ({ page }) => {
   for (const path of ["/?lang=pt", "/?lang=en", "/futebol", "/basketball", "/planos", "/prova", "/ferramentas", "/contato", "/termos", "/privacy", "/jogo-responsavel", "/login", "/signup"]) {

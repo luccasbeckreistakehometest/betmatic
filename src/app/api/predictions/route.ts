@@ -40,7 +40,7 @@ export async function GET(request: Request) {
   const pause = user ? pauseState(user.id) : { paused: false, until: null, daysLeft: 0 };
   const served = pause.paused
     ? { predictions: [], delayedGames: [] }
-    : servePredictionsDetailed({ scope, sportKey, dateKey, lang, plan, role, viewer });
+    : servePredictionsDetailed({ scope, sportKey, dateKey, lang, plan, role, viewer, anonymous: !user });
 
   return NextResponse.json({
     ...served,

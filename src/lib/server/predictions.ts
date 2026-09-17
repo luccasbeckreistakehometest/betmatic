@@ -122,6 +122,8 @@ export function servePredictionsDetailed(input: {
   plan: Plan;
   role: Role;
   viewer?: Viewer;
+  /** A signed-out visitor: a plan with a daily allowance shows them nothing — the pick needs an account. */
+  anonymous?: boolean;
   now?: number;
 }): { predictions: ServedPrediction[]; delayedGames: DelayedGame[] } {
   const { scope, sportKey, dateKey, lang, plan, role, viewer } = input;
@@ -129,6 +131,7 @@ export function servePredictionsDetailed(input: {
 
   if (role !== "admin" && plan.sports.length && !plan.sports.includes(sportKey)) return empty;
   if (role !== "admin" && scope === "slate" && !plan.crossGame) return empty;
+  if (input.anonymous && plan.gamesPerDay !== null) return empty;
 
   const rows = getDb()
     .prepare(
@@ -140,7 +143,7 @@ export function servePredictionsDetailed(input: {
 
   const now = input.now ?? Date.now();
   const delayMs = role === "admin" ? 0 : plan.delayMinutes * 60_000;
-  // A daily allowance means the games the viewer chose; an anonymous visitor gets the first ones.
+  // A daily allowance means the games the viewer chose (a viewer-less read, e.g. the digest, gets the first ones).
   const capped = role === "admin" || plan.gamesPerDay === null
     ? rows
     : viewer

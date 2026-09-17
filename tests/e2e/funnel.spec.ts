@@ -14,10 +14,15 @@ test("a free user sees the ticket of the game they opened, and that game is thei
   expect(served.predictions[0].slate.suggestions.every((s: { bandKey: string }) => s.bandKey === "value")).toBe(true);
 
   // A second game the same day is refused with the chosen one named, and nothing is generated.
-  const slate = await page.request.get("/api/slate?sport=soccer-esp&date=20260911").then((r) => r.json());
-  const other = slate.games.find((g: { id: string }) => g.id !== "401882878");
-  test.skip(!other, "ESPN listed no other game that day");
-  const second = await page.request.post(`/api/game/${other.id}/generate?sport=soccer-esp`).then((r) => r.json());
+  // Any other real game will do (the pick is per Brasília day, whatever the game's date).
+  let other: { id: string; sport: string } | null = null;
+  for (const sport of ["soccer-bra", "wnba", "soccer-eng", "nba"]) {
+    const slate = await page.request.get(`/api/slate?sport=${sport}`).then((r) => r.json());
+    const game = (slate.games ?? []).find((g: { id: string }) => g.id !== "401882878");
+    if (game) { other = { id: game.id, sport }; break; }
+  }
+  expect(other, "ESPN listed no other game to try").not.toBeNull();
+  const second = await page.request.post(`/api/game/${other!.id}/generate?sport=${other!.sport}`).then((r) => r.json());
   expect(second.status).toBe("cap_user");
   expect(second.unlocked[0].gameId).toBe("401882878");
   // A made-up id never burns the pick.

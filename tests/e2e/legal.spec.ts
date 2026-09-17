@@ -39,7 +39,7 @@ test("footers link the legal pages, signup shows the consent checkbox, and suppo
     await expect(footer.getByRole("link", { name: /Jogo responsável/ })).toBeVisible();
   }
   await page.goto("/");
-  await expect(page.getByTestId("support-channels")).toContainText("suporte@example.com");
+  await expect(page.getByTestId("support-channels")).toContainText("ajuda@betmatic.test");
   await expect(page.getByTestId("support-channels")).not.toContainText("WhatsApp");
 
   await page.goto("/signup?lang=pt");

@@ -40,7 +40,11 @@ test("the differentiators section and the sport funnels carry the proof strip", 
   const edge = page.getByTestId("edge");
   await expect(edge).toContainText("Prova pública");
   await expect(edge.getByRole("link")).toHaveCount(6);
-  await page.goto("/basquete");
+  await page.goto("/futebol");
   await expect(page.getByTestId("proof-strip")).toBeVisible();
   await expect(page.getByTestId("proof-strip")).toContainText("bilhetes gerados");
+  // A sport with no decided ticket shows the method, never a row of zeros.
+  await page.goto("/basquete");
+  await expect(page.getByTestId("proof-method")).toContainText("Como medimos");
+  await expect(page.getByTestId("proof-strip")).not.toContainText("bilhetes gerados");
 });
