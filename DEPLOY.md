@@ -77,7 +77,7 @@ linha JSON no log (`job.lineups`, `job.close`, `job.weekly`, `job.cleanup`, `job
 | job | quando | o que faz |
 |---|---|---|
 | `lineups` | a cada tick (15 min) | vigia de escalação: bilhetes pendentes com jogo nas próximas 100 min contra escalação e lesões (ESPN), no máximo 30 jogos por tick |
-| `close` | a cada tick | CLV: odd de fechamento das pernas cujo jogo começa em até 15 min |
+| `close` | a cada tick | CLV: odd de fechamento das pernas cujo jogo começa em até 30 min (janela maior que o intervalo do cron) |
 | `weekly` | de hora em hora | relatório semanal; só escreve na segunda a partir das 12:00 UTC (`force=1` para rodar agora) |
 | `cleanup` | 1 vez por dia | apaga eventos de medição com mais de 180 dias |
 | `featured` | junto do refresh (a cada 4 h) | destaques do dia; roda mesmo com `CRON_ENABLED=0` |
