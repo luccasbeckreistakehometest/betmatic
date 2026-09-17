@@ -304,6 +304,8 @@ const DICT = {
   login: { pt: "Entrar", en: "Log in" },
   planUntil: { pt: "até {date}", en: "until {date}" },
   contact: { pt: "Fale com a gente", en: "Contact us" },
+  generatingSlate: { pt: "Montando as múltiplas da rodada — pode levar um minuto.", en: "Building today's cross-game parlays — this can take a minute." },
+  slateTooFew: { pt: "Ainda não há pelo menos dois jogos por começar neste esporte hoje.", en: "There aren't two upcoming games in this sport today yet." },
   networkError: { pt: "Sem conexão. Confira sua internet e tente de novo.", en: "No connection. Check your internet and try again." },
 } as const;
 

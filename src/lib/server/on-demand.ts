@@ -1,9 +1,12 @@
 import { getDb, newId, nowIso } from "@/lib/server/db";
-import { findPrediction } from "@/lib/server/predictions";
+import { findPrediction, savePrediction } from "@/lib/server/predictions";
+import { buildSlateBets } from "@/lib/bets/builder";
+import { localiseSlate } from "@/lib/bets/localise";
+import { lastUsage } from "@/lib/ai/extract";
 import { generateGame } from "@/lib/server/generate-game";
 import { onDemandCaps, onDemandVerdict, type OnDemandVerdict } from "@/lib/server/on-demand-policy";
 import { refreshConfig } from "@/lib/server/refresh-policy";
-import { espnDateKey, getGameDetail } from "@/lib/sources/espn";
+import { espnDateKey, getGameDetail, getSlateOrNearest, todayKey } from "@/lib/sources/espn";
 import { SPORTS, sportSellsTickets } from "@/lib/sports";
 import { aiConfigured } from "@/lib/ai/client";
 import { AiBudgetExceededError, brasiliaDayStart } from "@/lib/server/ai-budget";
@@ -73,4 +76,65 @@ export async function ensureGameGenerated(args: { sportKey: string; gameId: stri
 
   inflight.set(key, task);
   try { return await task; } finally { inflight.delete(key); }
+}
+
+export type SlateDemandResult =
+  | { status: "generated" | "exists" | "too_few_games" | "cap_global" | "not_allowed" | "ai_off" | "unsupported" | "ai_budget" | "error"; dateKey?: string };
+
+const slateInflight = new Map<string, Promise<SlateDemandResult>>();
+
+/**
+ * Cross-game parlays on demand: the first paid (crossGame) user to open the parlays page of a sport
+ * builds that day's slate once; everyone else reads it. It counts against the global cap.
+ */
+export async function ensureSlateGenerated(args: { sportKey: string; user: PublicUser; maxGames?: number }): Promise<SlateDemandResult> {
+  const { sportKey, user } = args;
+  const sport = SPORTS.find((s) => s.key === sportKey);
+  if (!sport || !sportSellsTickets(sport)) return { status: "unsupported" };
+  if (user.role !== "admin" && !user.plan.crossGame) return { status: "not_allowed" };
+  const key = `slate:${sportKey}`;
+  const running = slateInflight.get(key);
+  if (running) return running;
+
+  const task = (async (): Promise<SlateDemandResult> => {
+    const slate = await getSlateOrNearest(todayKey(), false, sportKey).catch(() => null);
+    if (!slate) return { status: "error" };
+    const langs = refreshConfig(process.env, SPORTS.map((s) => s.key)).langs as Lang[];
+    const [primary, ...derived] = langs;
+    if (findPrediction({ scope: "slate", sportKey, gameId: null, dateKey: slate.dateKey, lang: primary })) return { status: "exists", dateKey: slate.dateKey };
+    const upcoming = slate.games.filter((g) => g.status === "scheduled" && Date.parse(g.startsAt) > Date.now()).slice(0, args.maxGames ?? 6);
+    if (upcoming.length < 2) return { status: "too_few_games", dateKey: slate.dateKey };
+    if (user.role !== "admin" && todayCounts(user.id).global >= onDemandCaps(process.env).globalDailyCap) return { status: "cap_global" };
+    if (!aiConfigured()) return { status: "ai_off" };
+
+    const reqId = newId("gr");
+    getDb().prepare("INSERT INTO generation_requests (id,userId,sportKey,gameId,dateKey,status,createdAt,scope) VALUES (?,?,?,?,?,?,?,?)")
+      .run(reqId, user.id, sportKey, key, slate.dateKey, "running", nowIso(), "slate");
+    try {
+      const details = (await Promise.all(upcoming.map((g) => getGameDetail(g.id, false, sportKey).catch(() => null))))
+        .filter((d): d is NonNullable<typeof d> => d !== null);
+      if (details.length < 2) throw new Error("fewer than two games with details");
+      let cost = 0;
+      const spend = () => { const c = lastUsage?.costUsd ?? 0; cost += c; return c; };
+      const cross = await buildSlateBets({ games: details.map((d) => ({ game: d.game, detail: d })), bands: ["long", "moonshot"], lang: primary });
+      const matchup = `${details.length} ${primary === "pt" ? "jogos" : "games"}`;
+      savePrediction({ scope: "slate", sportKey, gameId: null, dateKey: slate.dateKey, lang: primary, matchup, slate: cross, costUsd: spend() });
+      for (const lang of derived) {
+        try {
+          savePrediction({ scope: "slate", sportKey, gameId: null, dateKey: slate.dateKey, lang, matchup: `${details.length} ${lang === "pt" ? "jogos" : "games"}`, slate: await localiseSlate(cross, primary, lang), costUsd: spend() });
+        } catch (error) {
+          reportError("ai.slate.localise", error, { sportKey, lang }, "warn");
+        }
+      }
+      getDb().prepare("UPDATE generation_requests SET status='ok', costUsd=?, finishedAt=? WHERE id=?").run(cost, nowIso(), reqId);
+      return { status: "generated", dateKey: slate.dateKey };
+    } catch (error) {
+      reportError("ai.slate", error, { sportKey });
+      getDb().prepare("DELETE FROM generation_requests WHERE id = ?").run(reqId);
+      return { status: error instanceof AiBudgetExceededError ? "ai_budget" : "error" };
+    }
+  })();
+
+  slateInflight.set(key, task);
+  try { return await task; } finally { slateInflight.delete(key); }
 }

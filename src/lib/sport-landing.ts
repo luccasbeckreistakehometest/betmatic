@@ -127,60 +127,6 @@ export const SPORT_LANDINGS: SportLanding[] = [
       en: "Soccer picks with measured history: cards, fouls, shots on target and offsides across the Premier League, La Liga and Champions League.",
     },
   },
-  {
-    slug: { pt: "tenis", en: "tennis" },
-    sportKeys: ["tennis-atp", "tennis-wta"],
-    name: { pt: "Tênis", en: "Tennis" },
-    title: {
-      pt: "Um contra um. Sem time para culpar.",
-      en: "One against one. No teammates to blame.",
-    },
-    sub: {
-      pt: "Tênis é o esporte mais limpo para apostar: dois jogadores, nenhum banco, nenhuma tática coletiva para atrapalhar a leitura. Cobrimos a chave inteira do torneio, rodada por rodada.",
-      en: "Tennis is the cleanest sport to bet: two players, no bench, no team tactics muddying the read. We cover the full draw, round by round.",
-    },
-    angle: {
-      pt: [
-        {
-          title: "A chave inteira, não só a final",
-          body: "Qualificatório, primeira rodada, quartas. Todas as partidas do torneio aparecem no mesmo dia em que acontecem.",
-        },
-        {
-          title: "ATP e WTA com o mesmo peso",
-          body: "Cobertura igual nos dois circuitos. Não é um apêndice do masculino.",
-        },
-        {
-          title: "Total de games e sets",
-          body: "Em confronto direto, o mercado de total costuma ser mais previsível que o vencedor — e é onde a leitura de superfície e retrospecto pesa.",
-        },
-      ],
-      en: [
-        {
-          title: "The whole draw, not just the final",
-          body: "Qualifying, first round, quarters. Every match in the tournament shows up on the day it is played.",
-        },
-        {
-          title: "ATP and WTA weighted the same",
-          body: "Equal coverage across both tours, not one as an afterthought.",
-        },
-        {
-          title: "Total games and sets",
-          body: "Head to head, totals often read more predictably than the winner — and that is where surface and record matter most.",
-        },
-      ],
-    },
-    marketsTitle: { pt: "Mercados cobertos", en: "Covered markets" },
-    markets: {
-      pt: ["Vencedor", "Total de sets", "Total de games", "Handicap de games"],
-      en: ["Winner", "Total sets", "Total games", "Games handicap"],
-    },
-    leagues: ["ATP", "WTA"],
-    cta: { pt: "Ver as partidas de hoje", en: "See today's matches" },
-    meta: {
-      pt: "Palpites de tênis ATP e WTA, torneio a torneio, com a chance real de cada mercado.",
-      en: "ATP and WTA tennis picks, tournament by tournament, with the real probability of each market.",
-    },
-  },
 ];
 
 export function findSportLanding(slug: string): { landing: SportLanding; lang: Lang } | null {
