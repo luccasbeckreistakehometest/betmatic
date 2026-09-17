@@ -13,6 +13,8 @@ test("a paid user gets priced player legs, line movement and two alternatives un
 
   await page.goto("/prova?lang=pt");
   const before = await generated(page);
+  await page.goto("/prova?lang=pt&alts=1");
+  const beforeWithAlts = await generated(page);
 
   await page.goto("/app/game/990000101?sport=wnba&lang=pt");
   await expect(page.getByTestId("ticket-bankroll").first()).toBeVisible({ timeout: 60_000 });
@@ -37,5 +39,5 @@ test("a paid user gets priced player legs, line movement and two alternatives un
   expect(await generated(page)).toBe(before + 3);
   await page.getByTestId("alts-toggle").click();
   await expect(page).toHaveURL(/alts=1/);
-  expect(await generated(page)).toBe(before + 5);
+  expect(await generated(page)).toBe(beforeWithAlts + 5);
 });

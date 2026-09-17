@@ -148,6 +148,23 @@ export function writeEspnFixtures(dir: string, now = Date.now()) {
     writeFile(dir, `${CORE}/${g.sport}/leagues/${g.league}/events/${g.id}/competitions/${g.id}/odds?limit=100`, coreOdds(g));
     writeFile(dir, `${CORE}/${g.sport}/leagues/${g.league}/events/${g.id}/competitions/${g.id}/odds/100/propBets?limit=1000`, propBets(g));
   }
+  // The seeded Sevilla game (401882878) replays as "under way": the settle pass that every generation
+  // runs first must leave its seeded pending tickets alone instead of asking the real ESPN.
+  const sevilla = { id: "sev", abbreviation: "SEV", displayName: "Sevilla", shortDisplayName: "Sevilla", name: "Sevilla" };
+  const valencia = { id: "val", abbreviation: "VAL", displayName: "Valencia", shortDisplayName: "Valencia", name: "Valencia" };
+  writeFile(dir, `${SITE}/soccer/esp.1/summary?event=401882878`, {
+    header: { competitions: [{ date: "2026-09-11T19:00Z", status: { displayClock: "55'", period: 2, type: { state: "in", completed: false, shortDetail: "55'", detail: "In Progress" } }, competitors: [
+      { id: "sev", homeAway: "home", score: "1", team: sevilla }, { id: "val", homeAway: "away", score: "1", team: valencia },
+    ] }] },
+    boxscore: { teams: [], players: [] }, rosters: [],
+  });
+  for (const day of ["20260911"]) {
+    writeFile(dir, `${SITE}/soccer/esp.1/scoreboard?dates=${day}&limit=100`, { leagues: [{ calendar: [] }], events: [] });
+    writeFile(dir, `${SITE}/soccer/esp.1/scoreboard?dates=${day}&limit=1`, { leagues: [{ calendar: [] }], events: [] });
+  }
+  writeFile(dir, `${SITE}/soccer/esp.1/teams/sev/roster`, { athletes: [] });
+  writeFile(dir, `${SITE}/soccer/esp.1/teams/val/roster`, { athletes: [] });
+
   const leagueOf = (t: Team) => (t.players[0].id.startsWith("88") ? { sport: "soccer", league: "bra.1" } : { sport: "basketball", league: "wnba" });
   for (const t of teams) {
     const { sport, league } = leagueOf(t);
