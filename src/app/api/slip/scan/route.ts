@@ -3,7 +3,7 @@ import { currentUser } from "@/lib/server/session";
 import { apiError, rateLimited, requestLang } from "@/lib/server/api";
 import { accountKey, hit, ipKey } from "@/lib/server/rate-limit";
 import { pauseState } from "@/lib/server/settings";
-import { claimUse, globalUsesToday, releaseUse } from "@/lib/server/feature-uses";
+import { aiTryLimits, claimUse, globalUsesToday, releaseUse } from "@/lib/server/feature-uses";
 import { newId } from "@/lib/server/db";
 import { extractSlip, resolveScan, SCAN_MAX_BYTES, scanLimits } from "@/lib/server/slip-scan";
 import { slipChecks, sniffImage } from "@/lib/bets/slip-scan";
@@ -42,22 +42,30 @@ export async function POST(request: Request) {
 
   const limits = scanLimits();
   const paid = user.role === "admin" || user.plan.id !== "free";
-  if (user.role !== "admin" && globalUsesToday("scan") >= limits.global) return apiError("scan_busy", lang, 503, { manual: true });
+  // The global ceiling counts model calls, not successful reads.
+  if (user.role !== "admin" && globalUsesToday("scan_try") >= limits.global) return apiError("scan_busy", lang, 503, { manual: true });
   const key = newId("scan");
   const limit = user.role === "admin" ? Number.MAX_SAFE_INTEGER : paid ? limits.paid : limits.free;
   const claim = claimUse({ userId: user.id, feature: "scan", key, limit });
   if (!claim.ok) return apiError("scan_cap", lang, 403, { used: claim.used, limit });
+  if (user.role !== "admin") {
+    const tries = aiTryLimits().scan;
+    const tried = claimUse({ userId: user.id, feature: "scan_try", key, limit: paid ? tries.paid : tries.free });
+    if (!tried.ok) {
+      releaseUse(user.id, "scan", key);
+      return apiError("ai_tries", lang, 429, { manual: true });
+    }
+  }
 
   try {
     const scan = await extractSlip({ data: Buffer.from(bytes).toString("base64"), mediaType }, lang);
     logEvent("slip.scan", { bytes: bytes.length, legs: scan.legs.length });
-    if (!scan.legs.length) {
-      releaseUse(user.id, "scan", key);
-      return apiError("scan_unreadable", lang, 422);
-    }
+    // The model read the image and found nothing: that read was paid for, so it counts.
+    if (!scan.legs.length) return apiError("scan_unreadable", lang, 422, { used: claim.used, limit: user.role === "admin" ? null : limit });
     const legs = await resolveScan(sportKey, scan.legs);
     return NextResponse.json({ scan: { ...scan, legs }, checks: slipChecks({ ...scan, legs }), used: claim.used, limit: user.role === "admin" ? null : limit });
   } catch (error) {
+    // A failed call gives the read back; the try stays counted.
     releaseUse(user.id, "scan", key);
     if (error instanceof AiBudgetExceededError) return apiError("ai_budget", lang, 503, { manual: true });
     reportError("ai.slip_scan", error, { userId: user.id, bytes: bytes.length }, "warn");

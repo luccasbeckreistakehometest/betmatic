@@ -20,10 +20,15 @@ vi.mock("@/lib/sources/espn", async (orig) => ({
 }));
 let sessionUser: unknown = null;
 vi.mock("@/lib/server/session", () => ({ currentUser: async () => sessionUser }));
+let emptyPicks = false;
+vi.mock("@/lib/server/tipster", async (orig) => {
+  const real = await orig<typeof import("@/lib/server/tipster")>();
+  return { ...real, extractPicks: async (input: Parameters<typeof real.extractPicks>[0]) => (emptyPicks ? [] : real.extractPicks(input)) };
+});
 
 const { auditReport, longestLosingRun, postedLate, redFlags, shareText } = await import("@/lib/tipster/audit");
 const { POST, GET, DELETE } = await import("@/app/api/tipster/route");
-const { createUser, toPublic, findById } = await import("@/lib/server/users");
+const { adjustCoins, createUser, toPublic, findById } = await import("@/lib/server/users");
 const { getDb } = await import("@/lib/server/db");
 
 const pick = (outcome: string, extra: object = {}) => ({ postedAt: null, startsAt: null, event: "", selection: "", matchup: null, odds: 2, oddsSource: "stated" as const, claimed: null, outcome, ...extra }) as never;
@@ -74,5 +79,37 @@ describe("tipster route", async () => {
     expect(list.audits).toHaveLength(1);
     expect((await DELETE(new Request(`http://x/api/tipster?id=${list.audits[0].id}`))).status).toBe(200);
     expect(getDb().prepare("SELECT COUNT(*) n FROM tipster_audits").get()).toEqual({ n: 0 });
+  });
+
+  it("an empty read keeps the period's slot, refunds coins, and every model call counts toward a daily and a global try cap", async () => {
+    const u = await createUser({ email: `tipempty${Date.now()}@example.com`, name: "e", password: "password123" });
+    adjustCoins(u.id, 20, "test", {});
+    sessionUser = toPublic(findById(u.id)!);
+    emptyPicks = true;
+    try {
+      const first = await POST(body());
+      expect(first.status).toBe(422);
+      expect((await first.json()).error).toBe("tipster_unreadable");
+      expect((await (await GET(new Request("http://x/api/tipster"))).json()).allowance.used).toBe(1);
+      // the slot stayed used: the next free audit is capped
+      expect((await (await POST(body())).json()).error).toBe("tipster_cap");
+      // extras past the allowance: an empty read gives the coins back, up to the daily try cap (3 on the free plan)
+      for (let i = 0; i < 2; i++) expect((await POST(body(true))).status).toBe(422);
+      expect(findById(u.id)!.coins).toBe(20);
+      const tired = await POST(body(true));
+      expect(tired.status).toBe(429);
+      expect((await tired.json()).error).toBe("ai_tries");
+      expect(findById(u.id)!.coins).toBe(20);
+      // the global ceiling counts every account's calls
+      process.env.TIPSTER_DAILY_CAP = "3";
+      const other = await createUser({ email: `tipglobal${Date.now()}@example.com`, name: "g", password: "password123" });
+      sessionUser = toPublic(findById(other.id)!);
+      const busy = await POST(body());
+      expect(busy.status).toBe(503);
+      expect((await busy.json()).error).toBe("tipster_busy");
+    } finally {
+      emptyPicks = false;
+      delete process.env.TIPSTER_DAILY_CAP;
+    }
   });
 });

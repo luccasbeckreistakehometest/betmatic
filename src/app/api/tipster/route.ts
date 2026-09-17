@@ -5,7 +5,7 @@ import { apiError, rateLimited, requestLang } from "@/lib/server/api";
 import { accountKey, hit, ipKey } from "@/lib/server/rate-limit";
 import { pauseState } from "@/lib/server/settings";
 import { newId } from "@/lib/server/db";
-import { claimUse, releaseUse } from "@/lib/server/feature-uses";
+import { aiTryLimits, claimUse, globalUsesToday, releaseUse } from "@/lib/server/feature-uses";
 import { adjustCoins, InsufficientCoinsError } from "@/lib/server/users";
 import { deleteAudit, extractPicks, gradePicks, listAudits, saveAudit, TIPSTER_MAX_CHARS, tipsterAllowance } from "@/lib/server/tipster";
 import { auditReport, redFlags } from "@/lib/tipster/audit";
@@ -66,6 +66,9 @@ export async function POST(request: Request) {
   const ip = hit("aiIp", ipKey(request));
   if (!ip.ok) return rateLimited(ip, lang);
 
+  const tries = aiTryLimits().tipster;
+  if (user.role !== "admin" && globalUsesToday("tipster_try") >= tries.global) return apiError("tipster_busy", lang, 503);
+
   const allowance = tipsterAllowance(user);
   const key = newId("audit");
   const claim = claimUse({ userId: user.id, feature: "tipster", key, limit: allowance.limit, since: allowance.since });
@@ -84,10 +87,19 @@ export async function POST(request: Request) {
     if (claim.ok) releaseUse(user.id, "tipster", key);
     if (paid) adjustCoins(user.id, paid, "refund:tipster_audit", {});
   };
+  if (user.role !== "admin") {
+    const tried = claimUse({ userId: user.id, feature: "tipster_try", key, limit: user.plan.id !== "free" ? tries.paid : tries.free });
+    if (!tried.ok) { undo(); return apiError("ai_tries", lang, 429); }
+  }
   try {
     const flags = redFlags(d.text);
     const picks = await extractPicks({ text: d.text, images, lang });
-    if (!picks.length) { undo(); return apiError("scan_unreadable", lang, 422); }
+    // The model read it all and found no pick: the read was paid for, so the allowance slot stays
+    // used; coins spent on an extra come back (the daily try cap bounds that path).
+    if (!picks.length) {
+      if (paid) adjustCoins(user.id, paid, "refund:tipster_audit", {});
+      return apiError("tipster_unreadable", lang, 422);
+    }
     const graded = await gradePicks(d.sport, picks);
     const report = auditReport(graded, flags);
     const id = saveAudit(user.id, { label: d.label || (lang === "pt" ? "Tipster sem nome" : "Unnamed tipster"), sportKey: d.sport, report, picks: graded });

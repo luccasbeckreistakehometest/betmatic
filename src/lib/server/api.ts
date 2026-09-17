@@ -32,7 +32,10 @@ const MESSAGES = {
   scan_busy: { pt: "A leitura de prints atingiu o limite de hoje. Lance o bilhete à mão por enquanto.", en: "Slip reading hit today's limit. Log the slip by hand for now." },
   image_invalid: { pt: "Mande uma imagem JPG, PNG ou WebP do bilhete.", en: "Send a JPG, PNG or WebP image of the slip." },
   image_too_big: { pt: "A imagem ficou grande demais. Tente um print menor.", en: "The image is too large. Try a smaller screenshot." },
-  scan_unreadable: { pt: "Não conseguimos ler esse print. Tente outro mais nítido ou lance à mão.", en: "We couldn't read that screenshot. Try a sharper one or log it by hand." },
+  scan_unreadable: { pt: "Não conseguimos ler esse print, e a leitura conta no limite de hoje. Tente outro mais nítido ou lance à mão.", en: "We couldn't read that screenshot, and the read counts toward today's limit. Try a sharper one or log it by hand." },
+  tipster_unreadable: { pt: "Não achamos palpites nesse material, e a leitura conta no limite do período. Cole as mensagens com jogo, mercado e odd.", en: "We found no picks in that, and the read counts toward this period's limit. Paste the messages with the match, market and odds." },
+  tipster_busy: { pt: "O raio-x de tipster atingiu o limite de hoje. Tente de novo amanhã.", en: "Tipster audits hit today's limit. Try again tomorrow." },
+  ai_tries: { pt: "Você chegou ao limite de leituras de hoje. Amanhã libera de novo.", en: "You've reached today's reading limit. More unlock tomorrow." },
   tipster_cap: { pt: "Você já usou o raio-x de tipster deste período. Dá para fazer mais um usando coins.", en: "You've used this period's tipster audits. You can run another one with coins." },
   player_cap: { pt: "No plano Free dá para abrir o raio-x de 1 jogador por dia. Amanhã libera outro — ou veja os planos.", en: "The Free plan opens the deep dive for 1 player a day. Another one unlocks tomorrow — or see the plans." },
 } as const;

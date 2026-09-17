@@ -57,7 +57,11 @@ export function TipsterAudit() {
         await load();
       } else if (j.error === "tipster_cap") setNote({ text: c.capTitle, pay: true });
       else if (j.error === "insufficient_coins") setNote({ text: c.noCoins, buy: true });
-      else setNote({ text: j.message ?? c.aiOff });
+      else {
+        setNote({ text: j.message ?? c.aiOff });
+        // An empty read still used the period's slot: show the new count.
+        if (j.error === "tipster_unreadable") await load();
+      }
     } finally {
       setBusy(false);
     }

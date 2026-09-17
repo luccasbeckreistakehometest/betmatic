@@ -45,7 +45,13 @@ export function SlipScanner({ lang, sportKey: initialSport, onSaved }: { lang: L
       const body = await shrink(file);
       const r = await fetch(`/api/slip/scan?sport=${sportKey}&lang=${lang}`, { method: "POST", headers: { "content-type": "image/jpeg" }, body });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok) { setPhase("idle"); setNote(j.manual ? `${j.message ?? ""} ${c.manualFallback}`.trim() : j.message ?? c.manualFallback); return; }
+      if (!r.ok) {
+        setPhase("idle");
+        setNote(j.manual ? `${j.message ?? ""} ${c.manualFallback}`.trim() : j.message ?? c.manualFallback);
+        // An unreadable print still used a slot: keep the counter honest.
+        if (j.limit) setUses(c.uses.replace("{used}", String(j.used)).replace("{limit}", String(j.limit)));
+        return;
+      }
       const s = j.scan;
       setUses(j.limit ? c.uses.replace("{used}", String(j.used)).replace("{limit}", String(j.limit)) : null);
       setDraft({

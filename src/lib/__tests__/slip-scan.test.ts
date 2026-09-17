@@ -18,6 +18,18 @@ vi.mock("@/lib/server/deep-slip", async (orig) => ({
   ...(await orig<typeof import("@/lib/server/deep-slip")>()),
   slateContexts: async () => ({ contexts: games, details: new Map() }),
 }));
+let scanMode: "real" | "empty" | "throw" = "real";
+vi.mock("@/lib/server/slip-scan", async (orig) => {
+  const real = await orig<typeof import("@/lib/server/slip-scan")>();
+  return {
+    ...real,
+    extractSlip: async (...args: Parameters<typeof real.extractSlip>) => {
+      if (scanMode === "empty") return { book: null, betType: null, stake: null, totalOdds: null, potentialReturn: null, currency: null, legs: [], unreadable: ["legs"] };
+      if (scanMode === "throw") throw new Error("model said no");
+      return real.extractSlip(...args);
+    },
+  };
+});
 let sessionUser: unknown = null;
 vi.mock("@/lib/server/session", () => ({ currentUser: async () => sessionUser }));
 
@@ -153,5 +165,38 @@ describe("scan route", async () => {
     expect((await POST(req(Buffer.from("GIF89a not allowed")))).status).toBe(415);
     const big = new Request("http://x/api/slip/scan?sport=soccer-bra", { method: "POST", headers: { "content-length": String(2_000_000) }, body: new Blob([new Uint8Array(jpeg())]) });
     expect((await POST(big)).status).toBe(413);
+  });
+
+  it("an unreadable print keeps its slot; failed calls give the slot back but count as tries; a global ceiling applies", async () => {
+    const u = await createUser({ email: `scanempty${Date.now()}@example.com`, name: "e", password: "password123" });
+    sessionUser = toPublic(findById(u.id)!);
+    try {
+      scanMode = "empty";
+      for (let i = 1; i <= 3; i++) {
+        const r = await POST(req(jpeg()));
+        expect(r.status).toBe(422);
+        expect(await r.json()).toMatchObject({ error: "scan_unreadable", used: i, limit: 3 });
+      }
+      expect((await (await POST(req(jpeg()))).json()).error).toBe("scan_cap");
+
+      const v = await createUser({ email: `scanthrow${Date.now()}@example.com`, name: "t", password: "password123" });
+      sessionUser = toPublic(findById(v.id)!);
+      process.env.SCAN_TRIES_FREE_PER_DAY = "2";
+      scanMode = "throw";
+      expect((await POST(req(jpeg()))).status).toBe(502);
+      expect((await POST(req(jpeg()))).status).toBe(502);
+      const tired = await POST(req(jpeg()));
+      expect(tired.status).toBe(429);
+      expect((await tired.json()).error).toBe("ai_tries");
+
+      process.env.SCAN_DAILY_CAP = "1";
+      const busy = await POST(req(jpeg()));
+      expect(busy.status).toBe(503);
+      expect((await busy.json()).error).toBe("scan_busy");
+    } finally {
+      scanMode = "real";
+      delete process.env.SCAN_TRIES_FREE_PER_DAY;
+      delete process.env.SCAN_DAILY_CAP;
+    }
   });
 });
