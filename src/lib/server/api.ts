@@ -28,6 +28,7 @@ const MESSAGES = {
   game_unavailable: { pt: "Não foi possível carregar este jogo agora.", en: "Couldn't load this game right now." },
   slate_unavailable: { pt: "Não foi possível carregar os jogos agora. Tente de novo em instantes.", en: "Couldn't load the games right now. Try again shortly." },
   paused: { pt: "Sua pausa está ativa.", en: "Your pause is active." },
+  player_cap: { pt: "No plano Free dá para abrir o raio-x de 1 jogador por dia. Amanhã libera outro — ou veja os planos.", en: "The Free plan opens the deep dive for 1 player a day. Another one unlocks tomorrow — or see the plans." },
 } as const;
 
 export type ApiErrorCode = keyof typeof MESSAGES;

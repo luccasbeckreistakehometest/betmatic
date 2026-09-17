@@ -24,6 +24,7 @@ export const RULES = {
   aiIp: { max: 60, windowMs: 60 * MIN },
   slipAccount: { max: 10, windowMs: 60 * MIN },
   reviewAccount: { max: 20, windowMs: 60 * MIN },
+  playerAccount: { max: 90, windowMs: 60 * MIN },
   exportAccount: { max: 5, windowMs: 60 * MIN },
   webhookIp: { max: 120, windowMs: MIN },
   tourIp: { max: 120, windowMs: MIN },

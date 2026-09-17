@@ -58,7 +58,7 @@ export function rankCandidates(rows: PropRow[], limit = 40): PropRow[] {
   return [...trimmed, ...unpriced].slice(0, limit);
 }
 
-async function historyFor(sportKey: string, athleteId: string): Promise<PlayerHistory | null> {
+export async function historyFor(sportKey: string, athleteId: string): Promise<PlayerHistory | null> {
   const current = await getPlayerHistory(sportKey, athleteId).catch(() => null);
   if (current && current.games.length >= 8) return current;
   // Early in a season the current log is a rumour; the previous season is the sample to lean on.
@@ -72,7 +72,7 @@ async function historyFor(sportKey: string, athleteId: string): Promise<PlayerHi
   };
 }
 
-async function roleFor(sport: SportDef, player: { athleteId: string; name: string }, history: PlayerHistory | null): Promise<RoleProfile | null> {
+export async function roleFor(sport: SportDef, player: { athleteId: string; name: string }, history: PlayerHistory | null): Promise<RoleProfile | null> {
   if (sport.group === "basketball") return buildRoleProfile(history, player.name, "basketball");
   if (sport.group === "soccer") return buildRoleFromStarts(player.name, await getSeasonRole(sport.key, player.athleteId).catch(() => null));
   return null;

@@ -29,7 +29,8 @@ test("a paid user gets priced player legs, line movement and two alternatives un
   await expect(alts.getByTestId("alt-diff").first().locator("li.line-through")).toHaveCount(1);
   await expect(alts.getByText("Quando trocar").first()).toBeVisible();
   // The minutes gate removed the 12-minute bench player before the prompt.
-  await expect(page.getByText("Cris Rocha")).toHaveCount(0);
+  // (The roster panel still lists her as a deep-dive link; the legs live in the tickets' <ol>.)
+  await expect(page.locator("ol li", { hasText: "Cris Rocha" })).toHaveCount(0);
 
   // The public record counts main tickets only: three here, not five.
   await page.goto("/prova?lang=pt");

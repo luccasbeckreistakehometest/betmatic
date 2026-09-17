@@ -458,6 +458,20 @@ function migrateRound3(d: Database.Database): void {
       PRIMARY KEY (userId, feature, dayKey, key)
     );
     CREATE INDEX IF NOT EXISTS idx_feature_uses ON feature_uses(feature, createdAt);
+
+    -- "Leitura do analista" on the player deep dive: one per athlete, day and language. The first
+    -- reader pays for it; everyone after reads the same text for free.
+    CREATE TABLE IF NOT EXISTS player_reads (
+      sportKey TEXT NOT NULL,
+      athleteId TEXT NOT NULL,
+      dayKey TEXT NOT NULL,
+      lang TEXT NOT NULL,
+      payload TEXT NOT NULL,
+      paidBy TEXT,
+      costUsd REAL NOT NULL DEFAULT 0,
+      createdAt TEXT NOT NULL,
+      PRIMARY KEY (sportKey, athleteId, dayKey, lang)
+    );
   `);
   addColumn(d, "user_slips", "kind", "TEXT NOT NULL DEFAULT 'analysis'");
 }

@@ -69,7 +69,7 @@ export interface GameDetail {
   ats: { teamAbbreviation: string; record: string }[];
   leaders: { teamAbbreviation: string; player: string; line: string }[];
   lastMeetings: { date: string; summary: string }[];
-  rosters: { teamAbbreviation: string; players: string[]; athletes?: { name: string; id: string }[] }[];
+  rosters: { teamAbbreviation: string; players: string[]; athletes?: { name: string; id: string; position?: string }[] }[];
 }
 
 export interface Tweet {

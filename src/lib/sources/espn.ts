@@ -206,7 +206,12 @@ function mapTeamStats(summary: Json, abbreviation: string): TeamStatLine[] {
     .filter((s) => s.label && s.value);
 }
 
-async function getRoster(sport: SportDef, teamId: string): Promise<{ name: string; id: string }[]> {
+/** A team's roster by sport key (the player deep dive lists teammates from it). */
+export function getTeamRoster(sportKey: string, teamId: string): Promise<{ name: string; id: string; position?: string }[]> {
+  return getRoster(getSport(sportKey), teamId);
+}
+
+async function getRoster(sport: SportDef, teamId: string): Promise<{ name: string; id: string; position?: string }[]> {
   if (!teamId) return [];
   return cached(`espn-roster-${sport.key}-${teamId}`, TTL.roster, async () => {
     try {
@@ -215,7 +220,7 @@ async function getRoster(sport: SportDef, teamId: string): Promise<{ name: strin
       // ESPN returns either a flat athlete list or position-grouped buckets.
       const flat = groups.flatMap((g) => (Array.isArray(g.items) ? g.items : [g]));
       return flat
-        .map((a: Json) => ({ name: a.displayName ?? a.fullName ?? "", id: String(a.id ?? "") }))
+        .map((a: Json) => ({ name: a.displayName ?? a.fullName ?? "", id: String(a.id ?? ""), ...(a.position?.abbreviation ? { position: String(a.position.abbreviation) } : {}) }))
         .filter((a) => a.name);
     } catch {
       return [];
@@ -560,6 +565,25 @@ export async function getSeasonRole(sportKey: string, athleteId: string): Promis
         startShare: appearances ? Number((starts / appearances).toFixed(2)) : 0,
         seasonLabel: String(summary?.displayName ?? ""),
       };
+    } catch {
+      return null;
+    }
+  });
+}
+
+export interface AthleteBasics { athleteId: string; name: string; teamId: string; teamAbbr: string; position: string | null }
+
+/** Name, team and position of one athlete (the deep dive opened without a game in the URL). */
+export async function getAthleteBasics(sportKey: string, athleteId: string): Promise<AthleteBasics | null> {
+  const sport = getSport(sportKey);
+  if (!athleteId) return null;
+  return cached(`espn-athlete-${sport.key}-${athleteId}`, TTL.roster, async () => {
+    try {
+      const data = await getJson(`https://site.web.api.espn.com/apis/common/v3/sports/${sport.espnSport}/${sport.espnLeague}/athletes/${athleteId}`);
+      const a = (data.athlete ?? {}) as Json;
+      const name = String(a.displayName ?? a.fullName ?? "");
+      if (!name) return null;
+      return { athleteId, name, teamId: String(a.team?.id ?? ""), teamAbbr: String(a.team?.abbreviation ?? ""), position: a.position?.abbreviation ? String(a.position.abbreviation) : null };
     } catch {
       return null;
     }

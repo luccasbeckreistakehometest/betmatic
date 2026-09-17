@@ -156,6 +156,32 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
             </div>
           </Panel>
 
+          {sport.hasPlayerGamelog && detail.rosters.some((r) => r.athletes?.length) && (
+            <Panel title={lang === "pt" ? "Raio-x do jogador" : "Player deep dive"}>
+              <p className="mb-2 text-[11.5px] leading-relaxed text-mist-500">
+                {lang === "pt" ? "Histórico jogo a jogo, linha que você escolhe, minutagem e o \"com e sem\" o companheiro." : "Game-by-game log, any line you pick, minutes and the with/without-teammate split."}
+              </p>
+              <div className="flex flex-col gap-2.5" data-testid="player-links">
+                {[game.away, game.home].map((team) => {
+                  const roster = detail.rosters.find((r) => r.teamAbbreviation === team.abbreviation)?.athletes ?? [];
+                  if (!roster.length) return null;
+                  return (
+                    <div key={team.id}>
+                      <h3 className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-mist-500">{team.displayName}</h3>
+                      <div className="flex flex-wrap gap-1">
+                        {roster.slice(0, 14).map((a) => (
+                          <Link key={a.id} href={{ pathname: `/app/player/${a.id}`, query: { sport: sport.key, lang, game: game.id } }} className="rounded border border-ink-700 px-1.5 py-0.5 text-[11px] text-mist-300 hover:border-edge-400 hover:text-mist-100">
+                            {a.name}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Panel>
+          )}
+
           <Panel title={t("market")} meta={books.length ? `${books.length} ${books.length === 1 ? t("bookOne") : t("bookMany")}` : undefined}>
             {books.length ? (
               <div className="overflow-x-auto">

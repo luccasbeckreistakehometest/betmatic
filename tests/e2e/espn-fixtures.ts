@@ -44,11 +44,14 @@ function statLine(p: Player, i: number, sport: FakeGame["sport"]): string[] {
   });
 }
 
-function gamelog(p: Player, sport: FakeGame["sport"], now: number) {
+function gamelog(p: Player, teamId: string, sport: FakeGame["sport"], now: number) {
   const events: Record<string, unknown> = {};
   const rows = [];
   for (let i = 0; i < 20; i++) {
-    const eventId = `9800${p.id}${String(i).padStart(2, "0")}`;
+    // Teammates share event ids, so a "with / without" split has something to split. The bench
+    // guard 7103 sits out every fourth game (absent from her log, as ESPN does for a DNP).
+    if (p.id === "7103" && i % 4 === 1) continue;
+    const eventId = `9800${teamId}${String(i).padStart(2, "0")}`;
     events[eventId] = { id: eventId, gameDate: new Date(now - (i + 2) * 24 * HOUR).toISOString(), opponent: { abbreviation: "OPP" }, atVs: i % 2 ? "@" : "vs", gameResult: i % 3 ? "W" : "L", score: "80-75" };
     rows.push({ eventId, stats: statLine(p, i, sport) });
   }
@@ -148,14 +151,14 @@ export function writeEspnFixtures(dir: string, now = Date.now()) {
   const leagueOf = (t: Team) => (t.players[0].id.startsWith("88") ? { sport: "soccer", league: "bra.1" } : { sport: "basketball", league: "wnba" });
   for (const t of teams) {
     const { sport, league } = leagueOf(t);
-    writeFile(dir, `${SITE}/${sport}/${league}/teams/${t.id}/roster`, { athletes: t.players.map((p) => ({ id: p.id, displayName: p.name })) });
+    writeFile(dir, `${SITE}/${sport}/${league}/teams/${t.id}/roster`, { athletes: t.players.map((p) => ({ id: p.id, displayName: p.name, position: { abbreviation: p.pos } })) });
     writeFile(dir, `${SITE}/${sport}/${league}/teams/${t.id}/schedule?season=2026`, { events: [] });
     for (const p of t.players) {
-      const log = gamelog(p, sport as FakeGame["sport"], now);
+      const log = gamelog(p, t.id, sport as FakeGame["sport"], now);
       writeFile(dir, `${COMMON}/${sport}/${league}/athletes/${p.id}/gamelog`, log);
       writeFile(dir, `${COMMON}/${sport}/${league}/athletes/${p.id}/gamelog?season=${new Date(now).getUTCFullYear() - 1}`, { labels: [], events: {}, seasonTypes: [] });
       const starts = p.id === "88003" ? "3 (6)" : p.id === "88002" ? "8 (2)" : "9 (1)";
-      writeFile(dir, `${WEB}/${sport}/${league}/athletes/${p.id}`, { athlete: { statsSummary: { displayName: "2026", statistics: [{ name: "starts-subIns", displayValue: starts }] } } });
+      writeFile(dir, `${WEB}/${sport}/${league}/athletes/${p.id}`, { athlete: { displayName: p.name, position: { abbreviation: p.pos }, team: { id: t.id, abbreviation: t.abbr }, statsSummary: { displayName: "2026", statistics: [{ name: "starts-subIns", displayValue: starts }] } } });
     }
   }
   return { games };
