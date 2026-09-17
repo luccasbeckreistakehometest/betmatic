@@ -33,7 +33,7 @@ test("the public proof page draws the equity curve and answers 'only band X'", a
 
 test("the bankroll page carries the ledger curve and the user's own money curve", async ({ page }) => {
   // a fresh account, so the admin's bankroll (asserted by proof.spec) stays untouched
-  const reg = await page.request.post("/api/auth/register", { data: { name: "Curva", email: `curva${Date.now()}@example.com`, password: "password123", lang: "pt" } });
+  const reg = await page.request.post("/api/auth/register", { data: { name: "Curva", email: `curva${Date.now()}@example.com`, password: "password123", lang: "pt", acceptTerms: true } });
   expect(reg.ok()).toBeTruthy();
   await skipTour(page);
   for (const [title, outcome] of [["Aposta 1", "won"], ["Aposta 2", "lost"]] as const) {

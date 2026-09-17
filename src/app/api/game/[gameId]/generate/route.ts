@@ -34,11 +34,12 @@ export async function POST(request: Request, ctx: { params: Promise<{ gameId: st
     if (user.plan.sports.length && !user.plan.sports.includes(sportKey)) {
       return NextResponse.json({ status: "plan_sport", planSports: user.plan.sports }, { status: 200 });
     }
-    const unlock = unlockGame({ userId: user.id, plan: user.plan, gameId, sportKey });
-    if (!unlock.ok) return NextResponse.json({ status: "cap_user", unlocked: unlock.unlocked }, { status: 200 });
   }
 
-  const result = await ensureGameGenerated({ sportKey, gameId, user });
+  const result = await ensureGameGenerated({
+    sportKey, gameId, user,
+    unlock: user.role === "admin" || user.plan.gamesPerDay === null ? undefined : () => unlockGame({ userId: user.id, plan: user.plan, gameId, sportKey }),
+  });
   const code = result.status === "error" || result.status === "ai_budget" ? 502
     : result.status === "not_found" ? 404
       : result.status === "ai_off" || result.status === "unsupported" ? 503 : 200;

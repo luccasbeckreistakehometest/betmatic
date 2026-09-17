@@ -3,7 +3,7 @@ import { skipTour } from "./helpers";
 
 async function freshUser(page: import("@playwright/test").Page, name: string) {
   const email = `${name}${Date.now()}@example.com`;
-  const reg = await page.request.post("/api/auth/register", { data: { name, email, password: "password123", lang: "pt" } });
+  const reg = await page.request.post("/api/auth/register", { data: { name, email, password: "password123", lang: "pt", acceptTerms: true } });
   expect(reg.ok()).toBeTruthy();
   await skipTour(page);
   return email;

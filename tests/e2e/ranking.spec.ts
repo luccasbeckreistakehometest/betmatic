@@ -3,7 +3,7 @@ import { skipTour } from "./helpers";
 
 async function member(page: import("@playwright/test").Page, name: string) {
   const email = `${name}${Date.now()}@example.com`;
-  expect((await page.request.post("/api/auth/register", { data: { name, email, password: "password123", lang: "pt" } })).ok()).toBeTruthy();
+  expect((await page.request.post("/api/auth/register", { data: { name, email, password: "password123", lang: "pt", acceptTerms: true } })).ok()).toBeTruthy();
   await skipTour(page);
   return email;
 }

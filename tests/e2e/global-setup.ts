@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { startFakeMercadoPago } from "./fake-mercadopago";
 
 // Fresh database, then the real seed script writes the slate the specs read.
 export default async function globalSetup() {
@@ -31,4 +32,8 @@ export default async function globalSetup() {
     { id: "401882878:safe:Sevilha ou empate", gameId: "401882878", sportKey: "soccer-esp", matchup: "Valencia @ Sevilla", createdAt: "2026-09-11T10:00:00.000Z", bandKey: "safe", kind: "single", title: "Sevilha não perde", combinedDecimal: 1.26, modelledProbability: 0.77, evidenceScore: 85, outcome: "pending", legs: [leg("Sevilha ou empate", "pending", 1.26)] },
   ];
   fs.writeFileSync(path.join(ledgerDir, "predictions.jsonl"), entries.map((e) => JSON.stringify(e)).join("\n") + "\n");
+
+  // Checkout goes to a local fake of the Mercado Pago API for the whole run.
+  const fakeMp = await startFakeMercadoPago();
+  return async () => { await new Promise((r) => fakeMp.close(r)); };
 }

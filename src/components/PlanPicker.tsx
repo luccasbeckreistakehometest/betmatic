@@ -47,7 +47,7 @@ export function PlanPicker({ lang, signedIn, currentPlanId, paymentsReady, initi
     try {
       const r = await fetch(`/api/billing/checkout?lang=${lang}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
       const j = await r.json().catch(() => ({}));
-      if (r.ok && typeof j.url === "string" && j.url.startsWith("https://")) {
+      if (r.ok && typeof j.url === "string" && /^https?:\/\//.test(j.url)) {
         window.location.assign(j.url);
         return;
       }

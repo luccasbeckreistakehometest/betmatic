@@ -6,7 +6,8 @@ import { creditReferralOnPurchase } from "@/lib/server/referral";
 import { requireBaseUrl } from "@/lib/base-url";
 import { safeEqual } from "@/lib/server/auth";
 
-const BASE = "https://api.mercadopago.com";
+/** MP_API_BASE exists only so the e2e suite can point checkout at a local fake. */
+const apiBase = () => process.env.MP_API_BASE || "https://api.mercadopago.com";
 
 export function mpConfigured(): boolean {
   return (process.env.MP_ACCESS_TOKEN ?? "").trim().length > 0;
@@ -23,7 +24,7 @@ export class MercadoPagoError extends Error {
 type Fetcher = (path: string, init?: RequestInit) => Promise<Record<string, unknown>>;
 
 const liveFetcher: Fetcher = async (path, init) => {
-  const res = await fetch(BASE + path, {
+  const res = await fetch(apiBase() + path, {
     ...init,
     headers: {
       Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`,
@@ -102,7 +103,7 @@ async function createPreference(rowId: string, title: string, price: number, ema
       }),
     });
     const url = String(pref.init_point ?? "");
-    if (!/^https:\/\//.test(url)) throw new MercadoPagoError("Mercado Pago returned no init_point");
+    if (!/^https:\/\//.test(url) && !(process.env.MP_API_BASE && url.startsWith(process.env.MP_API_BASE))) throw new MercadoPagoError("Mercado Pago returned no init_point");
     getDb().prepare("UPDATE payments SET preferenceId = ?, providerId = ? WHERE id = ?").run(String(pref.id ?? ""), String(pref.id ?? ""), rowId);
     return { url };
   } catch (error) {

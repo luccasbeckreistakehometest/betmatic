@@ -11,11 +11,13 @@ import { SPORTS, sportSellsTickets } from "@/lib/sports";
 import { aiConfigured } from "@/lib/ai/client";
 import { AiBudgetExceededError, brasiliaDayStart } from "@/lib/server/ai-budget";
 import { reportError } from "@/lib/server/ops-log";
+import type { UnlockResult } from "@/lib/server/unlocks";
 import type { PublicUser } from "@/lib/server/users";
 import type { Lang } from "@/lib/i18n";
 
 export type OnDemandResult =
   | { status: OnDemandVerdict | "generated"; dateKey: string }
+  | { status: "cap_user"; unlocked: { gameId: string; sportKey: string }[] }
   | { status: "not_found" | "ai_off" | "unsupported" | "ai_budget" }
   | { status: "error" };
 
@@ -32,8 +34,21 @@ const todayCounts = (userId: string) => {
   };
 };
 
-export async function ensureGameGenerated(args: { sportKey: string; gameId: string; user: PublicUser }): Promise<OnDemandResult> {
+/**
+ * `unlock` runs once the game is known to exist (a plan with a daily allowance records the pick
+ * there, so a typo'd id never burns it). It is per caller, so it runs outside the shared in-flight task.
+ */
+export async function ensureGameGenerated(args: { sportKey: string; gameId: string; user: PublicUser; unlock?: () => UnlockResult }): Promise<OnDemandResult> {
   const { sportKey, gameId, user } = args;
+  if (args.unlock) {
+    const sportDef = SPORTS.find((s) => s.key === sportKey);
+    if (!sportDef) return { status: "not_found" };
+    if (!sportSellsTickets(sportDef)) return { status: "unsupported" };
+    const exists = await getGameDetail(gameId, false, sportKey).catch(() => null);
+    if (!exists) return { status: "not_found" };
+    const unlocked = args.unlock();
+    if (!unlocked.ok) return { status: "cap_user", unlocked: unlocked.unlocked };
+  }
   const sport = SPORTS.find((s) => s.key === sportKey);
   if (!sport) return { status: "not_found" };
   // Tennis has no price feed, so a generation would spend tokens and return no ticket.

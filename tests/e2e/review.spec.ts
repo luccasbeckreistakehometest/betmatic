@@ -36,7 +36,7 @@ test("'Por que perdi?' on a lost ticket: legs with actuals when no model key is 
 
   // another user without the ticket in their bankroll is refused
   await page.context().clearCookies();
-  await page.request.post("/api/auth/register", { data: { name: "Outro", email: `outro${Date.now()}@example.com`, password: "password123", lang: "pt" } });
+  await page.request.post("/api/auth/register", { data: { name: "Outro", email: `outro${Date.now()}@example.com`, password: "password123", lang: "pt", acceptTerms: true } });
   expect((await page.request.post("/api/review", { data: { slug: entry.slug } })).status()).toBe(403);
   const addMine = await page.request.post("/api/bankroll", { data: { kind: "ticket", ...LOST, stake: 5 } });
   expect(addMine.ok()).toBeTruthy();
