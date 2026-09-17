@@ -24,3 +24,13 @@ test.describe("landing", () => {
     expect(links.some((h) => /\/(nba|wnba|futebol|soccer|tenis|tennis|basquete|basketball)/.test(h))).toBe(true);
   });
 });
+
+test("the landing shows live proof numbers and today's whitelabelled ticket", async ({ page }) => {
+  await page.goto("/?lang=pt");
+  const strip = page.getByTestId("proof-strip");
+  await expect(strip).toContainText("bilhetes gerados");
+  await expect(strip).toContainText("50.0%");
+  await expect(page.getByTestId("ticket-of-day")).toBeVisible();
+  const html = await page.content();
+  expect(html).not.toMatch(/Betano|ESPN|DraftKings/);
+});

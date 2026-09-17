@@ -26,11 +26,11 @@ export default async function Image({ params }: { params: Promise<{ slug: string
           <div style={{ fontSize: 56, fontWeight: 700, lineHeight: 1.1 }}>{e ? scrubText(e.title, "pt").slice(0, 60) : "Bilhete"}</div>
           <div style={{ fontSize: 30, color: "#8a94a8" }}>{e ? scrubText(e.matchup, "pt") : ""}</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
-            {(e?.legs ?? []).slice(0, 4).map((l, i) => (<div key={i} style={{ fontSize: 26, color: "#b8c2d4" }}>• {scrubText(l.selection, "pt").slice(0, 70)}</div>))}
+            {(e?.legs ?? []).slice(0, 4).map((l, i) => (<div key={i} style={{ display: "flex", gap: 10, fontSize: 26, color: "#b8c2d4" }}><span>•</span><span>{scrubText(l.selection, "pt").slice(0, 70)}</span></div>))}
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 28, color: "#8a94a8" }}>
-          <div>odd <span style={{ color: "#f2f5fa", fontWeight: 700, marginLeft: 8 }}>{e ? formatDecimal(e.combinedDecimal) : "—"}</span></div>
+          <div style={{ display: "flex", gap: 8 }}><span>odd</span><span style={{ color: "#f2f5fa", fontWeight: 700 }}>{e ? formatDecimal(e.combinedDecimal) : "—"}</span></div>
           <div>histórico público · liquidado automaticamente</div>
         </div>
       </div>

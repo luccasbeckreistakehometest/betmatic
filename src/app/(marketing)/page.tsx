@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Logo, LogoMark } from "@/components/Logo";
 import { LandingLang } from "@/components/LandingLang";
+import { ProofStrip } from "@/components/ProofStrip";
 import { LADDER, landingCopy } from "@/lib/landing-copy";
 import { normaliseLang } from "@/lib/i18n";
 import { SPORT_LANDINGS } from "@/lib/sport-landing";
@@ -133,6 +134,8 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
           </div>
         </div>
       </section>
+
+      <ProofStrip lang={lang} />
 
       {/* ---- honesty ---- */}
       <section className="border-b border-ink-800/80">

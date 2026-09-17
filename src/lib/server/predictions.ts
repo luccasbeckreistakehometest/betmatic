@@ -59,6 +59,12 @@ export function findPrediction(input: { scope: "game" | "slate"; sportKey: strin
   ).get(input.scope, input.sportKey, input.gameId ?? "", input.dateKey, input.lang) as { generatedAt: string; payload: string } | undefined) ?? null;
 }
 
+/** The most recent day that has game tickets — the landing falls back to it when today has none yet. */
+export function latestPredictionDateKey(): string | null {
+  const row = getDb().prepare("SELECT dateKey FROM predictions WHERE scope='game' ORDER BY dateKey DESC LIMIT 1").get() as { dateKey: string } | undefined;
+  return row?.dateKey ?? null;
+}
+
 export interface ServedPrediction {
   gameId: string | null;
   matchup: string;
