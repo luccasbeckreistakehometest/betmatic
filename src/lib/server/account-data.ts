@@ -54,6 +54,8 @@ export function deleteAccount(userId: string): boolean {
     db.prepare("UPDATE generation_requests SET userId = ? WHERE userId = ?").run(DELETED_USER_ID, userId);
     db.prepare("DELETE FROM onboarding WHERE id = ?").run(userId);
     db.prepare("DELETE FROM contact_messages WHERE userId = ?").run(userId);
+    // Operator error rows may carry the id in their metadata; the message stays, the link goes.
+    db.prepare("UPDATE ops_log SET meta = '{}' WHERE meta LIKE ?").run(`%${userId}%`);
     db.prepare("DELETE FROM users WHERE id = ?").run(userId);
     return true;
   });
