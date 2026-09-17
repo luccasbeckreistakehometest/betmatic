@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { formatDate } from "@/lib/format";
 import Link from "next/link";
 import { useNavState } from "@/components/Controls";
 import { makeT } from "@/lib/i18n";
@@ -52,7 +53,7 @@ export function ResponsibleGuard() {
     <>
       {state.paused && state.until && (
         <div className="mx-auto mb-4 w-full max-w-7xl rounded-xl border border-warn-400/30 bg-warn-400/5 px-4 py-2.5 text-[13px] text-warn-400" data-testid="pause-banner">
-          {t("pausedBlock").replace("{date}", new Date(state.until).toLocaleDateString(lang === "pt" ? "pt-BR" : "en-US"))}{" "}
+          {t("pausedBlock").replace("{date}", formatDate(state.until, lang, { year: true }))}{" "}
           <Link href={{ pathname: "/app/settings", query: { lang } }} className="underline underline-offset-2">{t("navSettings")}</Link>
         </div>
       )}

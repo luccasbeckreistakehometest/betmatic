@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { formatDate } from "@/lib/format";
 import { bandComparison, curvePath, equityCurve, type BacktestRow } from "@/lib/ledger/backtest";
 import { ODDS_BANDS } from "@/lib/odds";
 import { SPORTS } from "@/lib/sports";
@@ -51,7 +52,7 @@ export function EquityChart({ rows: initial, lang, compact = false }: { rows?: B
 
   const W = 640, H = compact ? 140 : 200, PAD = 8;
   const path = curvePath(summary.points, W, H, PAD);
-  const day = (iso: string) => new Date(iso).toLocaleDateString(lang === "pt" ? "pt-BR" : "en-US", { day: "2-digit", month: "2-digit" });
+  const day = (iso: string) => formatDate(iso, lang);
   const select = "rounded-lg border border-ink-700 bg-ink-900 px-2 py-1 text-[12px] text-mist-200 outline-none focus:border-edge-400";
 
   return (

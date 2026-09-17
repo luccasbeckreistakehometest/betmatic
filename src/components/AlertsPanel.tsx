@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { formatDateTime } from "@/lib/format";
 import Link from "next/link";
 import { Empty, Panel } from "@/components/ui";
 import { useNavState } from "@/components/Controls";
@@ -34,7 +35,7 @@ export function AlertsPanel() {
   const followingLeague = (key: string) => data?.follows.some((f) => f.kind === "league" && f.sportKey === key) ?? false;
   const teams = data?.follows.filter((f) => f.kind === "team") ?? [];
   const groups = [["basketball", lang === "pt" ? "Basquete" : "Basketball"], ["soccer", lang === "pt" ? "Futebol" : "Soccer"], ["tennis", lang === "pt" ? "Tênis" : "Tennis"]] as const;
-  const when = (iso: string) => new Date(iso).toLocaleString(lang === "pt" ? "pt-BR" : "en-US", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+  const when = (iso: string) => formatDateTime(iso, lang);
 
   return (
     <div className="flex flex-col gap-4" data-testid="alerts">

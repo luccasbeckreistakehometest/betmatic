@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { formatDate } from "@/lib/format";
 import { makeT, type Lang } from "@/lib/i18n";
 
 interface Review { assumed: string; happened: string; verdict: "variance" | "repeatable_error" | "mixed"; reasoning: string; keyLeg: string | null; watchNext: string[] }
@@ -40,7 +41,7 @@ export function LossReview({ slug, lang, compact = false }: { slug: string; lang
         <>
           <div className="flex flex-wrap items-center gap-2">
             <span className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${verdictTone[data.review.verdict]}`} data-testid="review-verdict">{verdictLabel[data.review.verdict]}</span>
-            {data.createdAt && <span className="text-[11px] text-mist-500">{t("reviewCached")} {new Date(data.createdAt).toLocaleDateString(lang === "pt" ? "pt-BR" : "en-US")}</span>}
+            {data.createdAt && <span className="text-[11px] text-mist-500">{t("reviewCached")} {formatDate(data.createdAt, lang, { year: true })}</span>}
           </div>
           <div><h4 className="text-[10px] font-semibold uppercase tracking-wider text-mist-500">{t("reviewAssumed")}</h4><p className="mt-1 leading-relaxed text-mist-300">{data.review.assumed}</p></div>
           <div><h4 className="text-[10px] font-semibold uppercase tracking-wider text-mist-500">{t("reviewHappened")}</h4><p className="mt-1 leading-relaxed text-mist-300">{data.review.happened}</p></div>

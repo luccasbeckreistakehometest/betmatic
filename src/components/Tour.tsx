@@ -35,8 +35,9 @@ export function Tour({ telegram = false }: { telegram?: boolean }) {
   useEffect(() => {
     fetch("/api/tour", { cache: "no-store" }).then((r) => r.json()).then((j) => {
       if (j.tourCompleted) return setState("done");
-      const seen = sessionStorage.getItem("bm_tour_seen");
-      if (!seen) { sessionStorage.setItem("bm_tour_seen", "1"); save(0, false, "visit"); }
+      let seen: string | null = "1";
+      try { seen = sessionStorage.getItem("bm_tour_seen"); if (!seen) sessionStorage.setItem("bm_tour_seen", "1"); } catch { /* storage blocked */ }
+      if (!seen) save(0, false, "visit");
       if (j.tourStep > 0 && j.tourStep < STEP_COUNT) { setStep(j.tourStep); setState("running"); }
       else if (!seen) setState("welcome");
     }).catch(() => {});

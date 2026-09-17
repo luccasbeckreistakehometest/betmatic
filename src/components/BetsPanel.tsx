@@ -147,7 +147,7 @@ function Ticket({ bet, lang, gameId }: { bet: BetSuggestion; lang: Lang; gameId?
             <span className="ml-auto flex items-center gap-2">
               {saved === "saved" ? <span className="text-signal-400">✓ {t("saved")}</span> : saved === "error" ? <span className="text-warn-400">{lang === "pt" ? "entre para salvar" : "sign in to save"}</span> : saved === "limit" ? <span className="text-warn-400" data-testid="ticket-limit">{limitNote}</span> : saved === "paused" ? <span className="text-warn-400" data-testid="ticket-paused">{t("pausedHint")}</span> : (
                 <>
-                  <input value={stake} onChange={(e) => setStake(e.target.value)} placeholder={t("stake")} inputMode="decimal" className="nums w-20 rounded border border-ink-700 bg-ink-900 px-2 py-1 text-[12px] text-mist-100 outline-none focus:border-edge-400" data-testid="ticket-stake" />
+                  <input aria-label={lang === "pt" ? "Valor apostado (R$)" : "Stake (R$)"} value={stake} onChange={(e) => setStake(e.target.value)} placeholder={t("stake")} inputMode="decimal" className="nums w-20 rounded border border-ink-700 bg-ink-900 px-2 py-1 text-[12px] text-mist-100 outline-none focus:border-edge-400" data-testid="ticket-stake" />
                   <button onClick={addToBankroll} disabled={!(Number(stake) > 0) || saved === "saving"} className="rounded border border-ink-700 px-2 py-1 text-mist-300 hover:border-ink-600 hover:text-mist-100 disabled:opacity-40" data-testid="ticket-add">{t("addToBankroll")}</button>
                 </>
               )}

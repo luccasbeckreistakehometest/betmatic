@@ -89,18 +89,24 @@ export function SlipBuilder() {
             <div key={i} className="grid gap-2 sm:grid-cols-[1fr_140px_100px_auto]">
               <input
                 className={field}
+                aria-label={`${t("selection")} ${i + 1}`}
+                maxLength={160}
                 placeholder={t("selection")}
                 value={leg.selection}
                 onChange={(e) => update(i, { selection: e.target.value })}
               />
               <input
                 className={field}
+                aria-label={`${lang === "pt" ? "Mercado" : "Market"} ${i + 1}`}
+                maxLength={60}
                 placeholder={lang === "pt" ? "mercado" : "market"}
                 value={leg.market}
                 onChange={(e) => update(i, { market: e.target.value })}
               />
               <input
                 className={`${field} nums`}
+                aria-label={`${t("odds")} ${i + 1}`}
+                maxLength={12}
                 placeholder="-110"
                 value={leg.odds}
                 onChange={(e) => update(i, { odds: e.target.value })}
