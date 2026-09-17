@@ -472,6 +472,22 @@ function migrateRound3(d: Database.Database): void {
       createdAt TEXT NOT NULL,
       PRIMARY KEY (sportKey, athleteId, dayKey, lang)
     );
+
+    -- Vigia de escalação: a pending ticket's leg that lost its footing before kickoff (benched, ruled
+    -- out, doubtful, a key absence). One row per leg and kind; the lineup job never writes it twice.
+    CREATE TABLE IF NOT EXISTS leg_alerts (
+      ledgerId TEXT NOT NULL,
+      legIndex INTEGER NOT NULL,
+      gameId TEXT NOT NULL,
+      sportKey TEXT NOT NULL,
+      suggestionId TEXT,
+      kind TEXT NOT NULL,
+      player TEXT NOT NULL DEFAULT '',
+      detail TEXT NOT NULL DEFAULT '',
+      detectedAt TEXT NOT NULL,
+      PRIMARY KEY (ledgerId, legIndex, kind)
+    );
+    CREATE INDEX IF NOT EXISTS idx_leg_alerts_game ON leg_alerts(gameId, detectedAt);
   `);
   addColumn(d, "user_slips", "kind", "TEXT NOT NULL DEFAULT 'analysis'");
 }

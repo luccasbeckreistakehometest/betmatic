@@ -95,6 +95,7 @@ async function generateShared(sportKey: string, gameId: string, user: PublicUser
       ...onDemandCaps(process.env),
       alreadyGenerated: !!findPrediction({ scope: "game", sportKey, gameId, dateKey, lang: langs[0] }),
       started: Date.parse(detail.game.startsAt) <= Date.now() || detail.game.status !== "scheduled",
+      priority: user.plan.id === "max",
     });
     if (verdict !== "generate") return { status: verdict, dateKey };
     if (!aiConfigured()) return { status: "ai_off" };

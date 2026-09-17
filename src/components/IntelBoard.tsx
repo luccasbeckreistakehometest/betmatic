@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { BetsPanel } from "@/components/BetsPanel";
+import { RefreshBar } from "@/components/RefreshBar";
 import { useNavState } from "@/components/Controls";
 import { Empty, Panel } from "@/components/ui";
 import { makeT, type DictKey } from "@/lib/i18n";
@@ -141,6 +142,7 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
         {mine.delayed && (
           <p className="mb-3 rounded-lg border border-warn-400/25 bg-warn-400/5 px-3 py-2 text-[12px] text-warn-400">{t("delayedNotice")}</p>
         )}
+        {data?.plan.id === "max" && !started && <RefreshBar gameId={gameId} sportKey={sport.key} lang={lang} onRefreshed={() => void load()} />}
         <BetsPanel slate={mine.slate} lang={lang} gameId={gameId} sportKey={sport.key} />
       </>
     );

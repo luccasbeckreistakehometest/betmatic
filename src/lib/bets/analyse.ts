@@ -63,7 +63,7 @@ export interface SlipAnalysis {
  * The user's own slip, priced in code and judged by the model. This is the per-user compute that
  * coins exist to pay for — everything else the product shows was generated once for everyone.
  */
-export async function analyseSlip(legs: SlipLegInput[], lang: Lang): Promise<SlipAnalysis> {
+export async function analyseSlip(legs: SlipLegInput[], lang: Lang, opts: { context?: string } = {}): Promise<SlipAnalysis> {
   const decimals = legs.map((l) => parseOdds(l.odds));
   const priced = decimals.filter((d) => Number.isFinite(d) && d > 1);
   if (priced.length < 2) throw new Error("Informe ao menos duas pernas com odds válidas.");
@@ -74,6 +74,7 @@ export async function analyseSlip(legs: SlipLegInput[], lang: Lang): Promise<Sli
     "",
     `Combined price: ${parlayDecimal(priced).toFixed(2)}x`,
     "",
+    ...(opts.context ? [opts.context, ""] : []),
     calibrationPrompt(),
   ].join("\n");
 
@@ -82,6 +83,14 @@ export async function analyseSlip(legs: SlipLegInput[], lang: Lang): Promise<Sli
     system: lang === "pt" ? SYSTEM_PT : SYSTEM_EN,
     prompt,
     maxTokens: 8000,
+    label: opts.context ? "deep_slip" : "analyse_slip",
+    mock: () => ({
+      verdict: lang === "pt" ? "Análise de teste: bilhete revisado sem IA." : "Test analysis: slip reviewed without AI.",
+      legs: legs.map((_, index) => ({ index, assessment: lang === "pt" ? "Perna conferida no modo de teste." : "Leg checked in test mode.", fairProbability: 0.5, concern: "minor" as const })),
+      weakestIndex: legs.length - 1,
+      swaps: [],
+      correlationNote: lang === "pt" ? "independentes" : "independent",
+    }),
   });
 
   // Arithmetic stays in code; the model supplies judgement, never the payout.
