@@ -38,14 +38,26 @@ const ParseSchema = z.object({
   })),
 });
 
-async function upcomingGames(sportKey: string): Promise<{ contexts: GameContext[]; details: Map<string, GameDetail> }> {
+/**
+ * The games a typed or printed leg can be matched to: the sport's slates on the given day offsets,
+ * with rosters. `upcomingOnly` keeps scheduled games (the deep analysis); a slip print can also be of
+ * a game that already started or ended.
+ */
+export async function slateContexts(sportKey: string, offsets: number[], opts: { upcomingOnly: boolean; max?: number }): Promise<{ contexts: GameContext[]; details: Map<string, GameDetail> }> {
   const today = todayKey();
-  const slates = await Promise.all([today, shiftKey(today, 1)].map((d) => getSlate(d, false, sportKey).catch(() => [])));
-  const games = slates.flat().filter((g) => g.status === "scheduled" && Date.parse(g.startsAt) > Date.now() - 3 * 3_600_000).slice(0, 16);
+  const slates = await Promise.all(offsets.map((o) => getSlate(shiftKey(today, o), false, sportKey).catch(() => [])));
+  const games = slates.flat()
+    .filter((g) => !opts.upcomingOnly || (g.status === "scheduled" && Date.parse(g.startsAt) > Date.now() - 3 * 3_600_000))
+    .slice(0, opts.max ?? 16);
   const details = new Map<string, GameDetail>();
   const contexts: GameContext[] = [];
-  for (const g of games) {
-    const d = await getGameDetail(g.id, false, sportKey).catch(() => null);
+  // Six at a time: a full round of details is a few dozen cached ESPN reads.
+  const fetched: (GameDetail | null)[] = [];
+  for (let i = 0; i < games.length; i += 6) {
+    fetched.push(...(await Promise.all(games.slice(i, i + 6).map((g) => getGameDetail(g.id, false, sportKey).catch(() => null)))));
+  }
+  for (const [i, g] of games.entries()) {
+    const d = fetched[i];
     if (!d) continue;
     details.set(g.id, d);
     contexts.push({
@@ -65,7 +77,7 @@ const mlDecimal = (american: number | undefined) => (american !== undefined && N
  */
 export async function buildDeepContext(sportKey: string, legs: TypedLeg[], lang: Lang): Promise<DeepContext> {
   const sport = SOLD_SPORTS.find((s) => s.key === sportKey) ?? getSport(sportKey);
-  const { contexts, details } = await upcomingGames(sport.key);
+  const { contexts, details } = await slateContexts(sport.key, [0, 1], { upcomingOnly: true });
   const resolved = legs.map((l, i) => resolveTypedLeg(l, i, contexts));
   const missing = resolved.filter((r) => r.kind === "unknown" || (r.kind === "player" && (r.line === null || !r.marketKey)));
   let parsedCount = 0;

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useNavState } from "@/components/Controls";
 import { DeepSlipTable } from "@/components/DeepSlipTable";
+import { SLIP_PREFILL_KEY, SlipScanner } from "@/components/SlipScanner";
 import type { DeepContext } from "@/lib/server/deep-slip";
 import { Chip, Panel } from "@/components/ui";
 import { formatDecimal, formatPercent, parseOdds, parlayDecimal } from "@/lib/odds";
@@ -51,6 +52,15 @@ export function SlipBuilder() {
   useEffect(() => {
     // Deferred so the effect itself sets no state synchronously.
     const id = setTimeout(() => {
+      // A print sent from the scanner arrives here with its legs already filled in.
+      try {
+        const raw = sessionStorage.getItem(SLIP_PREFILL_KEY);
+        if (raw) {
+          sessionStorage.removeItem(SLIP_PREFILL_KEY);
+          const pre = (JSON.parse(raw) as Leg[]).filter((l) => l.selection).slice(0, 12);
+          if (pre.length) setLegs(pre.length >= 2 ? pre : [...pre, { ...emptyLeg }]);
+        }
+      } catch { /* storage may be blocked */ }
       fetch("/api/slip", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((j) => {
         if (j?.pricing) {
           setPricing(j.pricing);
@@ -105,6 +115,8 @@ export function SlipBuilder() {
         <h1 className="text-xl font-semibold tracking-tight text-white">{t("slipTitle")}</h1>
         <p className="mt-1 max-w-2xl text-sm leading-relaxed text-mist-400">{t("slipHint")}</p>
       </div>
+
+      <SlipScanner lang={lang} sportKey={sport.key} />
 
       <Panel title={t("slipTitle")} lang={lang} meta={Number.isFinite(combined) ? formatDecimal(combined) : undefined}>
         <div className="flex flex-col gap-2.5">

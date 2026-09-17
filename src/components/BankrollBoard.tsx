@@ -10,13 +10,14 @@ import { formatDecimal } from "@/lib/odds";
 import { EquityChart } from "@/components/EquityChart";
 import { curvePath } from "@/lib/ledger/backtest";
 import { LossReview } from "@/components/LossReview";
+import { SlipScanner } from "@/components/SlipScanner";
 
 interface EntryLeg { selection: string; outcome: string; actual?: string; settlement?: unknown }
 interface Entry { id: string; source: "ticket" | "manual" | "custom" | "scan"; title: string; matchup: string; combinedDecimal: number; stake: number; outcome: string; pnl: number; createdAt: string; settledAt: string | null; slug: string | null; legs?: EntryLeg[]; autoLegs?: number; alerts?: { kind: string; player: string }[]; clv?: { pct: number; n: number; moved: number } }
 interface Payload { entries: Entry[]; totals: { staked: number; profit: number; roi: number; won: number; lost: number; pending: number }; streak?: { streak: number; notice: boolean }; pause?: { paused: boolean; until: string | null }; error?: string }
 
 export function BankrollBoard() {
-  const { lang } = useNavState();
+  const { lang, sport } = useNavState();
   const t = makeT(lang);
   const [data, setData] = useState<Payload | null>(null);
   const [title, setTitle] = useState(""); const [odds, setOdds] = useState(""); const [stake, setStake] = useState("");
@@ -55,6 +56,7 @@ export function BankrollBoard() {
           {t("streakNoticeText").replace("{n}", String(data.streak.streak))}
         </div>
       )}
+      {!data?.pause?.paused && <SlipScanner lang={lang} sportKey={sport.key} onSaved={() => void load()} />}
       <Panel title={t("bankroll")} meta={data ? `${data.totals.won}W ${data.totals.lost}L · ${data.totals.pending} ${lang === "pt" ? "pendentes" : "pending"}` : undefined}>
         <p className="text-[12px] text-mist-500">{t("bankrollIntro")}</p>
         {data && (

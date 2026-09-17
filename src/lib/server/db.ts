@@ -516,6 +516,27 @@ function migrateRound3(d: Database.Database): void {
       PRIMARY KEY (ledgerId, legIndex)
     );
     CREATE INDEX IF NOT EXISTS idx_leg_prices_pending ON leg_prices(status, startsAt);
+
+    -- First-party analytics. No IP is stored; visitors are counted by a random first-party cookie.
+    -- Rows older than 180 days are deleted by the daily cleanup.
+    CREATE TABLE IF NOT EXISTS events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ts TEXT NOT NULL,
+      name TEXT NOT NULL,
+      anonId TEXT,
+      userId TEXT,
+      path TEXT NOT NULL DEFAULT '',
+      refHost TEXT NOT NULL DEFAULT '',
+      utmSource TEXT NOT NULL DEFAULT '',
+      utmMedium TEXT NOT NULL DEFAULT '',
+      utmCampaign TEXT NOT NULL DEFAULT '',
+      utmContent TEXT NOT NULL DEFAULT '',
+      device TEXT NOT NULL DEFAULT '',
+      props TEXT NOT NULL DEFAULT '{}'
+    );
+    CREATE INDEX IF NOT EXISTS idx_events_name ON events(name, ts);
+    CREATE INDEX IF NOT EXISTS idx_events_anon ON events(anonId, ts);
+    CREATE INDEX IF NOT EXISTS idx_events_user ON events(userId, ts);
   `);
   addColumn(d, "user_slips", "kind", "TEXT NOT NULL DEFAULT 'analysis'");
 }
