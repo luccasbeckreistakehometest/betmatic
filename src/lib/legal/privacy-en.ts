@@ -15,6 +15,9 @@ export function privacyEn(): LegalDoc {
               "Sign-up: name, email, password (stored only as a scrypt hash — nobody can read it), language, and when you accepted the terms and confirmed you are an adult.",
               "Using the service: games you opened and picked for the day, tickets generated at your request, your bankroll (bets you logged yourself), slips you had analysed, teams and leagues you follow, notices, responsible-play settings (limits, reminders, pause), optional leaderboard participation, and first-visit tour progress.",
               "Payments: the plan or pack bought, amount, status and the Mercado Pago payment number. We never receive or store card data — Mercado Pago does.",
+              "Slip screenshots (\"Snap your slip\"): the image is read on the spot and discarded, never written anywhere. Only the slip's text (game, selection, odds, stake) goes into your bankroll, and only if you save it.",
+              "Tipster audit: the pasted text and screenshots are discarded after reading. Only the extracted picks, the report and the name you gave are kept, visible to you alone and deletable at any time.",
+              "Usage measurement: pages visited and actions in the app (such as opening a game or saving a ticket), with a random identifier in our own cookie and the campaign that brought you (UTM or referring site). No IP address is stored and no third-party tool is used.",
               "Telegram (only if you connect it): the chat identifier and username.",
               "Contact: the name, email and message you send through the form.",
               "Technical data: IP address and browser details, used in memory to limit abuse and written to server logs that rotate automatically.",
@@ -43,7 +46,7 @@ export function privacyEn(): LegalDoc {
           "Only with providers the service needs, acting on our behalf:",
           {
             list: [
-              "Anthropic (AI): receives game data and the text of slips you ask us to analyse. We never send your name or email.",
+              "Anthropic (AI): receives game data, the text of slips you ask us to analyse, the slip screenshots and the tipster messages you send for reading. We never send your name or email.",
               "Mercado Pago: processes payments and receives the buyer's email.",
               "Hostinger: hosts the server that holds the database and logs.",
               "Telegram: delivers alerts, if you connect your account.",
@@ -69,6 +72,7 @@ export function privacyEn(): LegalDoc {
               "Contact messages: up to 12 months after they are resolved.",
               "Tour progress of visitors without an account: up to 12 months.",
               "Server logs: rotated automatically within a few weeks.",
+              "Usage-measurement events: 180 days, then deleted automatically.",
             ],
           },
           "The public ticket record contains no personal data.",
@@ -95,7 +99,7 @@ export function privacyEn(): LegalDoc {
       },
       {
         title: "9. Cookies",
-        body: ["We only use essential cookies — see the [Cookie notice](/cookies?lang=en). No advertising or third-party tracking cookies."],
+        body: ["We use essential cookies and one first-party usage-measurement cookie with no IP address — see the [Cookie notice](/cookies?lang=en). No advertising or third-party tracking cookies."],
       },
       {
         title: "10. Minors",

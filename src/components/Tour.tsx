@@ -10,20 +10,26 @@ import { useNavState } from "@/components/Controls";
 const ALL_STEPS = [
   { anchor: "sport", pt: ["Escolha o esporte", "Basquete (NBA e WNBA) e futebol, com as ligas de cada um. Cada esporte tem seus mercados e seus bilhetes."], en: ["Pick a sport", "Basketball (NBA and WNBA) and soccer, league by league. Each sport has its own markets and tickets."] },
   { anchor: "games", pt: ["Os jogos do dia", "Cada card é um jogo. Abra um: se ele ainda não tiver bilhete, a gente monta na hora, com as odds e o histórico daquele momento."], en: ["Today's games", "Every card is a game. Open one: if it has no ticket yet, we build it on the spot from that moment's odds and history."] },
+  { anchor: "games", pt: ["Alternativas embaixo de cada bilhete", "Dentro do jogo, cada bilhete tem duas alternativas com a mesma ideia. Se uma perna cair ou a linha mudar, é só abrir ali."], en: ["Backups under every ticket", "Inside a game, every ticket has two alternatives with the same idea. If a leg breaks or the line moves, open them right there."] },
+  { anchor: "games", pt: ["O selo de escalação", "Uma hora antes do jogo a gente confere quem entrou. Se alguém do seu bilhete ficar no banco, a perna ganha um selo vermelho e a alternativa sem ele fica destacada."], en: ["The lineup badge", "An hour before kickoff we check who starts. If someone on your ticket is benched, the leg gets a red badge and the backup without him is highlighted."] },
   { anchor: "nav", pt: ["Múltiplas e histórico", "Combine jogos em múltiplas, monte seu próprio bilhete e acompanhe o histórico do que acertamos e erramos."], en: ["Parlays and track record", "Combine games into parlays, build your own slip, and follow the record of what we got right and wrong."] },
   { anchor: "bankroll", pt: ["Sua banca e a curva", "Salve bilhetes com o valor apostado: liquidação automática, lucro, ROI, e a curva de unidades do histórico inteiro — filtrada por faixa, esporte e evidência."], en: ["Your bankroll and the curve", "Save tickets with the amount you staked: automatic grading, profit, ROI, and the equity curve of the whole record — filtered by band, sport and evidence."] },
+  { anchor: "bankroll", ai: true, pt: ["Manda o print do seu bilhete", "Fez a aposta na casa? Na sua banca, mande o print: a gente lê, você confere, e ele é liquidado sozinho no fim do jogo. A imagem não fica guardada."], en: ["Send your slip screenshot", "Placed the bet at the book? In your bankroll, send the screenshot: we read it, you check it, and it grades itself when the game ends. The image is never kept."] },
   { anchor: "alerts", telegram: true, pt: ["Alertas dos seus times", "Siga times e ligas e receba os bilhetes no Telegram assim que saem — ou aqui, na lista de avisos."], en: ["Alerts for your teams", "Follow teams and leagues and get their tickets on Telegram as soon as they are built — or here, in the notice list."] },
   { anchor: "alerts", telegram: false, pt: ["Avisos dos seus times", "Siga times e ligas: quando os bilhetes de um jogo deles saem, o aviso aparece aqui, na sua lista."], en: ["Notices for your teams", "Follow teams and leagues: when one of their games gets tickets, the notice lands here, in your list."] },
   { anchor: "settings", pt: ["Seus limites", "Teto de aposta por dia e por semana, lembrete de tempo, aviso de sequência ruim e uma pausa de 7 ou 30 dias. Aposta não é investimento."], en: ["Your limits", "Daily and weekly stake ceilings, a time reminder, a losing-streak notice and a 7- or 30-day pause. Betting is not investing."] },
-  { anchor: "account", pt: ["Seu plano, seus coins e o menu", "Os bilhetes são montados quando alguém abre o jogo. O plano define quantos jogos e faixas você vê; coins pagam análises só suas. Tudo o mais — conta, planos, sair — fica no menu."], en: ["Your plan, coins and the menu", "Tickets are built when someone opens the game. Your plan sets how many games and bands you see; coins pay for analysis made just for you. Everything else — account, plans, log out — is in the menu."] },
+  { anchor: "account", pt: ["Seu plano, seus coins e o menu", "O plano define quantos jogos e faixas você vê; coins pagam análises só suas. No menu ficam o raio-x do tipster, o relatório da semana, a conta e os planos."], en: ["Your plan, coins and the menu", "Your plan sets how many games and bands you see; coins pay for analysis made just for you. The menu holds the tipster audit, the weekly report, your account and the plans."] },
 ] as const;
-/** One of the two alert steps is shown, so every visitor sees the same number of steps. */
-const STEP_COUNT = ALL_STEPS.length - 1;
+type Step = (typeof ALL_STEPS)[number];
+/** Steps tied to a feature appear only when that feature is on here. */
+const visible = (s: Step, flags: { telegram: boolean; ai: boolean }) =>
+  (!("telegram" in s) || s.telegram === flags.telegram) && (!("ai" in s) || flags.ai);
 type Rect = { top: number; left: number; width: number; height: number };
 
-export function Tour({ telegram = false }: { telegram?: boolean }) {
+export function Tour({ telegram = false, ai = false }: { telegram?: boolean; ai?: boolean }) {
   const { lang } = useNavState();
-  const STEPS = useMemo(() => ALL_STEPS.filter((s) => !("telegram" in s) || s.telegram === telegram), [telegram]);
+  const STEPS = useMemo(() => ALL_STEPS.filter((s) => visible(s, { telegram, ai })), [telegram, ai]);
+  const stepCount = STEPS.length;
   const [state, setState] = useState<"idle" | "welcome" | "running" | "done">("idle");
   const [step, setStep] = useState(0);
   const [rect, setRect] = useState<Rect | null>(null);
@@ -38,10 +44,10 @@ export function Tour({ telegram = false }: { telegram?: boolean }) {
       let seen: string | null = "1";
       try { seen = sessionStorage.getItem("bm_tour_seen"); if (!seen) sessionStorage.setItem("bm_tour_seen", "1"); } catch { /* storage blocked */ }
       if (!seen) save(0, false, "visit");
-      if (j.tourStep > 0 && j.tourStep < STEP_COUNT) { setStep(j.tourStep); setState("running"); }
+      if (j.tourStep > 0 && j.tourStep < stepCount) { setStep(j.tourStep); setState("running"); }
       else if (!seen) setState("welcome");
     }).catch(() => {});
-  }, [save]);
+  }, [save, stepCount]);
 
   const measure = useCallback(() => {
     const el = document.querySelector<HTMLElement>(`[data-tour="${STEPS[step].anchor}"]`);

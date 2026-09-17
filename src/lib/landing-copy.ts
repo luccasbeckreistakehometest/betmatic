@@ -109,14 +109,14 @@ const PT: LandingCopy = {
   ],
 
   edgeTitle: "O que só o Betmatic tem",
-  edgeSub: "Quem vende palpite esconde o histórico e some quando erra. A gente construiu o contrário disso.",
+  edgeSub: "Quem vende palpite esconde o histórico e some quando erra. A gente construiu o contrário: cada bilhete conferido, vigiado e comparado com o mercado.",
   edges: [
-    { title: "Prova pública, bilhete por bilhete", body: "Todo bilhete que geramos vai pra uma página aberta e é liquidado sozinho contra o placar real. Dá até pra baixar a planilha inteira. Se ficar feio, fica feio lá.", href: "/prova" },
-    { title: "Bilhete na hora que você abre o jogo", body: "Sem esperar rodada de atualização: abriu uma partida sem bilhete, o sistema monta na hora — com as odds e escalações daquele momento.", href: "/signup" },
-    { title: "Sua banca, liquidada sozinha", body: "Salva o bilhete com o valor que apostou e o resultado entra automático quando o jogo acaba. Lucro, ROI e o stake sugerido por Kelly em cada bilhete.", href: "/signup" },
-    { title: "Aprende com o próprio erro", body: "Todo dia o sistema revisa o que ganhou e perdeu, escreve o post-mortem e propõe ajustes, que a gente revisa antes de valer. A taxa de acerto por mercado entra em toda geração seguinte.", href: "/prova" },
-    { title: "Calculadoras grátis, sem cadastro", body: "Valor esperado, múltipla com a margem real da casa e conversor de odds — a mesma conta que roda em cada bilhete.", href: "/ferramentas" },
-    { title: "Indique e ganhe", body: "Seu link traz um amigo; quando ele faz a primeira compra, os dois ganham coins para analisar bilhetes.", href: "/signup" },
+    { title: "Se a escalação mudar, seu bilhete avisa", body: "Uma hora antes do jogo a gente confere quem entrou em campo. Jogador no banco? A perna fica marcada em vermelho e a alternativa sem ele aparece do lado.", href: "/futebol" },
+    { title: "Plano B embaixo de cada bilhete", body: "Todo bilhete vem com duas alternativas que mantêm a mesma ideia. Mudou a linha ou caiu um titular, você já sabe pra onde ir.", href: "/signup" },
+    { title: "Manda o print, a gente confere", body: "Fez o bilhete na casa? Manda o print. Ele entra na sua banca e é liquidado sozinho quando o jogo acaba. A imagem não fica guardada.", href: "/signup" },
+    { title: "Antes de pagar grupo VIP, passa ele no raio-x", body: "Cola as mensagens do tipster e veja quanto ele acertou de verdade, inclusive os \"greens\" postados depois que o jogo já tinha começado. É privado: o nome nunca aparece.", href: "/raio-x-tipster" },
+    { title: "Prova pública: o mercado concordou com a gente?", body: "Toda perna é comparada com a odd de fechamento. Pegar preço melhor que o fechamento com frequência é o sinal mais honesto de que a análise presta, e está na página de prova, pra todo mundo ver.", href: "/prova" },
+    { title: "Odd de verdade em cada perna de jogador", body: "Linha e preço publicados e, do lado, quantas vezes o jogador passou dessa linha nos últimos 5, 10 e na temporada. Quem joga pouco nem entra na lista.", href: "/basquete" },
   ],
   howTitle: "Como funciona",
   howSteps: [
@@ -124,19 +124,25 @@ const PT: LandingCopy = {
       n: "01",
       title: "Você abre o jogo, a gente monta",
       body:
-        "Na primeira vez que uma partida é aberta, o sistema lê o quadro de lesões, as linhas publicadas e o histórico de cada jogador e monta os bilhetes em cerca de um minuto. Quem abre depois lê o mesmo bilhete na hora.",
+        "Na primeira vez que uma partida é aberta, o sistema lê as odds publicadas, o quadro de lesões e o histórico de cada jogador naquele momento, tira quem joga pouco e monta os bilhetes em cerca de um minuto. Quem abre depois lê o mesmo bilhete na hora.",
     },
     {
       n: "02",
-      title: "Várias faixas, cada perna explicada",
+      title: "Cada bilhete vem com a chance real e dois planos B",
       body:
-        "Do seguro ao ousado, cada perna vem com o motivo e o número que sustenta ela. Se os dados não sustentam um bilhete, a gente não inventa um.",
+        "Do seguro ao ousado, cada perna vem com o motivo, o preço e o histórico naquela linha. Embaixo, duas alternativas com a mesma ideia. Se os dados não sustentam um bilhete, a gente não inventa um.",
     },
     {
       n: "03",
-      title: "Você decide, com o número na mão",
+      title: "Até o apito final, a gente vigia",
       body:
-        "Monte o seu próprio bilhete e peça pra análise apontar o que está frágil e o que trocar. Aí sim é você no controle, mas sabendo o que está fazendo.",
+        "Uma hora antes, a escalação: se alguém da sua perna ficar no banco, você fica sabendo. Com a bola rolando, cada perna mostra se já bateu, se caiu ou quanto de chance ainda tem.",
+    },
+    {
+      n: "04",
+      title: "Depois do jogo, tudo é conferido em público",
+      body:
+        "Cada bilhete é liquidado contra o placar oficial e cada perna é comparada com a odd de fechamento. Acerto, retorno e CLV ficam na página de prova, bons ou ruins.",
     },
   ],
 
@@ -148,16 +154,16 @@ const PT: LandingCopy = {
       name: "Basquete",
       hook: "NBA e WNBA, temporada inteira",
       detail:
-        "Jogo a jogo, a gente mede quanto cada jogador produz e cruza com lesões e escalação. O bilhete sai só com linhas que têm odd publicada: resultado, handicap e total de pontos.",
-      markets: "No bilhete: Resultado · Handicap · Total de pontos — Na análise: pontos, rebotes e assistências de cada jogador",
+        "Jogo a jogo, a gente mede quanto cada jogador produz, com a minutagem e o papel no time, e cruza com lesões. Perna de jogador só entra quando a casa publicou a linha e o preço.",
+      markets: "No bilhete: Resultado · Total de pontos · Pontos, rebotes, assistências e bolas de 3 com odd publicada — Na análise: o \"com e sem\" o companheiro",
     },
     {
       key: "soccer",
       name: "Futebol",
       hook: "Brasileirão, Premier League, Libertadores e mais",
       detail:
-        "A análise desce ao detalhe: faltas, cartões e finalizações de cada jogador, partida a partida. O bilhete sai só com linhas que têm odd publicada: resultado, handicap e total de gols.",
-      markets: "No bilhete: Resultado · Handicap · Total de gols — Na análise: faltas, cartões e finalizações de cada jogador",
+        "A análise desce ao detalhe: faltas, cartões e finalizações de cada jogador, partida a partida. Quando a escalação sai, a gente confere se quem está no seu bilhete vai começar jogando.",
+      markets: "No bilhete: Resultado · Total de gols · Finalizações, faltas e impedimentos com odd publicada — Na análise: cartões e escalação confirmada",
     },
   ],
 
@@ -166,7 +172,7 @@ const PT: LandingCopy = {
   pricingPeriod: "Pague por mais tempo e economize",
   pricingCoins: "Coins para o que é só seu",
   pricingCoinsSub:
-    "Coins pagam a análise do bilhete que você montou (8 coins cada): a IA aponta a perna frágil e sugere troca. O que o plano já inclui não custa nada a mais.",
+    "Coins pagam o que é feito só pra você: análise do seu bilhete (8), análise profunda (14; no Max sai por 8), múltipla sob medida (12), leitura do analista no raio-x do jogador (5, e grátis pra quem abrir depois no mesmo dia) e raio-x de tipster além do limite do plano (6). O que o plano já inclui não custa nada a mais.",
   perMonth: "/mês",
   mostPopular: "Mais escolhido",
   choosePlan: "Escolher",
@@ -189,6 +195,14 @@ const PT: LandingCopy = {
     {
       q: "Tem renovação automática?",
       a: "Não. O pagamento é único para o período escolhido (1, 3, 6 ou 12 meses) e o acesso vai até o fim dele. Desistiu em até 7 dias da compra? Devolvemos o valor.",
+    },
+    {
+      q: "O print do meu bilhete fica guardado?",
+      a: "Não. A imagem é lida na hora e descartada. Só o texto do bilhete (jogo, seleção, odd e valor) fica na sua banca, e só se você mandar salvar.",
+    },
+    {
+      q: "Como funciona o raio-x do tipster?",
+      a: "Você cola as mensagens do grupo e a gente confere cada palpite contra o placar oficial. O relatório é só seu, pode ser apagado, e o nome do tipster nunca aparece em lugar nenhum. O texto colado é descartado depois da leitura.",
     },
     {
       q: "O Betmatic aceita apostas?",
@@ -251,14 +265,14 @@ const EN: LandingCopy = {
   ],
 
   edgeTitle: "What only Betmatic does",
-  edgeSub: "Pick sellers hide their record and vanish when they miss. We built the opposite.",
+  edgeSub: "Pick sellers hide their record and vanish when they miss. We built the opposite: every ticket graded, watched and held up against the market.",
   edges: [
-    { title: "A public record, ticket by ticket", body: "Every ticket we generate lands on an open page and settles itself against the real score. You can download the whole spreadsheet. When it looks bad, it looks bad there.", href: "/prova" },
-    { title: "Tickets the moment you open a game", body: "No waiting for a refresh cycle: open a game with no ticket and the system builds one on the spot, from that moment's odds and line-ups.", href: "/signup" },
-    { title: "Your bankroll, graded for you", body: "Save a ticket with your stake and the result lands automatically when the game ends. Profit, ROI, and a quarter-Kelly suggested stake on every ticket.", href: "/signup" },
-    { title: "It learns from its own misses", body: "Every day the system reviews what won and lost, writes the post-mortem and proposes changes that we review before they apply. Hit rate by market feeds every next generation.", href: "/prova" },
-    { title: "Free calculators, no signup", body: "Expected value, parlays with the book's real hold, and an odds converter — the same math that runs on every ticket.", href: "/ferramentas" },
-    { title: "Invite and earn", body: "Your link brings a friend; when they make their first purchase, you both get coins for slip analyses.", href: "/signup" },
+    { title: "Your slip watches the lineup for you", body: "An hour before kickoff we check who actually starts. A player on the bench? That leg turns red and the backup without him shows up right beside it.", href: "/soccer" },
+    { title: "Two backups under every ticket", body: "Every ticket ships with two alternatives that keep the same idea. If a line moves or a starter drops out, you already know where to go.", href: "/signup" },
+    { title: "Snap your slip, we grade it", body: "Placed a bet at the book? Send the screenshot. It lands in your bankroll and grades itself when the game ends. The image is never kept.", href: "/signup" },
+    { title: "Audit that VIP group before you pay", body: "Paste the tipster's messages and see what they really hit, including the \"wins\" posted after the game had already started. Private: the name never shows anywhere.", href: "/tipster-audit" },
+    { title: "Public record: did the market agree with us?", body: "Every leg is compared with the closing price. Beating the close often is the most honest sign the analysis is any good, and it sits on the public record for anyone to check.", href: "/prova" },
+    { title: "Real prices on every player leg", body: "The posted line and price, and next to it how often the player cleared that line over the last 5, the last 10 and the season. Players who barely play never make the list.", href: "/basketball" },
   ],
   howTitle: "How it works",
   howSteps: [
@@ -266,19 +280,25 @@ const EN: LandingCopy = {
       n: "01",
       title: "You open a game, we build it",
       body:
-        "The first time a game is opened, the system reads the injury report, the posted lines and each player's game log and builds the tickets in about a minute. Everyone who opens it after reads the same tickets instantly.",
+        "The first time a game is opened, the system reads the posted prices, the injury report and each player's game log at that moment, drops the players who barely play, and builds the tickets in about a minute. Everyone who opens it after reads the same tickets instantly.",
     },
     {
       n: "02",
-      title: "Several bands, every leg explained",
+      title: "Every ticket ships with the real chance and two backups",
       body:
-        "From short to ambitious, every leg carries the reason and the number behind it. When the data doesn't support a ticket, we don't invent one.",
+        "From short to ambitious, every leg carries the reason, the price and the record at that line. Underneath, two alternatives with the same idea. When the data doesn't support a ticket, we don't invent one.",
     },
     {
       n: "03",
-      title: "You decide, holding the number",
+      title: "Until the final whistle, we keep watch",
       body:
-        "Build your own slip and have the analysis flag what is weak and what to swap. You stay in control — with the maths in front of you.",
+        "An hour out, the lineup: if a player on your leg is benched, you hear about it. Once the game is on, every leg shows whether it has landed, busted, or how much chance it still has.",
+    },
+    {
+      n: "04",
+      title: "After the game, everything is graded in public",
+      body:
+        "Each ticket is settled against the official score and each leg is compared with the closing price. Hit rate, return and CLV sit on the public record, good or bad.",
     },
   ],
 
@@ -290,16 +310,16 @@ const EN: LandingCopy = {
       name: "Basketball",
       hook: "NBA and WNBA, all season",
       detail:
-        "Game by game, we measure what each player produces and cross it with injuries and line-ups. Tickets only use lines with a published price: moneyline, spread and totals.",
-      markets: "On the ticket: Moneyline · Spread · Totals — In the analysis: each player's points, rebounds and assists",
+        "Game by game, we measure what each player produces, with minutes and role, and cross it with injuries. A player leg only makes a ticket when the book has posted the line and the price.",
+      markets: "On the ticket: Moneyline · Totals · Points, rebounds, assists and threes at posted prices — In the analysis: with and without a teammate",
     },
     {
       key: "soccer",
       name: "Soccer",
       hook: "Premier League, La Liga, Champions League, Brasileirão",
       detail:
-        "The analysis goes down to the detail: each player's fouls, cards and shots, match by match. Tickets only use lines with a published price: result, handicap and goal totals.",
-      markets: "On the ticket: Result · Handicap · Goal totals — In the analysis: each player's fouls, cards and shots",
+        "The analysis goes down to the detail: each player's fouls, cards and shots, match by match. When the lineup is out, we check whether the players on your ticket actually start.",
+      markets: "On the ticket: Result · Goal totals · Shots, fouls and offsides at posted prices — In the analysis: cards and confirmed lineups",
     },
   ],
 
@@ -308,7 +328,7 @@ const EN: LandingCopy = {
   pricingPeriod: "Commit longer, pay less",
   pricingCoins: "Coins for what is yours alone",
   pricingCoinsSub:
-    "Coins pay for the analysis of a slip you built (8 coins each): the AI flags the weak leg and suggests a swap. Everything your plan already includes costs nothing extra.",
+    "Coins pay for work done just for you: a slip analysis (8), a deep analysis (14; 8 on Max), a custom parlay (12), the analyst read on a player deep dive (5, and free for anyone who opens it later that day) and a tipster audit past your plan's allowance (6). Everything your plan already includes costs nothing extra.",
   perMonth: "/mo",
   mostPopular: "Most popular",
   choosePlan: "Choose",
@@ -329,6 +349,8 @@ const EN: LandingCopy = {
       a: "No. The bands run from short returns to long parlays precisely so you choose the risk. Only stake what you can afford to lose.",
     },
     { q: "Does it renew automatically?", a: "No. You pay once for the period you pick (1, 3, 6 or 12 months) and access runs to its end. Changed your mind within 7 days of buying? We refund it." },
+    { q: "Do you keep my slip screenshot?", a: "No. The image is read on the spot and discarded. Only the slip's text (game, selection, odds and stake) goes into your bankroll, and only if you choose to save it." },
+    { q: "How does the tipster audit work?", a: "You paste the group's messages and we check each pick against the official score. The report is yours alone, can be deleted, and the tipster's name never shows anywhere. The pasted text is discarded after reading." },
     { q: "Does Betmatic take bets?", a: "No. It is a research tool: it shows numbers and tickets, and any bet you choose to place happens at a sportsbook of your choice. 18+ only." },
   ],
 

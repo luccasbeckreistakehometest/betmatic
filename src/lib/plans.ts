@@ -55,8 +55,8 @@ export const PLANS: Plan[] = [
     coinsPerPeriod: 0,
     tagline: { pt: "Prove antes de pagar", en: "Try before you pay" },
     highlights: {
-      pt: ["1 jogo por dia, você escolhe qual", "Faixa de valor (2x–5x)", "O bilhete que você gerou sai na hora; os já prontos, com 2 h de atraso", "Histórico público"],
-      en: ["1 game a day, your pick", "Value band (2x–5x)", "A ticket you generate shows at once; ready-made ones on a 2-hour delay", "Public track record"],
+      pt: ["1 jogo por dia, você escolhe qual", "Faixa de valor (2x–5x)", "O bilhete que você gerou sai na hora; os já prontos, com 2 h de atraso", "Raio-x de 1 jogador por dia", "3 prints de bilhete por dia e 1 raio-x de tipster por mês", "Histórico público"],
+      en: ["1 game a day, your pick", "Value band (2x–5x)", "A ticket you generate shows at once; ready-made ones on a 2-hour delay", "Deep dive on 1 player a day", "3 slip screenshots a day and 1 tipster audit a month", "Public track record"],
     },
   },
   {
@@ -76,12 +76,16 @@ export const PLANS: Plan[] = [
         "NBA e WNBA: todos os jogos",
         "Bilhetes montados quando você abre a partida",
         "Faixas até 20x",
+        "Raio-x de qualquer jogador de basquete",
+        "20 prints de bilhete por dia e 3 raio-x de tipster por semana",
         "30 coins por período para análises do seu bilhete",
       ],
       en: [
         "NBA and WNBA: every game",
         "Tickets built when you open the game",
         "Bands up to 20x",
+        "Deep dive on any basketball player",
+        "20 slip screenshots a day and 3 tipster audits a week",
         "30 coins per period to analyse your own slips",
       ],
     },
@@ -102,13 +106,17 @@ export const PLANS: Plan[] = [
       pt: [
         "Basquete e futebol: NBA, WNBA, Brasileirão, Premier League, La Liga, Champions e Libertadores",
         "Todas as faixas de odd",
-        "Múltiplas entre jogos da rodada",
+        "Múltiplas da rodada na hora que você pede (de 20x pra cima, com a chance real do lado)",
+        "Raio-x de qualquer jogador",
+        "Acompanhamento ao vivo com leitura ao vivo",
         "120 coins por período",
       ],
       en: [
         "Basketball and soccer: NBA, WNBA, Brasileirão, Premier League, La Liga, Champions League, Libertadores",
         "Every odds band",
-        "Cross-game parlays",
+        "Cross-game parlays whenever you ask (20x and up, with the real chance beside them)",
+        "Deep dive on any player",
+        "Live tracking with a live read",
         "120 coins per period",
       ],
     },
@@ -124,10 +132,22 @@ export const PLANS: Plan[] = [
     trackRecord: true,
     delayMinutes: 0,
     coinsPerPeriod: 400,
-    tagline: { pt: "Tudo do Pro, com mais coins", en: "Everything in Pro, with more coins" },
+    tagline: { pt: "Tudo do Pro, com análise profunda e prioridade", en: "Everything in Pro, with deep analysis and priority" },
     highlights: {
-      pt: ["Tudo do Pro", "400 coins por período (50 análises do seu bilhete)"],
-      en: ["Everything in Pro", "400 coins per period (50 analyses of your own slip)"],
+      pt: [
+        "Tudo do Pro",
+        "Análise profunda do seu bilhete pelo preço normal: cada perna conferida com linha, odd e minutagem",
+        "Atualizar os bilhetes de um jogo quando a escalação ou a linha muda (até 3 por dia)",
+        "Prioridade para gerar bilhetes em dia cheio",
+        "400 coins por período (50 análises do seu bilhete)",
+      ],
+      en: [
+        "Everything in Pro",
+        "Deep slip analysis at the normal price: every leg checked against line, price and minutes",
+        "Refresh a game's tickets when the lineup or the line moves (up to 3 a day)",
+        "Priority generation on busy days",
+        "400 coins per period (50 analyses of your own slip)",
+      ],
     },
   },
 ];
@@ -155,8 +175,7 @@ export function getCoinPack(id: string): CoinPack | undefined {
 
 /**
  * Coins only price work computed for one specific user. Reading inventory is covered by the plan,
- * so charging for it would be charging twice. Today coins buy one thing: the analysis of a slip the
- * user assembled.
+ * so charging for it would be charging twice.
  */
 export const ACTION_COST = {
   analyse_slip: 8,

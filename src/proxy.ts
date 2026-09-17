@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 /** English-only public paths; everything else is Portuguese unless ?lang=en. */
-const EN_PATHS = new Set(["/basketball", "/soccer", "/terms", "/privacy", "/refunds", "/responsible-gambling"]);
+const EN_PATHS = new Set(["/basketball", "/soccer", "/tipster-audit", "/terms", "/privacy", "/refunds", "/responsible-gambling"]);
 
 /**
  * Tells the root layout which language the page is in, so <html lang> and the default metadata are
