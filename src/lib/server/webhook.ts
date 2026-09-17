@@ -1,4 +1,5 @@
 import { ticketSlug } from "@/lib/ledger/proof";
+import { envValue } from "@/lib/env";
 import { scrubSuggestion } from "@/lib/server/whitelabel";
 import { formatDecimal } from "@/lib/odds";
 import type { BetSuggestion } from "@/lib/types";
@@ -19,8 +20,8 @@ export function ticketAnnouncement(args: { gameId: string; matchup: string; spor
 }
 
 export async function announceTickets(args: Parameters<typeof ticketAnnouncement>[0]): Promise<void> {
-  const url = process.env.TICKET_WEBHOOK_URL;
-  if (!url || !args.suggestions.length) return;
+  const url = envValue("TICKET_WEBHOOK_URL");
+  if (!/^https?:\/\//.test(url) || !args.suggestions.length) return;
   const body = ticketAnnouncement(args);
   try {
     // Discord accepts {content}; anything else gets the full structured payload alongside it.

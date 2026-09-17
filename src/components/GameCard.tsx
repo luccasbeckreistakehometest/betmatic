@@ -1,14 +1,11 @@
 import Link from "next/link";
 import { makeT, type Lang } from "@/lib/i18n";
+import { formatTime, localizeStatus } from "@/lib/format";
 import type { Game, TeamRef } from "@/lib/types";
 
-/** Tipoff is always shown in Eastern time — it is the league's own clock and avoids hydration drift. */
-export function tipoffET(iso: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(iso));
+/** Kickoff in the reader's clock: Brasília for the Portuguese app, Eastern for the English one. */
+export function kickoff(iso: string, lang: Lang): string {
+  return formatTime(iso, lang);
 }
 
 function fmtLine(value?: number): string {
@@ -64,11 +61,11 @@ export function GameCard({ game, lang = "pt", sportKey }: { game: Game; lang?: L
         {isLive ? (
           <span className="live-dot flex items-center gap-1.5 rounded-full bg-alert-400/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-alert-400">
             <span className="size-1.5 rounded-full bg-alert-400" />
-            {game.statusDetail || "Live"}
+            {localizeStatus(game.statusDetail || "Live", lang)}
           </span>
         ) : (
           <span className="nums text-[11px] font-medium uppercase tracking-wide text-mist-400">
-            {isFinal ? game.statusDetail || "Final" : `${tipoffET(game.startsAt)} ET`}
+            {isFinal ? localizeStatus(game.statusDetail || "Final", lang) : kickoff(game.startsAt, lang)}
           </span>
         )}
         {game.broadcast && (

@@ -15,7 +15,7 @@ export async function GET() {
 }
 
 const schema = z.union([
-  z.object({ kind: z.literal("ticket"), gameId: z.string(), bandKey: z.string(), selections: z.array(z.string()).min(1), stake: z.number().positive().max(1_000_000) }),
+  z.object({ kind: z.literal("ticket"), gameId: z.string().max(40), bandKey: z.string().max(20), selections: z.array(z.string().max(200)).min(1).max(20), stake: z.number().positive().max(1_000_000) }),
   z.object({ kind: z.literal("manual"), title: z.string().trim().min(2).max(160), odds: z.number().min(1.01).max(10_000), stake: z.number().positive().max(1_000_000) }),
 ]);
 
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   const user = await currentUser();
   if (!user) return NextResponse.json({ error: "não autorizado" }, { status: 401 });
-  const parsed = z.object({ id: z.string(), outcome: z.enum(["won", "lost", "void"]) }).safeParse(await request.json().catch(() => ({})));
+  const parsed = z.object({ id: z.string().max(80), outcome: z.enum(["won", "lost", "void"]) }).safeParse(await request.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: "pedido inválido" }, { status: 400 });
   return NextResponse.json({ ok: gradeManual(user.id, parsed.data.id, parsed.data.outcome) });
 }

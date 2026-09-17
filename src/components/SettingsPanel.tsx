@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { formatDate } from "@/lib/format";
 import Link from "next/link";
 import { Empty, Panel } from "@/components/ui";
 import { useNavState } from "@/components/Controls";
@@ -25,7 +26,7 @@ export function SettingsPanel() {
   const [handle, setHandle] = useState("");
   const [handleError, setHandleError] = useState<string | null>(null);
   const money = (n: number) => (lang === "pt" ? `R$ ${n.toFixed(2)}` : `$${n.toFixed(2)}`);
-  const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(lang === "pt" ? "pt-BR" : "en-US");
+  const fmtDate = (iso: string) => formatDate(iso, lang, { year: true });
 
   const apply = useCallback((j: Payload) => {
     setData(j);
@@ -81,7 +82,7 @@ export function SettingsPanel() {
 
       <Panel title={t("reminderTitle")}>
         <p className="text-[12px] text-mist-500">{t("reminderIntro")}</p>
-        <select value={s?.sessionReminderMinutes ?? 0} onChange={(e) => void patch({ sessionReminderMinutes: Number(e.target.value) || null })} className={`mt-3 ${select}`} data-testid="reminder-select">
+        <select aria-label={t("reminderTitle")} value={s?.sessionReminderMinutes ?? 0} onChange={(e) => void patch({ sessionReminderMinutes: Number(e.target.value) || null })} className={`mt-3 ${select}`} data-testid="reminder-select">
           <option value={0}>{t("reminderOff")}</option>
           {[1, 15, 30, 45, 60, 90, 120].map((m) => <option key={m} value={m}>{m} {t("minutes")}</option>)}
         </select>
@@ -89,7 +90,7 @@ export function SettingsPanel() {
 
       <Panel title={t("streakTitle")} meta={data ? `${data.streak.streak} ${lang === "pt" ? "seguidas agora" : "in a row now"}` : undefined}>
         <p className="text-[12px] text-mist-500">{t("streakIntro")}</p>
-        <select value={s?.lossStreakNotice ?? 3} onChange={(e) => void patch({ lossStreakNotice: Number(e.target.value) })} className={`mt-3 ${select}`} data-testid="streak-select">
+        <select aria-label={t("streakTitle")} value={s?.lossStreakNotice ?? 3} onChange={(e) => void patch({ lossStreakNotice: Number(e.target.value) })} className={`mt-3 ${select}`} data-testid="streak-select">
           <option value={0}>{t("streakOff")}</option>
           {[2, 3, 4, 5, 7].map((n) => <option key={n} value={n}>{n}</option>)}
         </select>
@@ -114,7 +115,7 @@ export function SettingsPanel() {
         <p className="text-[12px] text-mist-500">{t("rankingOptInIntro")}</p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-2 text-[13px] text-mist-200"><input type="checkbox" checked={optIn} onChange={(e) => { setOptIn(e.target.checked); void patch({ leaderboardOptIn: e.target.checked }); }} className="accent-edge-400" data-testid="ranking-optin" />{t("rankingOptIn")}</label>
-          <input value={handle} onChange={(e) => setHandle(e.target.value)} placeholder={t("handle")} maxLength={16} className={`${input} w-44`} data-testid="ranking-handle" />
+          <input aria-label={t("handle")} value={handle} onChange={(e) => setHandle(e.target.value)} placeholder={t("handle")} maxLength={16} className={`${input} w-44`} data-testid="ranking-handle" />
           <button onClick={() => void patch({ handle: handle.trim() || null })} disabled={saved === "saving"} className="rounded-lg border border-ink-700 px-3 py-2 text-[12px] text-mist-300 hover:text-mist-100" data-testid="ranking-handle-save">{t("save")}</button>
           {handleError && <span className="text-[12px] text-warn-400" data-testid="handle-error">{handleError}</span>}
           {s?.leaderboardOptIn && s.handle && <span className="text-[12px] text-mist-500">{t("shownAs")} <span className="nums text-mist-200">@{s.handle}</span></span>}

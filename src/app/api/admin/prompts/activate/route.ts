@@ -5,7 +5,7 @@ import { resetToDefault, revertPrompt } from "@/lib/server/prompts";
 
 export const runtime = "nodejs";
 
-const schema = z.union([z.object({ id: z.string() }), z.object({ kind: z.enum(["game", "slate"]), reset: z.literal(true) })]);
+const schema = z.union([z.object({ id: z.string().max(80) }), z.object({ kind: z.enum(["game", "slate"]), reset: z.literal(true) })]);
 
 /** Revert to a previous version, or to the code default. */
 export async function POST(request: Request) {

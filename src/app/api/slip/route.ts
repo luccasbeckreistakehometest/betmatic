@@ -6,41 +6,52 @@ import { getDb, newId, nowIso } from "@/lib/server/db";
 import { analyseSlip } from "@/lib/bets/analyse";
 import { ACTION_COST } from "@/lib/plans";
 import { normaliseLang } from "@/lib/i18n";
-import { describeAiError } from "@/lib/ai/client";
+import { AiNotConfiguredError } from "@/lib/ai/client";
+import { AiBudgetExceededError } from "@/lib/server/ai-budget";
+import { apiError, rateLimited } from "@/lib/server/api";
+import { accountKey, hit, ipKey } from "@/lib/server/rate-limit";
+import { reportError } from "@/lib/server/ops-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 const schema = z.object({
-  title: z.string().trim().default(""),
+  title: z.string().trim().max(120).default(""),
   lang: z.enum(["pt", "en"]).default("pt"),
   legs: z
-    .array(z.object({ selection: z.string().trim().min(1), market: z.string().trim().default(""), odds: z.string().trim() }))
-    .min(2, "Adicione ao menos duas pernas"),
+    .array(z.object({ selection: z.string().trim().min(1).max(160), market: z.string().trim().max(60).default(""), odds: z.string().trim().max(12) }))
+    .min(2, "Adicione ao menos duas pernas")
+    .max(12),
 });
 
 export async function POST(request: Request) {
   const user = await currentUser();
-  if (!user) return NextResponse.json({ error: "não autenticado" }, { status: 401 });
+  const body = await request.json().catch(() => null);
+  const lang = normaliseLang((body as { lang?: string } | null)?.lang ?? user?.lang);
+  if (!user) return apiError("unauthenticated", lang, 401);
+  const limit = hit("slipAccount", accountKey(user.id));
+  if (!limit.ok) return rateLimited(limit, lang);
+  const ipLimit = hit("aiIp", ipKey(request));
+  if (!ipLimit.ok) return rateLimited(ipLimit, lang);
 
-  const parsed = schema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Dados inválidos" }, { status: 400 });
-  }
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) return apiError("invalid_input", lang, 400);
   const { legs, title } = parsed.data;
-  const lang = normaliseLang(parsed.data.lang);
-  const cost = ACTION_COST.analyse_slip;
+  // The operator's own account is not billed for its own product.
+  const cost = user.role === "admin" ? 0 : ACTION_COST.analyse_slip;
 
   // Debit first so a burst of parallel requests cannot spend the same coins twice; refunded below
   // if the model call fails, since the user got nothing for it.
-  try {
-    adjustCoins(user.id, -cost, "spend:analyse_slip", { legs: legs.length });
-  } catch (error) {
-    if (error instanceof InsufficientCoinsError) {
-      return NextResponse.json({ error: error.message, needed: error.needed, balance: error.balance }, { status: 402 });
+  if (cost > 0) {
+    try {
+      adjustCoins(user.id, -cost, "spend:analyse_slip", { legs: legs.length });
+    } catch (error) {
+      if (error instanceof InsufficientCoinsError) {
+        return apiError("insufficient_coins", lang, 402, { needed: error.needed, balance: error.balance });
+      }
+      throw error;
     }
-    throw error;
   }
 
   try {
@@ -54,11 +65,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ analysis, coinsSpent: cost, balance: user.coins - cost });
   } catch (error) {
-    adjustCoins(user.id, cost, "refund:analyse_slip", { reason: "generation failed" });
-    return NextResponse.json(
-      { error: describeAiError(error) ?? (error instanceof Error ? error.message : "Falha na análise"), refunded: cost },
-      { status: 502 },
-    );
+    if (cost > 0) adjustCoins(user.id, cost, "refund:analyse_slip", { reason: "generation failed" });
+    reportError("ai.slip", error, { userId: user.id });
+    const code = error instanceof AiBudgetExceededError ? "ai_budget" : "ai_unavailable";
+    return apiError(code, lang, error instanceof AiNotConfiguredError ? 503 : 502, { refunded: cost });
   }
 }
 

@@ -1,42 +1,52 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { cookies } from "next/headers";
-import { createUser } from "@/lib/server/users";
-import { REF_COOKIE, creditReferral } from "@/lib/server/referral";
-import { SESSION_COOKIE, signSession } from "@/lib/server/auth";
+import { createUser, EmailTakenError } from "@/lib/server/users";
+import { REF_COOKIE, recordReferral } from "@/lib/server/referral";
+import { issueSession } from "@/lib/server/session";
+import { apiError, rateLimited, requestLang } from "@/lib/server/api";
+import { hit, ipKey } from "@/lib/server/rate-limit";
+import { reportError } from "@/lib/server/ops-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const schema = z.object({
-  name: z.string().trim().min(1),
-  email: z.string().trim().email(),
-  password: z.string().min(8, "A senha precisa de ao menos 8 caracteres"),
+  name: z.string().trim().min(1).max(80),
+  email: z.string().trim().max(254).email(),
+  password: z.string().max(200),
   lang: z.enum(["pt", "en"]).default("pt"),
+  // Explicit consent: 18+ and the terms/privacy notice. Stored with a timestamp and the version.
+  acceptTerms: z.literal(true).optional(),
+  // Honeypot: real people never see this field.
+  website: z.string().max(200).optional(),
 });
 
 export async function POST(request: Request) {
-  const parsed = schema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Dados inválidos" }, { status: 400 });
-  }
+  const body = await request.json().catch(() => null);
+  const parsed = schema.safeParse(body);
+  const lang = requestLang(request, parsed.success ? parsed.data.lang : null);
+  if (!parsed.success) return apiError("invalid_input", lang, 400);
+  const data = parsed.data;
+  if (data.password.length < 8) return apiError("weak_password", lang, 400);
+  if (data.acceptTerms !== true) return apiError("terms_required", lang, 400);
+
+  const limit = hit("signupIp", ipKey(request));
+  if (!limit.ok) return rateLimited(limit, lang);
+  // A bot that filled the hidden field gets a success-shaped answer and no account.
+  if (data.website) return NextResponse.json({ ok: true, role: "user" });
+
   try {
-    const user = createUser(parsed.data);
+    const user = await createUser({ name: data.name, email: data.email, password: data.password, lang: data.lang, acceptedTerms: true });
     const jar = await cookies();
-    // A referral cookie set by /r/[code] credits both sides once; the cookie is then spent.
-    if (creditReferral(user.id, jar.get(REF_COOKIE)?.value)) jar.set(REF_COOKIE, "", { path: "/", maxAge: 0 });
-    jar.set(SESSION_COOKIE, signSession({ userId: user.id, role: user.role }), {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: 30 * 86_400,
-    });
+    // The referral is remembered now and paid on the first purchase; the cookie is spent either way.
+    recordReferral(user.id, jar.get(REF_COOKIE)?.value);
+    if (jar.get(REF_COOKIE)) jar.set(REF_COOKIE, "", { path: "/", maxAge: 0 });
+    await issueSession(user);
     return NextResponse.json({ ok: true, role: user.role });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Falha no cadastro" },
-      { status: 400 },
-    );
+    if (error instanceof EmailTakenError) return apiError("email_taken", lang, 409);
+    reportError("auth.register", error);
+    return apiError("server_error", lang, 500);
   }
 }

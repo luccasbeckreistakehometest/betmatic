@@ -1,55 +1,52 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { Logo, LogoMark } from "@/components/Logo";
-import { LandingLang } from "@/components/LandingLang";
+import { LogoMark } from "@/components/Logo";
+import { MarketingFooter, MarketingHeader } from "@/components/MarketingShell";
 import { ProofStrip } from "@/components/ProofStrip";
+import { DEFAULT_META, langFrom, pageMetadata, type SearchProps } from "@/lib/seo";
+import { formatMoneyBRL } from "@/lib/format";
+import { currentUser } from "@/lib/server/session";
 import { LADDER, landingCopy } from "@/lib/landing-copy";
 import { normaliseLang } from "@/lib/i18n";
 import { SPORT_LANDINGS } from "@/lib/sport-landing";
-import { COIN_PACKS, PERIOD, PLANS } from "@/lib/plans";
+import { COIN_PACKS, PERIOD, PLANS, PREPAID_NOTE } from "@/lib/plans";
 import { impliedProbability } from "@/lib/odds";
 
 export const dynamic = "force-dynamic";
 
-function money(value: number, lang: "pt" | "en"): string {
-  return lang === "pt"
-    ? `R$ ${value.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`
-    : `$${value.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+export async function generateMetadata({ searchParams }: SearchProps): Promise<Metadata> {
+  const lang = await langFrom(searchParams);
+  const meta = pageMetadata({ lang, ...DEFAULT_META[lang], paths: { pt: "/", en: "/?lang=en" } });
+  return { ...meta, title: { absolute: DEFAULT_META[lang].title } };
 }
+
+/** Every price on the site is in reais; English readers see it labelled BRL. */
+const money = (value: number, lang: "pt" | "en") => formatMoneyBRL(value, lang);
 
 export default async function Landing({ searchParams }: PageProps<"/">) {
   const query = await searchParams;
   const lang = normaliseLang(typeof query.lang === "string" ? query.lang : undefined);
   const c = landingCopy(lang);
+  // Visitors carry the chosen plan through signup straight to checkout; members pick the period on /planos.
+  const signedIn = !!(await currentUser());
   const stake = lang === "pt" ? 10 : 10;
   const maxReturn = Math.max(...LADDER.map((l) => l.decimal)) * stake;
 
   return (
     <div className="flex min-h-full flex-col bg-ink-950">
-      {/* ---- nav ---- */}
-      <header className="sticky top-0 z-40 border-b border-ink-800/80 bg-ink-950/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center gap-6 px-5 py-3.5">
-          <Logo size={26} />
+      <MarketingHeader
+        lang={lang}
+        langHrefs={{ pt: "/", en: "/?lang=en" }}
+        nav={
           <nav className="ml-4 hidden items-center gap-5 text-[13px] text-mist-400 md:flex">
             <a href="#como" className="transition hover:text-mist-100">{c.navHow}</a>
             <a href="#esportes" className="transition hover:text-mist-100">{c.navSports}</a>
-            <a href="#planos" className="transition hover:text-mist-100">{c.navPricing}</a>
+            <Link href={{ pathname: "/planos", query: { lang } }} className="transition hover:text-mist-100">{c.navPricing}</Link>
             <Link href={{ pathname: "/prova", query: { lang } }} className="transition hover:text-mist-100">{lang === "pt" ? "Prova" : "Track record"}</Link>
             <Link href={{ pathname: "/ferramentas", query: { lang } }} className="transition hover:text-mist-100">{lang === "pt" ? "Ferramentas" : "Free tools"}</Link>
           </nav>
-          <div className="ml-auto flex items-center gap-3">
-            <LandingLang />
-            <Link href="/login" className="hidden text-[13px] text-mist-400 transition hover:text-mist-100 sm:block">
-              {c.navLogin}
-            </Link>
-            <Link
-              href="/signup"
-              className="rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500"
-            >
-              {c.navStart}
-            </Link>
-          </div>
-        </div>
-      </header>
+        }
+      />
 
       {/* ---- hero ---- */}
       <section className="relative overflow-hidden border-b border-ink-800/80">
@@ -76,13 +73,17 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
             <p className="mt-6 max-w-lg text-[15px] leading-relaxed text-mist-300">{c.heroSub}</p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Link
-                href="/signup"
+                href={{ pathname: "/signup", query: { lang } }}
+                data-testid="hero-cta"
                 className="rounded-xl bg-edge-400 px-6 py-3 text-[15px] font-semibold text-ink-950 transition hover:bg-edge-500"
               >
                 {c.heroCta}
               </Link>
-              <span className="text-[12px] text-mist-500">{c.heroCtaSub}</span>
+              <Link href={{ pathname: "/app", query: { lang } }} className="rounded-xl border border-ink-700 px-5 py-3 text-[14px] font-medium text-mist-200 transition hover:border-ink-600 hover:text-white">
+                {c.heroSecondary}
+              </Link>
             </div>
+            <p className="mt-3 text-[12px] text-mist-500">{c.heroCtaSub}</p>
             <p className="mt-8 max-w-md border-l-2 border-ink-700 pl-4 text-[12.5px] leading-relaxed text-mist-500">
               {c.heroProof}
             </p>
@@ -201,7 +202,7 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
             {c.sports.map((sport) => (
               <Link
                 key={sport.key}
-                href={`/${SPORT_LANDINGS.find((l) => l.sportKeys.some((k) => k.startsWith(sport.key === "basketball" ? "nba" : sport.key === "soccer" ? "soccer" : "tennis")))?.slug[lang] ?? ""}`}
+                href={`/${SPORT_LANDINGS.find((l) => l.sportKeys.some((k) => k.startsWith(sport.key === "basketball" ? "nba" : "soccer")))?.slug[lang] ?? ""}`}
                 className="group grid gap-5 rounded-2xl border border-ink-800 bg-ink-900/60 p-6 transition hover:border-edge-400/30 md:grid-cols-[1fr_1.5fr]"
               >
                 <div>
@@ -258,7 +259,8 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
                     ))}
                   </ul>
                   <Link
-                    href={plan.id === "free" ? "/signup" : `/signup?plan=${plan.id}`}
+                    href={plan.id === "free" ? (signedIn ? `/app?lang=${lang}` : `/signup?lang=${lang}`) : signedIn ? `/planos?lang=${lang}` : `/signup?lang=${lang}&plan=${plan.id}&period=monthly`}
+                    data-testid={`landing-plan-${plan.id}`}
                     className={`mt-6 rounded-lg px-4 py-2.5 text-center text-[13px] font-semibold transition ${
                       featured
                         ? "bg-edge-400 text-ink-950 hover:bg-edge-500"
@@ -272,7 +274,8 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
             })}
           </div>
 
-          <p className="mt-5 text-[12px] text-mist-500">
+          <p className="mt-5 text-[12.5px] text-mist-300">{PREPAID_NOTE[lang]}</p>
+          <p className="mt-2 text-[12px] text-mist-500">
             {c.pricingPeriod}:{" "}
             {(["quarterly", "semiannual", "annual"] as const).map((period, i) => (
               <span key={period} className="nums">
@@ -331,7 +334,7 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
           </h2>
           <p className="max-w-lg text-[15px] text-mist-400">{c.finalSub}</p>
           <Link
-            href="/signup"
+            href={{ pathname: "/signup", query: { lang } }}
             className="rounded-xl bg-edge-400 px-6 py-3 text-[15px] font-semibold text-ink-950 transition hover:bg-edge-500"
           >
             {c.finalCta}
@@ -339,13 +342,7 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
         </div>
       </section>
 
-      <footer className="px-5 py-8">
-        <div className="mx-auto flex max-w-6xl flex-col gap-2 text-[11.5px] leading-relaxed text-mist-500">
-          <Logo size={20} />
-          <p className="mt-2 max-w-3xl">{c.footerNote}</p>
-          <p className="max-w-3xl">{c.footerResponsible}</p>
-        </div>
-      </footer>
+      <MarketingFooter lang={lang} />
     </div>
   );
 }

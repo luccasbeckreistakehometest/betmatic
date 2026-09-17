@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { startFakeMercadoPago } from "./fake-mercadopago";
 
 // Fresh database, then the real seed script writes the slate the specs read.
 export default async function globalSetup() {
@@ -26,9 +27,17 @@ export default async function globalSetup() {
   fs.mkdirSync(ledgerDir, { recursive: true });
   const leg = (selection: string, outcome: string, odds: number) => ({ selection, market: "total", sourceBasis: "book line", predictedProbability: 0.55, oddsDecimal: odds, outcome });
   const entries = [
-    { id: "401882878:value:Sevilha FC vence", gameId: "401882878", sportKey: "soccer-esp", matchup: "Valencia @ Sevilla", createdAt: "2026-09-11T10:00:00.000Z", settledAt: "2026-09-11T20:00:00.000Z", bandKey: "value", kind: "single", title: "Sevilha vence em casa", combinedDecimal: 2.0, modelledProbability: 0.51, evidenceScore: 78, outcome: "won", legs: [leg("Sevilha FC vence", "won", 2.0)] },
-    { id: "401882878:mid:Mais de 2,5 gols|Ambas marcam", gameId: "401882878", sportKey: "soccer-esp", matchup: "Valencia @ Sevilla", createdAt: "2026-09-11T10:00:00.000Z", settledAt: "2026-09-11T20:00:00.000Z", bandKey: "mid", kind: "parlay", title: "Jogo aberto", combinedDecimal: 4.6, modelledProbability: 0.22, evidenceScore: 52, outcome: "lost", legs: [{ ...leg("Mais de 2,5 gols", "lost", 2.3), actual: "total 2 vs line 2.5" }, { ...leg("Ambas marcam", "won", 2.0), actual: "both scored" }] },
+    { id: "401882878:value:Sevilha FC vence", gameId: "401882878", sportKey: "soccer-esp", matchup: "Valencia @ Sevilla", createdAt: "2026-09-11T10:00:00.000Z", startsAt: "2026-09-11T19:00:00.000Z", settledAt: "2026-09-11T20:00:00.000Z", bandKey: "value", kind: "single", title: "Sevilha vence em casa", combinedDecimal: 2.0, modelledProbability: 0.51, evidenceScore: 78, outcome: "won", legs: [leg("Sevilha FC vence", "won", 2.0)] },
+    { id: "401882878:mid:Mais de 2,5 gols|Ambas marcam", gameId: "401882878", sportKey: "soccer-esp", matchup: "Valencia @ Sevilla", createdAt: "2026-09-11T10:00:00.000Z", startsAt: "2026-09-11T19:00:00.000Z", settledAt: "2026-09-11T20:00:00.000Z", bandKey: "mid", kind: "parlay", title: "Jogo aberto", combinedDecimal: 4.6, modelledProbability: 0.22, evidenceScore: 52, outcome: "lost", legs: [{ ...leg("Mais de 2,5 gols", "lost", 2.3), actual: "total 2 vs line 2.5" }, { ...leg("Ambas marcam", "won", 2.0), actual: "both scored" }] },
+    // Pending tickets: a legacy row with no kickoff time and one whose game is still ahead stay private;
+    // one whose game is under way is public.
     { id: "401882878:safe:Sevilha ou empate", gameId: "401882878", sportKey: "soccer-esp", matchup: "Valencia @ Sevilla", createdAt: "2026-09-11T10:00:00.000Z", bandKey: "safe", kind: "single", title: "Sevilha não perde", combinedDecimal: 1.26, modelledProbability: 0.77, evidenceScore: 85, outcome: "pending", legs: [leg("Sevilha ou empate", "pending", 1.26)] },
+    { id: "990000001:value:Betis vence|Mais de 1,5 gols", gameId: "990000001", sportKey: "soccer-esp", matchup: "Girona @ Betis", createdAt: new Date().toISOString(), startsAt: new Date(Date.now() + 3 * 3_600_000).toISOString(), bandKey: "value", kind: "parlay", title: "Betis em casa com gols", combinedDecimal: 2.4, modelledProbability: 0.45, evidenceScore: 70, outcome: "pending", legs: [leg("Betis vence", "pending", 1.8), leg("Mais de 1,5 gols", "pending", 1.33)] },
+    { id: "401882878:long:Sevilha vence de virada", gameId: "401882878", sportKey: "soccer-esp", matchup: "Valencia @ Sevilla", createdAt: "2026-09-11T10:00:00.000Z", startsAt: "2026-09-11T19:00:00.000Z", bandKey: "long", kind: "single", title: "Virada do Sevilha", combinedDecimal: 21, modelledProbability: 0.05, evidenceScore: 30, outcome: "pending", legs: [leg("Sevilha vence de virada", "pending", 21)] },
   ];
   fs.writeFileSync(path.join(ledgerDir, "predictions.jsonl"), entries.map((e) => JSON.stringify(e)).join("\n") + "\n");
+
+  // Checkout goes to a local fake of the Mercado Pago API for the whole run.
+  const fakeMp = await startFakeMercadoPago();
+  return async () => { await new Promise((r) => fakeMp.close(r)); };
 }

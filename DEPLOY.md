@@ -17,12 +17,19 @@ cp .env.example .env && nano .env
 ```
 | chave | de onde |
 |---|---|
-| `AUTH_SECRET` | `openssl rand -hex 32` |
-| `ANTHROPIC_API_KEY` | console.anthropic.com — **com crédito**; sem ela o job de 4h não gera nada novo, mas o app serve o que já tem |
-| `CRON_SECRET` | qualquer string longa; o sidecar `cron` usa pra chamar `/api/cron/refresh` |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | sua conta admin (plano Max permanente, criada no primeiro boot) |
-| `MP_ACCESS_TOKEN` | Mercado Pago → credenciais de **produção** (é o mesmo do AgencyHub) |
-| `NEXT_PUBLIC_BASE_URL` | `https://seu-dominio.com` |
+| `AUTH_SECRET` | `openssl rand -hex 32` — **obrigatória**: sem ela o servidor não sobe |
+| `CRON_SECRET` | `openssl rand -hex 24`; o sidecar `cron` manda no header `x-cron-secret` |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | sua conta admin (criada no primeiro boot). Cadastro público **nunca** vira admin |
+| `APP_URL` e `NEXT_PUBLIC_BASE_URL` | `https://seu-dominio.com` — lidos em tempo de execução; sem eles o checkout fica desligado |
+| `ANTHROPIC_API_KEY` | console.anthropic.com — **com crédito** |
+| `AI_DAILY_BUDGET_USD` | teto de gasto de IA por dia (padrão 20; `0` desliga a IA). Aparece no `/admin` |
+| `MP_ACCESS_TOKEN` | Mercado Pago → credenciais de **produção** |
+| `MP_WEBHOOK_SECRET` | opcional: "assinatura secreta" do webhook no painel do MP (confere o `x-signature`) |
+| `LEGAL_NAME`, `LEGAL_DOCUMENT`, `LEGAL_ADDRESS`, `LEGAL_EMAIL` | identificação que aparece em Termos/Privacidade/Reembolso. Vazio = a linha some e as páginas apontam pro formulário de contato |
+| `SUPPORT_EMAIL`, `SUPPORT_WHATSAPP` | opcionais; aparecem no rodapé e em /contato quando preenchidos |
+
+O `.dockerignore` deixa `.env*` fora da imagem: nenhum segredo vai para uma camada Docker. Por isso
+os valores `NEXT_PUBLIC_*` são lidos em tempo de execução (`src/lib/base-url.ts`), não no build.
 
 ## 3. Subir
 ```bash
@@ -41,8 +48,17 @@ systemctl reload caddy
 ```
 
 ## 5. Mercado Pago
-Webhook em **Suas integrações → Webhooks**: `https://seu-dominio.com/api/webhooks/mercadopago`,
-evento *Pagamentos*. Coins e planos entram sozinhos.
+Cada checkout já informa ao MP a URL de notificação (`APP_URL/api/webhooks/mercadopago`) e as de
+retorno (`/pagamento/sucesso|falhou|pendente`). Registre também o webhook em **Suas integrações →
+Webhooks** (evento *Pagamentos*) e copie a assinatura secreta para `MP_WEBHOOK_SECRET`.
+Com a assinatura configurada, uma notificação com `x-signature` errado é recusada (401); uma sem
+assinatura é aceita e registrada no log (`payments.webhook.unsigned`), porque o pagamento é sempre
+relido na API do MP com o nosso token. Teste com o simulador de notificações do painel antes da
+primeira venda.
+O webhook é idempotente (cada pagamento é creditado uma vez), só credita a compra indicada no
+`external_reference`, responde 5xx quando o MP não responde (o MP tenta de novo) e desfaz o crédito em
+estorno ou contestação. Planos são **pré-pagos** e não renovam sozinhos. Depois de subir, faça uma
+compra real de valor baixo e confira em `/admin → Pagamentos`.
 
 ## 6. O job de 4 horas
 - `cron` → `POST /api/cron/refresh?maxGames=8` com `x-cron-secret`.
@@ -71,10 +87,12 @@ Sem `TELEGRAM_BOT_TOKEN` o recurso fica escondido no app e nada é chamado.
 
 ## 8. Operar
 ```bash
-docker compose logs --tail 200 app
-cp data/betmatic.db backups/$(date +%F).db      # cron diário
+docker compose logs --tail 200 app | grep '"event"'   # uma linha JSON por job (settle, digest, learn, refresh)
+curl -s https://seu-dominio.com/api/health            # {"ok":true,"db":true}
 docker compose pull && docker compose up -d --build
 ```
-Painel: `/admin` — execuções do job, custo de IA, usuários, receita, funil do tour.
+Painel `/admin`: gasto de IA do dia contra o teto, erros recentes, usuários (plano, coins, senha
+provisória, desativar), pagamentos, caixa de contato, execuções do job (execução que falhou inteira
+aparece como `error`), funil do tour.
 
 Local: `pnpm dev` · `pnpm test` (unit) · `pnpm e2e` (Playwright; semeia o jogo Sevilha x Valencia).

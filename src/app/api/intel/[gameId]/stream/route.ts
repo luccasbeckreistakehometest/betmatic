@@ -1,5 +1,6 @@
 import { streamIntel, type SourceName } from "@/lib/intel";
 import { listExtraSources, loadConfig } from "@/lib/config";
+import { requireAdmin } from "@/lib/server/session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,6 +17,8 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ gameId: string }> },
 ) {
+  // Scrapes with a real browser and calls the model without the on-demand caps: admin research only.
+  if (!(await requireAdmin())) return Response.json({ error: "forbidden" }, { status: 403 });
   const { gameId } = await params;
   const url = new URL(request.url);
   const force = url.searchParams.get("force") === "1";

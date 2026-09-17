@@ -36,9 +36,10 @@ export interface Plan {
 const ALL_BANDS = ["safe", "value", "mid", "long", "moonshot", "lottery"];
 
 /**
- * Generation is a fixed cost paid by the background job, so a paid plan's marginal cost is
- * effectively zero — the tiers gate breadth (sports, games, bands), not compute.
- * Every paid tier is guaranteed at least one ticket per game on the slates it covers.
+ * Tiers gate breadth (sports, games, bands, cross-game parlays), not compute: a game's tickets are
+ * built once, when the first entitled user opens it, and everyone after reads the same inventory.
+ * Every paid plan is PREPAID for the chosen period and does not renew by itself.
+ * Highlights only name what the code does — tests read them.
  */
 export const PLANS: Plan[] = [
   {
@@ -52,10 +53,10 @@ export const PLANS: Plan[] = [
     trackRecord: false,
     delayMinutes: 120,
     coinsPerPeriod: 0,
-    tagline: { pt: "Prove antes de assinar", en: "Try before you subscribe" },
+    tagline: { pt: "Prove antes de pagar", en: "Try before you pay" },
     highlights: {
-      pt: ["1 jogo por dia", "Faixa de valor (2x–5x)", "Com 2h de atraso", "Histórico público"],
-      en: ["1 game per day", "Value band (2x–5x)", "2-hour delay", "Public track record"],
+      pt: ["1 jogo por dia, você escolhe qual", "Faixa de valor (2x–5x)", "O bilhete que você gerou sai na hora; os já prontos, com 2 h de atraso", "Histórico público"],
+      en: ["1 game a day, your pick", "Value band (2x–5x)", "A ticket you generate shows at once; ready-made ones on a 2-hour delay", "Public track record"],
     },
   },
   {
@@ -72,18 +73,16 @@ export const PLANS: Plan[] = [
     tagline: { pt: "Basquete inteiro, sem atraso", en: "All basketball, no delay" },
     highlights: {
       pt: [
-        "NBA e WNBA completas",
-        "Pelo menos 1 bilhete por partida",
+        "NBA e WNBA: todos os jogos",
+        "Bilhetes montados quando você abre a partida",
         "Faixas até 20x",
-        "Histórico de acertos medido",
-        "30 coins por período",
+        "30 coins por período para análises do seu bilhete",
       ],
       en: [
-        "Full NBA and WNBA",
-        "At least 1 ticket per game",
+        "NBA and WNBA: every game",
+        "Tickets built when you open the game",
         "Bands up to 20x",
-        "Measured track record",
-        "30 coins per period",
+        "30 coins per period to analyse your own slips",
       ],
     },
   },
@@ -98,19 +97,17 @@ export const PLANS: Plan[] = [
     trackRecord: true,
     delayMinutes: 0,
     coinsPerPeriod: 120,
-    tagline: { pt: "Todos os esportes e as múltiplas longas", en: "Every sport and the long parlays" },
+    tagline: { pt: "Basquete e futebol, com as múltiplas longas", en: "Basketball and soccer, with the long parlays" },
     highlights: {
       pt: [
-        "Basquete, futebol e tênis",
-        "Pelo menos 1 bilhete por partida",
-        "Todas as faixas, até 500x+",
+        "Basquete e futebol: NBA, WNBA, Brasileirão, Premier League, La Liga, Champions e Libertadores",
+        "Todas as faixas de odd",
         "Múltiplas entre jogos da rodada",
         "120 coins por período",
       ],
       en: [
-        "Basketball, soccer and tennis",
-        "At least 1 ticket per game",
-        "Every band, up to 500x+",
+        "Basketball and soccer: NBA, WNBA, Brasileirão, Premier League, La Liga, Champions League, Libertadores",
+        "Every odds band",
         "Cross-game parlays",
         "120 coins per period",
       ],
@@ -127,15 +124,10 @@ export const PLANS: Plan[] = [
     trackRecord: true,
     delayMinutes: 0,
     coinsPerPeriod: 400,
-    tagline: { pt: "Para quem aposta todo dia", en: "For daily bettors" },
+    tagline: { pt: "Tudo do Pro, com mais coins", en: "Everything in Pro, with more coins" },
     highlights: {
-      pt: [
-        "Tudo do Pro",
-        "400 coins por período",
-        "Análise do seu bilhete em profundidade",
-        "Prioridade nas atualizações",
-      ],
-      en: ["Everything in Pro", "400 coins per period", "Deep analysis of your own slip", "Priority refreshes"],
+      pt: ["Tudo do Pro", "400 coins por período (50 análises do seu bilhete)"],
+      en: ["Everything in Pro", "400 coins per period (50 analyses of your own slip)"],
     },
   },
 ];
@@ -162,19 +154,34 @@ export function getCoinPack(id: string): CoinPack | undefined {
 }
 
 /**
- * Coins only price work computed for one specific user. Reading pre-generated inventory is free
- * to serve, so charging for it would be charging twice for the subscription.
+ * Coins only price work computed for one specific user. Reading inventory is covered by the plan,
+ * so charging for it would be charging twice. Today coins buy one thing: the analysis of a slip the
+ * user assembled.
  */
 export const ACTION_COST = {
   analyse_slip: 8,
-  custom_parlay: 12,
-  player_deep_dive: 5,
 } as const;
 
 export type CoinAction = keyof typeof ACTION_COST;
 
 export const ACTION_LABEL: Record<CoinAction, { pt: string; en: string }> = {
   analyse_slip: { pt: "Analisar meu bilhete", en: "Analyse my slip" },
-  custom_parlay: { pt: "Múltipla sob medida", en: "Custom parlay" },
-  player_deep_dive: { pt: "Raio-x de jogador", en: "Player deep dive" },
 };
+
+/** Prepaid wording shown next to every paid price. */
+export const PREPAID_NOTE = {
+  pt: "Pagamento único, pré-pago pelo período escolhido. Não renova sozinho.",
+  en: "One-time prepaid payment for the chosen period. It does not renew by itself.",
+} as const;
+
+/** How a payment row reads to its buyer: "Plano PRO · Trimestral" or "Pacote de 230 coins" (bonus included). */
+export function paymentLabel(p: { kind: string; reference: string; period: string | null }, lang: "pt" | "en"): string {
+  if (p.kind === "plan") {
+    const period = PERIOD[(p.period ?? "monthly") as BillingPeriod]?.label[lang] ?? p.period ?? "";
+    return `${lang === "pt" ? "Plano" : "Plan"} ${p.reference.toUpperCase()}${period ? ` · ${period}` : ""}`;
+  }
+  const pack = COIN_PACKS.find((x) => x.id === p.reference);
+  const coins = pack ? pack.coins + pack.bonus : Number(p.reference.replace("pack_", "")) || 0;
+  return lang === "pt" ? `Pacote de ${coins} coins` : `${coins}-coin pack`;
+}
+

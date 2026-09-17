@@ -3,13 +3,15 @@ import { notFound } from "next/navigation";
 import { IntelBoard } from "@/components/IntelBoard";
 import { espnDateKey } from "@/lib/sources/espn";
 import { Empty, KeyValue, Panel } from "@/components/ui";
-import { tipoffET } from "@/components/GameCard";
+import { kickoff } from "@/components/GameCard";
+import { localizeStatLabel, localizeStatus } from "@/lib/format";
+import { scrubGameDetail } from "@/lib/server/whitelabel";
 import { getGameDetail } from "@/lib/sources/espn";
 import { FollowButton } from "@/components/FollowButton";
 import { currentUser } from "@/lib/server/session";
 import { listFollows } from "@/lib/server/telegram";
 import { makeT, normaliseLang } from "@/lib/i18n";
-import { getSport } from "@/lib/sports";
+import { getSport, sportSellsTickets } from "@/lib/sports";
 import type { InjuryEntry, TeamRef } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +22,9 @@ function money(value?: number): string {
 }
 
 const OUT_STATUSES = ["out", "suspension", "injured reserve"];
+
+/** Pre-match tickets are not built once the game is under way. */
+const hasStarted = (game: { status: string; startsAt: string }) => game.status !== "scheduled" || Date.parse(game.startsAt) <= Date.now();
 
 function injuryTone(status: string): string {
   const s = status.toLowerCase();
@@ -73,10 +78,13 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
   const lang = normaliseLang(typeof query.lang === "string" ? query.lang : undefined);
   const sport = getSport(typeof query.sport === "string" ? query.sport : undefined);
   const t = makeT(lang);
-  const detail = await getGameDetail(gameId, false, sport.key).catch(() => null);
-  if (!detail) notFound();
+  const raw = /^[\w-]{1,40}$/.test(gameId) ? await getGameDetail(gameId, false, sport.key).catch(() => null) : null;
+  if (!raw) notFound();
   // Follow state is read here so the buttons render with their real value, no client round-trip.
   const user = await currentUser();
+  const admin = user?.role === "admin";
+  // Non-admins never see which book or feed a number came from.
+  const detail = scrubGameDetail(raw, admin ? "admin" : "user", lang);
   const followed = new Set(user ? listFollows(user.id).filter((f) => f.kind === "team" && f.sportKey === sport.key).map((f) => f.key) : []);
   const followOf = (teamId: string) => ({ sportKey: sport.key, initial: followed.has(teamId), signedIn: !!user });
 
@@ -96,7 +104,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
           <TeamHeading team={game.away} align="left" showScore={game.status !== "scheduled"} follow={followOf(game.away.id)} />
           <div className="flex shrink-0 flex-col items-center gap-1 px-2">
             <span className="text-[11px] uppercase tracking-widest text-mist-500">
-              {game.status === "scheduled" ? `${tipoffET(game.startsAt)} ET` : game.statusDetail}
+              {game.status === "scheduled" ? kickoff(game.startsAt, lang) : localizeStatus(game.statusDetail, lang)}
             </span>
           </div>
           <TeamHeading team={game.home} align="right" showScore={game.status !== "scheduled"} follow={followOf(game.home.id)} />
@@ -112,7 +120,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
           )}
           {predictor?.homeWinPct !== undefined && (
             <span className="nums">
-              ESPN win prob: {game.away.abbreviation} {Math.round(predictor.awayWinPct ?? 0)}% ·{" "}
+              {admin ? "ESPN win prob" : t("winProb")}: {game.away.abbreviation} {Math.round(predictor.awayWinPct ?? 0)}% ·{" "}
               {game.home.abbreviation} {Math.round(predictor.homeWinPct ?? 0)}%
             </span>
           )}
@@ -121,11 +129,17 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="flex flex-col gap-4">
-          <IntelBoard gameId={gameId} dateKey={espnDateKey(new Date(game.startsAt))} />
+          {sportSellsTickets(sport) ? (
+            <IntelBoard gameId={gameId} dateKey={espnDateKey(new Date(game.startsAt))} started={hasStarted(game)} />
+          ) : (
+            <Panel title={t("betBuilder")} lang={lang}>
+              <Empty>{t("tennisUnsupported")}</Empty>
+            </Panel>
+          )}
         </div>
 
         <aside className="flex flex-col gap-4">
-          <Panel title={t("injuryReport")} meta="ESPN">
+          <Panel title={t("injuryReport")} meta={admin ? "ESPN" : undefined}>
             <div className="flex flex-col gap-3">
               <div>
                 <h3 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-mist-500">
@@ -142,16 +156,16 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
             </div>
           </Panel>
 
-          <Panel title={t("market")} meta={books.length ? `${books.length} book${books.length === 1 ? "" : "s"}` : undefined}>
+          <Panel title={t("market")} meta={books.length ? `${books.length} ${books.length === 1 ? t("bookOne") : t("bookMany")}` : undefined}>
             {books.length ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-[12px]">
                   <thead>
                     <tr className="border-b border-ink-800 text-[10px] uppercase tracking-wider text-mist-500">
-                      <th className="pb-1.5 font-medium">Book</th>
-                      <th className="pb-1.5 font-medium">Spread</th>
-                      <th className="pb-1.5 text-right font-medium">Total</th>
-                      <th className="pb-1.5 text-right font-medium">ML</th>
+                      <th className="pb-1.5 font-medium">{t("book")}</th>
+                      <th className="pb-1.5 font-medium">{t("spread")}</th>
+                      <th className="pb-1.5 text-right font-medium">{t("total")}</th>
+                      <th className="pb-1.5 text-right font-medium">{t("moneyline")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-ink-800/70">
@@ -205,7 +219,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
                 ] as const).map(([abbr, stats]) => (
                   <div key={abbr}>
                     <h3 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-mist-500">{abbr}</h3>
-                    <KeyValue rows={stats.slice(0, 10).map((s) => ({ label: s.label, value: s.value, hint: s.rank }))} />
+                    <KeyValue emptyText={t("nothingReported")} rows={stats.slice(0, 10).map((s) => ({ label: localizeStatLabel(s.label, lang), value: s.value, hint: s.rank }))} />
                   </div>
                 ))}
               </div>

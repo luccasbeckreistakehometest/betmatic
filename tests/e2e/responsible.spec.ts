@@ -3,7 +3,7 @@ import { skipTour } from "./helpers";
 
 async function freshUser(page: import("@playwright/test").Page, name: string) {
   const email = `${name}${Date.now()}@example.com`;
-  const reg = await page.request.post("/api/auth/register", { data: { name, email, password: "password123", lang: "pt" } });
+  const reg = await page.request.post("/api/auth/register", { data: { name, email, password: "password123", lang: "pt", acceptTerms: true } });
   expect(reg.ok()).toBeTruthy();
   await skipTour(page);
   return email;
@@ -29,7 +29,7 @@ test("stake ceilings cap the bankroll; the losing-streak notice and the session 
   await page.getByTestId("manual-odds").fill("1.90");
   await page.getByTestId("manual-stake").fill("50");
   await page.getByTestId("manual-add").click();
-  await expect(page.getByTestId("add-error")).toContainText("restam R$ 10.00");
+  await expect(page.getByTestId("add-error")).toContainText("restam R$ 10,00");
 
   // three losses in a row → the notice (default threshold 3)
   const { entries } = await page.request.get("/api/bankroll").then((r) => r.json());

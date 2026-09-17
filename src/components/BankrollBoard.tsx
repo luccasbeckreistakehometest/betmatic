@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { formatDate } from "@/lib/format";
 import Link from "next/link";
 import { Empty, Panel } from "@/components/ui";
 import { useNavState } from "@/components/Controls";
@@ -19,10 +20,10 @@ export function BankrollBoard() {
   const [data, setData] = useState<Payload | null>(null);
   const [title, setTitle] = useState(""); const [odds, setOdds] = useState(""); const [stake, setStake] = useState("");
   const [addError, setAddError] = useState<string | null>(null);
-  const money = (n: number) => (lang === "pt" ? `R$ ${n.toFixed(2)}` : `$${n.toFixed(2)}`);
+  const money = (n: number) => `R$ ${n.toLocaleString(lang === "pt" ? "pt-BR" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   /** 422 = over a stake ceiling, 423 = paused; anything else is a generic failure. */
   const explainAddError = (status: number, j: { reason?: string; remainingDaily?: number | null; remainingWeekly?: number | null; pausedUntil?: string | null }) =>
-    status === 423 ? t("pausedBlock").replace("{date}", j.pausedUntil ? new Date(j.pausedUntil).toLocaleDateString(lang === "pt" ? "pt-BR" : "en-US") : "—")
+    status === 423 ? t("pausedBlock").replace("{date}", j.pausedUntil ? formatDate(j.pausedUntil, lang, { year: true }) : "—")
     : status === 422 ? (j.reason === "weekly" ? t("limitWeekly") : t("limitDaily")).replace("{left}", money(j.reason === "weekly" ? j.remainingWeekly ?? 0 : j.remainingDaily ?? 0))
     : t("generateFailed");
 
@@ -91,9 +92,9 @@ export function BankrollBoard() {
       <EquityChart lang={lang} />
       <Panel title={t("manualBet")}>
         <div className="grid gap-2 sm:grid-cols-[1fr_120px_120px_auto]">
-          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={lang === "pt" ? "ex.: Flamengo vence @ Bet365" : "e.g. Lakers ML @ DraftKings"} className="rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-[13px] text-mist-100 outline-none focus:border-edge-400" data-testid="manual-title" />
-          <input value={odds} onChange={(e) => setOdds(e.target.value)} placeholder="odd 1.85" inputMode="decimal" className="nums rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-[13px] text-mist-100 outline-none focus:border-edge-400" data-testid="manual-odds" />
-          <input value={stake} onChange={(e) => setStake(e.target.value)} placeholder={t("stake")} inputMode="decimal" className="nums rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-[13px] text-mist-100 outline-none focus:border-edge-400" data-testid="manual-stake" />
+          <input aria-label={lang === "pt" ? "Descrição da aposta" : "Bet description"} maxLength={160} value={title} onChange={(e) => setTitle(e.target.value)} placeholder={lang === "pt" ? "ex.: Flamengo vence @ Bet365" : "e.g. Lakers ML @ DraftKings"} className="rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-[13px] text-mist-100 outline-none focus:border-edge-400" data-testid="manual-title" />
+          <input aria-label={lang === "pt" ? "Odd (decimal)" : "Odds (decimal)"} value={odds} onChange={(e) => setOdds(e.target.value)} placeholder="odd 1.85" inputMode="decimal" className="nums rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-[13px] text-mist-100 outline-none focus:border-edge-400" data-testid="manual-odds" />
+          <input aria-label={lang === "pt" ? "Valor apostado (R$)" : "Stake (R$)"} value={stake} onChange={(e) => setStake(e.target.value)} placeholder={t("stake")} inputMode="decimal" className="nums rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-[13px] text-mist-100 outline-none focus:border-edge-400" data-testid="manual-stake" />
           <button onClick={addManual} disabled={!title.trim() || !(Number(odds) > 1) || !(Number(stake) > 0) || !!data?.pause?.paused} className="rounded-lg bg-edge-400 px-3.5 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500 disabled:opacity-50" data-testid="manual-add">{t("addToBankroll")}</button>
         </div>
         {addError && <p className="mt-2 text-[12px] text-warn-400" data-testid="add-error">{addError}</p>}

@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ProofStrip } from "@/components/ProofStrip";
 import { notFound } from "next/navigation";
-import { Logo, LogoMark } from "@/components/Logo";
-import { LandingLang } from "@/components/LandingLang";
+import { LogoMark } from "@/components/Logo";
+import { MarketingFooter, MarketingHeader } from "@/components/MarketingShell";
+import { pageMetadata } from "@/lib/seo";
+import { formatMoneyBRL } from "@/lib/format";
 import { SPORT_LANDINGS, findSportLanding } from "@/lib/sport-landing";
 import { landingCopy, LADDER } from "@/lib/landing-copy";
 import { impliedProbability } from "@/lib/odds";
@@ -19,17 +21,16 @@ export async function generateMetadata({ params }: PageProps<"/[sport]">): Promi
   const { sport } = await params;
   const found = findSportLanding(sport);
   if (!found) return {};
-  return {
-    title: `${found.landing.name[found.lang]} — Betmatic`,
-    description: found.landing.meta[found.lang],
-  };
+  const { landing, lang } = found;
+  return pageMetadata({
+    lang,
+    title: lang === "pt" ? `Palpites de ${landing.name.pt.toLowerCase()} com a chance real` : `${landing.name.en} picks with the real probability`,
+    description: landing.meta[lang],
+    paths: { pt: `/${landing.slug.pt}`, en: `/${landing.slug.en}` },
+  });
 }
 
-function money(value: number, lang: "pt" | "en"): string {
-  return lang === "pt"
-    ? `R$ ${value.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`
-    : `$${value.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
-}
+const money = (value: number, lang: "pt" | "en") => formatMoneyBRL(value, lang);
 
 export default async function SportLanding({ params }: PageProps<"/[sport]">) {
   const { sport } = await params;
@@ -40,14 +41,16 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
   const { landing: s, lang } = found;
   const c = landingCopy(lang);
   const pro = PLANS.find((p) => p.id === "pro")!;
+  // The visitor's sport travels through signup, so the app opens on it.
+  const appPath = `/app?sport=${s.sportKeys[0]}&lang=${lang}`;
+  const signupHref = `/signup?lang=${lang}&next=${encodeURIComponent(appPath)}`;
 
   return (
     <div className="flex min-h-full flex-col bg-ink-950">
-      <header className="sticky top-0 z-40 border-b border-ink-800/80 bg-ink-950/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center gap-6 px-5 py-3.5">
-          <Link href={lang === "en" ? "/?lang=en" : "/"}>
-            <Logo size={26} />
-          </Link>
+      <MarketingHeader
+        lang={lang}
+        langHrefs={{ pt: `/${s.slug.pt}`, en: `/${s.slug.en}` }}
+        nav={
           <nav className="ml-2 hidden items-center gap-4 text-[13px] text-mist-400 md:flex">
             {SPORT_LANDINGS.map((other) => (
               <Link
@@ -58,18 +61,10 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
                 {other.name[lang]}
               </Link>
             ))}
+            <Link href={`/planos${lang === "en" ? "?lang=en" : ""}`} className="transition hover:text-mist-100">{c.navPricing}</Link>
           </nav>
-          <div className="ml-auto flex items-center gap-3">
-            <LandingLang />
-            <Link
-              href="/signup"
-              className="rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500"
-            >
-              {c.navStart}
-            </Link>
-          </div>
-        </div>
-      </header>
+        }
+      />
 
       <section className="relative overflow-hidden border-b border-ink-800/80">
         <div
@@ -98,7 +93,8 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
           <p className="mt-6 max-w-2xl text-[15.5px] leading-relaxed text-mist-300">{s.sub[lang]}</p>
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <Link
-              href="/signup"
+              href={appPath}
+              data-testid="sport-cta"
               className="rounded-xl bg-edge-400 px-6 py-3 text-[15px] font-semibold text-ink-950 transition hover:bg-edge-500"
             >
               {s.cta[lang]}
@@ -193,18 +189,18 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
           </h2>
           <p className="max-w-xl text-[15px] text-mist-400">
             {lang === "pt"
-              ? `${s.name.pt} está no plano ${pro.name} junto com todos os outros esportes — ou comece pelo grátis.`
-              : `${s.name.en} is in the ${pro.name} plan alongside every other sport — or start on the free tier.`}
+              ? `${s.name.pt} está no plano ${pro.name}${s.sportKeys.includes("nba") ? " (e no Starter)" : ""} — ou comece pelo grátis: um jogo por dia, você escolhe.`
+              : `${s.name.en} is in the ${pro.name} plan${s.sportKeys.includes("nba") ? " (and Starter)" : ""} — or start free: one game a day, your pick.`}
           </p>
           <div className="flex flex-wrap gap-3">
             <Link
-              href="/signup"
+              href={signupHref}
               className="rounded-xl bg-edge-400 px-6 py-3 text-[15px] font-semibold text-ink-950 transition hover:bg-edge-500"
             >
               {c.finalCta}
             </Link>
             <Link
-              href={lang === "en" ? "/?lang=en#planos" : "/#planos"}
+              href={`/planos?lang=${lang}`}
               className="rounded-xl border border-ink-700 px-6 py-3 text-[15px] font-semibold text-mist-200 transition hover:border-ink-600 hover:text-white"
             >
               {c.navPricing}
@@ -213,13 +209,7 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
         </div>
       </section>
 
-      <footer className="border-t border-ink-800/80 px-5 py-8">
-        <div className="mx-auto flex max-w-6xl flex-col gap-2 text-[11.5px] leading-relaxed text-mist-500">
-          <Logo size={20} />
-          <p className="mt-2 max-w-3xl">{c.footerNote}</p>
-          <p className="max-w-3xl">{c.footerResponsible}</p>
-        </div>
-      </footer>
+      <MarketingFooter lang={lang} />
     </div>
   );
 }

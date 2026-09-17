@@ -1,4 +1,4 @@
-import type { BetLeg, BetSlate, BetSuggestion } from "@/lib/types";
+import type { BetLeg, BetSlate, BetSuggestion, Game, GameDetail } from "@/lib/types";
 import type { Role } from "@/lib/plans";
 
 /**
@@ -115,5 +115,34 @@ export function scrubSlate(slate: BetSlate, role: Role, lang: "pt" | "en"): BetS
   return {
     suggestions: slate.suggestions.map((s) => scrubSuggestion(s, lang)),
     dataNote: scrub(slate.dataNote, lang),
+  };
+}
+
+/**
+ * The game page's research block. Non-admins see the numbers without the names behind them: every
+ * sportsbook becomes "Casa de apostas N" and no free text keeps a source name.
+ */
+export function scrubGameDetail<T extends GameDetail>(detail: T, role: Role, lang: "pt" | "en"): T {
+  if (role === "admin") return detail;
+  const generic = (i: number) => `${GENERIC_BOOK[lang]}${detail.books.length > 1 ? ` ${i + 1}` : ""}`;
+  return {
+    ...detail,
+    // A channel name like "ESPN+" would name the feed; it is dropped rather than rewritten.
+    game: scrubGame(detail.game, role, lang),
+    books: detail.books.map((b, i) => ({ ...b, provider: b.provider ? generic(i) : undefined })),
+    injuries: detail.injuries.map((inj) => ({ ...inj, detail: inj.detail ? scrub(inj.detail, lang) : inj.detail })),
+    lastMeetings: detail.lastMeetings.map((m) => ({ ...m, summary: scrub(m.summary, lang) })),
+  };
+}
+
+const SOURCE_NAME = /espn|draftkings|betano|bet\s*365|fanduel|caesars|betmgm/i;
+
+/** A slate card as a non-admin may see it: no book name on the odds, no source-named channel. */
+export function scrubGame(game: Game, role: Role, lang: "pt" | "en"): Game {
+  if (role === "admin") return game;
+  return {
+    ...game,
+    odds: game.odds ? { ...game.odds, provider: game.odds.provider ? GENERIC_BOOK[lang] : undefined } : undefined,
+    broadcast: game.broadcast && !SOURCE_NAME.test(game.broadcast) ? game.broadcast : undefined,
   };
 }

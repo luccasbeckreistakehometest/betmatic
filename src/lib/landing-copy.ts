@@ -17,6 +17,7 @@ export interface LandingCopy {
   heroSub: string;
   heroCta: string;
   heroCtaSub: string;
+  heroSecondary: string;
   heroProof: string;
 
   ladderTitle: string;
@@ -69,15 +70,16 @@ const PT: LandingCopy = {
   navLogin: "Entrar",
   navStart: "Começar de graça",
 
-  heroKicker: "Basquete · Futebol · Tênis",
-  heroTitle: ["R$ 10 podem", "virar R$ 5.400."], 
+  heroKicker: "Basquete · Futebol",
+  heroTitle: ["Toda odd esconde uma chance.", "A gente mostra qual."],
   heroSub:
     "A gente monta o bilhete e mostra, do lado, a chance real de ele bater. Sem promessa, sem guru, sem print de lucro. Só o número que a casa não coloca na tela.",
-  heroCta: "Ver os bilhetes de hoje",
-  heroCtaSub: "Grátis, sem cartão",
+  heroCta: "Criar conta grátis",
+  heroCtaSub: "Sem cartão. Um jogo por dia, você escolhe.",
+  heroSecondary: "Ver os jogos de hoje",
   heroProof: "Todo palpite fica registrado e é conferido depois do jogo. O histórico é público.",
 
-  ladderTitle: "Quanto R$ 10 viram",
+  ladderTitle: "O que R$ 10 pagam — e a chance real",
   ladderSub:
     "Múltiplas montadas com as linhas reais das casas. A coluna da direita é a que ninguém te mostra.",
   ladderStake: "Aposta",
@@ -112,23 +114,23 @@ const PT: LandingCopy = {
     { title: "Prova pública, bilhete por bilhete", body: "Todo bilhete que geramos vai pra uma página aberta e é liquidado sozinho contra o placar real. Dá até pra baixar a planilha inteira. Se ficar feio, fica feio lá.", href: "/prova" },
     { title: "Bilhete na hora que você abre o jogo", body: "Sem esperar rodada de atualização: abriu uma partida sem bilhete, o sistema monta na hora — com as odds e escalações daquele momento.", href: "/signup" },
     { title: "Sua banca, liquidada sozinha", body: "Salva o bilhete com o valor que apostou e o resultado entra automático quando o jogo acaba. Lucro, ROI e o stake sugerido por Kelly em cada bilhete.", href: "/signup" },
-    { title: "Aprende com o próprio erro", body: "Todo dia o sistema revisa o que ganhou e perdeu, escreve o post-mortem e ajusta as regras. A taxa de acerto por mercado e por fonte entra em toda geração seguinte.", href: "/prova" },
+    { title: "Aprende com o próprio erro", body: "Todo dia o sistema revisa o que ganhou e perdeu, escreve o post-mortem e propõe ajustes, que a gente revisa antes de valer. A taxa de acerto por mercado entra em toda geração seguinte.", href: "/prova" },
     { title: "Calculadoras grátis, sem cadastro", body: "Valor esperado, múltipla com a margem real da casa e conversor de odds — a mesma conta que roda em cada bilhete.", href: "/ferramentas" },
-    { title: "Indique e ganhe", body: "Seu link traz um amigo, os dois ganham coins. Coins geram bilhetes.", href: "/signup" },
+    { title: "Indique e ganhe", body: "Seu link traz um amigo; quando ele faz a primeira compra, os dois ganham coins para analisar bilhetes.", href: "/signup" },
   ],
   howTitle: "Como funciona",
   howSteps: [
     {
       n: "01",
-      title: "A gente varre a rodada",
+      title: "Você abre o jogo, a gente monta",
       body:
-        "De 4 em 4 horas o sistema lê o quadro de lesões, as linhas das casas, o histórico de cada jogador e o que saiu de notícia. Você não espera nada carregar.",
+        "Na primeira vez que uma partida é aberta, o sistema lê o quadro de lesões, as linhas publicadas e o histórico de cada jogador e monta os bilhetes em cerca de um minuto. Quem abre depois lê o mesmo bilhete na hora.",
     },
     {
       n: "02",
-      title: "Os bilhetes já chegam prontos",
+      title: "Várias faixas, cada perna explicada",
       body:
-        "Pelo menos um por partida, em várias faixas de odds — do seguro ao ousado. Cada perna vem com o motivo e o número que sustenta ela.",
+        "Do seguro ao ousado, cada perna vem com o motivo e o número que sustenta ela. Se os dados não sustentam um bilhete, a gente não inventa um.",
     },
     {
       n: "03",
@@ -139,43 +141,35 @@ const PT: LandingCopy = {
   ],
 
   sportsTitle: "O que a gente cobre",
-  sportsSub: "Cada esporte tem os mercados que fazem sentido nele — não é a mesma régua pra tudo.",
+  sportsSub: "Cada esporte tem a sua análise — não é a mesma régua pra tudo.",
   sports: [
     {
       key: "basketball",
       name: "Basquete",
       hook: "NBA e WNBA, temporada inteira",
       detail:
-        "O esporte com mais props por jogo. Pontos, rebotes, assistências, triplos, e as combinações que valorizam o bilhete.",
-      markets: "Pontos · Rebotes · Assistências · Bolas de 3 · Roubos + Tocos · Pontos+Reb+Ass",
+        "Jogo a jogo, a gente mede quanto cada jogador produz e cruza com lesões e escalação. O bilhete sai só com linhas que têm odd publicada: resultado, handicap e total de pontos.",
+      markets: "No bilhete: Resultado · Handicap · Total de pontos — Na análise: pontos, rebotes e assistências de cada jogador",
     },
     {
       key: "soccer",
       name: "Futebol",
       hook: "Brasileirão, Premier League, Libertadores e mais",
       detail:
-        "Aqui o dinheiro está no detalhe. Cartão, falta, impedimento e finalização no alvo pagam mais que resultado — e a gente mede o histórico de cada um.",
-      markets: "Gols · Assistências · Finalizações · No alvo · Faltas · Cartões · Impedimentos",
-    },
-    {
-      key: "tennis",
-      name: "Tênis",
-      hook: "ATP e WTA, torneio a torneio",
-      detail:
-        "Confronto direto, sem time pra atrapalhar. Chave inteira do torneio, rodada por rodada, com o retrospecto de cada lado.",
-      markets: "Vencedor · Total de sets · Total de games · Handicap",
+        "A análise desce ao detalhe: faltas, cartões e finalizações de cada jogador, partida a partida. O bilhete sai só com linhas que têm odd publicada: resultado, handicap e total de gols.",
+      markets: "No bilhete: Resultado · Handicap · Total de gols — Na análise: faltas, cartões e finalizações de cada jogador",
     },
   ],
 
   pricingTitle: "Escolha o seu",
-  pricingSub: "Todo plano pago garante pelo menos um bilhete por partida. Cancele quando quiser.",
+  pricingSub: "Planos pré-pagos, sem renovação automática: você paga o período e usa até o fim. Valores em reais.",
   pricingPeriod: "Pague por mais tempo e economize",
   pricingCoins: "Coins para o que é só seu",
   pricingCoinsSub:
-    "Analisar o seu bilhete, montar múltipla com a sua exigência ou abrir o raio-x de um jogador consome coins. O que já vem pronto na assinatura não custa nada a mais.",
+    "Coins pagam a análise do bilhete que você montou (8 coins cada): a IA aponta a perna frágil e sugere troca. O que o plano já inclui não custa nada a mais.",
   perMonth: "/mês",
   mostPopular: "Mais escolhido",
-  choosePlan: "Assinar",
+  choosePlan: "Escolher",
   startFree: "Começar de graça",
 
   faqTitle: "Perguntas diretas",
@@ -193,13 +187,17 @@ const PT: LandingCopy = {
       a: "Não. As faixas vão de retorno curto a múltiplas longas justamente pra você escolher o risco. Aposte só o que não faz falta.",
     },
     {
-      q: "Posso cancelar?",
-      a: "A qualquer momento, e o acesso segue até o fim do período que você já pagou.",
+      q: "Tem renovação automática?",
+      a: "Não. O pagamento é único para o período escolhido (1, 3, 6 ou 12 meses) e o acesso vai até o fim dele. Desistiu em até 7 dias da compra? Devolvemos o valor.",
+    },
+    {
+      q: "O Betmatic aceita apostas?",
+      a: "Não. É uma ferramenta de pesquisa: mostra números e bilhetes, e a aposta, se você quiser fazer, é na casa de sua escolha. Proibido para menores de 18 anos.",
     },
   ],
 
   finalTitle: "Comece pelo grátis",
-  finalSub: "Um jogo por dia, sem cartão. Se o número te convencer, você assina.",
+  finalSub: "Um jogo por dia, sem cartão. Se o número te convencer, você escolhe um plano.",
   finalCta: "Criar conta",
 
   footerNote:
@@ -215,15 +213,16 @@ const EN: LandingCopy = {
   navLogin: "Log in",
   navStart: "Start free",
 
-  heroKicker: "Basketball · Soccer · Tennis",
-  heroTitle: ["$10 can return", "$5,400."],
+  heroKicker: "Basketball · Soccer",
+  heroTitle: ["Every price hides a probability.", "We show you which."],
   heroSub:
     "We build the slip and put the real probability right next to it. No guarantees, no gurus, no profit screenshots — just the number your sportsbook leaves off the screen.",
-  heroCta: "See today's slips",
-  heroCtaSub: "Free, no card required",
+  heroCta: "Create a free account",
+  heroCtaSub: "No card. One game a day, your pick.",
+  heroSecondary: "See today's games",
   heroProof: "Every pick is logged and graded after the game. The track record is public.",
 
-  ladderTitle: "What $10 becomes",
+  ladderTitle: "What R$10 pays — and the real chance",
   ladderSub: "Parlays built from real posted lines. The right column is the one nobody shows you.",
   ladderStake: "Stake",
   ladderReturns: "Returns",
@@ -257,23 +256,23 @@ const EN: LandingCopy = {
     { title: "A public record, ticket by ticket", body: "Every ticket we generate lands on an open page and settles itself against the real score. You can download the whole spreadsheet. When it looks bad, it looks bad there.", href: "/prova" },
     { title: "Tickets the moment you open a game", body: "No waiting for a refresh cycle: open a game with no ticket and the system builds one on the spot, from that moment's odds and line-ups.", href: "/signup" },
     { title: "Your bankroll, graded for you", body: "Save a ticket with your stake and the result lands automatically when the game ends. Profit, ROI, and a quarter-Kelly suggested stake on every ticket.", href: "/signup" },
-    { title: "It learns from its own misses", body: "Every day the system reviews what won and lost, writes the post-mortem and adjusts its rules. Hit rate by market and by source feeds every next generation.", href: "/prova" },
+    { title: "It learns from its own misses", body: "Every day the system reviews what won and lost, writes the post-mortem and proposes changes that we review before they apply. Hit rate by market feeds every next generation.", href: "/prova" },
     { title: "Free calculators, no signup", body: "Expected value, parlays with the book's real hold, and an odds converter — the same math that runs on every ticket.", href: "/ferramentas" },
-    { title: "Invite and earn", body: "Your link brings a friend; you both get coins. Coins build tickets.", href: "/signup" },
+    { title: "Invite and earn", body: "Your link brings a friend; when they make their first purchase, you both get coins for slip analyses.", href: "/signup" },
   ],
   howTitle: "How it works",
   howSteps: [
     {
       n: "01",
-      title: "We sweep the slate",
+      title: "You open a game, we build it",
       body:
-        "Every four hours the system reads injury reports, posted lines, each player's game log and the reporting that moved. Nothing loads while you wait.",
+        "The first time a game is opened, the system reads the injury report, the posted lines and each player's game log and builds the tickets in about a minute. Everyone who opens it after reads the same tickets instantly.",
     },
     {
       n: "02",
-      title: "Slips arrive already built",
+      title: "Several bands, every leg explained",
       body:
-        "At least one per game, across odds bands from short to ambitious. Every leg carries the reason and the number behind it.",
+        "From short to ambitious, every leg carries the reason and the number behind it. When the data doesn't support a ticket, we don't invent one.",
     },
     {
       n: "03",
@@ -284,43 +283,35 @@ const EN: LandingCopy = {
   ],
 
   sportsTitle: "What we cover",
-  sportsSub: "Each sport gets the markets that actually matter in it, not one template stretched over three.",
+  sportsSub: "Each sport gets its own analysis, not one template stretched over all of them.",
   sports: [
     {
       key: "basketball",
       name: "Basketball",
       hook: "NBA and WNBA, all season",
       detail:
-        "The sport with the deepest prop board. Points, rebounds, assists, threes, and the combinations that lengthen a slip.",
-      markets: "Points · Rebounds · Assists · 3PM · Steals + Blocks · PRA",
+        "Game by game, we measure what each player produces and cross it with injuries and line-ups. Tickets only use lines with a published price: moneyline, spread and totals.",
+      markets: "On the ticket: Moneyline · Spread · Totals — In the analysis: each player's points, rebounds and assists",
     },
     {
       key: "soccer",
       name: "Soccer",
       hook: "Premier League, La Liga, Champions League, Brasileirão",
       detail:
-        "The value lives in the detail. Cards, fouls, offsides and shots on target price longer than the result — and we measure each player's history on all of them.",
-      markets: "Goals · Assists · Shots · On target · Fouls · Cards · Offsides",
-    },
-    {
-      key: "tennis",
-      name: "Tennis",
-      hook: "ATP and WTA, tournament by tournament",
-      detail:
-        "Head to head, no teammates to muddy it. The full draw, round by round, with each side's record.",
-      markets: "Winner · Total sets · Total games · Handicap",
+        "The analysis goes down to the detail: each player's fouls, cards and shots, match by match. Tickets only use lines with a published price: result, handicap and goal totals.",
+      markets: "On the ticket: Result · Handicap · Goal totals — In the analysis: each player's fouls, cards and shots",
     },
   ],
 
   pricingTitle: "Pick your tier",
-  pricingSub: "Every paid plan guarantees at least one slip per game. Cancel whenever.",
+  pricingSub: "Prepaid plans with no auto-renewal: pay for the period and use it to the end. Prices are in Brazilian reais (BRL).",
   pricingPeriod: "Commit longer, pay less",
   pricingCoins: "Coins for what is yours alone",
   pricingCoinsSub:
-    "Analysing your own slip, building a parlay to your constraints, or opening a player deep dive spends coins. Everything your subscription already generates costs nothing extra.",
+    "Coins pay for the analysis of a slip you built (8 coins each): the AI flags the weak leg and suggests a swap. Everything your plan already includes costs nothing extra.",
   perMonth: "/mo",
   mostPopular: "Most popular",
-  choosePlan: "Subscribe",
+  choosePlan: "Choose",
   startFree: "Start free",
 
   faqTitle: "Straight answers",
@@ -337,11 +328,12 @@ const EN: LandingCopy = {
       q: "Do I need to bet big?",
       a: "No. The bands run from short returns to long parlays precisely so you choose the risk. Only stake what you can afford to lose.",
     },
-    { q: "Can I cancel?", a: "Any time, and access runs to the end of the period you already paid for." },
+    { q: "Does it renew automatically?", a: "No. You pay once for the period you pick (1, 3, 6 or 12 months) and access runs to its end. Changed your mind within 7 days of buying? We refund it." },
+    { q: "Does Betmatic take bets?", a: "No. It is a research tool: it shows numbers and tickets, and any bet you choose to place happens at a sportsbook of your choice. 18+ only." },
   ],
 
   finalTitle: "Start on the free tier",
-  finalSub: "One game a day, no card. If the numbers convince you, subscribe.",
+  finalSub: "One game a day, no card. If the numbers convince you, pick a plan.",
   finalCta: "Create account",
 
   footerNote:

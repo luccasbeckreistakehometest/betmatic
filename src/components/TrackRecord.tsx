@@ -8,10 +8,11 @@ import { makeT } from "@/lib/i18n";
 import type { CalibrationReport, CalibrationRow, LedgerEntry } from "@/lib/types";
 
 interface Payload {
+  admin: boolean;
   summary: { total: number; pending: number; settled: number; won: number };
-  calibration: CalibrationReport;
-  specialisation: CalibrationRow[];
-  entries?: LedgerEntry[];
+  calibration: Partial<CalibrationReport>;
+  specialisation?: CalibrationRow[];
+  entries?: Pick<LedgerEntry, "id" | "outcome" | "title" | "matchup" | "combinedDecimal" | "legs">[];
 }
 
 const OUTCOME_TONE: Record<string, string> = {
@@ -21,6 +22,15 @@ const OUTCOME_TONE: Record<string, string> = {
   void: "text-mist-600",
   pending: "text-signal-400",
 };
+
+const OUTCOME_LABEL: Record<string, { pt: string; en: string }> = {
+  won: { pt: "ganhou", en: "won" },
+  lost: { pt: "perdeu", en: "lost" },
+  push: { pt: "devolvida", en: "push" },
+  void: { pt: "anulada", en: "void" },
+  pending: { pt: "pendente", en: "pending" },
+};
+const outcomeLabel = (outcome: string, lang: "pt" | "en") => OUTCOME_LABEL[outcome]?.[lang] ?? outcome;
 
 function CalibrationTable({ rows, lang }: { rows: CalibrationRow[]; lang: "pt" | "en" }) {
   const t = makeT(lang);
@@ -79,9 +89,9 @@ export function TrackRecord() {
   const [note, setNote] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const response = await fetch("/api/ledger?entries=1", { cache: "no-store" });
+    const response = await fetch(`/api/ledger?entries=1&lang=${lang}`, { cache: "no-store" });
     setData(await response.json());
-  }, []);
+  }, [lang]);
 
   useEffect(() => {
     // The state update lands after the fetch resolves, not synchronously in the effect body.
@@ -117,13 +127,15 @@ export function TrackRecord() {
           <h1 className="text-xl font-semibold tracking-tight text-white">{t("trackRecord")}</h1>
           <p className="mt-1 max-w-2xl text-sm leading-relaxed text-mist-400">{t("trackHint")}</p>
         </div>
-        <button
-          onClick={() => void settle()}
-          disabled={settling}
-          className="rounded-lg bg-signal-500 px-3.5 py-1.5 text-[13px] font-medium text-ink-950 transition hover:bg-signal-400 disabled:opacity-50"
-        >
-          {settling ? t("settling") : t("settleNow")}
-        </button>
+        {data?.admin && (
+          <button
+            onClick={() => void settle()}
+            disabled={settling}
+            className="rounded-lg bg-signal-500 px-3.5 py-1.5 text-[13px] font-medium text-ink-950 transition hover:bg-signal-400 disabled:opacity-50"
+          >
+            {settling ? t("settling") : t("settleNow")}
+          </button>
+        )}
       </div>
 
       {note && <p className="text-[12px] text-signal-400">{note}</p>}
@@ -142,17 +154,21 @@ export function TrackRecord() {
         ))}
       </div>
 
-      <Panel title={t("bySource")} lang={lang}>
-        <CalibrationTable rows={data?.calibration.bySource ?? []} lang={lang} />
-      </Panel>
+      {data?.admin && (
+        <Panel title={t("bySource")} lang={lang}>
+          <CalibrationTable rows={data?.calibration.bySource ?? []} lang={lang} />
+        </Panel>
+      )}
 
       <Panel title={t("byMarket")} lang={lang}>
         <CalibrationTable rows={data?.calibration.byMarket ?? []} lang={lang} />
       </Panel>
 
-      <Panel title={t("specialisation")} lang={lang}>
-        <CalibrationTable rows={data?.specialisation ?? []} lang={lang} />
-      </Panel>
+      {data?.admin && (
+        <Panel title={t("specialisation")} lang={lang}>
+          <CalibrationTable rows={data?.specialisation ?? []} lang={lang} />
+        </Panel>
+      )}
 
       <Panel title={t("recentTickets")} lang={lang} meta={data?.entries?.length ? String(data.entries.length) : undefined}>
         {data?.entries?.length ? (
@@ -160,7 +176,7 @@ export function TrackRecord() {
             {data.entries.slice(0, 25).map((entry) => (
               <li key={entry.id} className="flex flex-wrap items-baseline gap-2 py-1.5">
                 <span className={`text-[11px] font-semibold uppercase ${OUTCOME_TONE[entry.outcome]}`}>
-                  {entry.outcome}
+                  {outcomeLabel(entry.outcome, lang)}
                 </span>
                 <span className="text-[12px] text-mist-200">{entry.title}</span>
                 <span className="text-[11px] text-mist-500">{entry.matchup}</span>

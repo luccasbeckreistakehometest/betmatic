@@ -48,6 +48,8 @@ const SuggestionSchema = z.object({
   confidence: z.enum(["high", "medium", "low"]),
 });
 
+export type RawSuggestion = z.infer<typeof SuggestionSchema>;
+
 const SlateSchema = z.object({
   suggestions: z.array(SuggestionSchema),
   dataNote: z.string().describe("What was missing or thin in the inputs, so the reader can weigh the tickets."),
@@ -128,7 +130,7 @@ function scoreEvidence(legs: BetLeg[]): { score: number; notes: string[] } {
   return { score: Math.max(0, Math.min(100, Math.round(score))), notes };
 }
 
-function priceSuggestion(
+export function priceSuggestion(
   raw: z.infer<typeof SuggestionSchema>,
   bandKey: string,
   index: number,
@@ -158,8 +160,10 @@ function priceSuggestion(
   }
 
   const priced = legs.filter((l) => Number.isFinite(l.oddsDecimal) && l.oddsDecimal > 1);
-  // A ticket with no usable price cannot be evaluated, so it is dropped rather than shown blank.
-  if (!priced.length) return null;
+  // Every leg needs a published price. A leg without one (a player prop measured from game logs,
+  // with no book line attached) would make the shown payout — and the public ROI — smaller than the
+  // ticket really is, so the whole ticket is dropped rather than shown with a made-up number.
+  if (!legs.length || priced.length !== legs.length) return null;
 
   const combinedDecimal = parlayDecimal(priced.map((l) => l.oddsDecimal));
   const modelled = legs.reduce((acc, l) => acc * l.fairProbability, 1);
@@ -241,6 +245,7 @@ export async function buildBets(args: BuildArgs): Promise<BetSlate> {
     ...targets.map((b) => `- ${b.key}: combined ${b.min}x to ${b.max}x (${b.typicalLegs}). Set bandKey to "${b.key}".`),
     "",
     `Return the bandKey on each suggestion via its title prefix is not needed — instead order suggestions from shortest odds to longest.`,
+    "Every leg must carry a price that appears above. Measured player history without a published price is context for your reasoning, not a leg: a ticket with an unpriced leg is discarded.",
   ]
     .filter(Boolean)
     .join("\n");
@@ -355,6 +360,8 @@ export async function buildSlateBets(args: SlateBuildArgs): Promise<BetSlate> {
         away: { ...games[0].game.away, displayName: "cross-game", name: "cross-game" },
       },
       suggestions,
+      // Public only once every game on it has started; before that the remaining legs are still bettable.
+      { startsAt: games.map((g) => g.game.startsAt).filter(Boolean).sort().at(-1) },
     );
   }
 

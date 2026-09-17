@@ -42,6 +42,22 @@ export function proofStats(entries: LedgerEntry[]): ProofStats {
   };
 }
 
+/**
+ * Whether a ticket's content (title, legs, permalink) may be shown to someone who has not paid for
+ * it. A ticket is the product until its game starts: before kickoff only the operator sees it.
+ * Tickets logged before kickoff times were recorded go public once they are graded.
+ */
+export function isPublicTicket(e: Pick<LedgerEntry, "outcome" | "startsAt">, now = Date.now()): boolean {
+  if (e.startsAt) {
+    const kickoff = Date.parse(e.startsAt);
+    return Number.isFinite(kickoff) ? kickoff <= now : e.outcome !== "pending";
+  }
+  return e.outcome !== "pending";
+}
+
+export const publicTickets = <T extends Pick<LedgerEntry, "outcome" | "startsAt">>(entries: T[], now = Date.now()): T[] =>
+  entries.filter((e) => isPublicTicket(e, now));
+
 /** Ledger ids carry ':' and '|'; the public link uses a short stable hash instead. */
 export const ticketSlug = (id: string) => createHash("sha1").update(id).digest("hex").slice(0, 10);
 export const findBySlug = (entries: LedgerEntry[], slug: string) => entries.find((e) => ticketSlug(e.id) === slug) ?? null;
@@ -51,4 +67,18 @@ export function recentTickets(entries: LedgerEntry[], limit = 30): LedgerEntry[]
   const settled = entries.filter((e) => e.outcome !== "pending").sort((a, b) => (b.settledAt ?? "").localeCompare(a.settledAt ?? ""));
   const pending = entries.filter((e) => e.outcome === "pending").sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   return [...settled, ...pending].slice(0, limit);
+}
+
+/**
+ * Aggregate numbers (hit rate, ROI, counts) are published only once enough tickets are decided:
+ * three wins in a row is noise, and "0 tickets" is not a pitch. Below the bar the pages explain the
+ * method instead. PROOF_MIN_DECIDED overrides the bar (tests use 1).
+ */
+export function proofMinDecided(env: Record<string, string | undefined> = process.env): number {
+  const n = Number(env.PROOF_MIN_DECIDED);
+  return Number.isFinite(n) && n >= 1 ? Math.floor(n) : 30;
+}
+
+export function proofPublishable(stats: Pick<ProofStats, "won" | "lost">, env: Record<string, string | undefined> = process.env): boolean {
+  return stats.won + stats.lost >= proofMinDecided(env);
 }

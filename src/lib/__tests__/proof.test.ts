@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { findBySlug, proofStats, recentTickets, ticketSlug } from "@/lib/ledger/proof";
+import { findBySlug, isPublicTicket, proofStats, publicTickets, recentTickets, ticketSlug } from "@/lib/ledger/proof";
 import type { LedgerEntry } from "@/lib/types";
 
 const e = (id: string, outcome: LedgerEntry["outcome"], odds: number, extra: Partial<LedgerEntry> = {}): LedgerEntry => ({
@@ -30,5 +30,24 @@ describe("proofStats", () => {
   it("lists settled tickets first, newest settlement first", () => {
     const r = recentTickets([e("p", "pending", 2), e("old", "won", 2, { settledAt: "2026-09-01T00:00:00Z" }), e("new", "lost", 2, { settledAt: "2026-09-12T00:00:00Z" })]);
     expect(r.map((x) => x.id)).toEqual(["new", "old", "p"]);
+  });
+});
+
+describe("public tickets", () => {
+  const now = Date.parse("2026-09-17T12:00:00Z");
+  it("keeps a ticket private until its game starts, whatever its outcome field says", () => {
+    expect(isPublicTicket(e("a", "pending", 2, { startsAt: "2026-09-17T15:00:00Z" }), now)).toBe(false);
+    expect(isPublicTicket(e("b", "pending", 2, { startsAt: "2026-09-17T11:59:00Z" }), now)).toBe(true);
+    expect(isPublicTicket(e("c", "lost", 2, { startsAt: "2026-09-17T15:00:00Z" }), now)).toBe(false);
+  });
+  it("treats tickets logged before kickoff times existed as public only once graded", () => {
+    expect(isPublicTicket(e("d", "pending", 2), now)).toBe(false);
+    expect(isPublicTicket(e("e", "won", 2), now)).toBe(true);
+    expect(isPublicTicket(e("f", "pending", 2, { startsAt: "garbage" }), now)).toBe(false);
+  });
+  it("filters a list without touching the counts' source", () => {
+    const list = [e("a", "pending", 2, { startsAt: "2026-09-18T00:00:00Z" }), e("b", "won", 2), e("c", "pending", 2)];
+    expect(publicTickets(list, now).map((x) => x.id)).toEqual(["b"]);
+    expect(proofStats(list).generated).toBe(3);
   });
 });

@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
-
+import { envValue } from "@/lib/env";
+import { AiBudgetExceededError, recordAiSpend } from "@/lib/server/ai-budget";
 
 /** Judgement work: the synthesis brief. */
 export const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5";
@@ -9,7 +10,7 @@ export const EXTRACTION_MODEL = process.env.ANTHROPIC_EXTRACTION_MODEL ?? "claud
 let client: Anthropic | null = null;
 
 export function aiConfigured(): boolean {
-  const key = process.env.ANTHROPIC_API_KEY ?? process.env.ANTHROPIC_AUTH_TOKEN ?? "";
+  const key = envValue("ANTHROPIC_API_KEY") || envValue("ANTHROPIC_AUTH_TOKEN");
   // The .env.local.example placeholder would otherwise read as configured and fail with a 401.
   return key.length > 20 && !key.includes("...");
 }
@@ -32,6 +33,7 @@ export class AiNotConfiguredError extends Error {
  */
 export function describeAiError(error: unknown): string | null {
   if (error instanceof AiNotConfiguredError) return error.message;
+  if (error instanceof AiBudgetExceededError) return error.message;
 
   // Check the message before the subclass: this arrives as a plain 400 through the streaming
   // helper, so an `instanceof BadRequestError` test misses it.
@@ -92,5 +94,11 @@ export function recordUsage(label: string, usage: Anthropic.Usage | undefined, m
   console.log(
     `[ai] ${label.padEnd(22)} in=${input} out=${output} cacheRead=${cacheRead} → $${costUsd.toFixed(4)}`,
   );
+  // The spend ceiling reads these rows; a failed write must not lose the model's answer.
+  try {
+    recordAiSpend({ label, model, inputTokens: input + cacheRead + cacheWrite, outputTokens: output, costUsd });
+  } catch (error) {
+    console.warn("[ai] could not record spend:", error instanceof Error ? error.message : error);
+  }
   return record;
 }

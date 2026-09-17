@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { formatDate } from "@/lib/format";
 import { makeT, type Lang } from "@/lib/i18n";
 
 interface Review { assumed: string; happened: string; verdict: "variance" | "repeatable_error" | "mixed"; reasoning: string; keyLeg: string | null; watchNext: string[] }
-interface Payload { available: boolean; cached: boolean; review: Review | null; createdAt: string | null; legs: string[]; error?: string }
+interface Payload { available: boolean; cached: boolean; review: Review | null; createdAt: string | null; legs: string[]; error?: string; message?: string }
 
 /**
  * One click on a lost ticket: what the model assumed, what happened, variance or a repeatable
@@ -34,13 +35,13 @@ export function LossReview({ slug, lang, compact = false }: { slug: string; lang
   const legs = data?.legs ?? [];
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-ink-800 bg-ink-900/70 p-3.5 text-[13px]" data-testid="loss-review">
-      {state === "error" && <p className="text-warn-400">{t("reviewFailed")}{data?.error ? ` — ${data.error}` : ""}</p>}
+      {state === "error" && <p className="text-warn-400">{data?.message ?? t("reviewFailed")}</p>}
       {state === "done" && data && !data.available && <p className="text-[12px] text-mist-500" data-testid="review-fallback">{t("reviewUnavailable")}</p>}
       {data?.review ? (
         <>
           <div className="flex flex-wrap items-center gap-2">
             <span className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${verdictTone[data.review.verdict]}`} data-testid="review-verdict">{verdictLabel[data.review.verdict]}</span>
-            {data.createdAt && <span className="text-[11px] text-mist-500">{t("reviewCached")} {new Date(data.createdAt).toLocaleDateString(lang === "pt" ? "pt-BR" : "en-US")}</span>}
+            {data.createdAt && <span className="text-[11px] text-mist-500">{t("reviewCached")} {formatDate(data.createdAt, lang, { year: true })}</span>}
           </div>
           <div><h4 className="text-[10px] font-semibold uppercase tracking-wider text-mist-500">{t("reviewAssumed")}</h4><p className="mt-1 leading-relaxed text-mist-300">{data.review.assumed}</p></div>
           <div><h4 className="text-[10px] font-semibold uppercase tracking-wider text-mist-500">{t("reviewHappened")}</h4><p className="mt-1 leading-relaxed text-mist-300">{data.review.happened}</p></div>

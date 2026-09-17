@@ -7,10 +7,10 @@ import { useNavState } from "@/components/Controls";
 interface Payload { code: string; invited: number; coinsEarned: number; coinsPerInvite: number; link: string; error?: string }
 
 const C = {
-  pt: { title: "Indique e ganhe", intro: (n: number) => `Cada amigo que criar conta pelo seu link ganha ${n} coins — e você também. Coins geram bilhetes.`, link: "Seu link", copy: "Copiar", copied: "Copiado", wa: "Mandar no WhatsApp", invited: "indicados", earned: "coins ganhos", signIn: "Entre na sua conta para pegar seu link.",
-    waText: (link: string) => `Tô usando o Betmatic pra montar bilhete com dado de verdade e histórico público. Cria a conta pelo meu link que a gente ganha coins: ${link}` },
-  en: { title: "Invite & earn", intro: (n: number) => `Every friend who signs up through your link gets ${n} coins — and so do you. Coins build tickets.`, link: "Your link", copy: "Copy", copied: "Copied", wa: "Share on WhatsApp", invited: "invited", earned: "coins earned", signIn: "Sign in to get your link.",
-    waText: (link: string) => `I'm using Betmatic to build tickets from real data with a public track record. Sign up through my link and we both get coins: ${link}` },
+  pt: { title: "Indique e ganhe", intro: (n: number) => `Quando um amigo que criou conta pelo seu link faz a primeira compra, ele ganha ${n} coins — e você também. Coins pagam a análise do seu bilhete.`, link: "Seu link", copy: "Copiar", copied: "Copiado", wa: "Mandar no WhatsApp", invited: "indicados", earned: "coins ganhos", signIn: "Entre na sua conta para pegar seu link.",
+    waText: (link: string) => `Tô usando o Betmatic pra montar bilhete com dado de verdade e histórico público. Dá pra começar de graça pelo meu link: ${link}` },
+  en: { title: "Invite & earn", intro: (n: number) => `When a friend who signed up through your link makes a first purchase, they get ${n} coins — and so do you. Coins pay for slip analyses.`, link: "Your link", copy: "Copy", copied: "Copied", wa: "Share on WhatsApp", invited: "invited", earned: "coins earned", signIn: "Sign in to get your link.",
+    waText: (link: string) => `I'm using Betmatic to build tickets from real data with a public track record. You can start free through my link: ${link}` },
 };
 
 export function ReferralPanel() {

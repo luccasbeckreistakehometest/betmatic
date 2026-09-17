@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { currentUser } from "@/lib/server/session";
-import { SPORTS } from "@/lib/sports";
+import { SPORTS, SOLD_SPORTS } from "@/lib/sports";
 import {
   follow, issueLinkCode, linkStatus, listFollows, listNotifications, markNotificationsRead, setDigest, unfollow, unlinkTelegram, unreadCount,
 } from "@/lib/server/telegram";
@@ -15,7 +15,7 @@ function state(userId: string) {
     follows: listFollows(userId).map(({ userId: _u, ...f }) => { void _u; return f; }),
     notifications: listNotifications(userId),
     unread: unreadCount(userId),
-    leagues: SPORTS.map((s) => ({ key: s.key, label: s.label, group: s.group })),
+    leagues: SOLD_SPORTS.map((s) => ({ key: s.key, label: s.label, group: s.group })),
   };
 }
 
@@ -32,7 +32,7 @@ const schema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("digest"), on: z.boolean() }),
   z.object({ action: z.literal("follow"), kind: z.enum(["team", "league"]), sportKey, key: z.string().max(40).default(""), label: z.string().max(80).default("") }),
   z.object({ action: z.literal("unfollow"), kind: z.enum(["team", "league"]), sportKey, key: z.string().max(40).default("") }),
-  z.object({ action: z.literal("read"), ids: z.array(z.string()).nullable().default(null) }),
+  z.object({ action: z.literal("read"), ids: z.array(z.string().max(80)).max(500).nullable().default(null) }),
 ]);
 
 export async function POST(request: Request) {

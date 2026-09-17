@@ -2,39 +2,39 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { currentUser } from "@/lib/server/session";
 import { createCoinCheckout, createPlanCheckout, mpConfigured } from "@/lib/server/mercadopago";
+import { apiError, rateLimited, requestLang } from "@/lib/server/api";
+import { accountKey, hit } from "@/lib/server/rate-limit";
+import { reportError } from "@/lib/server/ops-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const schema = z.object({
-  kind: z.enum(["coins", "plan"]),
-  packId: z.string().optional(),
-  planId: z.string().optional(),
-  period: z.enum(["monthly", "quarterly", "semiannual", "annual"]).default("monthly"),
-});
+const schema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("coins"), packId: z.string().max(40) }),
+  z.object({ kind: z.literal("plan"), planId: z.string().max(40), period: z.enum(["monthly", "quarterly", "semiannual", "annual"]).default("monthly") }),
+]);
 
+/** Starts a Mercado Pago Checkout Pro payment and returns the page to send the buyer to. */
 export async function POST(request: Request) {
   const user = await currentUser();
-  if (!user) return NextResponse.json({ error: "não autenticado" }, { status: 401 });
-  if (!mpConfigured()) {
-    return NextResponse.json({ error: "Pagamento ainda não configurado (falta MP_ACCESS_TOKEN)." }, { status: 503 });
-  }
+  const lang = requestLang(request, user?.lang);
+  if (!user) return apiError("unauthenticated", lang, 401);
   const parsed = schema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
+  if (!parsed.success) return apiError("invalid_input", lang, 400);
+  if (!mpConfigured()) return apiError("payments_off", lang, 503);
+  const limit = hit("checkoutAccount", accountKey(user.id));
+  if (!limit.ok) return rateLimited(limit, lang);
 
   try {
-    const { kind, packId, planId, period } = parsed.data;
-    if (kind === "coins") {
-      if (!packId) return NextResponse.json({ error: "packId ausente" }, { status: 400 });
-      return NextResponse.json(await createCoinCheckout(user.id, packId, user.email));
-    }
-    if (!planId) return NextResponse.json({ error: "planId ausente" }, { status: 400 });
-    return NextResponse.json(await createPlanCheckout(user.id, planId, period, user.email));
+    const data = parsed.data;
+    const result = data.kind === "coins"
+      ? await createCoinCheckout(user.id, data.packId, user.email)
+      : await createPlanCheckout(user.id, data.planId, data.period, user.email);
+    return NextResponse.json(result);
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Erro no checkout" },
-      { status: 502 },
-    );
+    if (error instanceof RangeError) return apiError("invalid_input", lang, 400);
+    reportError("payments.checkout", error, { userId: user.id });
+    return apiError("checkout_failed", lang, 502);
   }
 }

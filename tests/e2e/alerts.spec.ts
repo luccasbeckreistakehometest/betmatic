@@ -68,7 +68,7 @@ test("follows: leagues from the alerts page, teams from the game page; the webho
 
 test("in-app notifications are the fallback when Telegram is not linked", async ({ page, request }) => {
   const email = `nina${Date.now()}@example.com`;
-  const reg = await page.request.post("/api/auth/register", { data: { name: "Nina", email, password: "password123", lang: "pt" } });
+  const reg = await page.request.post("/api/auth/register", { data: { name: "Nina", email, password: "password123", lang: "pt", acceptTerms: true } });
   expect(reg.ok()).toBeTruthy();
   await skipTour(page);
   await page.request.post("/api/alerts", { data: { action: "digest", on: true } });

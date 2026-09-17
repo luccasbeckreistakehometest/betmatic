@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { envValue } from "@/lib/env";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { getDb, newId, nowIso } from "@/lib/server/db";
@@ -15,6 +16,7 @@ import {
   parseStartCommand, ticketAlertText, type DigestItem, type FollowKind, type FollowRef,
 } from "@/lib/alerts";
 import type { BetSlate, BetSuggestion } from "@/lib/types";
+import { baseUrlOrEmpty } from "@/lib/base-url";
 
 /**
  * Telegram alerts. The bot only ever receives `/start <code>` and `/stop`; everything else is
@@ -23,8 +25,8 @@ import type { BetSlate, BetSuggestion } from "@/lib/types";
  */
 export type TelegramTransport = (chatId: string, text: string) => Promise<{ ok: boolean; error?: string }>;
 
-export const telegramConfigured = (): boolean => !!process.env.TELEGRAM_BOT_TOKEN;
-export const botUsername = (): string => (process.env.TELEGRAM_BOT_USERNAME ?? "").replace(/^@/, "");
+export const telegramConfigured = (): boolean => !!envValue("TELEGRAM_BOT_TOKEN");
+export const botUsername = (): string => envValue("TELEGRAM_BOT_USERNAME").replace(/^@/, "");
 export const deepLinkFor = (code: string): string | null => (botUsername() ? `https://t.me/${botUsername()}?start=${code}` : null);
 
 const outboxFile = () => path.join(process.env.DATA_DIR ?? path.join(process.cwd(), "data"), "telegram-outbox.jsonl");
@@ -37,7 +39,7 @@ const fileTransport: TelegramTransport = async (chatId, text) => {
 };
 
 const botApiTransport: TelegramTransport = async (chatId, text) => {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const token = envValue("TELEGRAM_BOT_TOKEN");
   if (!token) return { ok: false, error: "TELEGRAM_BOT_TOKEN not set" };
   try {
     // Plain text on purpose: Markdown escaping of team names and odds is a bug factory.
@@ -281,7 +283,7 @@ export async function sendDailyDigest(opts: { dateKey?: string; base?: string; f
   const now = opts.now ?? new Date();
   if (!opts.force && !digestDue(now, Number(process.env.TELEGRAM_DIGEST_HOUR ?? 9))) { out.note = "before digest hour"; return out; }
   const dateKey = opts.dateKey ?? todayKey();
-  const base = opts.base ?? process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  const base = opts.base ?? baseUrlOrEmpty();
   const primaryLang = refreshConfig(process.env, SPORTS.map((s) => s.key)).langs[0] as Lang;
   const subscribers = getDb().prepare("SELECT userId FROM telegram_links WHERE digest=1").all() as { userId: string }[];
 
