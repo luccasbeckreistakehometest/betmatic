@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { recordRouteEvent } from "@/lib/server/analytics";
 import { currentUser } from "@/lib/server/session";
 import { apiError, rateLimited, requestLang } from "@/lib/server/api";
 import { accountKey, hit } from "@/lib/server/rate-limit";
@@ -38,6 +39,7 @@ export async function GET(request: Request, ctx: { params: Promise<{ athleteId: 
       releasePlayer(user, sportKey, athleteId);
       return apiError("not_found", lang, 404);
     }
+    await recordRouteEvent("player_opened", user.id, { sportKey, limited: access.limit !== null });
     return NextResponse.json({
       profile,
       read: storedRead(sportKey, athleteId, lang),

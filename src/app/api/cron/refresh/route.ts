@@ -12,6 +12,7 @@ import { settleBankrollLegs } from "@/lib/server/bankroll";
 import { runLineupWatch } from "@/lib/server/lineups";
 import { runCloseJob } from "@/lib/server/leg-prices";
 import { runWeeklyReports } from "@/lib/server/weekly-report";
+import { cleanupEvents } from "@/lib/server/analytics-report";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,6 +27,7 @@ export const dynamic = "force-dynamic";
  *   lineups — vigia de escalação: pending tickets starting within 100 min vs the lineup/injuries; every tick
  *   close   — CLV: the closing price of every pending leg whose game starts within 15 min; every tick
  *   weekly  — relatório semanal de disciplina; safe every tick, writes on Mondays from 12:00 UTC (force=1 to run now)
+ *   cleanup — deletes analytics events older than 180 days; daily
  *   refresh — background generation (off unless CRON_ENABLED=1); every 4h
  * Protected by the x-cron-secret header (constant-time compare), or by an admin session for manual
  * runs from the panel. Every run logs one JSON summary line for `docker compose logs`.
@@ -70,6 +72,11 @@ export async function POST(request: Request) {
     if (job === "weekly") {
       const result = await runWeeklyReports({ force: url.searchParams.get("force") === "1" });
       return NextResponse.json({ job, ...result });
+    }
+    if (job === "cleanup") {
+      const deleted = cleanupEvents();
+      logEvent("job.cleanup", { deleted, ms: Date.now() - started });
+      return NextResponse.json({ job, deleted });
     }
     if (job === "featured") {
       const result = await runFeatured();

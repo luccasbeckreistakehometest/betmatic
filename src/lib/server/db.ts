@@ -562,6 +562,9 @@ function migrateRound3(d: Database.Database): void {
   `);
   // The bankroll a user declares (optional) so stake sizing can be read against it.
   addColumn(d, "user_settings", "bankrollAmount", "REAL");
+  // First-touch acquisition, copied from the bm_ft cookie at signup.
+  addColumn(d, "users", "signupSource", "TEXT");
+  addColumn(d, "users", "signupUtm", "TEXT");
   addColumn(d, "user_slips", "kind", "TEXT NOT NULL DEFAULT 'analysis'");
 }
 

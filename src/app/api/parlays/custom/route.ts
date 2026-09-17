@@ -15,6 +15,7 @@ import { buildLegPool } from "@/lib/server/leg-pool";
 import { CUSTOM_LIMITS, solveCustomParlay } from "@/lib/bets/custom-parlay";
 import { explainCustomTickets, templateCustomTickets, type CustomTicketView } from "@/lib/bets/custom-writeup";
 import { SOLD_SPORTS } from "@/lib/sports";
+import { recordRouteEvent } from "@/lib/server/analytics";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -113,6 +114,7 @@ export async function POST(request: Request) {
     const slipId = newId("slip");
     getDb().prepare("INSERT INTO user_slips (id,userId,title,legs,analysis,coinsSpent,createdAt,analysedAt,kind) VALUES (?,?,?,?,?,?,?,?,?)")
       .run(slipId, user.id, `${c.target}x`, JSON.stringify(c), JSON.stringify(result.tickets), charged, nowIso(), nowIso(), "custom");
+    await recordRouteEvent("custom_parlay_done", user.id, { target: c.target, coins: charged });
     return NextResponse.json({ ...result, slipId, cached: cachedHit, coinsSpent: charged, balance: user.coins - charged });
   } catch (error) {
     refund(charged, "failure");

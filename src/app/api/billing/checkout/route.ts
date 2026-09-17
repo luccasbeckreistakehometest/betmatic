@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { recordRouteEvent } from "@/lib/server/analytics";
 import { z } from "zod";
 import { currentUser } from "@/lib/server/session";
 import { createCoinCheckout, createPlanCheckout, mpConfigured } from "@/lib/server/mercadopago";
@@ -31,6 +32,7 @@ export async function POST(request: Request) {
     const result = data.kind === "coins"
       ? await createCoinCheckout(user.id, data.packId, user.email)
       : await createPlanCheckout(user.id, data.planId, data.period, user.email);
+    await recordRouteEvent("checkout_started", user.id, { kind: data.kind, ref: data.kind === "coins" ? data.packId : data.planId });
     return NextResponse.json(result);
   } catch (error) {
     if (error instanceof RangeError) return apiError("invalid_input", lang, 400);

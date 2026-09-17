@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "@/lib/track";
 import { useEffect, useRef, useState } from "react";
 import { formatDecimal, formatPercent } from "@/lib/odds";
 import { formatTime } from "@/lib/format";
@@ -52,6 +53,7 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const done = useRef(false);
+  const opened = useRef(false);
 
   useEffect(() => {
     let alive = true;
@@ -61,6 +63,7 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
       if (!alive || !r?.ok) return;
       const j = (await r.json()) as Payload;
       if (j.snapshot?.state === "post") done.current = true;
+      if (!opened.current && j.snapshot) { opened.current = true; track("live_panel_open", { state: j.snapshot.state }); }
       setData(j);
       setUpdatedAt(new Date().toISOString());
     };

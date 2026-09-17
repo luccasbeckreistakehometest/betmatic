@@ -1,6 +1,7 @@
 import { createHmac } from "node:crypto";
 import { getDb, newId, nowIso } from "@/lib/server/db";
 import { getCoinPack, getPlan, PERIOD, periodPrice, type BillingPeriod } from "@/lib/plans";
+import { recordEvent } from "@/lib/server/analytics";
 import { activatePlan, adjustCoins, findById, nextPlanExpiry, type PlanState, type UserRow } from "@/lib/server/users";
 import { creditReferralOnPurchase, reverseReferralForPayment } from "@/lib/server/referral";
 import { reportError } from "@/lib/server/ops-log";
@@ -283,6 +284,7 @@ export async function handleWebhook(paymentId: string): Promise<{ outcome: Webho
       db.prepare("UPDATE payments SET status='approved', settledAt=?, providerPaymentId=?, statusDetail=? WHERE id=?")
         .run(settledAt, paymentId, String(payment.status_detail ?? ""), row.id);
       creditReferralOnPurchase(row.userId, row.id);
+      recordEvent("paid", row.userId, { kind: row.kind, ref: row.reference, amount: row.amount });
       return { outcome: "credited", note: `${row.kind}:${row.reference}` };
     }
 

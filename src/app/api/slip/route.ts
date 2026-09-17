@@ -15,6 +15,7 @@ import { pauseState } from "@/lib/server/settings";
 import { buildDeepContext, deepPrompt, type DeepContext } from "@/lib/server/deep-slip";
 import { SOLD_SPORTS } from "@/lib/sports";
 import { slipPrice } from "@/lib/server/slip-pricing";
+import { recordRouteEvent } from "@/lib/server/analytics";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -82,6 +83,7 @@ export async function POST(request: Request) {
       )
       .run(newId("slip"), user.id, title, JSON.stringify(legs), JSON.stringify({ ...analysis, deep: context }), cost, nowIso(), nowIso(), deep ? "deep" : "analysis");
 
+    if (deep) await recordRouteEvent("deep_slip_done", user.id, { coins: cost, resolved: context?.resolved ?? 0 });
     return NextResponse.json({ analysis, deep: context, coinsSpent: cost, balance: user.coins - cost });
   } catch (error) {
     if (context) {

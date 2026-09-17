@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { recordRouteEvent } from "@/lib/server/analytics";
 import { z } from "zod";
 import { currentUser } from "@/lib/server/session";
 import { addManual, addTicket, addWithLegs, gradeManual, listBankroll, removeEntry } from "@/lib/server/bankroll";
@@ -46,6 +47,7 @@ export async function POST(request: Request) {
   if (!verdict.allowed) return NextResponse.json({ error: "limit", ...verdict }, { status: 422 });
   const data = parsed.data;
   const entry = data.kind === "ticket" ? addTicket(user.id, data) : data.kind === "custom" ? addCustom(user.id, data) : addManual(user.id, data);
+  if (entry) await recordRouteEvent("ticket_saved", user.id, { kind: data.kind });
   return entry ? NextResponse.json({ entry }) : NextResponse.json({ error: "bilhete não encontrado no histórico" }, { status: 404 });
 }
 

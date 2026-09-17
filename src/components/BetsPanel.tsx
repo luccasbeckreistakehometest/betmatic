@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "@/lib/track";
 import { useState } from "react";
 import Link from "next/link";
 
@@ -224,7 +225,7 @@ function Alternatives({ main, alternatives, lang, flagged }: { main: BetSuggesti
   const avoids = (alt: BetSuggestion) => flaggedPlayers.size > 0 && alt.legs.every((l) => !l.settlement?.player || !flaggedPlayers.has(l.settlement.player.toLowerCase()));
   const pct = (n: number) => `${n > 0 ? "+" : ""}${(n * 100).toFixed(1)} pp`;
   return (
-    <details className="group mt-3 rounded-lg border border-ink-700/80 bg-ink-900/40" data-testid="alternatives" open={flaggedPlayers.size > 0}>
+    <details className="group mt-3 rounded-lg border border-ink-700/80 bg-ink-900/40" data-testid="alternatives" open={flaggedPlayers.size > 0} onToggle={(e) => { if (e.currentTarget.open) track("alt_expanded", { count: alternatives.length }); }}>
       <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-[12px] font-medium text-mist-200">
         <span className="text-edge-400 transition group-open:rotate-90">›</span>
         {alternatives.length === 1 ? (lang === "pt" ? "1 alternativa" : "1 alternative") : lang === "pt" ? `${alternatives.length} alternativas` : `${alternatives.length} alternatives`}

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { recordRouteEvent } from "@/lib/server/analytics";
 import { currentUser } from "@/lib/server/session";
 import { apiError, rateLimited, requestLang } from "@/lib/server/api";
 import { accountKey, hit } from "@/lib/server/rate-limit";
@@ -48,6 +49,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ gameId: st
   if (!shared) running.set(key, task);
   try {
     const out = await task;
+    if (out.status === "refreshed" && !shared) await recordRouteEvent("refresh_done", user.id, { sportKey, gameId });
     const code = out.status === "refreshed" ? 200 : out.status === "error" || out.status === "ai_budget" ? 502 : out.status === "ai_off" ? 503 : 409;
     if (code >= 500) return apiError(out.status === "ai_budget" ? "ai_budget" : "ai_unavailable", lang, code, { status: out.status });
     return NextResponse.json(out, { status: code });

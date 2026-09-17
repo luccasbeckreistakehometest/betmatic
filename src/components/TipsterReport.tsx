@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "@/lib/track";
 import { useState } from "react";
 import { TIPSTER_COPY } from "@/components/tipster-copy";
 import { postedLate, RED_FLAGS, shareText, type AuditReport, type GradedPick } from "@/lib/tipster/audit";
@@ -16,6 +17,7 @@ export function TipsterReport({ report, picks, lang, onDelete }: { report: Audit
   const text = shareText(report, lang);
   const decided = report.won + report.lost;
   async function share() {
+    track("share_clicked", { what: "tipster_audit" });
     try { await navigator.clipboard.writeText(text); setCopied(true); } catch { setCopied(false); }
   }
   return (
