@@ -51,6 +51,10 @@ systemctl reload caddy
 Cada checkout já informa ao MP a URL de notificação (`APP_URL/api/webhooks/mercadopago`) e as de
 retorno (`/pagamento/sucesso|falhou|pendente`). Registre também o webhook em **Suas integrações →
 Webhooks** (evento *Pagamentos*) e copie a assinatura secreta para `MP_WEBHOOK_SECRET`.
+Com a assinatura configurada, uma notificação com `x-signature` errado é recusada (401); uma sem
+assinatura é aceita e registrada no log (`payments.webhook.unsigned`), porque o pagamento é sempre
+relido na API do MP com o nosso token. Teste com o simulador de notificações do painel antes da
+primeira venda.
 O webhook é idempotente (cada pagamento é creditado uma vez), só credita a compra indicada no
 `external_reference`, responde 5xx quando o MP não responde (o MP tenta de novo) e desfaz o crédito em
 estorno ou contestação. Planos são **pré-pagos** e não renovam sozinhos. Depois de subir, faça uma

@@ -313,9 +313,18 @@ export async function handleWebhook(paymentId: string): Promise<{ outcome: Webho
 }
 
 /**
- * Optional authenticity check (MP_WEBHOOK_SECRET, from the Mercado Pago dashboard). The handler
- * re-reads every payment from the API anyway, so this is defence in depth, not the only guard.
+ * How a notification's x-signature compares with MP_WEBHOOK_SECRET: "invalid" only when a signature
+ * is present and wrong. Notifications sent to a preference's notification_url (and the legacy IPN
+ * format) may arrive unsigned; they are accepted because the handler re-reads every payment from the
+ * API with our own token, so a forged call can only make us look at a real payment's real state.
  */
+export function webhookSignatureState(input: { signature: string | null; requestId: string | null; dataId: string | null }, secret = envValue("MP_WEBHOOK_SECRET")): "valid" | "unsigned" | "invalid" | "not_checked" {
+  if (!secret) return "not_checked";
+  if (!input.signature) return "unsigned";
+  return verifyWebhookSignature(input, secret) ? "valid" : "invalid";
+}
+
+/** Strict check of one x-signature against the secret (MP's manifest format). */
 export function verifyWebhookSignature(input: { signature: string | null; requestId: string | null; dataId: string | null }, secret = envValue("MP_WEBHOOK_SECRET")): boolean {
   if (!secret) return true;
   if (!input.signature || !input.dataId) return false;

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { handleWebhook, MercadoPagoError, mpConfigured, verifyWebhookSignature } from "@/lib/server/mercadopago";
+import { handleWebhook, MercadoPagoError, mpConfigured, webhookSignatureState } from "@/lib/server/mercadopago";
 import { hit, ipKey } from "@/lib/server/rate-limit";
 import { logEvent, reportError } from "@/lib/server/ops-log";
 
@@ -21,10 +21,12 @@ export async function POST(request: Request) {
   const bodyId = (body.data as { id?: string | number } | undefined)?.id;
   const paymentId = String(queryId ?? bodyId ?? "");
 
-  if (!verifyWebhookSignature({ signature: request.headers.get("x-signature"), requestId: request.headers.get("x-request-id"), dataId: queryId ?? (bodyId != null ? String(bodyId) : null) })) {
+  const signature = webhookSignatureState({ signature: request.headers.get("x-signature"), requestId: request.headers.get("x-request-id"), dataId: queryId ?? (bodyId != null ? String(bodyId) : null) });
+  if (signature === "invalid") {
     reportError("payments.webhook", new Error("invalid x-signature"), { paymentId }, "warn");
     return NextResponse.json({ ok: false }, { status: 401 });
   }
+  if (signature === "unsigned") logEvent("payments.webhook.unsigned", { paymentId, topic });
   if (topic && topic !== "payment") return NextResponse.json({ ok: true, note: `ignored ${topic}` });
   if (!paymentId) return NextResponse.json({ ok: true, note: "no payment id" });
 

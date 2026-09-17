@@ -263,6 +263,14 @@ describe("webhook signature", () => {
     expect(mp.verifyWebhookSignature({ signature: null, requestId: "abc", dataId: "123" }, secret)).toBe(false);
     expect(mp.verifyWebhookSignature({ signature: null, requestId: null, dataId: null }, "")).toBe(true);
   });
+  it("rejects a wrong signature but lets an unsigned delivery through to the API re-read", () => {
+    const secret = "whsec";
+    const v1 = createHmac("sha256", secret).update("id:123;ts:1;").digest("hex");
+    expect(mp.webhookSignatureState({ signature: `ts=1,v1=${v1}`, requestId: null, dataId: "123" }, secret)).toBe("valid");
+    expect(mp.webhookSignatureState({ signature: "ts=1,v1=bad", requestId: null, dataId: "123" }, secret)).toBe("invalid");
+    expect(mp.webhookSignatureState({ signature: null, requestId: null, dataId: "123" }, secret)).toBe("unsigned");
+    expect(mp.webhookSignatureState({ signature: null, requestId: null, dataId: "123" }, "")).toBe("not_checked");
+  });
 });
 
 describe("plan expiry on purchase", () => {
