@@ -87,6 +87,12 @@ test("health is public and read-only; the tour GET writes nothing", async ({ pag
   const tour = await page.request.get("/api/tour");
   expect(tour.headers()["set-cookie"]).toBeUndefined();
   expect(await tour.json()).toEqual({ tourCompleted: false, tourStep: 0 });
+  // Funnel events are labels, not documents.
+  const big = await page.request.post("/api/tour", { data: { event: "x", meta: { blob: "a".repeat(3_000_000) } } });
+  expect(big.status()).toBe(413);
+  const wide = await page.request.post("/api/tour", { data: { event: "x", meta: { blob: "a".repeat(1_000) } } });
+  expect(wide.status()).toBe(400);
+  expect((await page.request.post("/api/tour", { data: { event: "x", meta: { from: "hero" } } })).ok()).toBe(true);
 });
 
 test("login failures are limited per account and answered in the reader's language", async ({ page }) => {

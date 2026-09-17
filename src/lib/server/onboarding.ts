@@ -25,7 +25,10 @@ export function recordEvent(ownerId: string, type: string, meta?: Record<string,
   const events = JSON.parse(row.events) as { at: string; type: string; meta?: unknown }[];
   if (events.length >= 200) return;
   events.push({ at: nowIso(), type, meta });
-  getDb().prepare("UPDATE onboarding SET events = ? WHERE id = ?").run(JSON.stringify(events), ownerId);
+  const json = JSON.stringify(events);
+  // A hard ceiling per owner whatever the caller sends: the funnel log must never grow the database.
+  if (json.length > 64_000) return;
+  getDb().prepare("UPDATE onboarding SET events = ? WHERE id = ?").run(json, ownerId);
 }
 
 export function setTourStep(ownerId: string, step: number, completed: boolean): OnboardingRow {

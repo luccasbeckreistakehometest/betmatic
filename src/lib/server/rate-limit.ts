@@ -27,6 +27,7 @@ export const RULES = {
   exportAccount: { max: 5, windowMs: 60 * MIN },
   webhookIp: { max: 120, windowMs: MIN },
   tourIp: { max: 120, windowMs: MIN },
+  tourAnonIp: { max: 60, windowMs: 60 * MIN },
 } satisfies Record<string, LimitRule>;
 export type RuleName = keyof typeof RULES;
 

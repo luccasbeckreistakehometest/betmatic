@@ -31,13 +31,28 @@ export async function GET() {
   return NextResponse.json({ tourCompleted: row.tourCompleted === 1, tourStep: row.tourStep });
 }
 
-const schema = z.object({ step: z.number().int().min(0).max(20).optional(), completed: z.boolean().optional(), event: z.string().max(40).optional(), meta: z.record(z.string(), z.unknown()).optional() });
+/** Funnel events carry a few labels, never documents: anything bigger is refused before it is stored. */
+const MAX_BODY_BYTES = 2048;
+const MAX_META_CHARS = 512;
+const schema = z.object({
+  step: z.number().int().min(0).max(20).optional(),
+  completed: z.boolean().optional(),
+  event: z.string().max(40).optional(),
+  meta: z.record(z.string().max(40), z.unknown()).refine((m) => JSON.stringify(m).length <= MAX_META_CHARS, "meta too large").optional(),
+});
 
 export async function POST(request: Request) {
   if (!hit("tourIp", ipKey(request)).ok) return NextResponse.json({ error: "rate_limited" }, { status: 429 });
-  const parsed = schema.safeParse(await request.json().catch(() => ({})));
+  if (Number(request.headers.get("content-length") ?? 0) > MAX_BODY_BYTES) return NextResponse.json({ error: "too large" }, { status: 413 });
+  const raw = await request.text().catch(() => "");
+  if (raw.length > MAX_BODY_BYTES) return NextResponse.json({ error: "too large" }, { status: 413 });
+  let body: unknown = {};
+  try { body = raw ? JSON.parse(raw) : {}; } catch { body = null; }
+  const parsed = schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "bad request" }, { status: 400 });
   const o = await owner();
+  // Every cookie-less POST would mint a new row: new anonymous visitors are limited on their own.
+  if (o.fresh && !hit("tourAnonIp", ipKey(request)).ok) return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   const { step, completed, event, meta } = parsed.data;
   if (event) recordEvent(o.key, event, meta);
   const row = step !== undefined || completed !== undefined ? setTourStep(o.key, step ?? getOnboarding(o.key).tourStep, completed ?? false) : getOnboarding(o.key);
