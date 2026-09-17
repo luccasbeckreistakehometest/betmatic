@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as { everywhere?: boolean };
   if (body?.everywhere) {
-    const user = await currentUser();
+    const user = await currentUser({ pendingPasswordChange: true });
     if (user) bumpSessionVersion(user.id);
   }
   await clearSession();

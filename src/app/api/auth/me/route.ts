@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const user = await currentUser();
+  const user = await currentUser({ pendingPasswordChange: true });
   if (!user) return NextResponse.json({ user: null });
   return NextResponse.json({
     user: {

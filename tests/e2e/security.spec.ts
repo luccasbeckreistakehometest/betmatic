@@ -161,5 +161,11 @@ test("sessions are revocable: log out everywhere, password change, and disabling
   expect(reset.oneTimePassword).toMatch(/^[A-Za-z2-9]{14}$/);
   const login = await loginAs(pa, email, reset.oneTimePassword);
   expect(login.mustChangePassword).toBe(true);
+  // Until the password is changed the session only reaches the account page and the change itself.
+  expect((await pa.request.get("/api/account")).ok()).toBeTruthy();
+  expect((await pa.request.get("/api/bankroll")).status()).toBe(401);
+  expect((await pa.request.post("/api/game/401882878/generate?sport=soccer-esp")).status()).toBe(401);
+  expect((await pa.request.post("/api/account/password", { data: { current: reset.oneTimePassword, next: "mynewpassword789" } })).ok()).toBeTruthy();
+  expect((await pa.request.get("/api/bankroll")).ok()).toBeTruthy();
   await Promise.all([a.close(), b.close()]);
 });

@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 /** Everything the account page shows: plan and expiry, coin history, payments. Read-only. */
 export async function GET(request: Request) {
-  const user = await currentUser();
+  const user = await currentUser({ pendingPasswordChange: true });
   if (!user) return apiError("unauthenticated", requestLang(request), 401);
   return NextResponse.json({
     user: {

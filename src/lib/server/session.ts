@@ -9,12 +9,16 @@ export async function getSession(): Promise<SessionPayload | null> {
 /**
  * The signed cookie alone is not enough: the token's session version must match the user's current
  * one (bumped on password change, disable and "log out everywhere") and the account must be active.
+ * An account signed in with an admin-issued one-time password counts as signed out everywhere except
+ * the few routes that let it set a new password (`pendingPasswordChange: true`): whoever read the
+ * one-time password cannot keep using the account through it.
  */
-export async function currentUser(): Promise<PublicUser | null> {
+export async function currentUser(opts: { pendingPasswordChange?: boolean } = {}): Promise<PublicUser | null> {
   const session = await getSession();
   if (!session) return null;
   const row = findById(session.userId);
   if (!row || row.disabledAt || (row.sessionVersion ?? 0) !== session.sv) return null;
+  if (row.mustChangePassword && !opts.pendingPasswordChange) return null;
   return toPublic(row);
 }
 

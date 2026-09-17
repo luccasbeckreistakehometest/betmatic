@@ -12,7 +12,7 @@ const schema = z.object({ current: z.string().max(200), next: z.string().max(200
 
 /** Changing the password logs every other device out; this one gets a fresh cookie. */
 export async function POST(request: Request) {
-  const user = await currentUser();
+  const user = await currentUser({ pendingPasswordChange: true });
   const lang = requestLang(request, user?.lang);
   if (!user) return apiError("unauthenticated", lang, 401);
   const limit = hit("passwordAccount", accountKey(user.id));
