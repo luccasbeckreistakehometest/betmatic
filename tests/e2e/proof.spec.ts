@@ -16,6 +16,10 @@ test("public track record shows every ticket, and each has a shareable permalink
   await expect(page.getByTestId("ticket-page")).toContainText(/GANHOU|PERDEU|PENDENTE/);
   const share = page.getByTestId("share-wa");
   await expect(share).toHaveAttribute("href", /wa\.me\/\?text=/);
+  // the link unfurls as a result card
+  const og = await page.request.get(`${page.url().split("?")[0]}/opengraph-image`);
+  expect(og.ok()).toBeTruthy();
+  expect(og.headers()["content-type"]).toContain("image/png");
 });
 
 test("track record never names a source for visitors", async ({ page }) => {
