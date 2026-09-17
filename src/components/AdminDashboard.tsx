@@ -6,8 +6,11 @@ import { Logo } from "@/components/Logo";
 import { Empty, Panel } from "@/components/ui";
 import { PromptPanel } from "@/components/PromptPanel";
 import { LearningPanel } from "@/components/LearningPanel";
+import { AdminUsers } from "@/components/AdminUsers";
+import { AdminHealth, AdminInbox, AdminPayments, type OpsPayload } from "@/components/AdminOps";
 
-interface AdminPayload {
+interface AdminPayload extends OpsPayload {
+  contact?: Record<string, number>;
   error?: string;
   users: { id: string; email: string; name: string; role: string; planId: string; coins: number; createdAt: string; lastSeenAt: string | null }[];
   totals: { users: number; admins: number; paying: number; coinsSpent: number };
@@ -116,11 +119,24 @@ export function AdminDashboard() {
         <Stat label="Por que perdi?" value={data?.reviews?.reviews ?? 0} hint={`$${(data?.reviews?.costUsd ?? 0).toFixed(2)} em revisões`} />
         <Stat label="Jogo responsável" value={`${data?.responsible?.withLimits ?? 0} · ${data?.responsible?.paused ?? 0}`} hint={`com teto · em pausa · ${data?.responsible?.reminders ?? 0} lembretes`} />
         <Stat
+          label="Contato"
+          value={data?.contact?.open ?? 0}
+          hint="mensagens abertas"
+        />
+        <Stat
           label="Custo IA"
           value={`$${(data?.predictions.costUsd ?? 0).toFixed(2)}`}
           hint={data?.predictions.latest ? new Date(data.predictions.latest).toLocaleString() : "—"}
         />
       </div>
+
+      <AdminHealth data={data} />
+
+      <AdminUsers />
+
+      <AdminInbox />
+
+      <AdminPayments />
 
       <LearningPanel />
 
@@ -143,7 +159,7 @@ export function AdminDashboard() {
               <tbody className="divide-y divide-ink-800/70">
                 {data.jobs.map((job) => (
                   <tr key={job.id}>
-                    <td className="nums px-2 py-1.5 text-mist-300">{new Date(job.startedAt).toLocaleString()}</td>
+                    <td className="nums px-2 py-1.5 text-mist-300">{new Date(job.startedAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</td>
                     <td className={`px-2 py-1.5 ${job.status === "ok" ? "text-edge-400" : job.status === "error" ? "text-alert-400" : "text-signal-400"}`}>
                       {job.status}
                     </td>
@@ -163,38 +179,7 @@ export function AdminDashboard() {
         )}
       </Panel>
 
-      <Panel title="Usuários" meta={`${data?.users.length ?? 0}`}>
-        {data?.users.length ? (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[620px] text-left text-[12px]">
-              <thead>
-                <tr className="border-b border-ink-800 text-[10px] uppercase tracking-wider text-mist-500">
-                  <th className="px-2 pb-1.5 font-medium">E-mail</th>
-                  <th className="px-2 pb-1.5 font-medium">Papel</th>
-                  <th className="px-2 pb-1.5 font-medium">Plano</th>
-                  <th className="px-2 pb-1.5 text-right font-medium">Coins</th>
-                  <th className="px-2 pb-1.5 font-medium">Cadastro</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-800/70">
-                {data.users.map((u) => (
-                  <tr key={u.id}>
-                    <td className="px-2 py-1.5 text-mist-100">{u.email}</td>
-                    <td className={`px-2 py-1.5 ${u.role === "admin" ? "text-warn-400" : "text-mist-400"}`}>{u.role}</td>
-                    <td className="px-2 py-1.5 text-mist-300">{u.planId}</td>
-                    <td className="nums px-2 py-1.5 text-right text-mist-200">{u.coins}</td>
-                    <td className="nums px-2 py-1.5 text-[11px] text-mist-500">
-                      {new Date(u.createdAt).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <Empty>Nenhum usuário ainda.</Empty>
-        )}
-      </Panel>
+
     </div>
   );
 }

@@ -4,6 +4,8 @@ import { runRefresh } from "@/lib/server/refresh-job";
 import { settlePending } from "@/lib/ledger/settle";
 import { runLearning } from "@/lib/ledger/learn";
 import { sendDailyDigest } from "@/lib/server/telegram";
+import { safeEqual } from "@/lib/server/auth";
+import { logEvent, reportError } from "@/lib/server/ops-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,30 +16,43 @@ export const dynamic = "force-dynamic";
  *   digest  — "seus bilhetes de hoje" to Telegram subscribers; safe to call every tick, sends once a day
  *   learn   — post-mortem over the last 24h of settled tickets, proposes a prompt change; daily
  *   refresh — background generation (off unless CRON_ENABLED=1); every 4h
- * Protected by CRON_SECRET, or by an admin session for manual runs from the panel.
+ * Protected by the x-cron-secret header (constant-time compare), or by an admin session for manual
+ * runs from the panel. Every run logs one JSON summary line for `docker compose logs`.
  */
 export async function POST(request: Request) {
   const url = new URL(request.url);
   const secret = process.env.CRON_SECRET;
-  const provided = request.headers.get("x-cron-secret") ?? url.searchParams.get("secret");
-  const admin = await requireAdmin();
-  if (!admin && (!secret || provided !== secret)) return NextResponse.json({ error: "não autorizado" }, { status: 401 });
+  const provided = request.headers.get("x-cron-secret");
+  const byCron = !!secret && safeEqual(provided, secret);
+  if (!byCron && !(await requireAdmin())) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const job = url.searchParams.get("job") ?? "refresh";
+  const started = Date.now();
   try {
-    if (job === "settle") return NextResponse.json({ job, ...(await settlePending(500)) });
+    if (job === "settle") {
+      const result = await settlePending(500);
+      logEvent("job.settle", { ...result, ms: Date.now() - started });
+      return NextResponse.json({ job, ...result });
+    }
     if (job === "digest") {
       const date = url.searchParams.get("date") ?? undefined;
-      return NextResponse.json({ job, ...(await sendDailyDigest({ dateKey: date, force: url.searchParams.get("force") === "1" || !!date })) });
+      const result = await sendDailyDigest({ dateKey: date, force: url.searchParams.get("force") === "1" || !!date });
+      logEvent("job.digest", { ...result, ms: Date.now() - started });
+      return NextResponse.json({ job, ...result });
     }
     if (job === "learn") {
       const hours = Number(url.searchParams.get("hours") ?? "24");
-      return NextResponse.json({ job, run: await runLearning({ sinceHours: Number.isFinite(hours) ? hours : 24 }) });
+      const run = await runLearning({ sinceHours: Number.isFinite(hours) ? hours : 24 });
+      logEvent("job.learn", { id: run?.id, status: run?.status, tickets: run?.tickets, ms: Date.now() - started });
+      if (run?.status === "error") reportError("job.learn", new Error(run.note || "learning run failed"), { id: run.id });
+      return NextResponse.json({ job, run });
     }
     const sports = (url.searchParams.get("sports") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
     const maxGames = url.searchParams.get("maxGames") ? Number(url.searchParams.get("maxGames")) : undefined;
-    return NextResponse.json({ job, ...(await runRefresh({ sports, maxGames: Number.isFinite(maxGames) ? maxGames : undefined })) });
+    const result = await runRefresh({ sports, maxGames: Number.isFinite(maxGames) ? maxGames : undefined });
+    return NextResponse.json({ job, ...result }, { status: result.status === "error" ? 500 : 200 });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : `${job} failed` }, { status: 502 });
+    reportError(`job.${job}`, error);
+    return NextResponse.json({ error: `${job} failed` }, { status: 502 });
   }
 }

@@ -11,9 +11,12 @@ import { aiConfigured } from "@/lib/ai/client";
 import { lastUsage } from "@/lib/ai/extract";
 import type { BetSlate } from "@/lib/types";
 import type { Lang } from "@/lib/i18n";
+import { logEvent, reportError } from "@/lib/server/ops-log";
 
 export interface RefreshResult {
   runId: string;
+  status: "ok" | "error" | "skipped";
+  failures: number;
   games: number;
   predictions: number;
   skipped: number;
@@ -39,19 +42,20 @@ export async function runRefresh(options: { sports?: string[]; maxGames?: number
 
   db.prepare("INSERT INTO job_runs (id,job,status,startedAt) VALUES (?,?,?,?)").run(runId, "refresh", "running", nowIso());
 
-  let games = 0, predictions = 0, skipped = 0, cost = 0;
+  let games = 0, predictions = 0, skipped = 0, cost = 0, failures = 0;
   const notes: string[] = [];
   const spend = () => { cost += lastUsage?.costUsd ?? 0; return lastUsage?.costUsd ?? 0; };
 
   if (process.env.CRON_ENABLED === "0") {
     const note = "CRON_ENABLED=0 — generation happens on demand when a game is opened.";
-    db.prepare("UPDATE job_runs SET status=?, finishedAt=?, note=? WHERE id=?").run("ok", nowIso(), note, runId);
-    return { runId, games: 0, predictions: 0, skipped: 0, costUsd: 0, note };
+    db.prepare("UPDATE job_runs SET status=?, finishedAt=?, note=? WHERE id=?").run("skipped", nowIso(), note, runId);
+    return { runId, status: "skipped", failures: 0, games: 0, predictions: 0, skipped: 0, costUsd: 0, note };
   }
   if (!aiConfigured()) {
     const note = "ANTHROPIC_API_KEY missing — nothing generated.";
     db.prepare("UPDATE job_runs SET status=?, finishedAt=?, note=? WHERE id=?").run("error", nowIso(), note, runId);
-    return { runId, games: 0, predictions: 0, skipped: 0, costUsd: 0, note };
+    reportError("job.refresh", new Error(note));
+    return { runId, status: "error", failures: 1, games: 0, predictions: 0, skipped: 0, costUsd: 0, note };
   }
 
   for (const sportKey of sports) {
@@ -60,6 +64,7 @@ export async function runRefresh(options: { sports?: string[]; maxGames?: number
       slate = await getSlateOrNearest(todayKey(), false, sportKey);
     } catch (error) {
       notes.push(`${sportKey}: slate failed (${error instanceof Error ? error.message : "?"})`);
+      failures += 1;
       continue;
     }
     const upcoming = slate.games.filter((g) => g.status === "scheduled").slice(0, maxGames);
@@ -82,7 +87,8 @@ export async function runRefresh(options: { sports?: string[]; maxGames?: number
         cost += out.costUsd; predictions += cfg.langs.length - out.notes.length; generatedThisRun += 1;
         notes.push(`${sportKey}/${game.id}: ${decision.reason}${out.notes.length ? " (" + out.notes.join("; ") + ")" : ""}`);
       } catch (error) {
-        notes.push(`${sportKey}/${game.id}/${primary}: ${error instanceof Error ? error.message : "?"}`);
+        failures += 1;
+        notes.push(`${sportKey}/${game.id}/${primary}: ${reportError("job.refresh", error, { sportKey, gameId: game.id }, "warn")}`);
       }
     }
 
@@ -99,6 +105,7 @@ export async function runRefresh(options: { sports?: string[]; maxGames?: number
           catch (error) { notes.push(`${sportKey}/slate/${lang}: ${error instanceof Error ? error.message : "?"}`); }
         }
       } catch (error) {
+        failures += 1;
         notes.push(`${sportKey}/slate: ${error instanceof Error ? error.message : "?"}`);
       }
     }
@@ -106,10 +113,15 @@ export async function runRefresh(options: { sports?: string[]; maxGames?: number
 
   await closeSofascore().catch(() => null);
 
-  const note = [`skipped ${skipped} fresh`, ...notes].slice(0, 14).join(" | ");
+  // A run where something failed and nothing was written is an error, not an "ok" with a note:
+  // that is how an invalid API key stayed invisible for a day.
+  const status: RefreshResult["status"] = failures > 0 && predictions === 0 ? "error" : "ok";
+  const note = [`skipped ${skipped} fresh`, failures ? `${failures} failed` : "", ...notes].filter(Boolean).slice(0, 14).join(" | ");
   db.prepare("UPDATE job_runs SET status=?, finishedAt=?, gamesProcessed=?, predictionsWritten=?, costUsd=?, note=? WHERE id=?")
-    .run("ok", nowIso(), games, predictions, cost, note, runId);
-  return { runId, games, predictions, skipped, costUsd: cost, note };
+    .run(status, nowIso(), games, predictions, cost, note, runId);
+  if (status === "error") reportError("job.refresh", new Error(`refresh failed: ${failures} failures, 0 predictions`), { runId });
+  logEvent("job.refresh", { runId, status, games, predictions, skipped, failures, costUsd: Number(cost.toFixed(4)) });
+  return { runId, status, failures, games, predictions, skipped, costUsd: cost, note };
 }
 
 export function recentRuns(limit = 10) {

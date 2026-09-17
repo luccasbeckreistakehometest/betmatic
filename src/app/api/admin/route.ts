@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/server/session";
 import { getDb } from "@/lib/server/db";
-import { listUsers } from "@/lib/server/users";
+import { countUsers, listUsers } from "@/lib/server/users";
 import { predictionStats } from "@/lib/server/predictions";
 import { recentRuns } from "@/lib/server/refresh-job";
 import { ledgerSummary } from "@/lib/ledger/calibrate";
@@ -9,13 +9,17 @@ import { onboardingStats } from "@/lib/server/onboarding";
 import { alertStats } from "@/lib/server/telegram";
 import { reviewStats } from "@/lib/ledger/review";
 import { responsibleStats } from "@/lib/server/settings";
+import { budgetState, spendByDay } from "@/lib/server/ai-budget";
+import { contactCounts } from "@/lib/server/contact";
+import { listOps } from "@/lib/server/ops-log";
+import { DELETED_USER_ID } from "@/lib/server/db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   const admin = await requireAdmin();
-  if (!admin) return NextResponse.json({ error: "não autorizado" }, { status: 403 });
+  if (!admin) return NextResponse.json({ error: "Acesso restrito ao administrador." }, { status: 403 });
 
   const db = getDb();
   const revenue = db
@@ -24,7 +28,8 @@ export async function GET() {
   const coinsSpent = (
     db.prepare("SELECT COALESCE(SUM(-delta),0) AS n FROM coin_ledger WHERE delta < 0").get() as { n: number }
   ).n;
-  const byPlan = db.prepare("SELECT planId, COUNT(*) AS n FROM users GROUP BY planId").all();
+  const byPlan = db.prepare("SELECT planId, COUNT(*) AS n FROM users WHERE id != ? GROUP BY planId").all(DELETED_USER_ID);
+  const paying = (db.prepare("SELECT COUNT(*) AS n FROM users WHERE planId != 'free' AND planExpiresAt > ? AND role != 'admin'").get(new Date().toISOString()) as { n: number }).n;
   const users = listUsers({ limit: 100 }).map((u) => ({
     id: u.id, email: u.email, name: u.name, role: u.role, planId: u.planId,
     planExpiresAt: u.planExpiresAt, coins: u.coins, createdAt: u.createdAt, lastSeenAt: u.lastSeenAt,
@@ -33,9 +38,9 @@ export async function GET() {
   return NextResponse.json({
     users,
     totals: {
-      users: users.length,
+      users: countUsers(),
       admins: users.filter((u) => u.role === "admin").length,
-      paying: users.filter((u) => u.planId !== "free").length,
+      paying,
       coinsSpent,
     },
     revenue,
@@ -47,5 +52,8 @@ export async function GET() {
     alerts: alertStats(),
     reviews: reviewStats(),
     responsible: responsibleStats(),
+    ai: { ...budgetState(), byDay: spendByDay(7) },
+    contact: contactCounts(),
+    ops: listOps(30),
   });
 }

@@ -16,6 +16,7 @@ import { normaliseLang, type Lang } from "@/lib/i18n";
 import { eventJsonLd, faqJsonLd, formatKickoff, gameFaq, gamePageDescription, gamePageTitle, parseMatchup, type Teams } from "@/lib/seo/game-page";
 import type { BetSuggestion, GameDetail } from "@/lib/types";
 import { publicBaseUrl } from "@/lib/base-url";
+import { DEFAULT_OG_IMAGE } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -84,7 +85,8 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
   return {
     title: { absolute: `${title} | Betmatic` }, description,
     alternates: { canonical: lang === "en" ? en : canonical, languages: { "pt-BR": canonical, en, "x-default": canonical } },
-    openGraph: { title, description, url: gamePageUrl(base, gameId, data.sportKey, lang), type: "article", siteName: "Betmatic", locale: lang === "pt" ? "pt_BR" : "en_US" },
+    openGraph: { title, description, url: gamePageUrl(base, gameId, data.sportKey, lang), type: "article", siteName: "Betmatic", locale: lang === "pt" ? "pt_BR" : "en_US", images: [DEFAULT_OG_IMAGE] },
+    twitter: { card: "summary_large_image", title, description, images: [DEFAULT_OG_IMAGE.url] },
   };
 }
 
