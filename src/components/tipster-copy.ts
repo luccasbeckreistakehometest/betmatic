@@ -1,0 +1,33 @@
+/** Copy for "Raio-x do tipster", written separately in each language. */
+export const TIPSTER_COPY = {
+  pt: {
+    title: "Raio-x do tipster", sub: "Cola as mensagens do grupo (ou manda até 5 prints) e a gente confere palpite por palpite contra o placar oficial: quanto acertou de verdade, quanto rende a 1 unidade e quais \"greens\" foram postados depois do jogo começar.",
+    privacy: "É privado: só você vê, o nome que você der fica só com você, e o texto colado é descartado depois da leitura. Dá para apagar quando quiser.",
+    label: "Como você chama esse tipster (só você vê)", text: "Mensagens do grupo", textHint: "Copie e cole as mensagens, com data e hora se aparecerem.", images: "Ou mande prints (até 5)", sport: "Campeonato dos palpites",
+    run: "Fazer o raio-x", running: "Conferindo palpite por palpite…", allowance: "{used} de {limit} raio-x {window}", week: "nesta semana", month: "neste mês",
+    capTitle: "Você já usou o raio-x deste período.", capPay: "Fazer mais um por {n} coins", noCoins: "Coins insuficientes.", buy: "Comprar coins", aiOff: "O raio-x está indisponível agora.",
+    report: "Resultado", total: "palpites lidos", verifiable: "verificáveis", hit: "acerto real", roi: "retorno a 1 unidade", run_: "maior sequência de reds", avgOdds: "odd média",
+    claimed: "Ele disse que deu green em {c}; conferindo, deram green {r}.",
+    late: (n: number) => `${n === 1 ? "1 palpite foi postado" : `${n} palpites foram postados`} depois que o jogo já tinha começado — é o jeito clássico de fabricar green.`,
+    estimated: (n: number) => `${n === 1 ? "1 palpite sem odd na mensagem usou" : `${n} palpites sem odd na mensagem usaram`} a odd do mercado (estimada).`,
+    unverifiable: (n: number) => `Não deu para conferir ${n === 1 ? "1 palpite" : `${n} palpites`} (jogo ou mercado não encontrado).`,
+    flags: "Sinais de alerta no texto", noFlags: "Nenhuma frase de alerta encontrada.", picks: "Palpite a palpite", out: { won: "green", lost: "red", push: "devolvida", void: "anulada", pending: "jogo não acabou", unverifiable: "não verificável" } as Record<string, string>,
+    lateTag: "postado depois do início", share: "Compartilhar os números", copied: "Texto copiado.", del: "Apagar", past: "Seus raio-x", empty: "Você ainda não fez nenhum raio-x.",
+    smallSample: "Menos de 20 palpites decididos: use como sinal, não como veredito.",
+  },
+  en: {
+    title: "Tipster audit", sub: "Paste the group's messages (or send up to 5 screenshots) and we check pick by pick against the official score: the real hit rate, the return at 1 unit, and which \"greens\" were posted after kickoff.",
+    privacy: "It's private: only you see it, the name you give stays with you, and the pasted text is discarded after reading. Delete it whenever you like.",
+    label: "What you call this tipster (only you see it)", text: "Group messages", textHint: "Copy and paste the messages, with dates and times if shown.", images: "Or send screenshots (up to 5)", sport: "League of the picks",
+    run: "Run the audit", running: "Checking pick by pick…", allowance: "{used} of {limit} audits {window}", week: "this week", month: "this month",
+    capTitle: "You've used this period's audits.", capPay: "Run one more for {n} coins", noCoins: "Not enough coins.", buy: "Buy coins", aiOff: "The audit is unavailable right now.",
+    report: "Result", total: "picks read", verifiable: "verifiable", hit: "real hit rate", roi: "return at 1 unit", run_: "longest losing run", avgOdds: "average odds",
+    claimed: "They claimed {c} greens; checked, {r} were real.",
+    late: (n: number) => `${n === 1 ? "1 pick was" : `${n} picks were`} posted after the game had already started — the classic way to fake a green.`,
+    estimated: (n: number) => `${n === 1 ? "1 pick" : `${n} picks`} with no odds in the message used the market price (estimated).`,
+    unverifiable: (n: number) => `${n === 1 ? "1 pick" : `${n} picks`} couldn't be checked (game or market not found).`,
+    flags: "Red flags in the text", noFlags: "No red-flag phrases found.", picks: "Pick by pick", out: { won: "win", lost: "loss", push: "push", void: "void", pending: "game not over", unverifiable: "unverifiable" } as Record<string, string>,
+    lateTag: "posted after kickoff", share: "Share the numbers", copied: "Text copied.", del: "Delete", past: "Your audits", empty: "You haven't run an audit yet.",
+    smallSample: "Fewer than 20 decided picks: a signal, not a verdict.",
+  },
+} as const;

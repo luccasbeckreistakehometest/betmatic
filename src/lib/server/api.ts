@@ -33,6 +33,7 @@ const MESSAGES = {
   image_invalid: { pt: "Mande uma imagem JPG, PNG ou WebP do bilhete.", en: "Send a JPG, PNG or WebP image of the slip." },
   image_too_big: { pt: "A imagem ficou grande demais. Tente um print menor.", en: "The image is too large. Try a smaller screenshot." },
   scan_unreadable: { pt: "Não conseguimos ler esse print. Tente outro mais nítido ou lance à mão.", en: "We couldn't read that screenshot. Try a sharper one or log it by hand." },
+  tipster_cap: { pt: "Você já usou o raio-x de tipster deste período. Dá para fazer mais um usando coins.", en: "You've used this period's tipster audits. You can run another one with coins." },
   player_cap: { pt: "No plano Free dá para abrir o raio-x de 1 jogador por dia. Amanhã libera outro — ou veja os planos.", en: "The Free plan opens the deep dive for 1 player a day. Another one unlocks tomorrow — or see the plans." },
 } as const;
 
