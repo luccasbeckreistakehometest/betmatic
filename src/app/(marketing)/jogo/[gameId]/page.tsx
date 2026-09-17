@@ -5,6 +5,7 @@ import { Logo } from "@/components/Logo";
 import { readLedger } from "@/lib/ledger/store";
 import { proofStats } from "@/lib/ledger/proof";
 import { findGameInfo, servePredictions } from "@/lib/server/predictions";
+import { gamePageUrl } from "@/lib/server/sitemap-games";
 import { scrubText } from "@/lib/server/whitelabel";
 import { getPlan } from "@/lib/plans";
 import { getSport, SPORTS } from "@/lib/sports";
@@ -70,15 +71,16 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
   const data = await load(gameId, sportOf(q), lang);
   if (!data) return {};
   const base = process.env.NEXT_PUBLIC_BASE_URL ?? "";
-  const canonical = `${base}/jogo/${gameId}`;
+  // The sport is part of the canonical: without stored tickets it is the only way the page resolves.
+  const canonical = gamePageUrl(base, gameId, data.sportKey);
   const sc = (s: string) => scrubText(s, lang);
   const teams = { away: sc(data.teams.away), home: sc(data.teams.home) };
   const title = gamePageTitle(teams, formatKickoff(data.startsAt, lang).date, lang);
   const description = gamePageDescription(teams, getSport(data.sportKey).label[lang], lang, data.best ? { title: sc(data.best.title), odds: formatDecimal(data.best.combinedDecimal) } : null);
   return {
     title: `${title} | Betmatic`, description,
-    alternates: { canonical, languages: { "pt-BR": canonical, en: `${canonical}?lang=en` } },
-    openGraph: { title, description, url: lang === "en" ? `${canonical}?lang=en` : canonical, type: "article", siteName: "Betmatic" },
+    alternates: { canonical, languages: { "pt-BR": canonical, en: gamePageUrl(base, gameId, data.sportKey, "en") } },
+    openGraph: { title, description, url: gamePageUrl(base, gameId, data.sportKey, lang), type: "article", siteName: "Betmatic" },
   };
 }
 
@@ -95,7 +97,7 @@ export default async function GamePublicPage({ params, searchParams }: { params:
   const teams = { away: sc(data.teams.away), home: sc(data.teams.home) };
   const kickoff = formatKickoff(data.startsAt, lang);
   const base = process.env.NEXT_PUBLIC_BASE_URL ?? "";
-  const url = `${base}/jogo/${gameId}`;
+  const url = gamePageUrl(base, gameId, data.sportKey);
   const proof = proofStats(readLedger().filter((e) => e.sportKey === data.sportKey));
   const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
   const best = data.best;
