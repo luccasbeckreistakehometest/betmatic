@@ -2,7 +2,9 @@ import type { Lang } from "@/lib/i18n";
 
 /**
  * One funnel per sport. A basketball bettor and a soccer bettor are not the same person: the first
- * lives on player props, the second on cards and fouls. Generic copy converts neither.
+ * lives on player numbers, the second on cards and fouls. Generic copy converts neither.
+ * Tickets only carry markets with a published price (result, handicap, totals); player history is
+ * sold as analysis, never as a priced leg, until a player-market price source is wired in.
  */
 export interface SportLanding {
   slug: { pt: string; en: string };
@@ -24,12 +26,12 @@ export const SPORT_LANDINGS: SportLanding[] = [
     sportKeys: ["nba", "wnba"],
     name: { pt: "Basquete", en: "Basketball" },
     title: {
-      pt: "O jogo com mais linha de jogador do mundo.",
-      en: "The deepest player-prop board in sport.",
+      pt: "Antes da linha, o histórico de quem vai jogar.",
+      en: "Before the line, the record of who is playing.",
     },
     sub: {
-      pt: "Cada partida da NBA e da WNBA tem dezenas de linhas por atleta. A gente calcula, jogo a jogo, quantas vezes cada uma bateu — e mostra antes de você apostar.",
-      en: "Every NBA and WNBA game posts dozens of lines per player. We compute, game by game, how often each has hit — and show it before you bet.",
+      pt: "Na NBA e na WNBA, a gente mede jogo a jogo o que cada atleta produz e usa isso para montar bilhetes de resultado, handicap e total de pontos, só com odds publicadas.",
+      en: "Across the NBA and WNBA we measure, game by game, what each player produces, and use it to build moneyline, spread and totals tickets, with published prices only.",
     },
     angle: {
       pt: [
@@ -38,8 +40,8 @@ export const SPORT_LANDINGS: SportLanding[] = [
           body: "Não é média. É a contagem de quantos jogos passaram da linha, com o tamanho da amostra ao lado. Quando os últimos 10 discordam da temporada, isso aparece.",
         },
         {
-          title: "Combinações que esticam o bilhete",
-          body: "Pontos+Rebotes+Assistências, Roubos+Tocos, e as duplas. São elas que levam uma múltipla de 2x para 20x sem precisar de zebra.",
+          title: "Odd de verdade, não odd estimada",
+          body: "Cada perna do bilhete tem uma odd publicada, e a odd combinada é conta feita no servidor, não chute do modelo. Se uma linha não tem preço, ela não entra.",
         },
         {
           title: "Lesão muda tudo, e muda rápido",
@@ -52,8 +54,8 @@ export const SPORT_LANDINGS: SportLanding[] = [
           body: "Not an average — a count of how many games cleared the line, with the sample size beside it. When the last 10 disagree with the season, you see that.",
         },
         {
-          title: "Combos that lengthen a slip",
-          body: "PRA, steals+blocks, and the two-way pairs. These take a parlay from 2x to 20x without needing an upset.",
+          title: "Real prices, not estimated ones",
+          body: "Every leg on a ticket has a published price, and the combined odds are computed on the server, not guessed by the model. A line without a price stays off the ticket.",
         },
         {
           title: "Injuries move it, and fast",
@@ -61,7 +63,7 @@ export const SPORT_LANDINGS: SportLanding[] = [
         },
       ],
     },
-    marketsTitle: { pt: "Mercados medidos", en: "Measured markets" },
+    marketsTitle: { pt: "Números que entram na análise", en: "Numbers that feed the analysis" },
     markets: {
       pt: ["Pontos", "Rebotes", "Assistências", "Bolas de 3", "Roubos", "Tocos", "Erros", "Faltas", "Minutos", "Pts+Reb+Ass", "Roubos+Tocos"],
       en: ["Points", "Rebounds", "Assists", "3PM", "Steals", "Blocks", "Turnovers", "Fouls", "Minutes", "PRA", "Steals+Blocks"],
@@ -69,8 +71,8 @@ export const SPORT_LANDINGS: SportLanding[] = [
     leagues: ["NBA", "WNBA"],
     cta: { pt: "Ver os jogos de hoje", en: "See today's games" },
     meta: {
-      pt: "Palpites de NBA e WNBA com histórico medido jogo a jogo. Pontos, rebotes, assistências e combinações, com a chance real de cada linha.",
-      en: "NBA and WNBA picks with history measured game by game. Points, rebounds, assists and combos, each with its real probability.",
+      pt: "Palpites de NBA e WNBA com o histórico de cada jogador medido jogo a jogo e bilhetes só com odds publicadas, cada um com a chance estimada ao lado.",
+      en: "NBA and WNBA picks built on each player's game-by-game history, with tickets that use published prices only and show the estimated chance of each.",
     },
   },
   {
@@ -78,18 +80,18 @@ export const SPORT_LANDINGS: SportLanding[] = [
     sportKeys: ["soccer-bra", "soccer-eng", "soccer-esp", "soccer-ucl", "soccer-lib"],
     name: { pt: "Futebol", en: "Soccer" },
     title: {
-      pt: "O dinheiro não está no resultado. Está no cartão.",
-      en: "The value is not in the result. It is in the card.",
+      pt: "Todo mundo olha o placar. A gente olha o detalhe.",
+      en: "Everyone watches the score. We watch the detail.",
     },
     sub: {
-      pt: "Resultado de jogo paga pouco e todo mundo aposta. Falta, cartão, impedimento e finalização no alvo pagam bem — e quase ninguém checa o histórico do jogador nesses mercados. A gente checa.",
-      en: "Match result pays little and everyone plays it. Fouls, cards, offsides and shots on target pay properly — and almost nobody checks the player's history there. We do.",
+      pt: "Faltas, cartões, impedimentos e finalizações de cada jogador, partida a partida, entram na leitura do jogo. O bilhete sai com resultado, handicap e total de gols, só com odds publicadas.",
+      en: "Each player's fouls, cards, offsides and shots, match by match, feed the read of the game. Tickets come out on result, handicap and goal totals, with published prices only.",
     },
     angle: {
       pt: [
         {
           title: "Cartão tem padrão, e o padrão é medível",
-          body: "Volante que comete cinco faltas por jogo não leva cartão por azar. Puxamos o histórico de faltas e cartões partida a partida e mostramos a frequência real.",
+          body: "Volante que comete cinco faltas por jogo não leva cartão por azar. Puxamos o histórico de faltas e cartões partida a partida e usamos a frequência real para ler o jogo.",
         },
         {
           title: "Brasileirão, Premier League, Libertadores",
@@ -97,13 +99,13 @@ export const SPORT_LANDINGS: SportLanding[] = [
         },
         {
           title: "Finalização no alvo separa quem chuta de quem acerta",
-          body: "Muito atacante bate na linha de finalizações e não chega perto da linha de no alvo. São mercados diferentes e a gente mede os dois.",
+          body: "Muito atacante finaliza bastante e acerta pouco. São números diferentes, e a gente mede os dois antes de montar o bilhete.",
         },
       ],
       en: [
         {
           title: "Cards follow a pattern, and patterns are measurable",
-          body: "A midfielder committing five fouls a game is not booked by luck. We pull fouls and cards match by match and show the real frequency.",
+          body: "A midfielder committing five fouls a game is not booked by luck. We pull fouls and cards match by match and use the real frequency to read the game.",
         },
         {
           title: "Premier League, La Liga, Champions, Brasileirão",
@@ -111,11 +113,11 @@ export const SPORT_LANDINGS: SportLanding[] = [
         },
         {
           title: "Shots on target separates shooters from finishers",
-          body: "Plenty of forwards clear the shots line and never come close to the on-target line. Different markets, and we measure both.",
+          body: "Plenty of forwards shoot a lot and hit the target little. Different numbers, and we measure both before building a ticket.",
         },
       ],
     },
-    marketsTitle: { pt: "Mercados medidos", en: "Measured markets" },
+    marketsTitle: { pt: "Números que entram na análise", en: "Numbers that feed the analysis" },
     markets: {
       pt: ["Gols", "Assistências", "Gols+Assistências", "Finalizações", "No alvo", "Faltas cometidas", "Faltas sofridas", "Impedimentos", "Cartão amarelo", "Cartão vermelho"],
       en: ["Goals", "Assists", "Goals+Assists", "Shots", "On target", "Fouls committed", "Fouls suffered", "Offsides", "Yellow card", "Red card"],
@@ -123,8 +125,8 @@ export const SPORT_LANDINGS: SportLanding[] = [
     leagues: ["Brasileirão", "Premier League", "La Liga", "Champions", "Libertadores"],
     cta: { pt: "Ver os jogos de hoje", en: "See today's matches" },
     meta: {
-      pt: "Palpites de futebol com histórico medido: cartões, faltas, finalizações no alvo e impedimentos no Brasileirão, Premier League e Libertadores.",
-      en: "Soccer picks with measured history: cards, fouls, shots on target and offsides across the Premier League, La Liga and Champions League.",
+      pt: "Palpites de futebol com histórico medido de cartões, faltas e finalizações no Brasileirão, Premier League e Libertadores, e bilhetes só com odds publicadas.",
+      en: "Soccer picks built on measured cards, fouls and shots across the Premier League, La Liga and Champions League, with tickets that use published prices only.",
     },
   },
 ];

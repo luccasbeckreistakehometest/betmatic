@@ -141,23 +141,23 @@ const PT: LandingCopy = {
   ],
 
   sportsTitle: "O que a gente cobre",
-  sportsSub: "Cada esporte tem os mercados que fazem sentido nele — não é a mesma régua pra tudo.",
+  sportsSub: "Cada esporte tem a sua análise — não é a mesma régua pra tudo.",
   sports: [
     {
       key: "basketball",
       name: "Basquete",
       hook: "NBA e WNBA, temporada inteira",
       detail:
-        "O esporte com mais props por jogo. Pontos, rebotes, assistências, triplos, e as combinações que valorizam o bilhete.",
-      markets: "Pontos · Rebotes · Assistências · Bolas de 3 · Roubos + Tocos · Pontos+Reb+Ass",
+        "Jogo a jogo, a gente mede quanto cada jogador produz e cruza com lesões e escalação. O bilhete sai só com linhas que têm odd publicada: resultado, handicap e total de pontos.",
+      markets: "No bilhete: Resultado · Handicap · Total de pontos — Na análise: pontos, rebotes e assistências de cada jogador",
     },
     {
       key: "soccer",
       name: "Futebol",
       hook: "Brasileirão, Premier League, Libertadores e mais",
       detail:
-        "Aqui o dinheiro está no detalhe. Cartão, falta, impedimento e finalização no alvo pagam mais que resultado — e a gente mede o histórico de cada um.",
-      markets: "Gols · Assistências · Finalizações · No alvo · Faltas · Cartões · Impedimentos",
+        "A análise desce ao detalhe: faltas, cartões e finalizações de cada jogador, partida a partida. O bilhete sai só com linhas que têm odd publicada: resultado, handicap e total de gols.",
+      markets: "No bilhete: Resultado · Handicap · Total de gols — Na análise: faltas, cartões e finalizações de cada jogador",
     },
   ],
 
@@ -283,23 +283,23 @@ const EN: LandingCopy = {
   ],
 
   sportsTitle: "What we cover",
-  sportsSub: "Each sport gets the markets that actually matter in it, not one template stretched over three.",
+  sportsSub: "Each sport gets its own analysis, not one template stretched over all of them.",
   sports: [
     {
       key: "basketball",
       name: "Basketball",
       hook: "NBA and WNBA, all season",
       detail:
-        "The sport with the deepest prop board. Points, rebounds, assists, threes, and the combinations that lengthen a slip.",
-      markets: "Points · Rebounds · Assists · 3PM · Steals + Blocks · PRA",
+        "Game by game, we measure what each player produces and cross it with injuries and line-ups. Tickets only use lines with a published price: moneyline, spread and totals.",
+      markets: "On the ticket: Moneyline · Spread · Totals — In the analysis: each player's points, rebounds and assists",
     },
     {
       key: "soccer",
       name: "Soccer",
       hook: "Premier League, La Liga, Champions League, Brasileirão",
       detail:
-        "The value lives in the detail. Cards, fouls, offsides and shots on target price longer than the result — and we measure each player's history on all of them.",
-      markets: "Goals · Assists · Shots · On target · Fouls · Cards · Offsides",
+        "The analysis goes down to the detail: each player's fouls, cards and shots, match by match. Tickets only use lines with a published price: result, handicap and goal totals.",
+      markets: "On the ticket: Result · Handicap · Goal totals — In the analysis: each player's fouls, cards and shots",
     },
   ],
 
