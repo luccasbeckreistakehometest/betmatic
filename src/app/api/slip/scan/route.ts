@@ -3,7 +3,7 @@ import { currentUser } from "@/lib/server/session";
 import { apiError, rateLimited, requestLang } from "@/lib/server/api";
 import { accountKey, hit, ipKey } from "@/lib/server/rate-limit";
 import { pauseState } from "@/lib/server/settings";
-import { aiTryLimits, claimUse, globalUsesToday, releaseUse } from "@/lib/server/feature-uses";
+import { aiTryLimits, claimUse, globalUsesToday, recordUse, releaseUse } from "@/lib/server/feature-uses";
 import { newId } from "@/lib/server/db";
 import { extractSlip, resolveScan, SCAN_MAX_BYTES, scanLimits } from "@/lib/server/slip-scan";
 import { slipChecks, sniffImage } from "@/lib/bets/slip-scan";
@@ -63,7 +63,9 @@ export async function POST(request: Request) {
     // The model read the image and found nothing: that read was paid for, so it counts.
     if (!scan.legs.length) return apiError("scan_unreadable", lang, 422, { used: claim.used, limit: user.role === "admin" ? null : limit });
     const legs = await resolveScan(sportKey, scan.legs);
-    return NextResponse.json({ scan: { ...scan, legs }, checks: slipChecks({ ...scan, legs }), used: claim.used, limit: user.role === "admin" ? null : limit });
+    // The id the save route will ask for: one save per read print.
+    recordUse(user.id, "scan_ok", key);
+    return NextResponse.json({ scanId: key, scan: { ...scan, legs }, checks: slipChecks({ ...scan, legs }), used: claim.used, limit: user.role === "admin" ? null : limit });
   } catch (error) {
     // A failed call gives the read back; the try stays counted.
     releaseUse(user.id, "scan", key);

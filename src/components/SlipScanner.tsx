@@ -9,7 +9,7 @@ import { SOLD_SPORTS } from "@/lib/sports";
 import type { Lang } from "@/lib/i18n";
 
 interface DraftLeg { event: string; selection: string; market: string; odds: string; matchup: string | null; auto: boolean }
-interface Draft { book: string; betType: "single" | "multiple" | "bet_builder" | null; stake: string; totalOdds: string; potentialReturn: string; legs: DraftLeg[]; unreadable: string[] }
+interface Draft { scanId: string; book: string; betType: "single" | "multiple" | "bet_builder" | null; stake: string; totalOdds: string; potentialReturn: string; legs: DraftLeg[]; unreadable: string[] }
 type Phase = "idle" | "reading" | "review" | "saving" | "saved";
 
 export const SLIP_PREFILL_KEY = "bm-slip-prefill";
@@ -55,6 +55,7 @@ export function SlipScanner({ lang, sportKey: initialSport, onSaved }: { lang: L
       const s = j.scan;
       setUses(j.limit ? c.uses.replace("{used}", String(j.used)).replace("{limit}", String(j.limit)) : null);
       setDraft({
+        scanId: j.scanId ?? "",
         book: s.book ?? "", betType: s.betType, stake: show(s.stake), totalOdds: show(s.totalOdds), potentialReturn: show(s.potentialReturn), unreadable: s.unreadable ?? [],
         legs: s.legs.map((l: { event: string; selection: string; market: string; odds: number | null; settlement: unknown; resolved: { matchup: string | null } }) => ({
           event: l.event, selection: l.selection, market: l.market, odds: show(l.odds), matchup: l.resolved?.matchup ?? null, auto: !!l.settlement,
@@ -78,7 +79,7 @@ export function SlipScanner({ lang, sportKey: initialSport, onSaved }: { lang: L
     setPhase("saving");
     const r = await fetch("/api/slip/scan/save", {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ sport: sportKey, lang, book: draft.book || null, betType: draft.betType, stake: num(draft.stake), totalOdds: num(draft.totalOdds), legs: draft.legs.map((l) => ({ event: l.event, selection: l.selection, market: l.market, odds: num(l.odds) })) }),
+      body: JSON.stringify({ scanId: draft.scanId, sport: sportKey, lang, book: draft.book || null, betType: draft.betType, stake: num(draft.stake), totalOdds: num(draft.totalOdds), legs: draft.legs.map((l) => ({ event: l.event, selection: l.selection, market: l.market, odds: num(l.odds) })) }),
     }).catch(() => null);
     const j = r ? await r.json().catch(() => ({})) : {};
     if (!r?.ok) { setPhase("review"); setNote(j.message ?? c.manualFallback); return; }

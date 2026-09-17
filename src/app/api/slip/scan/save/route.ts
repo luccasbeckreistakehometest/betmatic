@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { currentUser } from "@/lib/server/session";
-import { apiError, requestLang } from "@/lib/server/api";
+import { apiError, rateLimited, requestLang } from "@/lib/server/api";
+import { accountKey, hit } from "@/lib/server/rate-limit";
+import { consumeScan } from "@/lib/server/feature-uses";
 import { pauseState, stakeVerdict } from "@/lib/server/settings";
 import { addWithLegs } from "@/lib/server/bankroll";
 import { resolveScan } from "@/lib/server/slip-scan";
@@ -12,6 +14,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const schema = z.object({
+  /** The id /api/slip/scan returned for this print. */
+  scanId: z.string().regex(/^scan_[a-f0-9]{20}$/),
   sport: z.string().max(20),
   lang: z.enum(["pt", "en"]).default("pt"),
   book: z.string().trim().max(60).nullable().default(null),
@@ -27,9 +31,10 @@ const schema = z.object({
 });
 
 /**
- * Saves a reviewed print to the bankroll. The legs are matched to ESPN again here — nothing the
- * browser sends decides how a leg is graded. The bet is already placed, so a stake ceiling does not
- * block the save; it comes back as a notice.
+ * Saves a reviewed print to the bankroll, once per print the scan route read (single-use scanId).
+ * The legs are matched to ESPN again here — nothing the browser sends decides how a leg is graded.
+ * The printed bet is already placed, so a stake ceiling does not block the save; it comes back as a
+ * notice. Without a read print there is no save: manual entries go through /api/bankroll and its ceiling.
  */
 export async function POST(request: Request) {
   const user = await currentUser();
@@ -40,7 +45,10 @@ export async function POST(request: Request) {
   if (!parsed.success || !SOLD_SPORTS.some((s) => s.key === parsed.data.sport)) return apiError("invalid_input", lang, 400);
   const pause = pauseState(user.id);
   if (pause.paused) return NextResponse.json({ error: "paused", pausedUntil: pause.until }, { status: 423 });
+  const acct = hit("scanSaveAccount", accountKey(user.id));
+  if (!acct.ok) return rateLimited(acct, lang);
   const d = parsed.data;
+  if (!consumeScan(user.id, d.scanId)) return apiError("scan_expired", lang, 409);
   const legs = await resolveScan(d.sport, d.legs.map((l) => ({ ...l, startsAt: null })));
   const verdict = stakeVerdict(user.id, d.stake);
   const games = [...new Set(legs.map((l) => l.resolved.matchup ?? l.event).filter(Boolean))];

@@ -35,6 +35,7 @@ vi.mock("@/lib/server/session", () => ({ currentUser: async () => sessionUser })
 
 const { slipChecks, checkText, resolveScanLeg, gameForEvent, sniffImage, settlementFor } = await import("@/lib/bets/slip-scan");
 const { POST } = await import("@/app/api/slip/scan/route");
+const { POST: SAVE } = await import("@/app/api/slip/scan/save/route");
 const { createUser, toPublic, findById } = await import("@/lib/server/users");
 
 describe("slip checks", () => {
@@ -198,5 +199,21 @@ describe("scan route", async () => {
       delete process.env.SCAN_TRIES_FREE_PER_DAY;
       delete process.env.SCAN_DAILY_CAP;
     }
+  });
+
+  it("saves a read print once, only with the id the scan handed out", async () => {
+    const u = await createUser({ email: `scansave${Date.now()}@example.com`, name: "v", password: "password123" });
+    sessionUser = toPublic(findById(u.id)!);
+    const read = await (await POST(req(jpeg()))).json();
+    expect(read.scanId).toMatch(/^scan_[a-f0-9]{20}$/);
+    const save = (scanId: unknown, stake = 500) => SAVE(new Request("http://x/api/slip/scan/save", { method: "POST", body: JSON.stringify({ scanId, sport: "soccer-bra", lang: "pt", stake, totalOdds: 4.1, legs: [{ event: "Tupi FC x Ipê EC", selection: "Tupi FC vence", market: "Resultado Final", odds: 2.1 }] }) }));
+    expect((await save(undefined)).status).toBe(400);
+    const forged = await save("scan_0123456789abcdef0123");
+    expect(forged.status).toBe(409);
+    expect((await forged.json()).error).toBe("scan_expired");
+    const ok = await save(read.scanId);
+    expect(ok.status).toBe(200);
+    expect((await ok.json()).entry).toBeTruthy();
+    expect((await save(read.scanId, 900)).status).toBe(409);
   });
 });

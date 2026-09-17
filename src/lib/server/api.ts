@@ -33,6 +33,7 @@ const MESSAGES = {
   image_invalid: { pt: "Mande uma imagem JPG, PNG ou WebP do bilhete.", en: "Send a JPG, PNG or WebP image of the slip." },
   image_too_big: { pt: "A imagem ficou grande demais. Tente um print menor.", en: "The image is too large. Try a smaller screenshot." },
   scan_unreadable: { pt: "Não conseguimos ler esse print, e a leitura conta no limite de hoje. Tente outro mais nítido ou lance à mão.", en: "We couldn't read that screenshot, and the read counts toward today's limit. Try a sharper one or log it by hand." },
+  scan_expired: { pt: "Esse print já foi salvo ou a leitura expirou. Mande o print de novo ou lance a aposta à mão.", en: "That slip was already saved or the read expired. Send the screenshot again or log the bet by hand." },
   tipster_unreadable: { pt: "Não achamos palpites nesse material, e a leitura conta no limite do período. Cole as mensagens com jogo, mercado e odd.", en: "We found no picks in that, and the read counts toward this period's limit. Paste the messages with the match, market and odds." },
   tipster_busy: { pt: "O raio-x de tipster atingiu o limite de hoje. Tente de novo amanhã.", en: "Tipster audits hit today's limit. Try again tomorrow." },
   ai_tries: { pt: "Você chegou ao limite de leituras de hoje. Amanhã libera de novo.", en: "You've reached today's reading limit. More unlock tomorrow." },

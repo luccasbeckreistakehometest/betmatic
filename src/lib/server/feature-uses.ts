@@ -5,7 +5,7 @@ import { brasiliaDayStart } from "@/lib/server/ai-budget";
  * Allowances of per-user features, counted per Brasília day. `key` makes a repeat free: opening the
  * same player twice on one day uses one slot.
  */
-export type Feature = "player" | "scan" | "tipster" | "scan_try" | "tipster_try";
+export type Feature = "player" | "scan" | "tipster" | "scan_try" | "tipster_try" | "scan_ok" | "scan_saved";
 
 /**
  * Model calls behind the paid-per-read features. The allowance counts reads the user got; these
@@ -59,5 +59,21 @@ export function claimUse(input: { userId: string; feature: Feature; key: string;
     if (used >= input.limit) return { ok: false, used, repeat: false };
     recordUse(input.userId, input.feature, input.key, now);
     return { ok: true, used: used + 1, repeat: false };
+  }).immediate();
+}
+
+/**
+ * A read print may be saved to the bankroll once, within a day of the read: the save route only
+ * accepts the id the scan route handed out, so it is not a side door around the stake ceiling.
+ */
+export function consumeScan(userId: string, scanId: string, now = new Date()): boolean {
+  const db = getDb();
+  const since = new Date(now.getTime() - 24 * 3_600_000).toISOString();
+  return db.transaction(() => {
+    const read = db.prepare("SELECT 1 FROM feature_uses WHERE userId=? AND feature='scan_ok' AND key=? AND createdAt >= ?").get(userId, scanId, since);
+    const saved = db.prepare("SELECT 1 FROM feature_uses WHERE userId=? AND feature='scan_saved' AND key=?").get(userId, scanId);
+    if (!read || saved) return false;
+    recordUse(userId, "scan_saved", scanId, now);
+    return true;
   }).immediate();
 }

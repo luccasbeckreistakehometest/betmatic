@@ -23,6 +23,7 @@ export const RULES = {
   aiAccount: { max: 30, windowMs: 60 * MIN },
   aiIp: { max: 60, windowMs: 60 * MIN },
   slipAccount: { max: 10, windowMs: 60 * MIN },
+  scanSaveAccount: { max: 30, windowMs: 60 * MIN },
   reviewAccount: { max: 20, windowMs: 60 * MIN },
   playerAccount: { max: 90, windowMs: 60 * MIN },
   liveAccount: { max: 150, windowMs: 60 * MIN },
