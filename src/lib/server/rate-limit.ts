@@ -87,13 +87,19 @@ export function resetRateLimits(): void {
 }
 
 /**
- * Client address. Caddy sets X-Forwarded-For and drops what an untrusted client sent, so the first
- * entry is the real peer. Without a proxy (local dev) everything shares one bucket.
+ * Client address, taken from the LAST entry of X-Forwarded-For.
+ *
+ * Caddy does not replace the header: it APPENDS the peer it actually spoke to. So a caller that
+ * sends `X-Forwarded-For: 1.2.3.4` turns it into `1.2.3.4, <real client>` — the first entry is
+ * whatever the attacker typed, and reading it hands every per-IP limit (login, signup, contact,
+ * AI cost) a fresh bucket on each request. The last entry is the only one Caddy wrote itself.
+ * `x-real-ip` (single value, also written by the proxy) is the fallback, then the local bucket.
  */
 export function clientIp(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");
-  const first = forwarded?.split(",")[0]?.trim();
-  if (first) return first.slice(0, 64);
+  const hops = forwarded?.split(",").map((h) => h.trim()).filter(Boolean) ?? [];
+  const last = hops.at(-1);
+  if (last) return last.slice(0, 64);
   const real = request.headers.get("x-real-ip")?.trim();
   return real ? real.slice(0, 64) : "local";
 }

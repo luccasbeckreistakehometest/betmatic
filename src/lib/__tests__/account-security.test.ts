@@ -123,10 +123,25 @@ describe("rate limits", () => {
     expect(rl.peek("loginAccount", "acct:a").ok).toBe(false);
   });
 
-  it("reads the first X-Forwarded-For entry", () => {
+  it("reads the LAST X-Forwarded-For entry, so a spoofed header cannot reset a limit", () => {
+    // Caddy appends the peer it spoke to; everything before it is caller-supplied text.
     const req = new Request("http://x/", { headers: { "x-forwarded-for": "203.0.113.9, 10.0.0.1" } });
-    expect(rl.clientIp(req)).toBe("203.0.113.9");
+    expect(rl.clientIp(req)).toBe("10.0.0.1");
     expect(rl.clientIp(new Request("http://x/"))).toBe("local");
+    expect(rl.clientIp(new Request("http://x/", { headers: { "x-forwarded-for": "198.51.100.7" } }))).toBe("198.51.100.7");
+    expect(rl.clientIp(new Request("http://x/", { headers: { "x-real-ip": "198.51.100.8" } }))).toBe("198.51.100.8");
+  });
+
+  it("an attacker rotating the first X-Forwarded-For entry keeps hitting the same bucket", () => {
+    rl.resetRateLimits();
+    const attacker = "198.51.100.42";
+    let last = { ok: true } as ReturnType<typeof rl.hit>;
+    for (let i = 0; i < rl.RULES.signupIp.max + 1; i++) {
+      // Each request forges a different first hop; Caddy appends the real peer after it.
+      const req = new Request("http://x/", { headers: { "x-forwarded-for": `10.0.0.${i}, ${attacker}` } });
+      last = rl.hit("signupIp", rl.ipKey(req));
+    }
+    expect(last.ok).toBe(false);
   });
 });
 
