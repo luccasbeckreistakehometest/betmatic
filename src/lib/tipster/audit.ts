@@ -7,7 +7,8 @@ import { normaliseName } from "@/lib/resolve/names";
  */
 export const TipsterSchema = z.object({
   picks: z.array(z.object({
-    postedAt: z.string().nullable().describe("When the message was posted (ISO 8601 if a date/time is visible), or null."),
+    postedAt: z.string().nullable().describe("When the message was posted (ISO 8601 if a date/time is visible; with no timezone shown, use -03:00, Brasília time), or null."),
+    live: z.boolean().nullable().describe("true when the message presents the pick as in-play (ao vivo / live), false when it is pre-match, null when unclear."),
     event: z.string().describe("The match, e.g. 'Flamengo x Palmeiras'."),
     selection: z.string().describe("The pick as written."),
     market: z.string().describe("The market as written, or ''."),
@@ -46,6 +47,8 @@ export interface GradedPick {
   oddsSource: "stated" | "estimated" | null;
   claimed: "green" | "red" | "void" | null;
   outcome: PickOutcome;
+  /** The tipster called it in-play; absent on audits saved before this field existed. */
+  live?: boolean | null;
 }
 
 export interface AuditReport {
@@ -79,9 +82,16 @@ export function longestLosingRun(picks: Pick<GradedPick, "outcome" | "postedAt" 
   return best;
 }
 
-/** A green posted after the game started is the classic fake: the result was already known. */
-export const postedLate = (p: Pick<GradedPick, "postedAt" | "startsAt">) =>
-  !!p.postedAt && !!p.startsAt && Number.isFinite(Date.parse(p.postedAt)) && Date.parse(p.postedAt) > Date.parse(p.startsAt);
+/** Clock drift between a chat app, the kickoff time and the extraction: a few minutes is not a fake. */
+export const LATE_TOLERANCE_MS = 5 * 60_000;
+
+/**
+ * A pre-match pick posted after the game had started is the classic fake: the result was already
+ * under way. A pick the tipster called live ("ao vivo") is not counted.
+ */
+export const postedLate = (p: Pick<GradedPick, "postedAt" | "startsAt" | "live">) =>
+  p.live !== true && !!p.postedAt && !!p.startsAt && Number.isFinite(Date.parse(p.postedAt))
+  && Date.parse(p.postedAt) - Date.parse(p.startsAt) > LATE_TOLERANCE_MS;
 
 export function auditReport(picks: GradedPick[], flags: string[]): AuditReport {
   const verifiable = picks.filter((p) => p.outcome !== "unverifiable");
@@ -114,6 +124,6 @@ export function auditReport(picks: GradedPick[], flags: string[]): AuditReport {
 export function shareText(r: AuditReport, lang: "pt" | "en"): string {
   const pct = (x: number | null) => (x === null ? "—" : `${Math.round(x * 100)}%`);
   return lang === "pt"
-    ? `Conferi ${r.total} palpites de um tipster no Betmatic: ${pct(r.verifiableShare)} verificáveis, acerto real ${pct(r.hitRate)}${r.postedAfterKickoff ? `, ${r.postedAfterKickoff} postados depois do jogo começar` : ""}.`
-    : `I audited ${r.total} picks from a tipster on Betmatic: ${pct(r.verifiableShare)} verifiable, real hit rate ${pct(r.hitRate)}${r.postedAfterKickoff ? `, ${r.postedAfterKickoff} posted after kickoff` : ""}.`;
+    ? `Conferi ${r.total} palpites de um tipster no Betmatic: ${pct(r.verifiableShare)} verificáveis, acerto real ${pct(r.hitRate)}${r.postedAfterKickoff ? `, ${r.postedAfterKickoff} postados com o jogo já em andamento` : ""}.`
+    : `I audited ${r.total} picks from a tipster on Betmatic: ${pct(r.verifiableShare)} verifiable, real hit rate ${pct(r.hitRate)}${r.postedAfterKickoff ? `, ${r.postedAfterKickoff} posted with the game already under way` : ""}.`;
 }

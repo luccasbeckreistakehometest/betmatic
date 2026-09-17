@@ -46,6 +46,12 @@ describe("audit maths", () => {
     expect(postedLate({ postedAt: "2026-09-16T21:00:00Z", startsAt: "2026-09-16T20:00:00Z" })).toBe(true);
     expect(postedLate({ postedAt: "2026-09-16T19:00:00Z", startsAt: "2026-09-16T20:00:00Z" })).toBe(false);
     expect(postedLate({ postedAt: null, startsAt: "2026-09-16T20:00:00Z" })).toBe(false);
+    // a pick called live is not a fake, and a few minutes of clock drift are tolerated
+    expect(postedLate({ postedAt: "2026-09-16T21:00:00Z", startsAt: "2026-09-16T20:00:00Z", live: true })).toBe(false);
+    expect(postedLate({ postedAt: "2026-09-16T20:04:00Z", startsAt: "2026-09-16T20:00:00Z", live: false })).toBe(false);
+    // 17:30 in Brasília is 20:30 UTC: with the offset the model is told to write, it is after a 20:00 UTC kickoff
+    expect(postedLate({ postedAt: "2026-09-16T17:30:00-03:00", startsAt: "2026-09-16T20:00:00Z" })).toBe(true);
+    expect(postedLate({ postedAt: "2026-09-16T16:30:00-03:00", startsAt: "2026-09-16T20:00:00Z" })).toBe(false);
     expect(redFlags("GREEN GARANTIDO! Últimas vagas no grupo VIP, recupere o prejuízo hoje")).toEqual(["guaranteed", "urgency", "chasing", "vip_upsell"]);
     expect(redFlags("Palpite: Flamengo vence, odd 1.80")).toEqual([]);
   });

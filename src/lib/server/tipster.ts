@@ -23,18 +23,18 @@ export function tipsterAllowance(user: Pick<PublicUser, "id" | "role" | "plan">,
 }
 
 const SYSTEM: Record<Lang, string> = {
-  pt: `Você extrai palpites de mensagens de tipsters (Telegram, WhatsApp, prints). Para cada palpite: quando foi postado (se a data/hora aparece), o jogo, a seleção, o mercado, a odd (decimal) se estiver escrita, as unidades se houver, e o que o tipster disse depois sobre ele (green, red ou anulado) se aparecer. Não invente nada que não esteja no texto. No máximo 60 palpites; ignore propaganda, figurinhas e conversa.`,
-  en: `You extract betting picks from tipster messages (Telegram, WhatsApp, screenshots). For each pick: when it was posted (if a date/time is visible), the match, the selection, the market, the decimal odds if written, units if any, and what the tipster later claimed about it (green, red or void) if shown. Never invent anything that is not in the text. At most 60 picks; ignore ads, stickers and chat.`,
+  pt: `Você extrai palpites de mensagens de tipsters (Telegram, WhatsApp, prints). Para cada palpite: quando foi postado (se a data/hora aparece), o jogo, a seleção, o mercado, a odd (decimal) se estiver escrita, as unidades se houver, e o que o tipster disse depois sobre ele (green, red ou anulado) se aparecer. Marque live=true quando o palpite for apresentado como ao vivo. Quando a hora aparecer sem fuso, escreva-a com -03:00 (horário de Brasília). Não invente nada que não esteja no texto. No máximo 60 palpites; ignore propaganda, figurinhas e conversa.`,
+  en: `You extract betting picks from tipster messages (Telegram, WhatsApp, screenshots). For each pick: when it was posted (if a date/time is visible), the match, the selection, the market, the decimal odds if written, units if any, and what the tipster later claimed about it (green, red or void) if shown. Set live=true when the pick is presented as in-play. When a time is shown without a timezone, write it with -03:00 (Brasília time). Never invent anything that is not in the text. At most 60 picks; ignore ads, stickers and chat.`,
 };
 
 /** Test fixture: fictional teams from the e2e world; one pick posted after kickoff, one unverifiable. */
 function mockPicks(): { picks: ExtractedPick[] } {
   const at = (hoursAgo: number) => new Date(Date.now() - hoursAgo * 3_600_000).toISOString();
   return { picks: [
-    { postedAt: at(30), event: "Tupi FC x Ipê EC", selection: "Tupi FC vence", market: "Resultado final", odds: 2.1, units: 1, claimedResult: "green" },
-    { postedAt: at(25), event: "Tupi FC x Ipê EC", selection: "Mais de 2,5 gols", market: "Total de gols", odds: null, units: 1, claimedResult: "green" },
-    { postedAt: at(30), event: "Tupi FC x Ipê EC", selection: "Ipê EC vence", market: "Resultado final", odds: 3.5, units: 1, claimedResult: "green" },
-    { postedAt: at(30), event: "Palmeiras x Santos", selection: "Palmeiras vence", market: "Resultado final", odds: 1.9, units: 1, claimedResult: "green" },
+    { postedAt: at(30), event: "Tupi FC x Ipê EC", selection: "Tupi FC vence", market: "Resultado final", odds: 2.1, units: 1, claimedResult: "green", live: false },
+    { postedAt: at(25), event: "Tupi FC x Ipê EC", selection: "Mais de 2,5 gols", market: "Total de gols", odds: null, units: 1, claimedResult: "green", live: false },
+    { postedAt: at(30), event: "Tupi FC x Ipê EC", selection: "Ipê EC vence", market: "Resultado final", odds: 3.5, units: 1, claimedResult: "green", live: false },
+    { postedAt: at(30), event: "Palmeiras x Santos", selection: "Palmeiras vence", market: "Resultado final", odds: 1.9, units: 1, claimedResult: "green", live: false },
   ] };
 }
 
@@ -77,7 +77,7 @@ export async function gradePicks(sportKey: string, picks: ExtractedPick[]): Prom
   const details = new Map<string, GameDetail | null>();
   const out: GradedPick[] = [];
   for (const [i, p] of picks.entries()) {
-    const base: GradedPick = { postedAt: p.postedAt, startsAt: null, event: p.event, selection: p.selection, matchup: null, odds: p.odds, oddsSource: p.odds ? "stated" : null, claimed: p.claimedResult, outcome: "unverifiable" };
+    const base: GradedPick = { postedAt: p.postedAt, startsAt: null, event: p.event, selection: p.selection, matchup: null, odds: p.odds, oddsSource: p.odds ? "stated" : null, claimed: p.claimedResult, outcome: "unverifiable", live: p.live ?? null };
     const pool = [-1, 0, 1].flatMap((o) => slates.get(shiftKey(anchor(p), o)) ?? []);
     const lite: GameContext[] = pool.map((g) => ({ id: g.id, sportKey, startsAt: g.startsAt, home: g.home, away: g.away, athletes: [] }));
     const hit = gameForEvent(p.event || p.selection, lite);
