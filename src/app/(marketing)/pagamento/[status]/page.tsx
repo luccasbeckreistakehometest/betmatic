@@ -7,6 +7,7 @@ import { listUserPayments } from "@/lib/server/mercadopago";
 import { formatDate, formatMoneyBRL } from "@/lib/format";
 import type { Lang } from "@/lib/i18n";
 import type { SearchParams } from "@/lib/seo";
+import { paymentLabel } from "@/lib/plans";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Pagamento", robots: { index: false, follow: false } };
@@ -56,7 +57,7 @@ export default async function PaymentResult({ params, searchParams }: { params: 
         {user && payment && (
           <div className="mt-8 rounded-xl border border-ink-800 bg-ink-900/60 p-5 text-[13.5px] text-mist-300">
             <p>
-              {payment.kind === "plan" ? `${lang === "pt" ? "Plano" : "Plan"} ${payment.reference.toUpperCase()}` : `${lang === "pt" ? "Pacote" : "Pack"} ${payment.reference.replace("pack_", "")} coins`}
+              {paymentLabel(payment, lang)}
               {" · "}<span className="nums">{formatMoneyBRL(payment.amount, lang, 2)}</span>
               {" · "}{formatDate(payment.createdAt, lang, { year: true })}
             </p>

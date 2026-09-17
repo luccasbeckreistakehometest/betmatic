@@ -59,7 +59,7 @@ export function ContactForm({ lang, defaultName = "", defaultEmail = "", default
         <textarea className={`${field} min-h-36`} required maxLength={4000} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} data-testid="contact-message" />
       </label>
       <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
-        <label>Website<input tabIndex={-1} autoComplete="off" name="website" value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} /></label>
+        <label>Deixe em branco<input tabIndex={-1} type="text" autoComplete="new-password" data-lpignore="true" data-1p-ignore name="bm_hp_field" value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} /></label>
       </div>
       <p className="text-[12px] text-mist-500">{c.hint}</p>
       {error && <p className="text-[13px] text-alert-400" role="alert" data-testid="contact-error">{error}</p>}

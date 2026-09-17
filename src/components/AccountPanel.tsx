@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavState } from "@/components/Controls";
 import { Empty, Panel } from "@/components/ui";
 import { formatDate, formatDateTime, formatMoneyBRL } from "@/lib/format";
+import { paymentLabel } from "@/lib/plans";
 
 interface AccountData {
   user: { name: string; email: string; role: string; coins: number; createdAt: string; mustChangePassword: boolean; termsAcceptedAt: string | null };
@@ -167,7 +168,7 @@ export function AccountPanel() {
           <ul className="divide-y divide-ink-800 text-[13px]" data-testid="payments-list">
             {data.payments.map((p) => (
               <li key={p.id} className="flex flex-wrap items-center gap-x-3 gap-y-0.5 py-1.5">
-                <span className="text-mist-200">{p.kind === "plan" ? `${p.reference.toUpperCase()} · ${p.period ?? ""}` : `${p.reference.replace("pack_", "")} coins`}</span>
+                <span className="text-mist-200">{paymentLabel(p, lang)}</span>
                 <span className="nums text-mist-300">{formatMoneyBRL(p.amount, lang, 2)}</span>
                 <span className="text-mist-400">{c.status[p.status] ?? p.status}</span>
                 <span className="ml-auto text-[12px] text-mist-500">{formatDateTime(p.createdAt, lang)}</span>

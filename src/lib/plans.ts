@@ -173,3 +173,15 @@ export const PREPAID_NOTE = {
   pt: "Pagamento único, pré-pago pelo período escolhido. Não renova sozinho.",
   en: "One-time prepaid payment for the chosen period. It does not renew by itself.",
 } as const;
+
+/** How a payment row reads to its buyer: "Plano PRO · Trimestral" or "Pacote de 230 coins" (bonus included). */
+export function paymentLabel(p: { kind: string; reference: string; period: string | null }, lang: "pt" | "en"): string {
+  if (p.kind === "plan") {
+    const period = PERIOD[(p.period ?? "monthly") as BillingPeriod]?.label[lang] ?? p.period ?? "";
+    return `${lang === "pt" ? "Plano" : "Plan"} ${p.reference.toUpperCase()}${period ? ` · ${period}` : ""}`;
+  }
+  const pack = COIN_PACKS.find((x) => x.id === p.reference);
+  const coins = pack ? pack.coins + pack.bonus : Number(p.reference.replace("pack_", "")) || 0;
+  return lang === "pt" ? `Pacote de ${coins} coins` : `${coins}-coin pack`;
+}
+

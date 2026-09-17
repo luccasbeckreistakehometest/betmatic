@@ -110,11 +110,11 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         window.location.assign(j.url);
         return true;
       }
-      setError(j.message ?? c.checkoutFailed);
     } catch {
-      setError(c.checkoutFailed);
+      // handled below: the account exists either way, so the buyer continues on the plans page
     }
-    router.push(`/planos?lang=${lang}${plan ? `&period=${period}` : ""}`);
+    // The account was created; the plans page says the payment did not start and offers it again.
+    router.push(`/planos?lang=${lang}${plan ? `&period=${period}` : ""}&checkout=falhou`);
     return true;
   }
 
@@ -205,7 +205,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           <>
             {/* Honeypot: hidden from people, filled by bots. */}
             <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
-              <label>Website<input tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} name="website" /></label>
+              <label>Deixe em branco<input tabIndex={-1} type="text" autoComplete="new-password" data-lpignore="true" data-1p-ignore value={website} onChange={(e) => setWebsite(e.target.value)} name="bm_hp_field" /></label>
             </div>
             <label className="mt-1 flex items-start gap-2.5 text-[12.5px] leading-relaxed text-mist-300">
               <input type="checkbox" required checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-[3px] size-4 accent-edge-400" data-testid="auth-consent" />

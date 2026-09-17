@@ -54,6 +54,9 @@ test("signup with a chosen plan goes straight to checkout; the webhook credits i
 
   await page.goto(`/pagamento/sucesso?lang=pt&external_reference=bm:${account.payments[0].id}`);
   await expect(page.getByTestId("payment-row-status")).toHaveText("aprovado");
+  await expect(page.getByTestId("payment-sucesso")).toContainText("Plano PRO · Trimestral");
+  await page.goto("/app/conta?lang=pt");
+  await expect(page.getByTestId("payments-list")).toContainText("Plano PRO · Trimestral");
   await page.goto("/pagamento/falhou?lang=pt");
   await expect(page.getByTestId("payment-falhou")).toContainText("não foi concluído");
   await page.goto("/pagamento/pendente?lang=pt");
