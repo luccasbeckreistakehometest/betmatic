@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useTransition } from "react";
-import { LANGS, makeT, normaliseLang } from "@/lib/i18n";
+import { LANGS, makeT, normaliseLang, type DictKey } from "@/lib/i18n";
 import { SPORTS, getSport } from "@/lib/sports";
 
 /** Sport, language and date all live in the URL so any view can be linked and shared. */
@@ -82,14 +82,16 @@ export function T({ k }: { k: Parameters<ReturnType<typeof makeT>>[0] }) {
   return <>{makeT(lang)(k)}</>;
 }
 
-const NAV = [
+/** `tour` names the anchor the first-visit tour points at for that link. */
+const NAV: { href: string; key: DictKey; tour?: string }[] = [
   { href: "/app", key: "navSlate" },
   { href: "/app/parlays", key: "navParlays" },
   { href: "/app/slip", key: "mySlip" },
   { href: "/app/track", key: "navTrack" },
-  { href: "/app/bankroll", key: "bankroll" },
+  { href: "/app/bankroll", key: "bankroll", tour: "bankroll" },
+  { href: "/app/alerts", key: "navAlerts", tour: "alerts" },
   { href: "/app/referral", key: "referral" },
-] as const;
+];
 
 export function NavLinks() {
   const { lang, sport } = useNavState();
@@ -103,6 +105,7 @@ export function NavLinks() {
           <Link
             key={item.href}
             href={{ pathname: item.href, query: { sport: sport.key, lang } }}
+            data-tour={item.tour}
             className={`rounded-lg px-2.5 py-1 text-[12px] transition ${
               active ? "bg-ink-800 text-mist-100" : "text-mist-500 hover:text-mist-300"
             }`}

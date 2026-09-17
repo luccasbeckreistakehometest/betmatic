@@ -8,6 +8,12 @@ export default async function globalSetup() {
   fs.rmSync(dir, { recursive: true, force: true });
   const r = spawnSync("npx", ["tsx", "scripts/seed-sev-val.mts"], { env: { ...process.env, DATA_DIR: "data/e2e", ADMIN_EMAIL: "admin@betmatic.app", ADMIN_PASSWORD: "betmatic2026" }, stdio: "pipe", encoding: "utf8" });
   if (r.status !== 0) throw new Error(`seed failed: ${r.stderr}`);
+  // The seed is "overnight" inventory: the free plan reads tickets on a two-hour delay, so a
+  // just-written row would be invisible to free accounts in the specs.
+  const Database = (await import("better-sqlite3")).default;
+  const db = new Database(path.join(dir, "betmatic.db"));
+  db.prepare("UPDATE predictions SET generatedAt = ?").run(new Date(Date.now() - 3 * 3_600_000).toISOString());
+  db.close();
   // A small settled ledger so the public track record, permalinks and the bankroll have data.
   const ledgerDir = path.join(dir, "ledger");
   fs.mkdirSync(ledgerDir, { recursive: true });

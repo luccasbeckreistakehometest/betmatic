@@ -5,6 +5,9 @@ import { espnDateKey } from "@/lib/sources/espn";
 import { Empty, KeyValue, Panel } from "@/components/ui";
 import { tipoffET } from "@/components/GameCard";
 import { getGameDetail } from "@/lib/sources/espn";
+import { FollowButton } from "@/components/FollowButton";
+import { currentUser } from "@/lib/server/session";
+import { listFollows } from "@/lib/server/telegram";
 import { makeT, normaliseLang } from "@/lib/i18n";
 import { getSport } from "@/lib/sports";
 import type { InjuryEntry, TeamRef } from "@/lib/types";
@@ -26,7 +29,7 @@ function injuryTone(status: string): string {
   return "text-mist-400";
 }
 
-function TeamHeading({ team, align, showScore }: { team: TeamRef; align: "left" | "right"; showScore: boolean }) {
+function TeamHeading({ team, align, showScore, follow }: { team: TeamRef; align: "left" | "right"; showScore: boolean; follow: { sportKey: string; initial: boolean; signedIn: boolean } }) {
   return (
     <div className={`flex flex-1 items-center gap-3 ${align === "right" ? "flex-row-reverse text-right" : ""}`}>
       {team.logo && (
@@ -36,6 +39,7 @@ function TeamHeading({ team, align, showScore }: { team: TeamRef; align: "left" 
       <div>
         <div className="text-[15px] font-semibold tracking-tight text-white">{team.displayName}</div>
         <div className="nums text-[12px] text-mist-500">{team.record ?? ""}</div>
+        <div className="mt-1"><FollowButton sportKey={follow.sportKey} teamId={team.id} label={team.displayName} initial={follow.initial} signedIn={follow.signedIn} /></div>
       </div>
       {showScore && team.score !== undefined && (
         <div className="nums text-2xl font-semibold text-white">{team.score}</div>
@@ -71,6 +75,10 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
   const t = makeT(lang);
   const detail = await getGameDetail(gameId, false, sport.key).catch(() => null);
   if (!detail) notFound();
+  // Follow state is read here so the buttons render with their real value, no client round-trip.
+  const user = await currentUser();
+  const followed = new Set(user ? listFollows(user.id).filter((f) => f.kind === "team" && f.sportKey === sport.key).map((f) => f.key) : []);
+  const followOf = (teamId: string) => ({ sportKey: sport.key, initial: followed.has(teamId), signedIn: !!user });
 
   const { game, books, ats, injuries, teamStats, predictor, leaders, lastMeetings } = detail;
 
@@ -85,13 +93,13 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
 
       <section className="rounded-xl border border-ink-800 bg-ink-900/60 p-5">
         <div className="flex flex-wrap items-center gap-4">
-          <TeamHeading team={game.away} align="left" showScore={game.status !== "scheduled"} />
+          <TeamHeading team={game.away} align="left" showScore={game.status !== "scheduled"} follow={followOf(game.away.id)} />
           <div className="flex shrink-0 flex-col items-center gap-1 px-2">
             <span className="text-[11px] uppercase tracking-widest text-mist-500">
               {game.status === "scheduled" ? `${tipoffET(game.startsAt)} ET` : game.statusDetail}
             </span>
           </div>
-          <TeamHeading team={game.home} align="right" showScore={game.status !== "scheduled"} />
+          <TeamHeading team={game.home} align="right" showScore={game.status !== "scheduled"} follow={followOf(game.home.id)} />
         </div>
         <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 border-t border-ink-800 pt-3 text-[12px] text-mist-500">
           {game.tournament && <span className="text-mist-300">{game.tournament}</span>}

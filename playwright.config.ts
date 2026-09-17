@@ -14,7 +14,7 @@ export default defineConfig({
   use: { baseURL: "http://localhost:3300", trace: "retain-on-failure", screenshot: "only-on-failure", locale: "pt-BR" },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: "DATA_DIR=data/e2e ADMIN_EMAIL=admin@betmatic.app ADMIN_PASSWORD=betmatic2026 npx next dev -p 3300",
+    command: "DATA_DIR=data/e2e ADMIN_EMAIL=admin@betmatic.app ADMIN_PASSWORD=betmatic2026 TELEGRAM_BOT_TOKEN=e2e-token TELEGRAM_BOT_USERNAME=betmatic_e2e_bot TELEGRAM_TRANSPORT=file npx next dev -p 3300",
     url: "http://localhost:3300/login",
     reuseExistingServer: false,
     timeout: 180_000,

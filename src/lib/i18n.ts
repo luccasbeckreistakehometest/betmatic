@@ -186,6 +186,35 @@ const DICT = {
     pt: "Múltiplas longas são de baixa probabilidade e a margem da casa se acumula a cada perna. Os números abaixo mostram isso sem maquiagem.",
     en: "Long parlays are low-probability tickets and the book's margin compounds with every leg. The numbers below show that plainly.",
   },
+
+  // ---- alerts ----
+  navAlerts: { pt: "Alertas", en: "Alerts" },
+  alertsTitle: { pt: "Alertas no Telegram", en: "Telegram alerts" },
+  alertsIntro: {
+    pt: "Siga times e ligas. Quando os bilhetes de um jogo deles saírem, você recebe na hora — no Telegram, ou aqui na lista de avisos se não conectar.",
+    en: "Follow teams and leagues. When one of their games gets its tickets, you hear about it right away — on Telegram, or here in the notice list if you don't connect.",
+  },
+  telegramConnect: { pt: "Conectar Telegram", en: "Connect Telegram" },
+  telegramLinked: { pt: "Telegram conectado", en: "Telegram connected" },
+  telegramCodeHint: { pt: "Abra o bot e mande /start com este código. Vale por 15 minutos.", en: "Open the bot and send /start with this code. It expires in 15 minutes." },
+  telegramOpenBot: { pt: "Abrir o bot", en: "Open the bot" },
+  telegramNewCode: { pt: "Gerar outro código", en: "New code" },
+  telegramUnlink: { pt: "Desconectar", en: "Disconnect" },
+  digestDaily: { pt: "Resumo de manhã: seus bilhetes de hoje", en: "Morning digest: today's tickets" },
+  digestHint: { pt: "Um resumo por dia com o melhor bilhete de cada jogo que o seu plano cobre.", en: "One message a day with the best ticket of every game your plan covers." },
+  following: { pt: "Seguindo", en: "Following" },
+  followLeagues: { pt: "Ligas", en: "Leagues" },
+  followTeams: { pt: "Times", en: "Teams" },
+  followTeamsHint: { pt: "Para seguir um time, abra um jogo dele e clique em Seguir.", en: "To follow a team, open one of its games and hit Follow." },
+  follow: { pt: "Seguir", en: "Follow" },
+  followingLabel: { pt: "Seguindo ✓", en: "Following ✓" },
+  unfollow: { pt: "Deixar de seguir", en: "Unfollow" },
+  notifications: { pt: "Avisos", en: "Notifications" },
+  noNotifications: { pt: "Nenhum aviso ainda. Siga um time ou uma liga e os bilhetes chegam aqui.", en: "No notices yet. Follow a team or a league and tickets land here." },
+  markAllRead: { pt: "Marcar tudo como lido", en: "Mark all read" },
+  sentOnTelegram: { pt: "enviado no Telegram", en: "sent on Telegram" },
+  signInForAlerts: { pt: "Entre na sua conta para configurar alertas.", en: "Sign in to set up alerts." },
+  openTicket: { pt: "abrir bilhete", en: "open ticket" },
 } as const;
 
 export type DictKey = keyof typeof DICT;

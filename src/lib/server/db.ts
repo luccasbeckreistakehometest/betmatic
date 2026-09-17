@@ -223,6 +223,52 @@ function migrate(d: Database.Database): void {
       analysedAt TEXT
     );
     CREATE INDEX IF NOT EXISTS idx_slips_user ON user_slips(userId, createdAt);
+
+    -- Telegram: one row per user. The one-time code is issued in the app and consumed by the bot
+    -- (/start <code>); once chatId is set the code is cleared. digest = the morning "tickets of
+    -- the day" message.
+    CREATE TABLE IF NOT EXISTS telegram_links (
+      userId TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      code TEXT UNIQUE,
+      codeExpiresAt TEXT,
+      chatId TEXT,
+      username TEXT NOT NULL DEFAULT '',
+      linkedAt TEXT,
+      digest INTEGER NOT NULL DEFAULT 1,
+      createdAt TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_telegram_chat ON telegram_links(chatId);
+
+    -- What a user wants to hear about: a league (sport key) or a team (ESPN team id within a sport).
+    CREATE TABLE IF NOT EXISTS follows (
+      userId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      kind TEXT NOT NULL,                           -- team | league
+      sportKey TEXT NOT NULL,
+      key TEXT NOT NULL,                            -- team id, or the sport key again for a league
+      label TEXT NOT NULL DEFAULT '',
+      createdAt TEXT NOT NULL,
+      PRIMARY KEY (userId, kind, sportKey, key)
+    );
+    CREATE INDEX IF NOT EXISTS idx_follows_sport ON follows(sportKey);
+
+    -- Every alert the product sent or queued, per user: the Telegram history and the in-app list
+    -- are the same table. dedupeKey stops a regenerated game from alerting twice.
+    CREATE TABLE IF NOT EXISTS alert_log (
+      id TEXT PRIMARY KEY,
+      userId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      channel TEXT NOT NULL,                        -- telegram | inapp
+      kind TEXT NOT NULL,                           -- tickets | digest | system
+      dedupeKey TEXT NOT NULL,
+      title TEXT NOT NULL DEFAULT '',
+      body TEXT NOT NULL DEFAULT '',
+      url TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL,                         -- sent | failed | unread | read
+      error TEXT NOT NULL DEFAULT '',
+      createdAt TEXT NOT NULL,
+      readAt TEXT
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_alert_dedupe ON alert_log(userId, dedupeKey);
+    CREATE INDEX IF NOT EXISTS idx_alert_user ON alert_log(userId, createdAt DESC);
   `);
 }
 

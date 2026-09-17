@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/server/session";
 import { runRefresh } from "@/lib/server/refresh-job";
 import { settlePending } from "@/lib/ledger/settle";
 import { runLearning } from "@/lib/ledger/learn";
+import { sendDailyDigest } from "@/lib/server/telegram";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,6 +11,7 @@ export const dynamic = "force-dynamic";
 /**
  * The scheduler's entry point. `job` picks what runs:
  *   settle  — grade every finished game's tickets (ESPN only, no tokens); hourly
+ *   digest  — "seus bilhetes de hoje" to Telegram subscribers; safe to call every tick, sends once a day
  *   learn   — post-mortem over the last 24h of settled tickets, proposes a prompt change; daily
  *   refresh — background generation (off unless CRON_ENABLED=1); every 4h
  * Protected by CRON_SECRET, or by an admin session for manual runs from the panel.
@@ -24,6 +26,10 @@ export async function POST(request: Request) {
   const job = url.searchParams.get("job") ?? "refresh";
   try {
     if (job === "settle") return NextResponse.json({ job, ...(await settlePending(500)) });
+    if (job === "digest") {
+      const date = url.searchParams.get("date") ?? undefined;
+      return NextResponse.json({ job, ...(await sendDailyDigest({ dateKey: date, force: url.searchParams.get("force") === "1" || !!date })) });
+    }
     if (job === "learn") {
       const hours = Number(url.searchParams.get("hours") ?? "24");
       return NextResponse.json({ job, run: await runLearning({ sinceHours: Number.isFinite(hours) ? hours : 24 }) });

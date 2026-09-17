@@ -10,7 +10,8 @@ services:
     shm_size: "1gb"                                   # Chromium needs more than Docker's 64MB default
 
   # Scheduler: settles finished games every hour (no tokens), runs the learning post-mortem daily,
-  # and the optional background refresh every 4h (off unless CRON_ENABLED=1). Ticks every 15 min.
+  # the optional background refresh every 4h (off unless CRON_ENABLED=1), and asks for the Telegram
+  # digest hourly — the server sends it once a day, after TELEGRAM_DIGEST_HOUR. Ticks every 15 min.
   cron:
     image: curlimages/curl:8.10.1
     depends_on: [app]
@@ -23,6 +24,7 @@ services:
         t=0
         while true; do
           [ $$((t % 4)) -eq 0 ]  && curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=settle" >/dev/null || true
+          [ $$((t % 4)) -eq 2 ]  && curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=digest" >/dev/null || true
           [ $$((t % 16)) -eq 0 ] && curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh" >/dev/null || true
           [ $$((t % 96)) -eq 95 ] && curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=learn" >/dev/null || true
           t=$$((t + 1)); sleep 900

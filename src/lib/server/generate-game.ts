@@ -8,6 +8,7 @@ import { computeDvp } from "@/lib/signals/dvp";
 import { getSport } from "@/lib/sports";
 import { lastUsage } from "@/lib/ai/extract";
 import { announceTickets } from "@/lib/server/webhook";
+import { notifyFollowers } from "@/lib/server/telegram";
 import type { BetSlate } from "@/lib/types";
 import type { Lang } from "@/lib/i18n";
 
@@ -37,15 +38,20 @@ export async function generateGame(args: { sportKey: string; dateKey: string; de
     : undefined;
 
   const matchup = `${detail.game.away.displayName} @ ${detail.game.home.displayName}`;
+  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "";
   const save = (lang: Lang, slate: BetSlate, costUsd: number) =>
     savePrediction({ scope: "game", sportKey, gameId: detail.game.id, dateKey, lang, matchup, startsAt: detail.game.startsAt, slate, costUsd });
 
   const primarySlate = await buildBets({ game: detail.game, detail, props, picks: [], dimers: [], x: null, bands: BANDS, lang: primary, referee, dvp });
   save(primary, primarySlate, spend());
-  void announceTickets({ gameId: detail.game.id, matchup, sportKey, lang: primary, suggestions: primarySlate.suggestions, base: process.env.NEXT_PUBLIC_BASE_URL ?? "" });
+  void announceTickets({ gameId: detail.game.id, matchup, sportKey, lang: primary, suggestions: primarySlate.suggestions, base });
+  const slates: Partial<Record<Lang, BetSlate>> = { [primary]: primarySlate };
   for (const lang of derived) {
-    try { save(lang, await localiseSlate(primarySlate, primary, lang), spend()); }
+    try { const localised = await localiseSlate(primarySlate, primary, lang); save(lang, localised, spend()); slates[lang] = localised; }
     catch (error) { notes.push(`${lang}: ${error instanceof Error ? error.message : "?"}`); }
   }
+  // Followers hear after every language is saved, so each gets the ticket in their own words.
+  void notifyFollowers({ gameId: detail.game.id, sportKey, matchup, teamIds: [detail.game.home.id, detail.game.away.id], primary, slates, base })
+    .catch((error) => console.warn("[telegram] notify failed:", error instanceof Error ? error.message : error));
   return { primary: primarySlate, costUsd: cost, notes };
 }

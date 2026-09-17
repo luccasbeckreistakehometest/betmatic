@@ -6,7 +6,8 @@ test("first visit offers the tour and it is saved for the anonymous cookie", asy
   await expect(page.getByTestId("tour-welcome")).toBeVisible();
   await page.getByTestId("tour-start").click();
   await expect(page.getByTestId("tour-step")).toHaveAttribute("data-step", "0");
-  for (let i = 0; i < 4; i++) await page.getByTestId("tour-next").click();
+  // one click per step; the last one is "Entendi"
+  for (let i = 0; i < 12 && (await page.getByTestId("tour-step").isVisible()); i++) await page.getByTestId("tour-next").click();
   await expect(page.getByTestId("tour-step")).toBeHidden();
   const state = await page.evaluate(() => fetch("/api/tour").then((r) => r.json()));
   expect(state.tourCompleted).toBe(true);
