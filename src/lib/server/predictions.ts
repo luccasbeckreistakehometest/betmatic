@@ -143,11 +143,13 @@ export function servePredictionsDetailed(input: {
 
   const now = input.now ?? Date.now();
   const delayMs = role === "admin" ? 0 : plan.delayMinutes * 60_000;
+  // A game under way is no longer paid content: its tickets are on the public record from kickoff.
+  const started = (r: StoredPrediction) => !!r.startsAt && Date.parse(r.startsAt) <= now;
   // A daily allowance means the games the viewer chose (a viewer-less read, e.g. the digest, gets the first ones).
   const capped = role === "admin" || plan.gamesPerDay === null
     ? rows
     : viewer
-      ? rows.filter((r) => r.gameId !== null && viewer.unlocked.has(r.gameId))
+      ? rows.filter((r) => r.gameId !== null && (viewer.unlocked.has(r.gameId) || started(r)))
       : rows.slice(0, plan.gamesPerDay);
 
   const predictions: ServedPrediction[] = [];
@@ -155,7 +157,7 @@ export function servePredictionsDetailed(input: {
   for (const row of capped) {
     const generated = Date.parse(row.generatedAt);
     const own = !!(row.gameId && viewer?.ownGenerated.has(row.gameId));
-    if (delayMs > 0 && !own && generated + delayMs > now) {
+    if (delayMs > 0 && !own && !started(row) && generated + delayMs > now) {
       delayedGames.push({ gameId: row.gameId, matchup: row.matchup, availableAt: new Date(generated + delayMs).toISOString() });
       continue;
     }

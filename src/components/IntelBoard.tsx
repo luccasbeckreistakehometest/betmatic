@@ -48,11 +48,11 @@ function relTime(iso: string | undefined, lang: "pt" | "en"): string {
 }
 
 /**
- * The tickets of one game. Opening the page asks the server for them: on a plan with a daily
- * allowance that is the moment the game becomes the user's pick, and a game without tickets is
- * built on the spot (signed-in only; the server enforces every cap).
+ * The tickets of one game. Opening the page asks the server for them and a game without tickets is
+ * built on the spot (signed-in only; the server enforces every cap). On a plan with a daily
+ * allowance nothing is spent by browsing: the user confirms the pick with a click.
  */
-export function IntelBoard({ gameId, dateKey }: { gameId: string; dateKey?: string }) {
+export function IntelBoard({ gameId, dateKey, started = false }: { gameId: string; dateKey?: string; started?: boolean }) {
   const { lang, sport } = useNavState();
   const t = makeT(lang);
   const pathname = usePathname();
@@ -110,12 +110,17 @@ export function IntelBoard({ gameId, dateKey }: { gameId: string; dateKey?: stri
 
   const authenticated = data?.authenticated ?? false;
   const paused = !!data?.paused;
+  const dailyLimit = data?.plan.gamesPerDay ?? null;
+  const picked = data?.unlocked ?? [];
+  // A daily-pick plan and a game that is not today's pick yet: ask before spending it.
+  const needsPick = authenticated && dailyLimit !== null && !picked.some((g) => g.gameId === gameId);
+  const pickUsedUp = needsPick && picked.length >= dailyLimit;
   useEffect(() => {
-    if (loading || !authenticated || paused || mine || delayed || gen !== "idle") return;
+    if (loading || !authenticated || paused || mine || delayed || gen !== "idle" || needsPick || started) return;
     // Deferred so the effect itself does not set state synchronously (React Compiler rule).
     const id = setTimeout(() => void generate(), 0);
     return () => clearTimeout(id);
-  }, [loading, authenticated, paused, mine, delayed, gen, generate]);
+  }, [loading, authenticated, paused, mine, delayed, gen, generate, needsPick, started]);
 
   const here = `${pathname}${search.toString() ? `?${search.toString()}` : ""}`;
   const signupHref = `/signup?lang=${lang}&next=${encodeURIComponent(here)}`;
@@ -155,6 +160,34 @@ export function IntelBoard({ gameId, dateKey }: { gameId: string; dateKey?: stri
         <Link href={signupHref} data-testid="signup-for-tickets" className="w-fit rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500">
           {t("startFreeCta")}
         </Link>
+      </div>
+    );
+  } else if (started && gen === "idle") {
+    body = <Empty>{t("gameStarted")}</Empty>;
+  } else if (pickUsedUp && gen === "idle") {
+    const other = picked.find((g) => g.gameId !== gameId);
+    body = (
+      <div className="flex flex-col gap-2" data-testid="cap-user">
+        <Empty>{t("freeGameChosen")}</Empty>
+        <div className="flex flex-wrap gap-2">
+          {other && (
+            <Link href={`/app/game/${other.gameId}?sport=${other.sportKey}&lang=${lang}`} className="w-fit rounded-lg border border-ink-700 px-3.5 py-1.5 text-[13px] text-mist-200 transition hover:border-ink-600">
+              {t("openChosenGame")}
+            </Link>
+          )}
+          <Link href={plansHref} className="w-fit rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500">{t("seePlans")}</Link>
+        </div>
+      </div>
+    );
+  } else if (needsPick && gen === "idle") {
+    body = (
+      <div className="flex flex-col gap-2" data-testid="daily-pick">
+        <Empty>{t("dailyPickPrompt")}</Empty>
+        <div className="flex flex-wrap items-center gap-3">
+          <button onClick={() => void generate()} data-testid="use-daily-pick" className="w-fit rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500">{t("useDailyPick")}</button>
+          <Link href={plansHref} className="text-[13px] text-mist-400 underline-offset-4 hover:text-mist-100 hover:underline">{t("seePlans")}</Link>
+        </div>
+        <p className="text-[12px] text-mist-500">{t("dailyPickNote")}</p>
       </div>
     );
   } else if (gen === "running") {

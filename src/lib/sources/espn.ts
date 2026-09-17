@@ -419,6 +419,20 @@ async function nearestGameDay(sport: SportDef, fromKey: string, direction: "forw
 }
 
 /**
+ * Which game days to try when the requested one is empty. From today on, the next round comes first:
+ * yesterday's finished games are useless to someone looking for a game to bet on. For a past date
+ * (browsing history) the closest day wins, ties going forward.
+ */
+export function nearestCandidates(dateKey: string, today: string, forward: string[], backward: string[]): string[] {
+  const ahead = forward.slice(0, 4);
+  const behind = backward.slice(0, 4);
+  if (dateKey >= today) return [...ahead, ...behind].slice(0, 6);
+  const toDate = (k: string) => Date.UTC(+k.slice(0, 4), +k.slice(4, 6) - 1, +k.slice(6, 8));
+  const distance = (key: string) => Math.abs(toDate(key) - toDate(dateKey));
+  return [...ahead, ...behind].sort((a, b) => distance(a) - distance(b) || (a > dateKey ? -1 : 1)).slice(0, 6);
+}
+
+/**
  * The NBA has a four-month offseason, so an empty slate is normal rather than an error.
  * Finds the closest day that actually has games — forward first, then backward.
  */
@@ -437,13 +451,9 @@ export async function getSlateOrNearest(
     nearestGameDay(sport, dateKey, "backward", spanDays),
   ]);
 
-  // Candidates ordered by distance; ties go to the upcoming slate. A calendar day can still be
-  // empty (postponements, preseason placeholders), so each is confirmed with a real slate.
-  const toDate = (k: string) => Date.UTC(+k.slice(0, 4), +k.slice(4, 6) - 1, +k.slice(6, 8));
-  const distance = (key: string) => Math.abs(toDate(key) - toDate(dateKey));
-  const candidates = [...forward.slice(0, 4), ...backward.slice(0, 4)]
-    .sort((a, b) => distance(a) - distance(b) || (a > dateKey ? -1 : 1));
-  for (const key of candidates.slice(0, 6)) {
+  // A calendar day can still be empty (postponements, preseason placeholders), so each candidate is
+  // confirmed with a real slate.
+  for (const key of nearestCandidates(dateKey, todayKey(), forward, backward)) {
     const games = await getSlate(key, force, sport.key).catch(() => []);
     if (games.length) return { dateKey: key, requestedKey: dateKey, games, shifted: true };
   }

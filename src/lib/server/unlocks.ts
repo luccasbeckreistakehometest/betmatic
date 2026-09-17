@@ -34,6 +34,12 @@ export function unlockGame(input: { userId: string; plan: Plan; gameId: string; 
   return run.immediate();
 }
 
+/** Gives a pick back (the game turned out to be unusable: generation failed, AI off, caps). */
+export function releaseUnlock(input: { userId: string; gameId: string; now?: Date }): void {
+  getDb().prepare("DELETE FROM user_game_unlocks WHERE userId = ? AND dayKey = ? AND gameId = ?")
+    .run(input.userId, dayKeyFor(input.now ?? new Date()), input.gameId);
+}
+
 /** Games whose current tickets this user generated: their own fresh work is never delayed. */
 export function ownGeneratedGames(userId: string, since: string): Set<string> {
   const rows = getDb().prepare("SELECT DISTINCT gameId FROM generation_requests WHERE userId = ? AND status = 'ok' AND createdAt >= ?")

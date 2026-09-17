@@ -1,5 +1,5 @@
 import { getDb, newId, nowIso } from "@/lib/server/db";
-import { findPrediction, savePrediction } from "@/lib/server/predictions";
+import { findGameInfo, findPrediction, savePrediction } from "@/lib/server/predictions";
 import { buildSlateBets } from "@/lib/bets/builder";
 import { localiseSlate } from "@/lib/bets/localise";
 import { lastUsage } from "@/lib/ai/extract";
@@ -34,25 +34,49 @@ const todayCounts = (userId: string) => {
   };
 };
 
+/** A plan with a daily game allowance: `claim` records the pick, `release` gives it back. */
+export interface GamePick {
+  claim: () => UnlockResult;
+  release: () => void;
+}
+
 /**
- * `unlock` runs once the game is known to exist (a plan with a daily allowance records the pick
- * there, so a typo'd id never burns it). It is per caller, so it runs outside the shared in-flight task.
+ * Opening a game. On a plan with a daily allowance the game becomes the user's pick only when it is
+ * one they can actually use: it exists, has not started, and ends up with tickets. A started or
+ * finished game never spends the pick (its tickets are public from kickoff), and a generation that
+ * fails, is switched off or hits a cap hands the pick back.
  */
-export async function ensureGameGenerated(args: { sportKey: string; gameId: string; user: PublicUser; unlock?: () => UnlockResult }): Promise<OnDemandResult> {
-  const { sportKey, gameId, user } = args;
-  if (args.unlock) {
-    const sportDef = SPORTS.find((s) => s.key === sportKey);
-    if (!sportDef) return { status: "not_found" };
-    if (!sportSellsTickets(sportDef)) return { status: "unsupported" };
-    const exists = await getGameDetail(gameId, false, sportKey).catch(() => null);
-    if (!exists) return { status: "not_found" };
-    const unlocked = args.unlock();
-    if (!unlocked.ok) return { status: "cap_user", unlocked: unlocked.unlocked };
-  }
+export async function ensureGameGenerated(args: { sportKey: string; gameId: string; user: PublicUser; pick?: GamePick }): Promise<OnDemandResult> {
+  const { sportKey, gameId, user, pick } = args;
   const sport = SPORTS.find((s) => s.key === sportKey);
   if (!sport) return { status: "not_found" };
   // Tennis has no price feed, so a generation would spend tokens and return no ticket.
   if (!sportSellsTickets(sport)) return { status: "unsupported" };
+  if (!pick) return generateShared(sportKey, gameId, user);
+
+  const detail = await getGameDetail(gameId, false, sportKey).catch(() => null);
+  // A fixture ESPN no longer lists can still be opened when its tickets are stored.
+  const stored = detail ? null : findGameInfo(gameId);
+  if (!detail && (!stored || stored.sportKey !== sportKey)) return { status: "not_found" };
+  const startsAt = detail?.game.startsAt ?? stored?.startsAt ?? null;
+  if (!startsAt || !Number.isFinite(Date.parse(startsAt))) return { status: "not_found" };
+  const dateKey = detail ? espnDateKey(new Date(detail.game.startsAt)) : stored!.dateKey;
+  const started = Date.parse(startsAt) <= Date.now() || (!!detail && detail.game.status !== "scheduled");
+  const primary = refreshConfig(process.env, SPORTS.map((s) => s.key)).langs[0];
+  const exists = !!findPrediction({ scope: "game", sportKey, gameId, dateKey, lang: primary });
+  if (started) return { status: exists ? "exists" : "started", dateKey };
+  if (!detail && !exists) return { status: "not_found" };
+
+  const claimed = pick.claim();
+  if (!claimed.ok) return { status: "cap_user", unlocked: claimed.unlocked };
+  if (exists) return { status: "exists", dateKey };
+  const result = await generateShared(sportKey, gameId, user);
+  if (!claimed.alreadyUnlocked && result.status !== "generated" && result.status !== "exists") pick.release();
+  return result;
+}
+
+/** Ten people opening the same game share one generation; the verdict (caps, started) is re-read inside. */
+async function generateShared(sportKey: string, gameId: string, user: PublicUser): Promise<OnDemandResult> {
   const key = `${sportKey}:${gameId}`;
   const running = inflight.get(key);
   if (running) return running;

@@ -1,30 +1,53 @@
 import { test, expect } from "@playwright/test";
 import { registerUser, skipTour } from "./helpers";
 
-test("a free user sees the ticket of the game they opened, and that game is their pick for the day", async ({ page }) => {
+/** A real upcoming game ESPN lists today (the pick rules only apply before kickoff). */
+async function upcomingGame(page: import("@playwright/test").Page): Promise<{ id: string; sport: string } | null> {
+  for (const sport of ["soccer-bra", "wnba", "soccer-eng", "soccer-esp", "nba"]) {
+    const slate = await page.request.get(`/api/slate?sport=${sport}`).then((r) => r.json());
+    const game = (slate.games ?? []).find((g: { id: string; status: string; startsAt: string }) => g.status === "scheduled" && Date.parse(g.startsAt) > Date.now() + 10 * 60_000);
+    if (game) return { id: game.id, sport };
+  }
+  return null;
+}
+
+test("a free user's daily pick is spent only on an upcoming game that ends up with tickets", async ({ page }) => {
   await registerUser(page, "free");
   await skipTour(page);
+  const picks = async () => (await page.request.get("/api/predictions?sport=soccer-esp&lang=pt").then((r) => r.json())).unlocked.map((g: { gameId: string }) => g.gameId);
+
+  // A finished game shows its tickets (public since kickoff) and costs nothing.
   await page.goto("/app/game/401882878?sport=soccer-esp&lang=pt");
-  // The seeded ticket exists, so opening the game unlocks it and shows it right away.
   await expect(page.getByTestId("ticket-bankroll").first()).toBeVisible();
   const served = await page.request.get("/api/predictions?sport=soccer-esp&date=20260911&lang=pt").then((r) => r.json());
   expect(served.predictions.map((p: { gameId: string }) => p.gameId)).toEqual(["401882878"]);
-  expect(served.unlocked.map((g: { gameId: string }) => g.gameId)).toEqual(["401882878"]);
   // Free plan: value band only.
   expect(served.predictions[0].slate.suggestions.every((s: { bandKey: string }) => s.bandKey === "value")).toBe(true);
+  expect((await page.request.post("/api/game/401882878/generate?sport=soccer-esp").then((r) => r.json())).status).toBe("exists");
+  expect(await picks()).toEqual([]);
 
-  // A second game the same day is refused with the chosen one named, and nothing is generated.
-  // Any other real game will do (the pick is per Brasília day, whatever the game's date).
-  let other: { id: string; sport: string } | null = null;
-  for (const sport of ["soccer-bra", "wnba", "soccer-eng", "nba"]) {
-    const slate = await page.request.get(`/api/slate?sport=${sport}`).then((r) => r.json());
-    const game = (slate.games ?? []).find((g: { id: string }) => g.id !== "401882878");
-    if (game) { other = { id: game.id, sport }; break; }
-  }
-  expect(other, "ESPN listed no other game to try").not.toBeNull();
+  // Opening an upcoming game asks first; browsing spends nothing.
+  const other = await upcomingGame(page);
+  expect(other, "ESPN listed no upcoming game to try").not.toBeNull();
+  await page.goto(`/app/game/${other!.id}?sport=${other!.sport}&lang=pt`);
+  await expect(page.getByTestId("daily-pick")).toBeVisible();
+  expect(await picks()).toEqual([]);
+  // No AI in the suite: the generation cannot run, and the pick comes back.
+  await page.getByTestId("use-daily-pick").click();
+  await expect(page.getByText("A geração está desligada neste servidor.")).toBeVisible();
+  expect(await picks()).toEqual([]);
+
+  // An upcoming game with tickets ready becomes the pick; a second one is then refused, naming it.
+  const chosen = await page.request.post("/api/game/990000001/generate?sport=soccer-esp").then((r) => r.json());
+  expect(chosen.status).toBe("exists");
+  expect(await picks()).toEqual(["990000001"]);
+  const todays = await page.request.get(`/api/predictions?sport=soccer-esp&date=${chosen.dateKey}&lang=pt`).then((r) => r.json());
+  expect(todays.predictions.map((p: { gameId: string }) => p.gameId)).toContain("990000001");
   const second = await page.request.post(`/api/game/${other!.id}/generate?sport=${other!.sport}`).then((r) => r.json());
   expect(second.status).toBe("cap_user");
-  expect(second.unlocked[0].gameId).toBe("401882878");
+  expect(second.unlocked[0].gameId).toBe("990000001");
+  await page.goto(`/app/game/${other!.id}?sport=${other!.sport}&lang=pt`);
+  await expect(page.getByTestId("cap-user")).toBeVisible();
   // A made-up id never burns the pick.
   expect((await page.request.post("/api/game/999999999/generate?sport=soccer-esp")).status()).toBe(404);
 });

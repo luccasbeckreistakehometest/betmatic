@@ -23,6 +23,9 @@ function money(value?: number): string {
 
 const OUT_STATUSES = ["out", "suspension", "injured reserve"];
 
+/** Pre-match tickets are not built once the game is under way. */
+const hasStarted = (game: { status: string; startsAt: string }) => game.status !== "scheduled" || Date.parse(game.startsAt) <= Date.now();
+
 function injuryTone(status: string): string {
   const s = status.toLowerCase();
   if (OUT_STATUSES.some((x) => s.includes(x))) return "text-alert-400";
@@ -127,7 +130,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="flex flex-col gap-4">
           {sportSellsTickets(sport) ? (
-            <IntelBoard gameId={gameId} dateKey={espnDateKey(new Date(game.startsAt))} />
+            <IntelBoard gameId={gameId} dateKey={espnDateKey(new Date(game.startsAt))} started={hasStarted(game)} />
           ) : (
             <Panel title={t("betBuilder")} lang={lang}>
               <Empty>{t("tennisUnsupported")}</Empty>
