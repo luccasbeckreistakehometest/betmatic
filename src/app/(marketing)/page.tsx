@@ -156,6 +156,22 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
         </div>
       </section>
 
+      {/* ---- edge ---- */}
+      <section className="border-b border-ink-800/80" data-testid="edge">
+        <div className="mx-auto max-w-6xl px-5 py-16">
+          <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">{c.edgeTitle}</h2>
+          <p className="mt-3 max-w-2xl text-[15px] text-mist-400">{c.edgeSub}</p>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {c.edges.map((e) => (
+              <Link key={e.title} href={{ pathname: e.href, query: { lang } }} className="group rounded-xl border border-ink-800 bg-ink-900/50 p-5 transition hover:border-edge-400/50">
+                <p className="text-[15px] font-semibold text-white group-hover:text-edge-400">{e.title}</p>
+                <p className="mt-2 text-[13px] leading-relaxed text-mist-400">{e.body}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ---- how ---- */}
       <section id="como" className="border-b border-ink-800/80">
         <div className="mx-auto max-w-6xl px-5 py-16">

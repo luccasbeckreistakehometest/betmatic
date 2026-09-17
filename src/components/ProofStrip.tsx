@@ -19,9 +19,9 @@ const C = {
   en: { eyebrow: "Live proof", generated: "tickets generated", hit: "hit rate", roi: "ROI at 1 unit", all: "see every ticket →", today: "Ticket of the day", latest: "Latest ticket", legs: "legs", cta: "See the legs for free", none: "Today's first ticket appears as soon as a game is opened." },
 };
 
-function bestFor(dateKey: string, lang: Lang): { bet: BetSuggestion; matchup: string; gameId: string | null } | null {
+function bestFor(dateKey: string, lang: Lang, sportKeys?: string[]): { bet: BetSuggestion; matchup: string; gameId: string | null } | null {
   let best: { bet: BetSuggestion; matchup: string; gameId: string | null } | null = null;
-  for (const s of SPORTS) {
+  for (const s of SPORTS.filter((x) => !sportKeys || sportKeys.includes(x.key))) {
     // The full plan's view, whitelabelled: the strip shows title, price and context — never the legs,
     // which is what the free plan's delay protects. A visitor sees what exists, not a hollowed slate.
     for (const p of servePredictions({ scope: "game", sportKey: s.key, dateKey, lang, plan: getPlan("pro"), role: "user" })) {
@@ -32,17 +32,18 @@ function bestFor(dateKey: string, lang: Lang): { bet: BetSuggestion; matchup: st
 }
 
 /** Today's best-evidenced ticket; before today has one, the latest day's, labelled as such. */
-function bestToday(lang: Lang): { pick: ReturnType<typeof bestFor>; isToday: boolean } {
-  const today = bestFor(todayKey(), lang);
+function bestToday(lang: Lang, sportKeys?: string[]): { pick: ReturnType<typeof bestFor>; isToday: boolean } {
+  const today = bestFor(todayKey(), lang, sportKeys);
   if (today) return { pick: today, isToday: true };
   const latest = latestPredictionDateKey();
-  return { pick: latest && latest !== todayKey() ? bestFor(latest, lang) : null, isToday: false };
+  return { pick: latest && latest !== todayKey() ? bestFor(latest, lang, sportKeys) : null, isToday: false };
 }
 
-export function ProofStrip({ lang }: { lang: Lang }) {
+/** `sportKeys` narrows both the numbers and the ticket to one sport funnel. */
+export function ProofStrip({ lang, sportKeys }: { lang: Lang; sportKeys?: string[] }) {
   const c = C[lang];
-  const s = proofStats(readLedger());
-  const { pick: top, isToday } = bestToday(lang);
+  const s = proofStats(readLedger().filter((e) => !sportKeys || sportKeys.includes(e.sportKey)));
+  const { pick: top, isToday } = bestToday(lang, sportKeys);
   const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
   return (
     <section className="border-b border-ink-800/80 bg-ink-900/40" data-testid="proof-strip">

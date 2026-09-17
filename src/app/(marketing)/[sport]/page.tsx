@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ProofStrip } from "@/components/ProofStrip";
 import { notFound } from "next/navigation";
 import { Logo, LogoMark } from "@/components/Logo";
 import { LandingLang } from "@/components/LandingLang";
@@ -106,6 +107,8 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
           </div>
         </div>
       </section>
+
+      <ProofStrip lang={lang} sportKeys={s.sportKeys} />
 
       <section className="border-b border-ink-800/80">
         <div className="mx-auto max-w-6xl px-5 py-16">

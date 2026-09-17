@@ -34,3 +34,13 @@ test("the landing shows live proof numbers and today's whitelabelled ticket", as
   const html = await page.content();
   expect(html).not.toMatch(/Betano|ESPN|DraftKings/);
 });
+
+test("the differentiators section and the sport funnels carry the proof strip", async ({ page }) => {
+  await page.goto("/?lang=pt");
+  const edge = page.getByTestId("edge");
+  await expect(edge).toContainText("Prova pública");
+  await expect(edge.getByRole("link")).toHaveCount(6);
+  await page.goto("/basquete");
+  await expect(page.getByTestId("proof-strip")).toBeVisible();
+  await expect(page.getByTestId("proof-strip")).toContainText("bilhetes gerados");
+});

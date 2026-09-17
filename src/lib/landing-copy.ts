@@ -30,6 +30,10 @@ export interface LandingCopy {
   honestySub: string;
   honestyPoints: { title: string; body: string }[];
 
+  edgeTitle: string;
+  edgeSub: string;
+  edges: { title: string; body: string; href: string }[];
+
   howTitle: string;
   howSteps: { n: string; title: string; body: string }[];
 
@@ -102,6 +106,16 @@ const PT: LandingCopy = {
     },
   ],
 
+  edgeTitle: "O que só o Betmatic tem",
+  edgeSub: "Quem vende palpite esconde o histórico e some quando erra. A gente construiu o contrário disso.",
+  edges: [
+    { title: "Prova pública, bilhete por bilhete", body: "Todo bilhete que geramos vai pra uma página aberta e é liquidado sozinho contra o placar real. Dá até pra baixar a planilha inteira. Se ficar feio, fica feio lá.", href: "/prova" },
+    { title: "Bilhete na hora que você abre o jogo", body: "Sem esperar rodada de atualização: abriu uma partida sem bilhete, o sistema monta na hora — com as odds e escalações daquele momento.", href: "/signup" },
+    { title: "Sua banca, liquidada sozinha", body: "Salva o bilhete com o valor que apostou e o resultado entra automático quando o jogo acaba. Lucro, ROI e o stake sugerido por Kelly em cada bilhete.", href: "/signup" },
+    { title: "Aprende com o próprio erro", body: "Todo dia o sistema revisa o que ganhou e perdeu, escreve o post-mortem e ajusta as regras. A taxa de acerto por mercado e por fonte entra em toda geração seguinte.", href: "/prova" },
+    { title: "Calculadoras grátis, sem cadastro", body: "Valor esperado, múltipla com a margem real da casa e conversor de odds — a mesma conta que roda em cada bilhete.", href: "/ferramentas" },
+    { title: "Indique e ganhe", body: "Seu link traz um amigo, os dois ganham coins. Coins geram bilhetes.", href: "/signup" },
+  ],
   howTitle: "Como funciona",
   howSteps: [
     {
@@ -237,6 +251,16 @@ const EN: LandingCopy = {
     },
   ],
 
+  edgeTitle: "What only Betmatic does",
+  edgeSub: "Pick sellers hide their record and vanish when they miss. We built the opposite.",
+  edges: [
+    { title: "A public record, ticket by ticket", body: "Every ticket we generate lands on an open page and settles itself against the real score. You can download the whole spreadsheet. When it looks bad, it looks bad there.", href: "/prova" },
+    { title: "Tickets the moment you open a game", body: "No waiting for a refresh cycle: open a game with no ticket and the system builds one on the spot, from that moment's odds and line-ups.", href: "/signup" },
+    { title: "Your bankroll, graded for you", body: "Save a ticket with your stake and the result lands automatically when the game ends. Profit, ROI, and a quarter-Kelly suggested stake on every ticket.", href: "/signup" },
+    { title: "It learns from its own misses", body: "Every day the system reviews what won and lost, writes the post-mortem and adjusts its rules. Hit rate by market and by source feeds every next generation.", href: "/prova" },
+    { title: "Free calculators, no signup", body: "Expected value, parlays with the book's real hold, and an odds converter — the same math that runs on every ticket.", href: "/ferramentas" },
+    { title: "Invite and earn", body: "Your link brings a friend; you both get coins. Coins build tickets.", href: "/signup" },
+  ],
   howTitle: "How it works",
   howSteps: [
     {
