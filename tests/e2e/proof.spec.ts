@@ -16,8 +16,10 @@ test("public track record shows every ticket, and each has a shareable permalink
   await expect(page.getByTestId("ticket-page")).toContainText(/GANHOU|PERDEU|PENDENTE/);
   const share = page.getByTestId("share-wa");
   await expect(share).toHaveAttribute("href", /wa\.me\/\?text=/);
-  // the link unfurls as a result card
-  const og = await page.request.get(`${page.url().split("?")[0]}/opengraph-image`);
+  // the link unfurls as a result card: Next hashes the image URL, so read it off the page itself
+  const ogUrl = await page.locator('meta[property="og:image"]').getAttribute("content");
+  expect(ogUrl).toMatch(/\/opengraph-image/);
+  const og = await page.request.get(ogUrl!);
   expect(og.ok()).toBeTruthy();
   expect(og.headers()["content-type"]).toContain("image/png");
 });
