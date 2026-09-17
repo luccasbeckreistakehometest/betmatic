@@ -16,10 +16,10 @@ export const metadata: Metadata = {
 const C = {
   pt: { eyebrow: "Prova pública", title: "Todos os bilhetes. Nenhum escondido.", sub: "Cada bilhete que o Betmatic gera entra aqui no momento em que nasce e é liquidado sozinho contra o placar real. Sem seleção, sem editar depois. Se um dia ficar feio, vai ficar feio aqui também.",
     generated: "gerados", settled: "liquidados", hit: "acerto", roi: "ROI a 1 unidade", pending: "aguardando jogo", byMarket: "Por mercado", bySport: "Por esporte", byBand: "Por faixa de odd", recent: "Últimos bilhetes", none: "Ainda não há bilhete liquidado. O primeiro aparece assim que um jogo com bilhete terminar.",
-    won: "ganhou", lost: "perdeu", push: "push", void: "anulado", pend: "pendente", cta: "Ver os bilhetes de hoje", legs: "pernas", small: "Amostra pequena: menos de 30 bilhetes decididos ainda não diz nada sobre o longo prazo.", unit: "u" },
+    won: "ganhou", lost: "perdeu", push: "push", void: "anulado", pend: "pendente", cta: "Ver os bilhetes de hoje", csv: "Baixar tudo em CSV", legs: "pernas", small: "Amostra pequena: menos de 30 bilhetes decididos ainda não diz nada sobre o longo prazo.", unit: "u" },
   en: { eyebrow: "Public track record", title: "Every ticket. None hidden.", sub: "Every ticket Betmatic generates lands here the moment it is born and is graded automatically against the real score. No curation, no edits after the fact. If it ever looks bad, it looks bad here too.",
     generated: "generated", settled: "settled", hit: "hit rate", roi: "ROI at 1 unit", pending: "awaiting kickoff", byMarket: "By market", bySport: "By sport", byBand: "By odds band", recent: "Latest tickets", none: "No settled ticket yet. The first one appears once a game with a ticket ends.",
-    won: "won", lost: "lost", push: "push", void: "void", pend: "pending", cta: "See today's tickets", legs: "legs", small: "Small sample: fewer than 30 decided tickets says nothing about the long run.", unit: "u" },
+    won: "won", lost: "lost", push: "push", void: "void", pend: "pending", cta: "See today's tickets", csv: "Download everything as CSV", legs: "legs", small: "Small sample: fewer than 30 decided tickets says nothing about the long run.", unit: "u" },
 };
 
 export default async function ProofPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
@@ -80,7 +80,10 @@ export default async function ProofPage({ searchParams }: { searchParams: Promis
             ))}
           </ul>
         )}
-        <Link href="/signup" className="mt-10 inline-block rounded-lg bg-edge-400 px-5 py-2.5 text-[14px] font-semibold text-ink-950 hover:bg-edge-500">{c.cta}</Link>
+        <div className="mt-10 flex flex-wrap items-center gap-4">
+          <Link href="/signup" className="inline-block rounded-lg bg-edge-400 px-5 py-2.5 text-[14px] font-semibold text-ink-950 hover:bg-edge-500">{c.cta}</Link>
+          <a href={`/api/public/ledger?lang=${lang}`} className="text-[13px] text-mist-400 underline-offset-4 hover:text-mist-100 hover:underline" data-testid="csv-link">{c.csv}</a>
+        </div>
       </section>
     </main>
   );

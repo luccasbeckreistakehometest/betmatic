@@ -69,3 +69,13 @@ test("sitemap and robots exist for search engines", async ({ page }) => {
   const rb = await page.request.get("/robots.txt");
   expect(await rb.text()).toContain("Disallow: /app");
 });
+
+test("the whole record downloads as a whitelabelled CSV", async ({ page }) => {
+  const r = await page.request.get("/api/public/ledger?lang=pt");
+  expect(r.headers()["content-type"]).toContain("text/csv");
+  const csv = await r.text();
+  expect(csv.split("\n")).toHaveLength(4); // header + 3 seeded tickets
+  expect(csv).toContain("Sevilha vence em casa");
+  expect(csv).toContain("/p/");
+  expect(csv).not.toMatch(/Betano|ESPN/);
+});

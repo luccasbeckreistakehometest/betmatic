@@ -7,6 +7,7 @@ import { refereeForMatch } from "@/lib/signals/referee";
 import { computeDvp } from "@/lib/signals/dvp";
 import { getSport } from "@/lib/sports";
 import { lastUsage } from "@/lib/ai/extract";
+import { announceTickets } from "@/lib/server/webhook";
 import type { BetSlate } from "@/lib/types";
 import type { Lang } from "@/lib/i18n";
 
@@ -41,6 +42,7 @@ export async function generateGame(args: { sportKey: string; dateKey: string; de
 
   const primarySlate = await buildBets({ game: detail.game, detail, props, picks: [], dimers: [], x: null, bands: BANDS, lang: primary, referee, dvp });
   save(primary, primarySlate, spend());
+  void announceTickets({ gameId: detail.game.id, matchup, sportKey, lang: primary, suggestions: primarySlate.suggestions, base: process.env.NEXT_PUBLIC_BASE_URL ?? "" });
   for (const lang of derived) {
     try { save(lang, await localiseSlate(primarySlate, primary, lang), spend()); }
     catch (error) { notes.push(`${lang}: ${error instanceof Error ? error.message : "?"}`); }
