@@ -9,8 +9,37 @@ export interface PromptVersion {
   feedback: string; rationale: string; batch: string; createdBy: string; active: number; createdAt: string;
 }
 
+/**
+ * Stored prompts written before tickets carried linked alternatives still ask for the old
+ * `isAlternative` flag, which the schema no longer has. Once per process, such an active version is
+ * superseded by a new version (the history stays linear and the admin sees why).
+ */
+export const ALTERNATIVES_RULE = `- ALWAYS give every main ticket at least TWO alternatives (never more than two). Set alternativeOf on each alternative to the 0-based index of its main ticket in this same suggestions list (main tickets carry alternativeOf null), and write swapReason: the moment to switch, e.g. "se o Fulano for vetado" or "se a linha passar de 2,5". An alternative keeps the same thesis and roughly the same band and changes one or two legs. When a leg depends on one player, at least one alternative must avoid him.`;
+
+export function upgradeAlternativesRule(content: string): string | null {
+  if (!/isAlternative/.test(content)) return null;
+  const paragraph = /- ALWAYS pair each main ticket[\s\S]*?restating the same bet at a worse price\./;
+  return paragraph.test(content)
+    ? content.replace(paragraph, ALTERNATIVES_RULE)
+    : `${content.replace(/isAlternative/g, "alternativeOf")}\n\n${ALTERNATIVES_RULE}`;
+}
+
+let upgraded = false;
+function ensurePromptUpgrades(): void {
+  if (upgraded) return;
+  upgraded = true;
+  for (const kind of Object.keys(DEFAULT_PROMPTS) as PromptKind[]) {
+    for (const lang of ["pt", "en"] as Lang[]) {
+      const row = getDb().prepare("SELECT content FROM prompt_versions WHERE kind=? AND lang=? AND active=1").get(kind, lang) as { content: string } | undefined;
+      const next = row ? upgradeAlternativesRule(row.content) : null;
+      if (next) savePrompt({ kind, lang, content: next, source: "manual", rationale: "Sistema: bilhetes agora trazem duas alternativas ligadas por alternativeOf (índice do principal) e swapReason; a regra antiga com isAlternative foi substituída.", createdBy: "system" });
+    }
+  }
+}
+
 /** What the builder actually sends: the active stored version, else the code default. */
 export function getPrompt(kind: PromptKind, lang: Lang): string {
+  ensurePromptUpgrades();
   const row = getDb().prepare("SELECT content FROM prompt_versions WHERE kind=? AND lang=? AND active=1").get(kind, lang) as { content: string } | undefined;
   return row?.content ?? DEFAULT_PROMPTS[kind][lang];
 }

@@ -55,6 +55,8 @@ export async function refereeForMatch(
   awayName: string,
   dateKey: string,
 ): Promise<RefereeSignal | null> {
+  // Tests (and any server that must not launch a browser) switch the headless lookup off.
+  if (process.env.SOFASCORE_DISABLED === "1") return null;
   const event = await findEvent(homeName, awayName, dateKey).catch(() => null);
   if (!event) return null;
   // The scheduled-events payload sometimes omits the referee; the event detail carries it.

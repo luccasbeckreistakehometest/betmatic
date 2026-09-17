@@ -1,0 +1,77 @@
+import Link from "next/link";
+import { MarketingPage } from "@/components/MarketingShell";
+import { RED_FLAGS } from "@/lib/tipster/audit";
+import type { Lang } from "@/lib/i18n";
+
+const C = {
+  pt: {
+    eyebrow: "Raio-x do tipster", title: "Seu tipster mostra só os greens? A gente mostra o resto.",
+    sub: "Grupo VIP que só posta print de green, cobra caro pra entrar e depois some nas reds? Antes de pagar, cola as mensagens aqui e veja o acerto de verdade, jogo a jogo, contra o placar oficial.",
+    steps: [
+      { n: "01", t: "Cola as mensagens", b: "Copia do Telegram ou do WhatsApp (ou manda até 5 prints). Dá um nome pra você lembrar de quem é — esse nome fica só com você." },
+      { n: "02", t: "A gente confere jogo a jogo", b: "Cada palpite é procurado no jogo certo e liquidado contra o resultado oficial. O que não dá pra conferir fica marcado como não verificável, sem chute." },
+      { n: "03", t: "Você vê o que ele não mostra", b: "Acerto real, retorno a 1 unidade, a maior sequência de reds, e quais \"greens\" foram postados depois que o jogo já tinha começado." },
+    ],
+    privacyTitle: "É privado", privacy: "O nome do tipster nunca aparece em lugar nenhum: nem em página pública, nem no que você compartilhar. O texto colado é descartado depois da leitura; fica só a lista de palpites e o relatório, e você apaga quando quiser.",
+    flagsTitle: "Sinais de alerta que a gente procura no texto",
+    limits: "No plano Free: 1 raio-x por mês. Nos planos pagos: 3 por semana. Passou do limite? Mais um sai por 6 coins.",
+    cta: "Fazer o raio-x", ctaSub: "Grátis pra começar. Sem cartão.",
+    note: "O Betmatic não vende palpite de terceiros nem indica grupo. Aposta envolve risco de perda; se você está tentando recuperar dinheiro perdido, pare e procure ajuda.",
+  },
+  en: {
+    eyebrow: "Tipster audit", title: "Your tipster only shows the wins? We show the rest.",
+    sub: "A VIP group that posts nothing but winning screenshots, charges a lot to join and goes quiet on the losses? Before you pay, paste the messages here and see the real record, game by game, against the official score.",
+    steps: [
+      { n: "01", t: "Paste the messages", b: "Copy them from Telegram or WhatsApp (or send up to 5 screenshots). Give it a name you'll remember — that name stays with you." },
+      { n: "02", t: "We check game by game", b: "Each pick is matched to the right game and graded against the official result. What can't be checked is marked unverifiable, never guessed." },
+      { n: "03", t: "You see what they don't show", b: "The real hit rate, the return at 1 unit, the longest losing run, and which \"wins\" were posted after the game had already started." },
+    ],
+    privacyTitle: "It's private", privacy: "The tipster's name never shows anywhere: not on a public page, not in anything you share. The pasted text is discarded after reading; only the list of picks and the report stay, and you can delete them whenever you like.",
+    flagsTitle: "Red flags we look for in the text",
+    limits: "Free plan: 1 audit a month. Paid plans: 3 a week. Past the limit, another one costs 6 coins.",
+    cta: "Run an audit", ctaSub: "Free to start. No card.",
+    note: "Betmatic doesn't sell third-party picks or recommend any group. Betting carries a risk of loss; if you're trying to win back money you lost, stop and look for help.",
+  },
+};
+
+/** Public explainer for the tipster audit; the audit itself runs signed in, at /app/tipster. */
+export function TipsterFunnel({ lang }: { lang: Lang }) {
+  const c = C[lang];
+  const next = `/app/tipster?lang=${lang}`;
+  return (
+    <MarketingPage lang={lang} langHrefs={{ pt: "/raio-x-tipster", en: "/tipster-audit" }} wide>
+      <section className="text-mist-100" data-testid="tipster-funnel">
+        <p className="text-[11px] uppercase tracking-[0.18em] text-edge-400">{c.eyebrow}</p>
+        <h1 className="mt-2 max-w-3xl text-4xl font-semibold tracking-tight sm:text-5xl">{c.title}</h1>
+        <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-mist-400">{c.sub}</p>
+        <div className="mt-6 flex flex-wrap items-center gap-4">
+          <Link href={`/signup?lang=${lang}&next=${encodeURIComponent(next)}`} className="rounded-xl bg-edge-400 px-6 py-3 text-[15px] font-semibold text-ink-950 hover:bg-edge-500" data-testid="tipster-funnel-cta">{c.cta}</Link>
+          <span className="text-[12px] text-mist-500">{c.ctaSub}</span>
+        </div>
+        <ol className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-ink-800 bg-ink-800 md:grid-cols-3">
+          {c.steps.map((s) => (
+            <li key={s.n} className="bg-ink-900/80 p-6">
+              <span className="nums text-[2rem] font-semibold leading-none text-ink-700">{s.n}</span>
+              <h2 className="mt-3 text-[15px] font-semibold text-white">{s.t}</h2>
+              <p className="mt-2 text-[13px] leading-relaxed text-mist-400">{s.b}</p>
+            </li>
+          ))}
+        </ol>
+        <div className="mt-8 grid gap-4 md:grid-cols-2">
+          <div className="rounded-xl border border-edge-400/30 bg-edge-400/[0.04] p-5">
+            <h2 className="text-[15px] font-semibold text-white">{c.privacyTitle}</h2>
+            <p className="mt-2 text-[13.5px] leading-relaxed text-mist-300">{c.privacy}</p>
+            <p className="mt-3 text-[12.5px] text-mist-500">{c.limits}</p>
+          </div>
+          <div className="rounded-xl border border-ink-800 bg-ink-900/60 p-5">
+            <h2 className="text-[15px] font-semibold text-white">{c.flagsTitle}</h2>
+            <ul className="mt-2 flex flex-wrap gap-1.5">
+              {RED_FLAGS.map((f) => <li key={f.key} className="rounded bg-alert-400/12 px-2 py-0.5 text-[12px] text-alert-400">{f.label[lang]}</li>)}
+            </ul>
+          </div>
+        </div>
+        <p className="mt-8 max-w-3xl text-[12px] leading-relaxed text-mist-500">{c.note}</p>
+      </section>
+    </MarketingPage>
+  );
+}

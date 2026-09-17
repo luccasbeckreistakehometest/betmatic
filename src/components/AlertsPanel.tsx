@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "@/lib/track";
 import { useCallback, useEffect, useState } from "react";
 import { formatDateTime } from "@/lib/format";
 import Link from "next/link";
@@ -64,7 +65,7 @@ export function AlertsPanel() {
             </div>
           ) : (
             <div className="mt-3" data-testid="telegram-status" data-linked="0">
-              <button onClick={() => void act({ action: "link_code" })} disabled={busy} className="rounded-lg bg-edge-400 px-3.5 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500 disabled:opacity-50" data-testid="telegram-connect">{t("telegramConnect")}</button>
+              <button onClick={() => { track("telegram_link_started"); void act({ action: "link_code" }); }} disabled={busy} className="rounded-lg bg-edge-400 px-3.5 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500 disabled:opacity-50" data-testid="telegram-connect">{t("telegramConnect")}</button>
             </div>
           )}
         </Panel>

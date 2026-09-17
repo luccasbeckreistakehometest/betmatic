@@ -3,8 +3,8 @@ import type { Lang } from "@/lib/i18n";
 /**
  * One funnel per sport. A basketball bettor and a soccer bettor are not the same person: the first
  * lives on player numbers, the second on cards and fouls. Generic copy converts neither.
- * Tickets only carry markets with a published price (result, handicap, totals); player history is
- * sold as analysis, never as a priced leg, until a player-market price source is wired in.
+ * Every leg on a ticket carries a published price. Player legs are priced from the book's posted
+ * player lines (measured at that exact line); a player with no posted line stays in the analysis.
  */
 export interface SportLanding {
   slug: { pt: string; en: string };
@@ -26,12 +26,12 @@ export const SPORT_LANDINGS: SportLanding[] = [
     sportKeys: ["nba", "wnba"],
     name: { pt: "Basquete", en: "Basketball" },
     title: {
-      pt: "Antes da linha, o histórico de quem vai jogar.",
-      en: "Before the line, the record of who is playing.",
+      pt: "Odd e minutagem em cada perna de jogador.",
+      en: "A real price and real minutes behind every player leg.",
     },
     sub: {
-      pt: "Na NBA e na WNBA, a gente mede jogo a jogo o que cada atleta produz e usa isso para montar bilhetes de resultado, handicap e total de pontos, só com odds publicadas.",
-      en: "Across the NBA and WNBA we measure, game by game, what each player produces, and use it to build moneyline, spread and totals tickets, with published prices only.",
+      pt: "Na NBA e na WNBA, cada perna de jogador sai com a linha e o preço que a casa publicou e, do lado, quantas vezes ele passou dessa linha. Quem joga pouco nem entra. E no raio-x do jogador você vê como ele rende com e sem o companheiro.",
+      en: "Across the NBA and WNBA, every player leg comes with the line and price the book posted and, next to it, how often he cleared that line. Players who barely play never make it. And the player deep dive shows how he does with and without a teammate.",
     },
     angle: {
       pt: [
@@ -40,12 +40,12 @@ export const SPORT_LANDINGS: SportLanding[] = [
           body: "Não é média. É a contagem de quantos jogos passaram da linha, com o tamanho da amostra ao lado. Quando os últimos 10 discordam da temporada, isso aparece.",
         },
         {
-          title: "Odd de verdade, não odd estimada",
-          body: "Cada perna do bilhete tem uma odd publicada, e a odd combinada é conta feita no servidor, não chute do modelo. Se uma linha não tem preço, ela não entra.",
+          title: "Minutagem antes de tudo",
+          body: "Matchup bom não vale nada pra quem fica 12 minutos em quadra. Antes de qualquer perna, a gente confere minutos e papel no time; quem joga pouco sai da lista.",
         },
         {
-          title: "Lesão muda tudo, e muda rápido",
-          body: "Um pivô fora reorganiza rebote e garrafão do time inteiro. O quadro de lesões entra no cálculo, não só na notícia.",
+          title: "Com e sem o companheiro",
+          body: "Escolha um companheiro de time e veja como o jogador rende quando ele joga e quando não joga, com o tamanho da amostra do lado. Amostra pequena vem avisada.",
         },
       ],
       en: [
@@ -54,12 +54,12 @@ export const SPORT_LANDINGS: SportLanding[] = [
           body: "Not an average — a count of how many games cleared the line, with the sample size beside it. When the last 10 disagree with the season, you see that.",
         },
         {
-          title: "Real prices, not estimated ones",
-          body: "Every leg on a ticket has a published price, and the combined odds are computed on the server, not guessed by the model. A line without a price stays off the ticket.",
+          title: "Minutes come first",
+          body: "A soft matchup is worth nothing to a player who logs 12 minutes. Before any leg, we check minutes and role; players who barely play are dropped.",
         },
         {
-          title: "Injuries move it, and fast",
-          body: "One centre out reshuffles rebounds and paint touches for the whole team. The injury report feeds the maths, not just the headline.",
+          title: "With and without a teammate",
+          body: "Pick a teammate and see how the player does when he plays and when he sits, with the sample size beside it. Small samples are flagged as such.",
         },
       ],
     },
@@ -71,8 +71,8 @@ export const SPORT_LANDINGS: SportLanding[] = [
     leagues: ["NBA", "WNBA"],
     cta: { pt: "Ver os jogos de hoje", en: "See today's games" },
     meta: {
-      pt: "Palpites de NBA e WNBA com o histórico de cada jogador medido jogo a jogo e bilhetes só com odds publicadas, cada um com a chance estimada ao lado.",
-      en: "NBA and WNBA picks built on each player's game-by-game history, with tickets that use published prices only and show the estimated chance of each.",
+      pt: "Palpites de NBA e WNBA com odd publicada em cada perna de jogador, histórico nessa linha, minutagem e o \"com e sem\" o companheiro, e a chance estimada ao lado.",
+      en: "NBA and WNBA picks with a posted price on every player leg, the record at that line, minutes, and with/without-teammate splits, each with the estimated chance.",
     },
   },
   {
@@ -80,40 +80,48 @@ export const SPORT_LANDINGS: SportLanding[] = [
     sportKeys: ["soccer-bra", "soccer-eng", "soccer-esp", "soccer-ucl", "soccer-lib"],
     name: { pt: "Futebol", en: "Soccer" },
     title: {
-      pt: "Todo mundo olha o placar. A gente olha o detalhe.",
-      en: "Everyone watches the score. We watch the detail.",
+      pt: "Escalação confirmada muda tudo: seu bilhete fica sabendo antes de você.",
+      en: "A confirmed lineup changes everything, and your slip hears about it first.",
     },
     sub: {
-      pt: "Faltas, cartões, impedimentos e finalizações de cada jogador, partida a partida, entram na leitura do jogo. O bilhete sai com resultado, handicap e total de gols, só com odds publicadas.",
-      en: "Each player's fouls, cards, offsides and shots, match by match, feed the read of the game. Tickets come out on result, handicap and goal totals, with published prices only.",
+      pt: "Finalizações, faltas e impedimentos de cada jogador entram no bilhete com a odd que a casa publicou. Uma hora antes do jogo a gente confere a escalação: se quem está na sua perna ficar no banco, você fica sabendo e, quando existe, a alternativa sem ele aparece do lado.",
+      en: "Each player's shots, fouls and offsides go on the ticket at the price the book posted. An hour before kickoff we check the lineup: if the player on your leg is benched, you hear about it and, when there is one, the backup without him shows up beside it.",
     },
     angle: {
       pt: [
         {
-          title: "Cartão tem padrão, e o padrão é medível",
-          body: "Volante que comete cinco faltas por jogo não leva cartão por azar. Puxamos o histórico de faltas e cartões partida a partida e usamos a frequência real para ler o jogo.",
+          title: "Vigia de escalação",
+          body: "Quando os times saem, a gente cruza com cada bilhete salvo. Jogador no banco ou fora da lista vira um selo vermelho na perna e um aviso pra quem salvou.",
+        },
+        {
+          title: "Cartão é onde a casa menos presta atenção",
+          body: "Volante que comete cinco faltas por jogo não leva cartão por azar. A gente mede faltas e cartões partida a partida e mostra a chance real do lado, porque é nesse mercado que o preço costuma escapar.",
         },
         {
           title: "Brasileirão, Premier League, Libertadores",
           body: "Cobrimos as ligas que você acompanha, com o mesmo rigor. Sem tratar campeonato brasileiro como categoria de segunda.",
         },
         {
-          title: "Finalização no alvo separa quem chuta de quem acerta",
-          body: "Muito atacante finaliza bastante e acerta pouco. São números diferentes, e a gente mede os dois antes de montar o bilhete.",
+          title: "Finalização com preço e histórico",
+          body: "Muito atacante finaliza bastante e acerta pouco. Cada perna de finalização sai com a odd publicada e quantas vezes ele passou dessa linha.",
         },
       ],
       en: [
         {
-          title: "Cards follow a pattern, and patterns are measurable",
-          body: "A midfielder committing five fouls a game is not booked by luck. We pull fouls and cards match by match and use the real frequency to read the game.",
+          title: "A lineup watch on every saved slip",
+          body: "When the teams are out, we cross them with every saved ticket. A benched or missing player turns into a red badge on the leg and a notice to whoever saved it.",
+        },
+        {
+          title: "Cards are where books pay least attention",
+          body: "A midfielder committing five fouls a game is not booked by luck. We measure fouls and cards match by match and put the real chance beside the price, because that is where prices tend to slip.",
         },
         {
           title: "Premier League, La Liga, Champions, Brasileirão",
           body: "The leagues you actually follow, all held to the same standard.",
         },
         {
-          title: "Shots on target separates shooters from finishers",
-          body: "Plenty of forwards shoot a lot and hit the target little. Different numbers, and we measure both before building a ticket.",
+          title: "Shots with a price and a record",
+          body: "Plenty of forwards shoot a lot and hit the target little. Every shots leg carries the posted price and how often the player cleared that line.",
         },
       ],
     },
@@ -125,8 +133,8 @@ export const SPORT_LANDINGS: SportLanding[] = [
     leagues: ["Brasileirão", "Premier League", "La Liga", "Champions", "Libertadores"],
     cta: { pt: "Ver os jogos de hoje", en: "See today's matches" },
     meta: {
-      pt: "Palpites de futebol com histórico medido de cartões, faltas e finalizações no Brasileirão, Premier League e Libertadores, e bilhetes só com odds publicadas.",
-      en: "Soccer picks built on measured cards, fouls and shots across the Premier League, La Liga and Champions League, with tickets that use published prices only.",
+      pt: "Palpites de futebol com escalação conferida antes do jogo, finalizações e faltas com odd publicada e histórico medido no Brasileirão, Premier League e Libertadores.",
+      en: "Soccer picks with the lineup checked before kickoff, shots and fouls at posted prices, and measured records across the Premier League, La Liga and Champions League.",
     },
   },
 ];

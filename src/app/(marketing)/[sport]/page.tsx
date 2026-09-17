@@ -108,7 +108,7 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
 
       <section className="border-b border-ink-800/80">
         <div className="mx-auto max-w-6xl px-5 py-16">
-          <div className="grid gap-px overflow-hidden rounded-2xl border border-ink-800 bg-ink-800 md:grid-cols-3">
+          <div className={`grid gap-px overflow-hidden rounded-2xl border border-ink-800 bg-ink-800 ${s.angle[lang].length > 3 ? "md:grid-cols-2 lg:grid-cols-4" : "md:grid-cols-3"}`}>
             {s.angle[lang].map((item, i) => (
               <div key={item.title} className="flex flex-col bg-ink-900/80 p-6">
                 <span className="nums text-[11px] text-edge-400">{String(i + 1).padStart(2, "0")}</span>

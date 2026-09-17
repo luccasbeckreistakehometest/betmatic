@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "@/lib/track";
 import Link from "next/link";
 import { useState } from "react";
 import { expectedValue, formatDecimal, impliedProbability, parlayDecimal, parlayHold, parseOdds } from "@/lib/odds";
@@ -22,7 +23,7 @@ const C = {
 };
 
 const Field = ({ label, value, onChange, testId }: { label: string; value: string; onChange: (v: string) => void; testId?: string }) => (
-  <label className="block text-[12px] text-mist-400">{label}<input value={value} onChange={(e) => onChange(e.target.value)} inputMode="decimal" data-testid={testId} className="nums mt-1 w-full rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-[15px] text-mist-100 outline-none focus:border-edge-400" /></label>
+  <label className="block text-[12px] text-mist-400">{label}<input value={value} onChange={(e) => onChange(e.target.value)} onBlur={() => { if (testId) track("tool_used", { tool: testId.split("-")[0] }); }} inputMode="decimal" data-testid={testId} className="nums mt-1 w-full rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-[15px] text-mist-100 outline-none focus:border-edge-400" /></label>
 );
 const Card = ({ title, help, children }: { title: string; help: string; children: React.ReactNode }) => (
   <div className="rounded-2xl border border-ink-800 bg-ink-900/60 p-6"><h2 className="text-lg font-semibold">{title}</h2><p className="mt-1 text-[13px] text-mist-500">{help}</p><div className="mt-5">{children}</div></div>

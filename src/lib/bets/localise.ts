@@ -18,6 +18,7 @@ const TextsSchema = z.object({
     background: z.string(),
     riskNote: z.string(),
     evidenceNotes: z.array(z.string()),
+    swapReason: z.string().nullable(),
     legs: z.array(z.object({ selection: z.string(), explanation: z.string(), evidence: z.string() })),
   })),
 });
@@ -32,7 +33,7 @@ export function extractTexts(slate: BetSlate): SlateTexts {
   return {
     dataNote: slate.dataNote,
     suggestions: slate.suggestions.map((s) => ({
-      id: s.id, title: s.title, background: s.background, riskNote: s.riskNote, evidenceNotes: s.evidenceNotes,
+      id: s.id, title: s.title, background: s.background, riskNote: s.riskNote, evidenceNotes: s.evidenceNotes, swapReason: s.swapReason ?? null,
       legs: s.legs.map((l) => ({ selection: l.selection, explanation: l.explanation, evidence: l.evidence })),
     })),
   };
@@ -49,6 +50,7 @@ export function mergeTexts(slate: BetSlate, texts: SlateTexts): BetSlate {
       return {
         ...structuredClone(s),
         title: t.title, background: t.background, riskNote: t.riskNote, evidenceNotes: t.evidenceNotes,
+        swapReason: s.swapReason ? t.swapReason ?? s.swapReason : undefined,
         legs: s.legs.map((l, i) => ({ ...structuredClone(l), selection: t.legs[i].selection, explanation: t.legs[i].explanation, evidence: t.legs[i].evidence })),
       };
     }),
@@ -68,6 +70,8 @@ Rules:
 - Keep 'selection' recognisable as the same bet; only its wording changes.
 - Return every suggestion with the same id and the same number of legs, in the same order.`,
     prompt: JSON.stringify(extractTexts(slate)),
+    label: `localise:${to}`,
+    mock: () => extractTexts(slate),
   });
   return mergeTexts(slate, texts);
 }

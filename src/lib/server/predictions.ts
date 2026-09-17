@@ -19,7 +19,7 @@ export interface StoredPrediction {
 }
 
 export function savePrediction(input: {
-  scope: "game" | "slate";
+  scope: "game" | "slate" | "live";
   sportKey: string;
   gameId?: string | null;
   dateKey: string;
@@ -53,7 +53,7 @@ export function savePrediction(input: {
 }
 
 /** Only what the refresh policy needs to decide whether to spend tokens on this game again. */
-export function findPrediction(input: { scope: "game" | "slate"; sportKey: string; gameId: string | null; dateKey: string; lang: string }): { generatedAt: string; payload: string } | null {
+export function findPrediction(input: { scope: "game" | "slate" | "live"; sportKey: string; gameId: string | null; dateKey: string; lang: string }): { generatedAt: string; payload: string } | null {
   return (getDb().prepare(
     "SELECT generatedAt, payload FROM predictions WHERE scope=? AND sportKey=? AND COALESCE(gameId,'')=? AND dateKey=? AND lang=?",
   ).get(input.scope, input.sportKey, input.gameId ?? "", input.dateKey, input.lang) as { generatedAt: string; payload: string } | undefined) ?? null;

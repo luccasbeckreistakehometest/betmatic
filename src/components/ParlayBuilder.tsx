@@ -21,7 +21,7 @@ interface Payload {
   paused: { until: string | null } | null;
 }
 
-type BuildState = "idle" | "running" | "done" | "too_few_games" | "cap_global" | "failed";
+type BuildState = "idle" | "running" | "done" | "too_few_games" | "cap_global" | "cap_user" | "failed";
 
 /** Cross-game tickets: read from inventory; a plan that includes them builds the day's slate once. */
 export function ParlayBuilder() {
@@ -29,12 +29,13 @@ export function ParlayBuilder() {
   const t = makeT(lang);
   const [data, setData] = useState<Payload | null>(null);
   const [loading, setLoading] = useState(true);
+  const [builtFor, setBuiltFor] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (dateKey?: string) => {
     setLoading(true);
     try {
       const query = new URLSearchParams({ scope: "slate", sport: sport.key, lang });
-      const date = params.get("date");
+      const date = dateKey ?? params.get("date");
       if (date) query.set("date", date);
       const response = await fetch(`/api/predictions?${query}`, { cache: "no-store" });
       setData(await response.json());
@@ -64,8 +65,9 @@ export function ParlayBuilder() {
       const j = await r.json().catch(() => ({}));
       if (j.status === "generated" || j.status === "exists") {
         setBuild("done");
-        await load();
-      } else if (j.status === "too_few_games" || j.status === "cap_global") {
+        if (j.dateKey) setBuiltFor(j.dateKey);
+        await load(j.dateKey);
+      } else if (j.status === "too_few_games" || j.status === "cap_global" || j.status === "cap_user") {
         setBuild(j.status);
       } else {
         setBuild("failed");
@@ -77,12 +79,8 @@ export function ParlayBuilder() {
     }
   }, [sport.key, lang, load, t]);
 
+  // Generation costs real money, so it only starts on an explicit click.
   const canBuild = !!data && data.authenticated && !locked && !data.paused && !slate;
-  useEffect(() => {
-    if (loading || !canBuild || build !== "idle") return;
-    const id = setTimeout(() => void generate(), 0);
-    return () => clearTimeout(id);
-  }, [loading, canBuild, build, generate]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -97,7 +95,8 @@ export function ParlayBuilder() {
         title={t("betBuilder")}
         lang={lang}
         status={loading ? "pending" : locked ? "disabled" : slate ? "ok" : "empty"}
-        meta={slate?.matchup}
+        meta={slate ? `${slate.matchup}${builtFor ? ` · ${builtFor.slice(6, 8)}/${builtFor.slice(4, 6)}` : ""}` : undefined}
+        action={<Link href={`/app/parlays/custom?sport=${sport.key}&lang=${lang}`} className="rounded-md border border-ink-700 px-2 py-0.5 text-[11px] text-mist-400 transition hover:border-ink-600 hover:text-mist-100" data-testid="custom-parlay-link">{t("customParlay")}</Link>}
       >
         {loading ? (
           <Empty>{t("loadingTickets")}</Empty>
@@ -112,15 +111,23 @@ export function ParlayBuilder() {
             </Link>
           </div>
         ) : slate ? (
-          <BetsPanel slate={slate.slate} lang={lang} />
+          <BetsPanel slate={slate.slate} lang={lang} sportKey={sport.key} />
         ) : build === "running" ? (
           <div className="flex items-center gap-3 rounded-lg border border-ink-700 bg-ink-850 px-3 py-3 text-[13px] text-mist-300" data-testid="generating-slate">
             <span className="h-3 w-3 animate-pulse rounded-full bg-edge-400" />{t("generatingSlate")}
           </div>
         ) : (
-          <Empty>
-            {build === "too_few_games" ? t("slateTooFew") : build === "cap_global" ? t("capGlobal") : build === "failed" ? buildMessage ?? t("generateFailed") : data?.authenticated ? t("noTicketsYet") : t("signInForTickets")}
-          </Empty>
+          <div className="flex flex-col gap-3">
+            <Empty>
+              {build === "too_few_games" ? t("slateTooFew") : build === "cap_global" ? t("capGlobal") : build === "cap_user" ? t("slateCapUser") : build === "failed" ? buildMessage ?? t("generateFailed") : data?.authenticated ? t("slateEmpty") : t("signInForTickets")}
+            </Empty>
+            {canBuild && (build === "idle" || build === "failed") && (
+              <button onClick={() => void generate()} data-testid="build-slate" className="w-fit rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500">
+                {t("buildSlate")}
+              </button>
+            )}
+            {canBuild && <p className="text-[12px] text-mist-500">{t("slateHonesty")}</p>}
+          </div>
         )}
       </Panel>
     </div>

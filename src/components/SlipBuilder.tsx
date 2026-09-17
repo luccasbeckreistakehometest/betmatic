@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavState } from "@/components/Controls";
+import { DeepSlipTable } from "@/components/DeepSlipTable";
+import { SLIP_PREFILL_KEY, SlipScanner } from "@/components/SlipScanner";
+import type { DeepContext } from "@/lib/server/deep-slip";
 import { Chip, Panel } from "@/components/ui";
 import { formatDecimal, formatPercent, parseOdds, parlayDecimal } from "@/lib/odds";
 import { ACTION_COST } from "@/lib/plans";
@@ -36,12 +39,38 @@ const CONCERN_TONE: Record<string, string> = {
 const emptyLeg: Leg = { selection: "", market: "", odds: "" };
 
 export function SlipBuilder() {
-  const { lang } = useNavState();
+  const { lang, sport } = useNavState();
   const t = makeT(lang);
   const [legs, setLegs] = useState<Leg[]>([{ ...emptyLeg }, { ...emptyLeg }]);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [deepCtx, setDeepCtx] = useState<DeepContext | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [deep, setDeep] = useState(false);
+  const [pricing, setPricing] = useState<{ normal: number; deep: number; deepIncluded: boolean }>({ normal: ACTION_COST.analyse_slip, deep: ACTION_COST.deep_slip, deepIncluded: false });
+
+  useEffect(() => {
+    // Deferred so the effect itself sets no state synchronously.
+    const id = setTimeout(() => {
+      // A print sent from the scanner arrives here with its legs already filled in.
+      try {
+        const raw = sessionStorage.getItem(SLIP_PREFILL_KEY);
+        if (raw) {
+          sessionStorage.removeItem(SLIP_PREFILL_KEY);
+          const pre = (JSON.parse(raw) as Leg[]).filter((l) => l.selection).slice(0, 12);
+          if (pre.length) setLegs(pre.length >= 2 ? pre : [...pre, { ...emptyLeg }]);
+        }
+      } catch { /* storage may be blocked */ }
+      fetch("/api/slip", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((j) => {
+        if (j?.pricing) {
+          setPricing(j.pricing);
+          if (j.pricing.deepIncluded) setDeep(true);
+        }
+      }).catch(() => {});
+    }, 0);
+    return () => clearTimeout(id);
+  }, []);
+  const price = deep ? pricing.deep : pricing.normal;
 
   const update = (i: number, patch: Partial<Leg>) =>
     setLegs((prev) => prev.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
@@ -54,11 +83,13 @@ export function SlipBuilder() {
   async function analyse() {
     setBusy(true);
     setError(null);
+    setDeepCtx(null);
+    setAnalysis(null);
     try {
       const response = await fetch("/api/slip", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ lang, legs: legs.filter((l) => l.selection.trim()) }),
+        body: JSON.stringify({ lang, deep, sport: sport.key, legs: legs.filter((l) => l.selection.trim()) }),
       });
       const result = await response.json();
       if (!response.ok) {
@@ -66,6 +97,8 @@ export function SlipBuilder() {
         return;
       }
       setAnalysis(result.analysis);
+      setDeepCtx(result.deep ?? null);
+      if (!result.analysis && result.message) setError(`${result.message} ${lang === "pt" ? "Os coins voltaram." : "Your coins are back."}`);
     } catch {
       setError(t("networkError"));
     } finally {
@@ -82,6 +115,8 @@ export function SlipBuilder() {
         <h1 className="text-xl font-semibold tracking-tight text-white">{t("slipTitle")}</h1>
         <p className="mt-1 max-w-2xl text-sm leading-relaxed text-mist-400">{t("slipHint")}</p>
       </div>
+
+      <SlipScanner lang={lang} sportKey={sport.key} />
 
       <Panel title={t("slipTitle")} lang={lang} meta={Number.isFinite(combined) ? formatDecimal(combined) : undefined}>
         <div className="flex flex-col gap-2.5">
@@ -135,11 +170,28 @@ export function SlipBuilder() {
             >
               {busy ? t("analysing") : t("analyseSlip")}
             </button>
-            <span className="nums text-[11px] text-mist-500">
-              {t("costsCoins")} {ACTION_COST.analyse_slip} coins
+            <span className="nums text-[11px] text-mist-500" data-testid="slip-price">
+              {t("costsCoins")} {price} coins
             </span>
+            <label className="flex items-center gap-1.5 text-[12px] text-mist-300" data-testid="deep-toggle">
+              <input type="checkbox" checked={deep} onChange={(e) => setDeep(e.target.checked)} className="accent-emerald-400" />
+              {lang === "pt" ? "Análise profunda" : "Deep analysis"}
+              <span className="text-[11px] text-mist-500">
+                {pricing.deepIncluded
+                  ? (lang === "pt" ? `(incluída no Max: ${pricing.deep} coins)` : `(included in Max: ${pricing.deep} coins)`)
+                  : `(${pricing.deep} coins)`}
+              </span>
+            </label>
             {!ready && <span className="text-[11px] text-mist-600">{t("slipEmpty")}</span>}
           </div>
+
+          {deep && (
+            <p className="text-[11.5px] leading-relaxed text-mist-500">
+              {lang === "pt"
+                ? "Na análise profunda cada perna é conferida antes do veredito: jogo e jogador encontrados, quantas vezes passou da linha, odd publicada sem a margem, papel no time, lesão e pernas que andam juntas."
+                : "In the deep analysis each leg is checked before the verdict: game and player found, how often the line was cleared, the posted price without the margin, role, injuries and legs that move together."}
+            </p>
+          )}
 
           {error && (
             <p className="text-[12.5px] text-alert-400">
@@ -151,6 +203,8 @@ export function SlipBuilder() {
           )}
         </div>
       </Panel>
+
+      {deepCtx && <DeepSlipTable ctx={deepCtx} lang={lang} sportKey={sport.key} />}
 
       {analysis && (
         <Panel title={t("slipVerdict")} lang={lang} status="ok">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatDate } from "@/lib/format";
 import Link from "next/link";
 import { useNavState } from "@/components/Controls";
@@ -21,6 +21,9 @@ export function ResponsibleGuard() {
   const t = makeT(lang);
   const [state, setState] = useState<State | null>(null);
   const [reminder, setReminder] = useState<number | null>(null);
+  // The reminder counts as seen only once it is dismissed: a remount (a client navigation right after
+  // load) must not swallow one that was never on screen.
+  const due = useRef(0);
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -41,7 +44,7 @@ export function ResponsibleGuard() {
     const check = () => {
       const start = read(START_KEY) || Date.now();
       const n = reminderCount(start, minutes, Date.now());
-      if (n > read(SHOWN_KEY)) { write(SHOWN_KEY, n); setReminder(Math.round((Date.now() - start) / 60_000)); }
+      if (n > read(SHOWN_KEY)) { due.current = n; setReminder(Math.round((Date.now() - start) / 60_000)); }
     };
     const first = setTimeout(check, 50);
     const every = setInterval(check, 30_000);
@@ -61,7 +64,7 @@ export function ResponsibleGuard() {
         <div className="fixed bottom-5 right-5 z-[80] w-[min(92vw,340px)] rounded-xl border border-ink-700 bg-ink-900 p-4 shadow-2xl" data-testid="session-reminder">
           <p className="text-[14px] font-semibold text-mist-100">{t("sessionReminder").replace("{n}", String(reminder))}</p>
           <p className="mt-1 text-[12px] text-mist-500">{t("notInvestment")}</p>
-          <button onClick={() => setReminder(null)} className="mt-3 rounded-lg border border-ink-700 px-3 py-1.5 text-[12px] text-mist-300 hover:text-mist-100" data-testid="reminder-dismiss">{t("dismiss")}</button>
+          <button onClick={() => { try { sessionStorage.setItem(SHOWN_KEY, String(due.current)); } catch { /* private mode */ } setReminder(null); }} className="mt-3 rounded-lg border border-ink-700 px-3 py-1.5 text-[12px] text-mist-300 hover:text-mist-100" data-testid="reminder-dismiss">{t("dismiss")}</button>
         </div>
       )}
     </>

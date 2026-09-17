@@ -4,7 +4,8 @@ import { buildSlateBets } from "@/lib/bets/builder";
 import { localiseSlate } from "@/lib/bets/localise";
 import { lastUsage } from "@/lib/ai/extract";
 import { generateGame } from "@/lib/server/generate-game";
-import { onDemandCaps, onDemandVerdict, type OnDemandVerdict } from "@/lib/server/on-demand-policy";
+import { onDemandCaps, onDemandVerdict, slateCaps, slateVerdict, type OnDemandVerdict } from "@/lib/server/on-demand-policy";
+import { buildPropCandidates } from "@/lib/props/candidates";
 import { refreshConfig } from "@/lib/server/refresh-policy";
 import { espnDateKey, getGameDetail, getSlateOrNearest, todayKey } from "@/lib/sources/espn";
 import { SPORTS, sportSellsTickets } from "@/lib/sports";
@@ -25,12 +26,13 @@ export type OnDemandResult =
 const inflight = new Map<string, Promise<OnDemandResult>>();
 
 /** Counted per Brasília calendar day, the same day the plan's game allowance uses. */
-const todayCounts = (userId: string) => {
+export const todayCounts = (userId: string) => {
   const db = getDb();
   const since = brasiliaDayStart();
   return {
-    user: (db.prepare("SELECT COUNT(*) n FROM generation_requests WHERE userId = ? AND createdAt > ?").get(userId, since) as { n: number }).n,
-    global: (db.prepare("SELECT COUNT(*) n FROM generation_requests WHERE createdAt > ?").get(since) as { n: number }).n,
+    user: (db.prepare("SELECT COUNT(*) n FROM generation_requests WHERE userId = ? AND createdAt > ? AND scope = 'game'").get(userId, since) as { n: number }).n,
+    // Featured, slate, live and refresh generations have caps of their own.
+    global: (db.prepare("SELECT COUNT(*) n FROM generation_requests WHERE createdAt > ? AND scope = 'game'").get(since) as { n: number }).n,
   };
 };
 
@@ -93,6 +95,7 @@ async function generateShared(sportKey: string, gameId: string, user: PublicUser
       ...onDemandCaps(process.env),
       alreadyGenerated: !!findPrediction({ scope: "game", sportKey, gameId, dateKey, lang: langs[0] }),
       started: Date.parse(detail.game.startsAt) <= Date.now() || detail.game.status !== "scheduled",
+      priority: user.plan.id === "max",
     });
     if (verdict !== "generate") return { status: verdict, dateKey };
     if (!aiConfigured()) return { status: "ai_off" };
@@ -102,7 +105,7 @@ async function generateShared(sportKey: string, gameId: string, user: PublicUser
       .run(reqId, user.id, sportKey, gameId, dateKey, "running", nowIso());
     try {
       const out = await generateGame({ sportKey, dateKey, detail, langs });
-      getDb().prepare("UPDATE generation_requests SET status=?, costUsd=?, finishedAt=?, note=? WHERE id=?").run("ok", out.costUsd, nowIso(), out.notes.join(" | "), reqId);
+      getDb().prepare("UPDATE generation_requests SET status=?, costUsd=?, finishedAt=?, note=? WHERE id=?").run("ok", out.costUsd, nowIso(), [...out.notes, ...out.info].join(" | ").slice(0, 500), reqId);
       return { status: "generated", dateKey };
     } catch (error) {
       // The operator sees the reason (admin panel + log); the user sees a neutral message.
@@ -118,15 +121,26 @@ async function generateShared(sportKey: string, gameId: string, user: PublicUser
 }
 
 export type SlateDemandResult =
-  | { status: "generated" | "exists" | "too_few_games" | "cap_global" | "not_allowed" | "ai_off" | "unsupported" | "ai_budget" | "error"; dateKey?: string };
+  | { status: "generated" | "exists" | "too_few_games" | "cap_global" | "cap_user" | "not_allowed" | "ai_off" | "unsupported" | "ai_budget" | "error"; dateKey?: string };
 
 const slateInflight = new Map<string, Promise<SlateDemandResult>>();
+export const SLATE_BANDS = ["long", "moonshot", "lottery"];
+
+const slateCounts = (userId: string) => {
+  const db = getDb();
+  const since = brasiliaDayStart();
+  return {
+    global: (db.prepare("SELECT COUNT(*) n FROM generation_requests WHERE scope='slate' AND createdAt > ?").get(since) as { n: number }).n,
+    user: (db.prepare("SELECT COUNT(*) n FROM generation_requests WHERE scope='slate' AND userId = ? AND createdAt > ?").get(userId, since) as { n: number }).n,
+  };
+};
 
 /**
- * Cross-game parlays on demand: the first paid (crossGame) user to open the parlays page of a sport
- * builds that day's slate once; everyone else reads it. It counts against the global cap.
+ * Cross-game parlays on demand: one shared slate per sport per day, built when a plan with cross-game
+ * tickets asks for it (slateVerdict decides). Up to SLATE_MAX_GAMES upcoming games, with their posted
+ * player prices, in the long/moonshot/lottery bands; a ticket with two legs from one game is dropped.
  */
-export async function ensureSlateGenerated(args: { sportKey: string; user: PublicUser; maxGames?: number }): Promise<SlateDemandResult> {
+export async function ensureSlateGenerated(args: { sportKey: string; user: PublicUser }): Promise<SlateDemandResult> {
   const { sportKey, user } = args;
   const sport = SPORTS.find((s) => s.key === sportKey);
   if (!sport || !sportSellsTickets(sport)) return { status: "unsupported" };
@@ -138,12 +152,17 @@ export async function ensureSlateGenerated(args: { sportKey: string; user: Publi
   const task = (async (): Promise<SlateDemandResult> => {
     const slate = await getSlateOrNearest(todayKey(), false, sportKey).catch(() => null);
     if (!slate) return { status: "error" };
+    const caps = slateCaps(process.env);
     const langs = refreshConfig(process.env, SPORTS.map((s) => s.key)).langs as Lang[];
     const [primary, ...derived] = langs;
-    if (findPrediction({ scope: "slate", sportKey, gameId: null, dateKey: slate.dateKey, lang: primary })) return { status: "exists", dateKey: slate.dateKey };
-    const upcoming = slate.games.filter((g) => g.status === "scheduled" && Date.parse(g.startsAt) > Date.now()).slice(0, args.maxGames ?? 6);
-    if (upcoming.length < 2) return { status: "too_few_games", dateKey: slate.dateKey };
-    if (user.role !== "admin" && todayCounts(user.id).global >= onDemandCaps(process.env).globalDailyCap) return { status: "cap_global" };
+    const upcoming = slate.games.filter((g) => g.status === "scheduled" && Date.parse(g.startsAt) > Date.now()).slice(0, caps.maxGames);
+    const counts = slateCounts(user.id);
+    const verdict = slateVerdict({
+      role: user.role, crossGame: user.plan.crossGame, caps,
+      exists: !!findPrediction({ scope: "slate", sportKey, gameId: null, dateKey: slate.dateKey, lang: primary }),
+      upcomingGames: upcoming.length, globalCountToday: counts.global, userCountToday: counts.user,
+    });
+    if (verdict !== "generate") return { status: verdict, dateKey: slate.dateKey };
     if (!aiConfigured()) return { status: "ai_off" };
 
     const reqId = newId("gr");
@@ -152,15 +171,20 @@ export async function ensureSlateGenerated(args: { sportKey: string; user: Publi
     try {
       const details = (await Promise.all(upcoming.map((g) => getGameDetail(g.id, false, sportKey).catch(() => null))))
         .filter((d): d is NonNullable<typeof d> => d !== null);
-      if (details.length < 2) throw new Error("fewer than two games with details");
+      const games = [];
+      for (const d of details) {
+        const candidates = await buildPropCandidates(d, { maxPlayers: 4, limit: 12 }).catch(() => null);
+        games.push({ game: d.game, detail: d, props: candidates?.props ?? [] });
+      }
+      if (games.length < 2) throw new Error("fewer than two games with details");
       let cost = 0;
       const spend = () => { const c = lastUsage?.costUsd ?? 0; cost += c; return c; };
-      const cross = await buildSlateBets({ games: details.map((d) => ({ game: d.game, detail: d })), bands: ["long", "moonshot"], lang: primary });
-      const matchup = `${details.length} ${primary === "pt" ? "jogos" : "games"}`;
-      savePrediction({ scope: "slate", sportKey, gameId: null, dateKey: slate.dateKey, lang: primary, matchup, slate: cross, costUsd: spend() });
+      const cross = await buildSlateBets({ games, bands: SLATE_BANDS, lang: primary });
+      const matchup = (lang: Lang) => `${games.length} ${lang === "pt" ? "jogos" : "games"}`;
+      savePrediction({ scope: "slate", sportKey, gameId: null, dateKey: slate.dateKey, lang: primary, matchup: matchup(primary), slate: cross, costUsd: spend() });
       for (const lang of derived) {
         try {
-          savePrediction({ scope: "slate", sportKey, gameId: null, dateKey: slate.dateKey, lang, matchup: `${details.length} ${lang === "pt" ? "jogos" : "games"}`, slate: await localiseSlate(cross, primary, lang), costUsd: spend() });
+          savePrediction({ scope: "slate", sportKey, gameId: null, dateKey: slate.dateKey, lang, matchup: matchup(lang), slate: await localiseSlate(cross, primary, lang), costUsd: spend() });
         } catch (error) {
           reportError("ai.slate.localise", error, { sportKey, lang }, "warn");
         }

@@ -1,7 +1,8 @@
 import { getGameDetail, getPlayerHistory } from "@/lib/sources/espn";
 import { measureProp, matchAthlete, resolveStatLabels } from "@/lib/props/history";
 import { pendingEntries, updateEntries } from "@/lib/ledger/store";
-import type { LedgerEntry, LegOutcome, SettledLeg } from "@/lib/types";
+import { getSport } from "@/lib/sports";
+import type { GameDetail, LedgerEntry, LegOutcome, SettledLeg } from "@/lib/types";
 
 interface FinalGame {
   homeAbbr: string;
@@ -27,9 +28,11 @@ async function gradeLeg(leg: SettledLeg, final: FinalGame, parsed: ParsedSelecti
     const isHome = parsed.team === homeAbbr;
     const own = isHome ? homeScore : awayScore;
     const other = isHome ? awayScore : homeScore;
+    // A football match has three outcomes: a draw loses a win bet (it is not a push, as in basketball OT-less lines).
+    const drawLoses = getSport(final.sportKey).group === "soccer";
     return {
       ...leg,
-      outcome: own === other ? "push" : own > other ? "won" : "lost",
+      outcome: own === other ? (drawLoses ? "lost" : "push") : own > other ? "won" : "lost",
       actual: `${awayAbbr} ${awayScore} - ${homeScore} ${homeAbbr}`,
     };
   }
@@ -116,6 +119,36 @@ function parseSelection(leg: SettledLeg, final: FinalGame): ParsedSelection {
   return { type: "other" };
 }
 
+function finalOf(detail: GameDetail, sportKey: string): FinalGame {
+  return {
+    homeAbbr: detail.game.home.abbreviation,
+    awayAbbr: detail.game.away.abbreviation,
+    homeNames: [detail.game.home.displayName, detail.game.home.name, detail.game.home.abbreviation].filter(Boolean),
+    awayNames: [detail.game.away.displayName, detail.game.away.name, detail.game.away.abbreviation].filter(Boolean),
+    homeScore: detail.game.home.score ?? 0,
+    awayScore: detail.game.away.score ?? 0,
+    athletes: detail.rosters.flatMap((r) => r.athletes ?? []),
+    sportKey,
+  };
+}
+
+/** Grades one leg against a finished game (bankroll legs, scanned slips, tipster picks). */
+export async function gradeLegAgainst(leg: SettledLeg, detail: GameDetail, sportKey: string): Promise<SettledLeg> {
+  if (detail.game.status !== "final") return { ...leg, outcome: "pending" };
+  const final = finalOf(detail, sportKey);
+  return gradeLeg(leg, final, parseSelection(leg, final));
+}
+
+/** A ticket's outcome from its graded legs: any loss loses; an ungradable leg voids; all wins win. */
+export function ticketOutcome(legs: Pick<SettledLeg, "outcome">[]): LegOutcome {
+  const decided = legs.filter((l) => l.outcome === "won" || l.outcome === "lost");
+  if (decided.some((l) => l.outcome === "lost")) return "lost";
+  if (legs.some((l) => l.outcome === "pending")) return "pending";
+  if (legs.some((l) => l.outcome === "void")) return "void";
+  if (!decided.length) return "push";
+  return decided.every((l) => l.outcome === "won") ? "won" : "push";
+}
+
 /**
  * Grades every pending ticket whose game has finished. Runs on demand — there is no scheduler here,
  * and a leg that cannot be graded deterministically is marked void rather than guessed at.
@@ -134,17 +167,7 @@ export async function settlePending(limit = 50): Promise<{ settled: number; stil
       continue;
     }
 
-    const final: FinalGame = {
-      homeAbbr: detail.game.home.abbreviation,
-      awayAbbr: detail.game.away.abbreviation,
-      homeNames: [detail.game.home.displayName, detail.game.home.name, detail.game.home.abbreviation].filter(Boolean),
-      awayNames: [detail.game.away.displayName, detail.game.away.name, detail.game.away.abbreviation].filter(Boolean),
-      homeScore: detail.game.home.score ?? 0,
-      awayScore: detail.game.away.score ?? 0,
-      athletes: detail.rosters.flatMap((r) => r.athletes ?? []),
-      sportKey: entry.sportKey,
-    };
-
+    const final = finalOf(detail, entry.sportKey);
     const legs: SettledLeg[] = [];
     for (const leg of entry.legs) {
       legs.push(await gradeLeg(leg, final, parseSelection(leg, final)));

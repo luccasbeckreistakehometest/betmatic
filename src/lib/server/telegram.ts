@@ -13,10 +13,12 @@ import { todayKey } from "@/lib/sources/espn";
 import { normaliseLang, type Lang } from "@/lib/i18n";
 import {
   BOT_REPLY, LINK_CODE_LENGTH, LINK_CODE_TTL_MS, codeIsLive, digestDue, digestText, matchFollowers, newLinkCode,
-  parseStartCommand, ticketAlertText, type DigestItem, type FollowKind, type FollowRef,
+  parseStartCommand, ticketAlertText, ticketNoticeText, type DigestItem, type FollowKind, type FollowRef,
 } from "@/lib/alerts";
 import type { BetSlate, BetSuggestion } from "@/lib/types";
 import { baseUrlOrEmpty } from "@/lib/base-url";
+import { recentFeaturedIds } from "@/lib/server/featured-store";
+import { visibleSuggestionIds } from "@/lib/server/entitlement";
 
 /**
  * Telegram alerts. The bot only ever receives `/start <code>` and `/stop`; everything else is
@@ -194,9 +196,15 @@ export function followersOf(sportKey: string, teamIds: string[]): string[] {
 // ---- alert log + delivery -----------------------------------------------------------------------
 
 export interface AlertRow {
-  id: string; channel: "telegram" | "inapp"; kind: "tickets" | "digest" | "system"; dedupeKey: string;
+  id: string; channel: "telegram" | "inapp"; kind: "tickets" | "digest" | "system" | "lineup" | "report" | "line"; dedupeKey: string;
   title: string; body: string; url: string; status: "sent" | "failed" | "unread" | "read"; error: string; createdAt: string; readAt: string | null;
 }
+/** Read straight from the table so this module stays free of the settings/bankroll import chain. */
+export function isPausedNow(userId: string, now = new Date()): boolean {
+  const row = getDb().prepare("SELECT pausedUntil FROM user_settings WHERE userId=?").get(userId) as { pausedUntil: string | null } | undefined;
+  return !!row?.pausedUntil && row.pausedUntil > now.toISOString();
+}
+
 export interface DeliverArgs { userId: string; kind: AlertRow["kind"]; dedupeKey: string; title: string; body: string; url: string }
 
 /**
@@ -206,6 +214,8 @@ export interface DeliverArgs { userId: string; kind: AlertRow["kind"]; dedupeKey
  */
 export async function deliver(args: DeliverArgs, send: TelegramTransport = sendTelegram): Promise<"telegram" | "inapp" | null> {
   const db = getDb();
+  // Nothing is pushed to someone on a self-exclusion pause (Lei 14.790 / CONAR): not queued either.
+  if (isPausedNow(args.userId)) return null;
   const chat = telegramConfigured() ? getRow(args.userId)?.chatId ?? null : null;
   const id = newId("al");
   const claimed = db.prepare(
@@ -241,21 +251,39 @@ export function markNotificationsRead(userId: string, ids: string[] | null): num
 
 export interface NotifyArgs {
   gameId: string; sportKey: string; matchup: string; teamIds: string[];
+  /** The dateKey the tickets were saved under; the entitlement pass reads that row. */
+  dateKey?: string;
   primary: Lang; slates: Partial<Record<Lang, BetSlate>>; base: string;
 }
 
-/** Called right after a game's tickets are saved. Each follower hears once, in their own language. */
+/**
+ * Called right after a game's tickets are saved. Each follower hears once, in their own language,
+ * and only about the tickets their plan shows on the page right now (same pass as /api/predictions);
+ * a follower whose plan shows none yet gets a pick-free notice pointing to the game page.
+ */
 export async function notifyFollowers(args: NotifyArgs, send: TelegramTransport = sendTelegram): Promise<{ users: number; telegram: number; inapp: number }> {
   const out = { users: 0, telegram: 0, inapp: 0 };
   const primarySlate = args.slates[args.primary];
   if (!primarySlate?.suggestions.length) return out;
   for (const userId of followersOf(args.sportKey, args.teamIds)) {
-    const user = findById(userId);
-    if (!user) continue;
+    const row = findById(userId);
+    if (!row || row.disabledAt) continue;
+    const user = toPublic(row);
     const lang = normaliseLang(user.lang);
-    const { text, slugs } = ticketAlertText({ gameId: args.gameId, matchup: args.matchup, lang, primary: primarySlate.suggestions, localised: args.slates[lang]?.suggestions, base: args.base });
+    const visible = visibleSuggestionIds(user, { sportKey: args.sportKey, gameId: args.gameId, lang: args.primary, dateKey: args.dateKey });
+    const primary = primarySlate.suggestions.filter((s) => visible.has(s.id));
     const title = scrubText(lang === "pt" ? `Bilhetes novos — ${args.matchup}` : `New tickets — ${args.matchup}`, lang);
-    const where = await deliver({ userId, kind: "tickets", dedupeKey: `tickets:${args.gameId}`, title, body: text, url: `${args.base}/p/${slugs[0]}?lang=${lang}` }, send);
+    let body: string;
+    let url: string;
+    if (primary.length) {
+      const alert = ticketAlertText({ gameId: args.gameId, matchup: args.matchup, lang, primary, localised: args.slates[lang]?.suggestions, base: args.base });
+      body = alert.text;
+      url = `${args.base}/p/${alert.slugs[0]}?lang=${lang}`;
+    } else {
+      url = `${args.base}/app/game/${args.gameId}?sport=${args.sportKey}&lang=${lang}`;
+      body = ticketNoticeText({ matchup: args.matchup, lang, url });
+    }
+    const where = await deliver({ userId, kind: "tickets", dedupeKey: `tickets:${args.gameId}`, title, body, url }, send);
     if (!where) continue;
     out.users += 1;
     if (where === "telegram") out.telegram += 1; else out.inapp += 1;
@@ -286,6 +314,7 @@ export async function sendDailyDigest(opts: { dateKey?: string; base?: string; f
   const base = opts.base ?? baseUrlOrEmpty();
   const primaryLang = refreshConfig(process.env, SPORTS.map((s) => s.key)).langs[0] as Lang;
   const subscribers = getDb().prepare("SELECT userId FROM telegram_links WHERE digest=1").all() as { userId: string }[];
+  const featured = recentFeaturedIds(now);
 
   for (const { userId } of subscribers) {
     const row = findById(userId);
@@ -293,15 +322,16 @@ export async function sendDailyDigest(opts: { dateKey?: string; base?: string; f
     const user = toPublic(row);
     const lang = normaliseLang(user.lang);
     const collect = (readLang: Lang): DigestItem[] => {
-      const items: DigestItem[] = [];
+      const items: (DigestItem & { featured: boolean })[] = [];
       for (const sport of SPORTS) {
         for (const p of servePredictions({ scope: "game", sportKey: sport.key, dateKey, lang: readLang, plan: user.plan, role: "user" })) {
           const best = [...p.slate.suggestions].sort((a, b) => b.evidenceScore - a.evidenceScore)[0];
           if (!best || !p.gameId) continue;
-          items.push({ matchup: p.matchup, title: best.title, odds: best.combinedDecimal, evidenceScore: best.evidenceScore, slug: slugFor(sport.key, p.gameId, dateKey, primaryLang, best) });
+          items.push({ featured: featured.has(p.gameId), matchup: p.matchup, title: best.title, odds: best.combinedDecimal, evidenceScore: best.evidenceScore, slug: slugFor(sport.key, p.gameId, dateKey, primaryLang, best) });
         }
       }
-      return items;
+      // The day's featured games lead the digest; the rest follow.
+      return items.sort((a, b) => Number(b.featured) - Number(a.featured)).map(({ featured: _f, ...item }) => { void _f; return item; });
     };
     // A day whose derived-language pass failed still has the primary text: better that than silence.
     let items = collect(lang);

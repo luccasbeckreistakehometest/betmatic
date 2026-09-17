@@ -40,6 +40,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       { url: `${base}${p || "/"}?lang=en`, lastModified: now, changeFrequency: "daily" as const, priority: 0.5 },
     ]),
     ...SPORT_LANDINGS.flatMap((s) => [s.slug.pt, s.slug.en]).map((slug) => ({ url: `${base}/${slug}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 })),
+    ...["/raio-x-tipster", "/tipster-audit"].map((p) => ({ url: `${base}${p}`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.7 })),
     ...LEGAL_PATHS.map((p) => ({ url: `${base}${p}`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.2 })),
   ];
   // "Palpite X x Y": every scheduled game on today's and tomorrow's slates, with or without tickets.

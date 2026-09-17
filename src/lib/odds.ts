@@ -120,3 +120,14 @@ export function kellyFraction(decimal: number, fairProb: number, fraction = 0.25
   const full = (b * fairProb - (1 - fairProb)) / b;
   return full > 0 ? Number((full * fraction).toFixed(4)) : 0;
 }
+
+/**
+ * The two sides of one market with the book's margin removed (proportional method): the fair
+ * chance of each side. -110/-110 is 50/50.
+ */
+export function noVigPair(a: number, b: number): { a: number; b: number } {
+  const pa = impliedProbability(a);
+  const pb = impliedProbability(b);
+  if (!Number.isFinite(pa) || !Number.isFinite(pb) || pa + pb <= 0) return { a: NaN, b: NaN };
+  return { a: pa / (pa + pb), b: pb / (pa + pb) };
+}

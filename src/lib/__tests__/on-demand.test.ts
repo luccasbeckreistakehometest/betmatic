@@ -65,7 +65,7 @@ describe("a free user's daily pick", () => {
     game("g-ok", 5);
     game("g-other", 6);
     process.env.ANTHROPIC_API_KEY = "sk-ant-test-key-long-enough-to-count";
-    generate.mockResolvedValueOnce({ costUsd: 0, notes: [] });
+    generate.mockResolvedValueOnce({ costUsd: 0, notes: [], info: [] });
     expect((await u.open("g-ok")).status).toBe("generated");
     expect(u.picks()).toEqual(["g-ok"]);
     const second = await u.open("g-other");

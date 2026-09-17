@@ -17,6 +17,9 @@ function pt(): LegalDoc {
               "Cadastro: nome, e-mail, senha (guardada só como hash scrypt — ninguém consegue lê-la), idioma e a data em que você aceitou os termos e confirmou ter 18 anos ou mais.",
               "Uso do serviço: jogos que você abriu e escolheu no dia, bilhetes gerados a seu pedido, sua banca (apostas que você mesmo registrou), bilhetes analisados, times e ligas que você segue, avisos, ajustes de jogo responsável (limites, lembretes, pausa), participação opcional no ranking e o progresso do tour de primeiro acesso.",
               "Pagamentos: plano ou pacote comprado, valor, status e o número do pagamento no Mercado Pago. Não recebemos nem guardamos dados de cartão — isso fica com o Mercado Pago.",
+              "Prints de bilhete (\"Manda o print\"): a imagem é lida na hora e descartada, nunca é gravada. Só o texto do bilhete (jogo, seleção, odd, valor) fica na sua banca, e só se você salvar.",
+              "Raio-x do tipster: o texto colado e os prints são descartados depois da leitura. Ficam só os palpites extraídos, o relatório e o nome que você deu, visíveis apenas para você e apagáveis a qualquer momento.",
+              "Medição de uso: páginas visitadas e ações no app (por exemplo, abrir um jogo ou salvar um bilhete), com um identificador aleatório em cookie próprio e a campanha de origem (UTM ou site que trouxe você). Não guardamos IP e não usamos ferramentas de terceiros.",
               "Telegram (só se você conectar): o identificador do chat e o nome de usuário.",
               "Contato: nome, e-mail e a mensagem que você enviar pelo formulário.",
               "Dados técnicos: endereço IP e informações do navegador, usados em memória para limitar abusos e registrados em logs do servidor com rotação automática.",
@@ -45,7 +48,7 @@ function pt(): LegalDoc {
           "Só com fornecedores necessários para o serviço funcionar, que tratam os dados em nosso nome:",
           {
             list: [
-              "Anthropic (inteligência artificial): recebe os dados dos jogos e o texto dos bilhetes que você pede para analisar. Não enviamos seu nome nem seu e-mail.",
+              "Anthropic (inteligência artificial): recebe os dados dos jogos, o texto dos bilhetes que você pede para analisar, os prints de bilhete e as mensagens de tipster que você envia para leitura. Não enviamos seu nome nem seu e-mail.",
               "Mercado Pago: processa os pagamentos e recebe o e-mail do comprador.",
               "Hostinger: hospeda o servidor onde ficam o banco de dados e os logs.",
               "Telegram: entrega os alertas, se você conectar a conta.",
@@ -70,6 +73,7 @@ function pt(): LegalDoc {
               "Registros de pagamento: 5 anos, pelas obrigações fiscais; se você excluir a conta, ficam anonimizados (sem nome nem e-mail).",
               "Mensagens de contato: até 12 meses depois de resolvidas.",
               "Progresso do tour de visitantes sem conta: até 12 meses.",
+              "Eventos de medição de uso: 180 dias, depois são apagados automaticamente.",
               "Logs técnicos do servidor: rotação automática, por poucas semanas.",
             ],
           },
@@ -97,7 +101,7 @@ function pt(): LegalDoc {
       },
       {
         title: "9. Cookies",
-        body: ["Usamos apenas cookies essenciais — detalhes na [Política de cookies](/cookies). Não usamos cookies de publicidade nem de rastreamento de terceiros."],
+        body: ["Usamos cookies essenciais e um cookie de medição de uso próprio, sem IP — detalhes na [Política de cookies](/cookies). Não usamos cookies de publicidade nem de rastreamento de terceiros."],
       },
       {
         title: "10. Menores de idade",

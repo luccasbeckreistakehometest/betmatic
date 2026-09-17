@@ -96,7 +96,7 @@ export async function runRefresh(options: { sports?: string[]; maxGames?: number
     const slateExisting = findPrediction({ scope: "slate", sportKey, gameId: null, dateKey: slate.dateKey, lang: primary });
     if (detailed.length >= 2 && (!slateExisting || generatedThisRun > 0)) {
       try {
-        const cross = await buildSlateBets({ games: detailed.map((d) => ({ game: d.game, detail: d.detail })), bands: ["long", "moonshot"], lang: primary });
+        const cross = await buildSlateBets({ games: detailed.map((d) => ({ game: d.game, detail: d.detail })), bands: ["long", "moonshot", "lottery"], lang: primary });
         const saveSlate = (lang: Lang, s: BetSlate, costUsd: number) =>
           savePrediction({ scope: "slate", sportKey, gameId: null, dateKey: slate.dateKey, lang, matchup: `${detailed.length} games`, slate: s, costUsd });
         saveSlate(primary, cross, spend()); predictions += 1;

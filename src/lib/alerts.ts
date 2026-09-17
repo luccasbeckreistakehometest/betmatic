@@ -80,6 +80,18 @@ export function ticketAlertText(args: TicketAlertArgs): { text: string; slugs: s
   return { text: [head, ...lines, "", NOT_INVESTMENT[lang]].join("\n"), slugs };
 }
 
+/**
+ * What a follower hears when none of the new tickets is open to their plan yet (the free delay, a
+ * band or sport outside the plan, a game they did not pick today): that the game has tickets, no picks.
+ */
+export function ticketNoticeText(args: { matchup: string; lang: Lang; url: string }): string {
+  const matchup = scrubText(args.matchup, args.lang);
+  const line = args.lang === "pt"
+    ? `🎫 ${matchup} ganhou bilhetes novos. Os que o seu plano mostra aparecem na página do jogo.`
+    : `🎫 ${matchup} has new tickets. The ones your plan shows are on the game page.`;
+  return [line, args.url, "", NOT_INVESTMENT[args.lang]].join("\n");
+}
+
 export interface DigestItem { matchup: string; title: string; odds: number; slug: string; evidenceScore: number }
 
 /** The morning digest: one line per game, best-evidenced ticket first. */

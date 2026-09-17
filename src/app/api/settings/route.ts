@@ -24,6 +24,7 @@ const schema = z.object({
   lossStreakNotice: z.number().int().min(0).max(20).optional(),
   leaderboardOptIn: z.boolean().optional(),
   handle: z.string().max(32).nullable().optional(),
+  bankrollAmount: money.optional(),
 });
 
 export async function PATCH(request: Request) {

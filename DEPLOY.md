@@ -70,6 +70,29 @@ compra real de valor baixo e confira em `/admin → Pagamentos`.
   popula nem em janela; bet365 é ilegível; mercados de faltas por jogador só existem em
   alguns jogos. O app é honesto sobre isso nas notas de cada bilhete.
 
+## 6b. Jobs da rodada 3 (sidecar)
+O sidecar chama `POST /api/cron/refresh?job=…` com `x-cron-secret`. Todos são idempotentes e escrevem uma
+linha JSON no log (`job.lineups`, `job.close`, `job.weekly`, `job.cleanup`, `job.featured`):
+
+| job | quando | o que faz |
+|---|---|---|
+| `lineups` | a cada tick (15 min) | vigia de escalação: bilhetes pendentes com jogo nas próximas 100 min contra escalação e lesões (ESPN), no máximo 30 jogos por tick |
+| `close` | a cada tick | CLV: odd de fechamento das pernas cujo jogo começa em até 30 min (janela maior que o intervalo do cron) |
+| `weekly` | de hora em hora | relatório semanal; só escreve na segunda a partir das 12:00 UTC (`force=1` para rodar agora) |
+| `cleanup` | 1 vez por dia | apaga eventos de medição com mais de 180 dias |
+| `featured` | junto do refresh (a cada 4 h) | destaques do dia; roda mesmo com `CRON_ENABLED=0` |
+
+No stack de produção (`/srv/apps/stack/docker-compose.yml`, serviço `betmatic-cron`) acrescente as mesmas
+linhas do `docker-compose.yml` deste repositório.
+
+Fontes de dados: tudo vem do JSON público da ESPN (placar, escalação, odds de abertura/atual/fechamento
+e linhas de jogador do provedor 100). Se a ESPN mudar esse formato, o caminho licenciado é a
+The Odds API (plano pago com props). Os caminhos de captura da Betano/Sofascore com navegador não são
+usados pelos recursos da rodada 3.
+
+Privacidade: prints de bilhete são lidos em memória e descartados (só o tamanho vai para o log); o texto
+colado no raio-x do tipster é descartado depois da extração; a medição de uso não grava IP.
+
 ## 7. Telegram (alertas dos times seguidos)
 1. Crie o bot no @BotFather: o token vai em `TELEGRAM_BOT_TOKEN`, o @ do bot (sem @) em `TELEGRAM_BOT_USERNAME`.
 2. Aponte o webhook para o app, com o mesmo segredo de `TELEGRAM_WEBHOOK_SECRET`:

@@ -10,12 +10,14 @@ import { formatDecimal } from "@/lib/odds";
 import { EquityChart } from "@/components/EquityChart";
 import { curvePath } from "@/lib/ledger/backtest";
 import { LossReview } from "@/components/LossReview";
+import { SlipScanner } from "@/components/SlipScanner";
 
-interface Entry { id: string; source: "ticket" | "manual"; title: string; matchup: string; combinedDecimal: number; stake: number; outcome: string; pnl: number; createdAt: string; settledAt: string | null; slug: string | null }
+interface EntryLeg { selection: string; outcome: string; actual?: string; settlement?: unknown }
+interface Entry { id: string; source: "ticket" | "manual" | "custom" | "scan"; title: string; matchup: string; combinedDecimal: number; stake: number; outcome: string; pnl: number; createdAt: string; settledAt: string | null; slug: string | null; legs?: EntryLeg[]; autoLegs?: number; alerts?: { kind: string; player: string }[]; clv?: { pct: number; n: number; moved: number } }
 interface Payload { entries: Entry[]; totals: { staked: number; profit: number; roi: number; won: number; lost: number; pending: number }; streak?: { streak: number; notice: boolean }; pause?: { paused: boolean; until: string | null }; error?: string }
 
 export function BankrollBoard() {
-  const { lang } = useNavState();
+  const { lang, sport } = useNavState();
   const t = makeT(lang);
   const [data, setData] = useState<Payload | null>(null);
   const [title, setTitle] = useState(""); const [odds, setOdds] = useState(""); const [stake, setStake] = useState("");
@@ -54,6 +56,7 @@ export function BankrollBoard() {
           {t("streakNoticeText").replace("{n}", String(data.streak.streak))}
         </div>
       )}
+      {!data?.pause?.paused && <SlipScanner lang={lang} sportKey={sport.key} onSaved={() => void load()} />}
       <Panel title={t("bankroll")} meta={data ? `${data.totals.won}W ${data.totals.lost}L · ${data.totals.pending} ${lang === "pt" ? "pendentes" : "pending"}` : undefined}>
         <p className="text-[12px] text-mist-500">{t("bankrollIntro")}</p>
         {data && (
@@ -68,13 +71,35 @@ export function BankrollBoard() {
             <li key={e.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5 text-[13px]" data-testid="bankroll-entry">
               <span className={"w-16 font-semibold " + tone(e.outcome)}>{{ won: t("markWon"), lost: t("markLost"), void: t("markVoid"), push: "push", pending: "…" }[e.outcome]}</span>
               <span className="min-w-0 flex-1 truncate text-mist-100">{e.title}<span className="text-mist-500"> {e.matchup}</span></span>
+              {e.alerts?.length ? (
+                <span className="rounded bg-alert-400/12 px-1.5 py-0.5 text-[10.5px] font-semibold text-alert-400" data-testid="entry-alert" title={e.alerts.map((a) => a.player).join(", ")}>
+                  {lang === "pt" ? `escalação: ${e.alerts.length === 1 ? "1 perna em risco" : `${e.alerts.length} pernas em risco`}` : `lineup: ${e.alerts.length === 1 ? "1 leg at risk" : `${e.alerts.length} legs at risk`}`}
+                </span>
+              ) : null}
               <span className="nums text-mist-400">{formatDecimal(e.combinedDecimal)} · {money(e.stake)}</span>
+              {e.clv && (e.clv.n > 0 || e.clv.moved > 0) && (
+                <span className={`nums text-[11px] ${e.clv.n && e.clv.pct > 0 ? "text-signal-400" : "text-mist-500"}`} data-testid="entry-clv" title={lang === "pt" ? "Preço que você pegou comparado com o fechamento, sem a margem" : "Your price compared with the close, margin removed"}>
+                  {e.clv.n ? `CLV ${e.clv.pct > 0 ? "+" : ""}${(e.clv.pct * 100).toFixed(1).replace(".", lang === "pt" ? "," : ".")}%` : lang === "pt" ? "linha mudou" : "line moved"}
+                </span>
+              )}
               <span className={"nums w-24 text-right " + tone(e.outcome)}>{e.outcome === "won" || e.outcome === "lost" ? `${e.pnl >= 0 ? "+" : ""}${money(e.pnl)}` : ""}</span>
-              {e.source === "manual" && e.outcome === "pending" && (
+              {e.source !== "ticket" && e.outcome === "pending" && (
                 <span className="flex gap-1 text-[11px]">{(["won", "lost", "void"] as const).map((o) => <button key={o} onClick={() => grade(e.id, o)} className="rounded border border-ink-700 px-1.5 py-0.5 text-mist-400 hover:text-mist-100">{{ won: t("markWon"), lost: t("markLost"), void: t("markVoid") }[o]}</button>)}</span>
               )}
               <button onClick={() => remove(e.id)} className="text-[11px] text-mist-600 hover:text-warn-400">✕</button>
               {e.source === "ticket" && e.outcome === "lost" && e.slug && <div className="basis-full pt-1"><LossReview slug={e.slug} lang={lang} compact /></div>}
+              {(e.source === "custom" || e.source === "scan") && e.legs?.length ? (
+                <ul className="basis-full pl-16 text-[12px]" data-testid="entry-legs">
+                  {e.legs.map((l, i) => (
+                    <li key={i} className="flex flex-wrap items-baseline gap-2 py-0.5">
+                      <span className={tone(l.outcome)}>{l.outcome === "won" ? "✓" : l.outcome === "lost" ? "✗" : l.outcome === "void" ? "∅" : "·"}</span>
+                      <span className="text-mist-300">{l.selection}</span>
+                      {l.settlement ? <span className="rounded bg-edge-400/10 px-1 text-[10px] text-edge-400" data-testid="auto-grade">{lang === "pt" ? "liquidação automática" : "graded automatically"}</span> : <span className="text-[10px] text-mist-600">{lang === "pt" ? "você marca" : "you grade it"}</span>}
+                      {l.actual && <span className="text-[10.5px] text-mist-500">{l.actual}</span>}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
             </li>
           )) : <li className="py-4"><Empty>{t("bankrollEmpty")}</Empty></li>}
         </ul>

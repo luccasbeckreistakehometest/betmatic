@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { readLedger } from "@/lib/ledger/store";
-import { proofMinDecided, proofPublishable, proofStats } from "@/lib/ledger/proof";
+import { mainTickets, proofMinDecided, proofPublishable, proofStats } from "@/lib/ledger/proof";
 import { latestPredictionDateKey, servePredictions } from "@/lib/server/predictions";
 import { getPlan } from "@/lib/plans";
 import { SOLD_SPORTS } from "@/lib/sports";
@@ -9,6 +9,7 @@ import { formatDecimal } from "@/lib/odds";
 import type { Lang } from "@/lib/i18n";
 import type { BetSuggestion } from "@/lib/types";
 import { legsLabel, pickTeaser, teaserHeadline } from "@/lib/teaser";
+import { recentFeaturedIds } from "@/lib/server/featured-store";
 
 /**
  * The landing's honesty strip: live numbers from the public ledger and, when there is one, today's
@@ -30,7 +31,10 @@ function bestFor(dateKey: string, lang: Lang, sportKeys?: string[]): (TopPick & 
       for (const bet of p.slate.suggestions) all.push({ bet, matchup: p.matchup, gameId: p.gameId, sportKey: s.key });
     }
   }
-  return pickTeaser(all);
+  // The day's featured games come first: they are the ones picked to be shown.
+  const featured = recentFeaturedIds();
+  const fromFeatured = all.filter((p) => p.gameId && featured.has(p.gameId));
+  return pickTeaser(fromFeatured.length ? fromFeatured : all);
 }
 
 /** Today's best-evidenced ticket; before today has one, the latest day's, labelled as such. */
@@ -44,7 +48,7 @@ function bestToday(lang: Lang, sportKeys?: string[]): { pick: ReturnType<typeof 
 /** `sportKeys` narrows both the numbers and the ticket to one sport funnel. */
 export function ProofStrip({ lang, sportKeys }: { lang: Lang; sportKeys?: string[] }) {
   const c = C[lang];
-  const s = proofStats(readLedger().filter((e) => !sportKeys || sportKeys.includes(e.sportKey)));
+  const s = proofStats(mainTickets(readLedger()).filter((e) => !sportKeys || sportKeys.includes(e.sportKey)));
   const { pick: top, isToday } = bestToday(lang, sportKeys);
   const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
   const publish = proofPublishable(s);

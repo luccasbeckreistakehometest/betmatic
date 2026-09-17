@@ -6,6 +6,7 @@ import { releaseUnlock, unlockGame } from "@/lib/server/unlocks";
 import { apiError, rateLimited, requestLang } from "@/lib/server/api";
 import { accountKey, hit, ipKey } from "@/lib/server/rate-limit";
 import { SPORTS } from "@/lib/sports";
+import { recordRouteEvent } from "@/lib/server/analytics";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,5 +50,6 @@ export async function POST(request: Request, ctx: { params: Promise<{ gameId: st
   if (code >= 500 && result.status !== "unsupported" && result.status !== "ai_off") {
     return apiError(result.status === "ai_budget" ? "ai_budget" : "ai_unavailable", lang, code, { status: result.status });
   }
+  if (result.status === "generated") await recordRouteEvent("game_generated", user.id, { sportKey, gameId });
   return NextResponse.json(result, { status: code });
 }

@@ -1,0 +1,41 @@
+/** Copy for the player deep dive ("Raio-x do jogador"), written separately in each language. */
+export const PLAYER_COPY = {
+  pt: {
+    back: "Voltar ao jogo", title: "Raio-x do jogador", loading: "Puxando o histórico do jogador…",
+    signIn: "Entre na sua conta para abrir o raio-x.", notFound: "Não achamos histórico para esse jogador.", failed: "Não deu para carregar agora. Tente de novo em instantes.",
+    capTitle: "Seu raio-x de hoje já foi usado", capBody: "No Free dá para abrir 1 jogador por dia (reabrir o mesmo é livre). Amanhã libera outro. Nos planos pagos, o raio-x é ilimitado.", seePlans: "Ver planos",
+    market: "Mercado", line: "Linha", over: "Mais de", under: "Menos de", drag: "Arraste a linha no gráfico ou use os botões",
+    window: "Janela do gráfico", last10: "Últimos 10", last20: "Últimos 20", all: "Todos",
+    rates: "Quantas vezes passou dessa linha", l5: "Últimos 5", l10: "Últimos 10", season: "Histórico", home: "Em casa", away: "Fora", noSample: "sem amostra",
+    push: "Valor exatamente na linha conta como devolução, nem green nem red.",
+    posted: "Linhas publicadas pela casa", postedEmpty: "A casa ainda não publicou linha desse jogador para este jogo.", price: "odd", fair: "chance sem a margem", measuredHere: "passou", oneSided: "só um lado publicado", opened: "abriu", useLine: "usar essa linha",
+    role: "Minutagem e papel", tier: { starter: "titular", rotation: "rotação", fringe: "pouco usado", unknown: "sem dado" }, minutes: "min nos últimos 5", avg: "média", trend: "tendência", starts: "titularidade", noMinutes: "O histórico de futebol da fonte não traz minutos; o papel vem das partidas como titular.",
+    dvp: "O que o adversário cede", dvpBody: "Por jogo, a jogadores da mesma posição ({pos}), nos últimos {n} jogos do {team}.", dvpOwn: "referência: o time dele cede", dvpNone: "Sem amostra de defesa por posição para este jogo.", pts: "pts", reb: "reb", ast: "ast", threes: "bolas de 3",
+    split: "Com e sem o companheiro", splitHint: "Escolha um companheiro de time para ver como o jogador rende quando ele joga e quando não joga.", pick: "Escolha…", with: "Com", without: "Sem", games: "jogos",
+    small: "Amostra insuficiente: precisa de pelo menos 3 jogos de cada lado.", splitNote: "Amostra pequena: use como contexto, não como sinal sozinho.", splitLoading: "Carregando…",
+    read: "Leitura do analista", readBody: "Um parágrafo curto, escrito só com os números desta página. Quem pede primeiro no dia paga; depois fica grátis para todo mundo.",
+    readBtn: "Gerar leitura · {n} coins", readFree: "Gerar leitura", readBusy: "Escrevendo…", readCached: "Já gerada hoje: sem custo para você.", readSpent: "gastou {n} coins", watch: "O que mudaria a leitura",
+    noCoins: "Coins insuficientes.", buy: "Comprar coins", aiOff: "A leitura está indisponível no momento. Os números acima continuam valendo.", paused: "Sua pausa está ativa: a leitura fica para depois.",
+    honesty: "Histórico não garante o próximo jogo. Aposte só o que não faz falta.", freeLeft: "Seu jogador de hoje no plano Free.",
+  },
+  en: {
+    back: "Back to the game", title: "Player deep dive", loading: "Pulling the player's game log…",
+    signIn: "Log in to open the deep dive.", notFound: "No game log found for this player.", failed: "Couldn't load it right now. Try again shortly.",
+    capTitle: "You've used today's deep dive", capBody: "The Free plan opens 1 player a day (reopening the same one is free). Another one unlocks tomorrow. Paid plans get unlimited deep dives.", seePlans: "See plans",
+    market: "Market", line: "Line", over: "Over", under: "Under", drag: "Drag the line on the chart or use the buttons",
+    window: "Chart window", last10: "Last 10", last20: "Last 20", all: "All",
+    rates: "How often he cleared this line", l5: "Last 5", l10: "Last 10", season: "Logged", home: "Home", away: "Away", noSample: "no sample",
+    push: "A result exactly on the line is a push, neither a win nor a loss.",
+    posted: "Lines the book posted", postedEmpty: "The book hasn't posted a line on this player for this game yet.", price: "price", fair: "no-vig chance", measuredHere: "cleared", oneSided: "one side posted", opened: "opened", useLine: "use this line",
+    role: "Minutes and role", tier: { starter: "starter", rotation: "rotation", fringe: "fringe", unknown: "no data" }, minutes: "min over the last 5", avg: "average", trend: "trend", starts: "start share", noMinutes: "The source's soccer game log has no minutes; the role comes from starts.",
+    dvp: "What the opponent allows", dvpBody: "Per game, to players at the same position ({pos}), over {team}'s last {n} games.", dvpOwn: "for reference, his own team allows", dvpNone: "No defense-vs-position sample for this game.", pts: "pts", reb: "reb", ast: "ast", threes: "threes",
+    split: "With and without a teammate", splitHint: "Pick a teammate to see how this player does when he plays and when he sits.", pick: "Pick…", with: "With", without: "Without", games: "games",
+    small: "Not enough games: at least 3 on each side are needed.", splitNote: "Small sample: context, not a signal on its own.", splitLoading: "Loading…",
+    read: "Analyst read", readBody: "A short paragraph written only from the numbers on this page. The first request of the day pays; after that it's free for everyone.",
+    readBtn: "Write the read · {n} coins", readFree: "Write the read", readBusy: "Writing…", readCached: "Already written today: no cost to you.", readSpent: "spent {n} coins", watch: "What would change the read",
+    noCoins: "Not enough coins.", buy: "Buy coins", aiOff: "The read is unavailable right now. The numbers above still stand.", paused: "Your pause is active: the read can wait.",
+    honesty: "A game log doesn't guarantee the next game. Only bet what you can afford to lose.", freeLeft: "Your player for today on the Free plan.",
+  },
+} as const;
+
+export type PlayerCopy = (typeof PLAYER_COPY)["pt"] | (typeof PLAYER_COPY)["en"];

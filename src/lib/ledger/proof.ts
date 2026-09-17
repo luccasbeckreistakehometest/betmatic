@@ -55,6 +55,10 @@ export function isPublicTicket(e: Pick<LedgerEntry, "outcome" | "startsAt">, now
   return e.outcome !== "pending";
 }
 
+/** The record counts main tickets; alternatives are an opt-in view so they never inflate volume. */
+export const mainTickets = <T extends Pick<LedgerEntry, "alternativeOf">>(entries: T[], includeAlternatives = false): T[] =>
+  includeAlternatives ? entries : entries.filter((e) => !e.alternativeOf);
+
 export const publicTickets = <T extends Pick<LedgerEntry, "outcome" | "startsAt">>(entries: T[], now = Date.now()): T[] =>
   entries.filter((e) => isPublicTicket(e, now));
 

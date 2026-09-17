@@ -172,3 +172,27 @@ export function consensusPrompt(consensus: ConsensusProp[]): string {
     "When sources disagree on the line itself, treat the outlier as either stale or informed — flag it, do not silently average it away.",
   ].join("\n");
 }
+
+/**
+ * Consensus rows from the feeds the app actually has: DraftKings' posted props, plus every provider's
+ * current moneyline (Bet 365 appears next to DraftKings on many soccer games).
+ */
+export function consensusFromFeeds(
+  props: PropRow[],
+  lines: { provider: string; current: { homeMl: number | null; awayMl: number | null; draw: number | null } | null }[],
+  teams: { home: string; away: string },
+): ConsensusProp[] {
+  const rows: SourcedProp[] = props
+    .filter((p) => p.priced)
+    .map((p) => ({ ...p, source: p.book ?? "book" }));
+  for (const l of lines) {
+    if (!l.current) continue;
+    const add = (who: string, price: number | null) => {
+      if (price && price > 1) rows.push({ player: who, market: "moneyline", line: 0, side: "unknown", odds: price.toFixed(2), book: l.provider, source: l.provider });
+    };
+    add(teams.home, l.current.homeMl);
+    add(teams.away, l.current.awayMl);
+    add("Draw", l.current.draw);
+  }
+  return buildConsensus(rows);
+}

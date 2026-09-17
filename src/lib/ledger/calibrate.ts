@@ -1,4 +1,5 @@
 import { readLedger } from "@/lib/ledger/store";
+import { clvPromptLine } from "@/lib/server/leg-prices";
 import { getSport } from "@/lib/sports";
 import type { CalibrationReport, CalibrationRow, LedgerEntry, SettledLeg } from "@/lib/types";
 
@@ -85,6 +86,11 @@ export function specialisation(minSample = 4): CalibrationRow[] {
  * The track record as prompt text. Only slices with a real sample are included — feeding back a
  * 2-game "trend" would teach the model to trust noise.
  */
+/** One line of closing line value per market; the prompt never fails because of it. */
+function safeClvLine(): string {
+  try { return clvPromptLine(); } catch { return ""; }
+}
+
 export function calibrationPrompt(): string {
   const report = calibrate();
   if (report.totalSettled < 10) {
@@ -120,6 +126,7 @@ export function calibrationPrompt(): string {
           .join("\n")}`
       : "",
     "",
+    safeClvLine(),
     "Apply this honestly: where a source is measured OVERCONFIDENT, lower your fairProbability for legs leaning on it. Where a slice has no sample, say so instead of assuming it is good.",
   ]
     .filter(Boolean)

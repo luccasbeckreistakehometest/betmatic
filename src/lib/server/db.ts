@@ -406,11 +406,166 @@ function migrate(d: Database.Database): void {
   addColumn(d, "referrals", "creditedAt", "TEXT");
   addColumn(d, "referrals", "paymentRowId", "TEXT");
   addColumn(d, "generation_requests", "scope", "TEXT NOT NULL DEFAULT 'game'");
+  migrateRound3(d);
   d.exec(`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_provider_payment ON payments(providerPaymentId) WHERE providerPaymentId IS NOT NULL;
     CREATE INDEX IF NOT EXISTS idx_payments_preference ON payments(preferenceId);
     CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals(referrerId, status, creditedAt);
   `);
+}
+
+/** Round 3 tables. Every statement is idempotent; the caller runs inside an immediate transaction. */
+function migrateRound3(d: Database.Database): void {
+  d.exec(`
+    -- Destaques do dia: the few games the system generates by itself so the record is never empty.
+    CREATE TABLE IF NOT EXISTS featured_games (
+      dayKey TEXT NOT NULL,
+      sportKey TEXT NOT NULL,
+      gameId TEXT NOT NULL,
+      rank INTEGER NOT NULL DEFAULT 0,
+      matchup TEXT NOT NULL DEFAULT '',
+      startsAt TEXT,
+      createdAt TEXT NOT NULL,
+      PRIMARY KEY (dayKey, gameId)
+    );
+    CREATE INDEX IF NOT EXISTS idx_genreq_scope ON generation_requests(scope, createdAt);
+
+    -- The legs of a bankroll entry built here (custom parlay) or read from a slip print. Legs matched
+    -- to an ESPN game carry a settlement descriptor and are graded automatically.
+    CREATE TABLE IF NOT EXISTS bankroll_legs (
+      entryId TEXT NOT NULL REFERENCES bankroll_entries(id) ON DELETE CASCADE,
+      idx INTEGER NOT NULL,
+      selection TEXT NOT NULL,
+      market TEXT NOT NULL DEFAULT '',
+      odds REAL,
+      gameId TEXT,
+      sportKey TEXT,
+      startsAt TEXT,
+      settlement TEXT,
+      outcome TEXT NOT NULL DEFAULT 'pending',
+      actual TEXT NOT NULL DEFAULT '',
+      PRIMARY KEY (entryId, idx)
+    );
+    CREATE INDEX IF NOT EXISTS idx_bankroll_legs_pending ON bankroll_legs(outcome, gameId);
+
+    -- Daily/weekly/monthly allowances of per-user features (player deep dive, slip scans, tipster audits).
+    CREATE TABLE IF NOT EXISTS feature_uses (
+      userId TEXT NOT NULL,
+      feature TEXT NOT NULL,
+      dayKey TEXT NOT NULL,
+      key TEXT NOT NULL,
+      createdAt TEXT NOT NULL,
+      PRIMARY KEY (userId, feature, dayKey, key)
+    );
+    CREATE INDEX IF NOT EXISTS idx_feature_uses ON feature_uses(feature, createdAt);
+
+    -- "Leitura do analista" on the player deep dive: one per athlete, day and language. The first
+    -- reader pays for it; everyone after reads the same text for free.
+    CREATE TABLE IF NOT EXISTS player_reads (
+      sportKey TEXT NOT NULL,
+      athleteId TEXT NOT NULL,
+      dayKey TEXT NOT NULL,
+      lang TEXT NOT NULL,
+      payload TEXT NOT NULL,
+      paidBy TEXT,
+      costUsd REAL NOT NULL DEFAULT 0,
+      createdAt TEXT NOT NULL,
+      PRIMARY KEY (sportKey, athleteId, dayKey, lang)
+    );
+
+    -- Vigia de escalação: a pending ticket's leg that lost its footing before kickoff (benched, ruled
+    -- out, doubtful, a key absence). One row per leg and kind; the lineup job never writes it twice.
+    CREATE TABLE IF NOT EXISTS leg_alerts (
+      ledgerId TEXT NOT NULL,
+      legIndex INTEGER NOT NULL,
+      gameId TEXT NOT NULL,
+      sportKey TEXT NOT NULL,
+      suggestionId TEXT,
+      kind TEXT NOT NULL,
+      player TEXT NOT NULL DEFAULT '',
+      detail TEXT NOT NULL DEFAULT '',
+      detectedAt TEXT NOT NULL,
+      PRIMARY KEY (ledgerId, legIndex, kind)
+    );
+    CREATE INDEX IF NOT EXISTS idx_leg_alerts_game ON leg_alerts(gameId, detectedAt);
+
+    -- CLV: the price each leg was taken at, and the market's close at kickoff. ledgerId is a ledger
+    -- ticket id, or bl:<entryId> for a bankroll leg built here or read from a print.
+    CREATE TABLE IF NOT EXISTS leg_prices (
+      ledgerId TEXT NOT NULL,
+      legIndex INTEGER NOT NULL,
+      gameId TEXT NOT NULL,
+      sportKey TEXT NOT NULL,
+      startsAt TEXT,
+      kind TEXT NOT NULL,                           -- ml | total | spread | prop
+      marketKey TEXT NOT NULL DEFAULT '',
+      athleteId TEXT,
+      side TEXT,
+      line REAL,
+      takenDecimal REAL NOT NULL,
+      openDecimal REAL,
+      closeDecimal REAL,
+      closeFair REAL,
+      closeLine REAL,
+      clvPct REAL,
+      basis TEXT,                                   -- novig | raw
+      direction TEXT,                               -- favor | against (line_moved only)
+      status TEXT NOT NULL DEFAULT 'pending',       -- pending | closed | line_moved | no_close
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL,
+      PRIMARY KEY (ledgerId, legIndex)
+    );
+    CREATE INDEX IF NOT EXISTS idx_leg_prices_pending ON leg_prices(status, startsAt);
+
+    -- First-party analytics. No IP is stored; visitors are counted by a random first-party cookie.
+    -- Rows older than 180 days are deleted by the daily cleanup.
+    CREATE TABLE IF NOT EXISTS events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ts TEXT NOT NULL,
+      name TEXT NOT NULL,
+      anonId TEXT,
+      userId TEXT,
+      path TEXT NOT NULL DEFAULT '',
+      refHost TEXT NOT NULL DEFAULT '',
+      utmSource TEXT NOT NULL DEFAULT '',
+      utmMedium TEXT NOT NULL DEFAULT '',
+      utmCampaign TEXT NOT NULL DEFAULT '',
+      utmContent TEXT NOT NULL DEFAULT '',
+      device TEXT NOT NULL DEFAULT '',
+      props TEXT NOT NULL DEFAULT '{}'
+    );
+    CREATE INDEX IF NOT EXISTS idx_events_name ON events(name, ts);
+    CREATE INDEX IF NOT EXISTS idx_events_anon ON events(anonId, ts);
+    CREATE INDEX IF NOT EXISTS idx_events_user ON events(userId, ts);
+
+    -- Raio-x do tipster: private to its user, deletable. Only the extracted picks and the report are
+    -- kept; the pasted text and the images never reach the database.
+    CREATE TABLE IF NOT EXISTS tipster_audits (
+      id TEXT PRIMARY KEY,
+      userId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      label TEXT NOT NULL DEFAULT '',
+      sportKey TEXT NOT NULL,
+      report TEXT NOT NULL,
+      picks TEXT NOT NULL,
+      createdAt TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_tipster_user ON tipster_audits(userId, createdAt DESC);
+
+    -- Relatório semanal de disciplina: one row per user and ISO week, written once.
+    CREATE TABLE IF NOT EXISTS weekly_reports (
+      userId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      weekKey TEXT NOT NULL,
+      payload TEXT NOT NULL,
+      createdAt TEXT NOT NULL,
+      PRIMARY KEY (userId, weekKey)
+    );
+  `);
+  // The bankroll a user declares (optional) so stake sizing can be read against it.
+  addColumn(d, "user_settings", "bankrollAmount", "REAL");
+  // First-touch acquisition, copied from the bm_ft cookie at signup.
+  addColumn(d, "users", "signupSource", "TEXT");
+  addColumn(d, "users", "signupUtm", "TEXT");
+  addColumn(d, "user_slips", "kind", "TEXT NOT NULL DEFAULT 'analysis'");
 }
 
 export function nowIso(): string {

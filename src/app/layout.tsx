@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { headers } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
 import { HtmlLang } from "@/components/HtmlLang";
+import { PageBeacon } from "@/components/PageBeacon";
 import { publicBaseUrl } from "@/lib/base-url";
 import { DEFAULT_META, DEFAULT_OG_IMAGE, SITE_NAME } from "@/lib/seo";
 import "./globals.css";
@@ -47,6 +48,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <Suspense fallback={null}>
           <HtmlLang fallback={lang} />
+        </Suspense>
+        <Suspense fallback={null}>
+          <PageBeacon />
         </Suspense>
         {children}
       </body>

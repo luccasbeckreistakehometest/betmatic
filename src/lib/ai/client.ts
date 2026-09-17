@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
 import { envValue } from "@/lib/env";
 import { AiBudgetExceededError, recordAiSpend } from "@/lib/server/ai-budget";
@@ -6,10 +8,30 @@ import { AiBudgetExceededError, recordAiSpend } from "@/lib/server/ai-budget";
 export const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5";
 /** Bulk extraction from structured captures — mechanical, and ~60% cheaper per token. */
 export const EXTRACTION_MODEL = process.env.ANTHROPIC_EXTRACTION_MODEL ?? "claude-sonnet-5";
+/** Mechanical passes: short write-ups, parsing typed legs, reading a slip print. Has vision. */
+export const CHEAP_MODEL = envValue("ANTHROPIC_CHEAP_MODEL") || "claude-haiku-4-5";
+/** The in-play read: faster and cheaper than the judgement model, still good at numbers. */
+export const LIVE_MODEL = envValue("ANTHROPIC_LIVE_MODEL") || "claude-sonnet-5";
+
+/** Haiku 4.5 rejects adaptive thinking; it runs without a thinking block here. */
+export const supportsAdaptiveThinking = (model: string): boolean => !/haiku/i.test(model);
+
+/**
+ * Test mode. AI_MOCK=1 answers every model call with the caller's deterministic fixture;
+ * AI_MOCK=switch does the same only while DATA_DIR/ai-mock.on exists, so one test server can run
+ * specs with and without AI. Refused in production (lib/env.ts).
+ */
+export function aiMockActive(env: Record<string, string | undefined> = process.env): boolean {
+  if (env.AI_MOCK === "1") return true;
+  if (env.AI_MOCK !== "switch") return false;
+  const dir = env.DATA_DIR ?? path.join(process.cwd(), "data");
+  return fs.existsSync(path.join(dir, "ai-mock.on"));
+}
 
 let client: Anthropic | null = null;
 
 export function aiConfigured(): boolean {
+  if (aiMockActive()) return true;
   const key = envValue("ANTHROPIC_API_KEY") || envValue("ANTHROPIC_AUTH_TOKEN");
   // The .env.local.example placeholder would otherwise read as configured and fail with a 401.
   return key.length > 20 && !key.includes("...");
@@ -68,6 +90,7 @@ export function describeAiError(error: unknown): string | null {
 const PRICING: Record<string, { input: number; output: number; cacheRead: number; cacheWrite: number }> = {
   "claude-opus-5": { input: 5, output: 25, cacheRead: 0.5, cacheWrite: 6.25 },
   "claude-sonnet-5": { input: 2, output: 10, cacheRead: 0.2, cacheWrite: 2.5 },
+  "claude-haiku-4-5": { input: 1, output: 5, cacheRead: 0.1, cacheWrite: 1.25 },
 };
 
 export interface UsageRecord {

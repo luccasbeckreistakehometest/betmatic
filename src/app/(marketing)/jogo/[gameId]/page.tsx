@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MarketingFooter, MarketingHeader } from "@/components/MarketingShell";
 import { readLedger } from "@/lib/ledger/store";
-import { proofPublishable, proofStats } from "@/lib/ledger/proof";
+import { proofPublishable, proofStats, mainTickets } from "@/lib/ledger/proof";
 import { findGameInfo, servePredictions } from "@/lib/server/predictions";
 import { gamePageUrl } from "@/lib/server/sitemap-games";
 import { scrubText } from "@/lib/server/whitelabel";
@@ -109,7 +109,7 @@ export default async function GamePublicPage({ params, searchParams }: { params:
   const kickoff = formatKickoff(data.startsAt, lang);
   const base = publicBaseUrl();
   const url = gamePageUrl(base, gameId, data.sportKey);
-  const proof = proofStats(readLedger().filter((e) => e.sportKey === data.sportKey));
+  const proof = proofStats(mainTickets(readLedger()).filter((e) => e.sportKey === data.sportKey));
   const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
   const best = data.best;
   const appPath = `/app/game/${gameId}?sport=${data.sportKey}&lang=${lang}`;

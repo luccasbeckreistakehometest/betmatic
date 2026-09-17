@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { DateNav } from "@/components/DateNav";
 import { GameCard } from "@/components/GameCard";
 import { RememberSport } from "@/components/RememberSport";
+import { WhatsNew } from "@/components/WhatsNew";
 import { getSlateOrNearest, todayKey } from "@/lib/sources/espn";
 import { makeT, normaliseLang } from "@/lib/i18n";
 import { getSport } from "@/lib/sports";
@@ -48,6 +49,7 @@ export default async function SlatePage({ searchParams }: PageProps<"/app">) {
   return (
     <div className="flex flex-col gap-6">
       <RememberSport sportKey={sport.key} />
+      {viewer && <WhatsNew lang={lang} sportKey={sport.key} />}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-white">
