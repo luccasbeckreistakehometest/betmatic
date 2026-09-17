@@ -59,7 +59,10 @@ export function buildWorld(now = Date.now()) {
     { id: "990000104", league: "wnba", sport: "basketball", startsAt: new Date(now + 7 * HOUR), state: "pre", home: g7, away: h8, homeMl: 120, awayMl: -140, total: 162.5, spread: 2.5,
       props: [{ athlete: "7701", type: "Points Milestones", line: 26, over: 4.8 }, { athlete: "7801", type: "Total Rebounds", line: 9.5, over: 1.9, under: 1.9 }] },
     { id: "990000201", league: "bra.1", sport: "soccer", startsAt: new Date(now + 80 * 60_000), state: "pre", home: tupi, away: ipe, homeMl: 120, awayMl: 230, total: 2.5, spread: -0.5,
-      props: [{ athlete: "88001", type: "Shots Milestones", line: 2, over: 1.7 }, { athlete: "88002", type: "Shots Milestones", line: 2, over: 2.1 }] },
+      props: [
+        { athlete: "88001", type: "Shots Milestones", line: 2, over: 1.7 }, { athlete: "88002", type: "Shots Milestones", line: 2, over: 2.1 },
+        { athlete: "88101", type: "Shots Milestones", line: 2, over: 1.9 }, { athlete: "88102", type: "Fouls Committed Milestones", line: 2, over: 2.0 },
+      ] },
     { id: "990000202", league: "bra.1", sport: "soccer", startsAt: new Date(now - 26 * HOUR), state: "post", home: tupi, away: ipe, homeMl: 110, awayMl: 250, total: 2.5, spread: -0.5, score: [2, 1] },
   ];
   return { games, teams: [aces, birds, comets, divers, e5, f6, g7, h8, tupi, ipe] };

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { BetsPanel } from "@/components/BetsPanel";
+import { BetsPanel, type LegAlertView } from "@/components/BetsPanel";
 import { RefreshBar } from "@/components/RefreshBar";
 import { useNavState } from "@/components/Controls";
 import { Empty, Panel } from "@/components/ui";
@@ -23,6 +23,7 @@ interface Payload {
   predictions: Served[];
   delayedGames: { gameId: string | null; matchup: string; availableAt: string }[];
   plan: { id: string; name: string; bands: string[]; delayMinutes: number; gamesPerDay: number | null };
+  dateKey?: string;
   unlocked: { gameId: string; sportKey: string }[] | null;
   authenticated: boolean;
   paused: { until: string | null } | null;
@@ -85,6 +86,22 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
   }, [load]);
 
   const mine = data?.predictions.find((p) => p.gameId === gameId) ?? null;
+  const [alerts, setAlerts] = useState<LegAlertView[]>([]);
+  const alertDate = data?.dateKey ?? dateKey;
+  const hasTickets = !!mine;
+  const generatedAt = mine?.generatedAt;
+  useEffect(() => {
+    if (!hasTickets || !alertDate) return;
+    let alive = true;
+    // Deferred so the effect itself sets no state synchronously.
+    const id = setTimeout(() => {
+      fetch(`/api/game/${gameId}/alerts?sport=${sport.key}&lang=${lang}&date=${alertDate}`, { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : { alerts: [] }))
+        .then((j) => { if (alive) setAlerts(j.alerts ?? []); })
+        .catch(() => {});
+    }, 0);
+    return () => { alive = false; clearTimeout(id); };
+  }, [hasTickets, alertDate, gameId, sport.key, lang, generatedAt]);
   const delayed = data?.delayedGames?.find((g) => g.gameId === gameId) ?? null;
 
   const generate = useCallback(async () => {
@@ -143,7 +160,8 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
           <p className="mb-3 rounded-lg border border-warn-400/25 bg-warn-400/5 px-3 py-2 text-[12px] text-warn-400">{t("delayedNotice")}</p>
         )}
         {data?.plan.id === "max" && !started && <RefreshBar gameId={gameId} sportKey={sport.key} lang={lang} onRefreshed={() => void load()} />}
-        <BetsPanel slate={mine.slate} lang={lang} gameId={gameId} sportKey={sport.key} />
+        {alerts.length > 0 && <LineupBanner alerts={alerts} lang={lang} />}
+        <BetsPanel slate={mine.slate} lang={lang} gameId={gameId} sportKey={sport.key} alerts={alerts} />
       </>
     );
   } else if (delayed) {
@@ -243,6 +261,35 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
       >
         {body}
       </Panel>
+    </div>
+  );
+}
+
+const KIND_TEXT: Record<LegAlertView["kind"], { pt: string; en: string }> = {
+  bench: { pt: "começa no banco", en: "starts on the bench" },
+  out: { pt: "está fora", en: "is out" },
+  doubt: { pt: "é dúvida", en: "is doubtful" },
+  key_absence: { pt: "não joga", en: "is not playing" },
+};
+
+/** "Escalação: Fulano começa no banco — 2 pernas destes bilhetes perderam a base." Informational only. */
+function LineupBanner({ alerts, lang }: { alerts: LegAlertView[]; lang: "pt" | "en" }) {
+  const byPlayer = new Map<string, { kind: LegAlertView["kind"]; legs: number }>();
+  for (const a of alerts) {
+    const cur = byPlayer.get(a.player);
+    byPlayer.set(a.player, { kind: cur?.kind ?? a.kind, legs: (cur?.legs ?? 0) + 1 });
+  }
+  return (
+    <div className="mb-3 rounded-lg border border-alert-400/30 bg-alert-400/[0.06] px-3 py-2.5" data-testid="lineup-banner">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-alert-400">{lang === "pt" ? "Escalação" : "Lineup"}</p>
+      <ul className="mt-1 flex flex-col gap-0.5 text-[12.5px] text-mist-200">
+        {[...byPlayer].map(([player, v]) => (
+          <li key={player}>
+            {player} {KIND_TEXT[v.kind][lang]} — {lang === "pt" ? (v.legs === 1 ? "1 perna destes bilhetes perdeu a base" : `${v.legs} pernas destes bilhetes perderam a base`) : v.legs === 1 ? "1 leg on these tickets lost its footing" : `${v.legs} legs on these tickets lost their footing`}.
+          </li>
+        ))}
+      </ul>
+      <p className="mt-1 text-[11.5px] text-mist-500">{lang === "pt" ? "As alternativas sem ele aparecem destacadas embaixo de cada bilhete." : "Backups without him are highlighted under each ticket."}</p>
     </div>
   );
 }

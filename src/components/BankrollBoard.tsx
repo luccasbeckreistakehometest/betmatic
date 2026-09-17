@@ -12,7 +12,7 @@ import { curvePath } from "@/lib/ledger/backtest";
 import { LossReview } from "@/components/LossReview";
 
 interface EntryLeg { selection: string; outcome: string; actual?: string; settlement?: unknown }
-interface Entry { id: string; source: "ticket" | "manual" | "custom" | "scan"; title: string; matchup: string; combinedDecimal: number; stake: number; outcome: string; pnl: number; createdAt: string; settledAt: string | null; slug: string | null; legs?: EntryLeg[]; autoLegs?: number }
+interface Entry { id: string; source: "ticket" | "manual" | "custom" | "scan"; title: string; matchup: string; combinedDecimal: number; stake: number; outcome: string; pnl: number; createdAt: string; settledAt: string | null; slug: string | null; legs?: EntryLeg[]; autoLegs?: number; alerts?: { kind: string; player: string }[] }
 interface Payload { entries: Entry[]; totals: { staked: number; profit: number; roi: number; won: number; lost: number; pending: number }; streak?: { streak: number; notice: boolean }; pause?: { paused: boolean; until: string | null }; error?: string }
 
 export function BankrollBoard() {
@@ -69,6 +69,11 @@ export function BankrollBoard() {
             <li key={e.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5 text-[13px]" data-testid="bankroll-entry">
               <span className={"w-16 font-semibold " + tone(e.outcome)}>{{ won: t("markWon"), lost: t("markLost"), void: t("markVoid"), push: "push", pending: "…" }[e.outcome]}</span>
               <span className="min-w-0 flex-1 truncate text-mist-100">{e.title}<span className="text-mist-500"> {e.matchup}</span></span>
+              {e.alerts?.length ? (
+                <span className="rounded bg-alert-400/12 px-1.5 py-0.5 text-[10.5px] font-semibold text-alert-400" data-testid="entry-alert" title={e.alerts.map((a) => a.player).join(", ")}>
+                  {lang === "pt" ? `escalação: ${e.alerts.length === 1 ? "1 perna em risco" : `${e.alerts.length} pernas em risco`}` : `lineup: ${e.alerts.length === 1 ? "1 leg at risk" : `${e.alerts.length} legs at risk`}`}
+                </span>
+              ) : null}
               <span className="nums text-mist-400">{formatDecimal(e.combinedDecimal)} · {money(e.stake)}</span>
               <span className={"nums w-24 text-right " + tone(e.outcome)}>{e.outcome === "won" || e.outcome === "lost" ? `${e.pnl >= 0 ? "+" : ""}${money(e.pnl)}` : ""}</span>
               {e.source !== "ticket" && e.outcome === "pending" && (

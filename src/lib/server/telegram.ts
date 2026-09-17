@@ -195,9 +195,15 @@ export function followersOf(sportKey: string, teamIds: string[]): string[] {
 // ---- alert log + delivery -----------------------------------------------------------------------
 
 export interface AlertRow {
-  id: string; channel: "telegram" | "inapp"; kind: "tickets" | "digest" | "system"; dedupeKey: string;
+  id: string; channel: "telegram" | "inapp"; kind: "tickets" | "digest" | "system" | "lineup" | "report" | "line"; dedupeKey: string;
   title: string; body: string; url: string; status: "sent" | "failed" | "unread" | "read"; error: string; createdAt: string; readAt: string | null;
 }
+/** Read straight from the table so this module stays free of the settings/bankroll import chain. */
+export function isPausedNow(userId: string, now = new Date()): boolean {
+  const row = getDb().prepare("SELECT pausedUntil FROM user_settings WHERE userId=?").get(userId) as { pausedUntil: string | null } | undefined;
+  return !!row?.pausedUntil && row.pausedUntil > now.toISOString();
+}
+
 export interface DeliverArgs { userId: string; kind: AlertRow["kind"]; dedupeKey: string; title: string; body: string; url: string }
 
 /**
@@ -207,6 +213,8 @@ export interface DeliverArgs { userId: string; kind: AlertRow["kind"]; dedupeKey
  */
 export async function deliver(args: DeliverArgs, send: TelegramTransport = sendTelegram): Promise<"telegram" | "inapp" | null> {
   const db = getDb();
+  // Nothing is pushed to someone on a self-exclusion pause (Lei 14.790 / CONAR): not queued either.
+  if (isPausedNow(args.userId)) return null;
   const chat = telegramConfigured() ? getRow(args.userId)?.chatId ?? null : null;
   const id = newId("al");
   const claimed = db.prepare(
