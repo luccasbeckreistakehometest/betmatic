@@ -25,3 +25,23 @@ describe("onDemandVerdict", () => {
     expect(onDemandCaps({ ON_DEMAND_DAILY_CAP: "10", ON_DEMAND_USER_DAILY_CAP: "2" })).toEqual({ globalDailyCap: 10, userDailyCap: 2 });
   });
 });
+
+describe("slateVerdict", async () => {
+  const { slateVerdict, slateCaps } = await import("@/lib/server/on-demand-policy");
+  const caps = slateCaps({});
+  const base = { role: "user" as const, crossGame: true, exists: false, upcomingGames: 4, globalCountToday: 0, userCountToday: 0, caps };
+  it("covers every branch in order", () => {
+    expect(caps).toEqual({ globalDailyCap: 5, userDailyCap: 2, maxGames: 6 });
+    expect(slateVerdict({ ...base, crossGame: false })).toBe("not_allowed");
+    expect(slateVerdict({ ...base, crossGame: false, role: "admin" })).toBe("generate");
+    expect(slateVerdict({ ...base, exists: true })).toBe("exists");
+    expect(slateVerdict({ ...base, upcomingGames: 1 })).toBe("too_few_games");
+    expect(slateVerdict({ ...base, globalCountToday: 5 })).toBe("cap_global");
+    expect(slateVerdict({ ...base, userCountToday: 2 })).toBe("cap_user");
+    expect(slateVerdict({ ...base, globalCountToday: 99, role: "admin" })).toBe("generate");
+    expect(slateVerdict(base)).toBe("generate");
+  });
+  it("reads the caps from env", () => {
+    expect(slateCaps({ SLATE_DAILY_CAP: "0", SLATE_USER_DAILY_CAP: "1", SLATE_MAX_GAMES: "50" })).toEqual({ globalDailyCap: 0, userDailyCap: 1, maxGames: 10 });
+  });
+});

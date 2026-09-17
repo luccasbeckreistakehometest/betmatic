@@ -309,6 +309,11 @@ const DICT = {
   contact: { pt: "Fale com a gente", en: "Contact us" },
   generatingSlate: { pt: "Montando as múltiplas da rodada — pode levar um minuto.", en: "Building today's cross-game parlays — this can take a minute." },
   slateTooFew: { pt: "Ainda não há pelo menos dois jogos por começar neste esporte hoje.", en: "There aren't two upcoming games in this sport today yet." },
+  buildSlate: { pt: "Montar as múltiplas da rodada", en: "Build today's cross-game parlays" },
+  slateEmpty: { pt: "As múltiplas da rodada ainda não foram montadas hoje. Monte agora: fica pronta para todo mundo do seu plano.", en: "Today's cross-game parlays haven't been built yet. Build them now — they're shared with everyone on your plan." },
+  slateCapUser: { pt: "Você já montou as múltiplas de hoje duas vezes. Amanhã tem mais.", en: "You've already built today's parlays twice. More tomorrow." },
+  slateHonesty: { pt: "Múltiplas de 100x ou mais perdem quase sempre. Cada bilhete mostra a chance real do lado.", en: "Parlays at 100x and beyond lose almost every time. Each ticket shows its real chance next to the price." },
+  customParlay: { pt: "Múltipla sob medida", en: "Custom parlay" },
   networkError: { pt: "Sem conexão. Confira sua internet e tente de novo.", en: "No connection. Check your internet and try again." },
 } as const;
 
