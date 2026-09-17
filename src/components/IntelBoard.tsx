@@ -108,7 +108,7 @@ export function IntelBoard({ gameId, dateKey }: { gameId: string; dateKey?: stri
                 {t("delayedNotice")}
               </p>
             )}
-            <BetsPanel slate={mine.slate} lang={lang} />
+            <BetsPanel slate={mine.slate} lang={lang} gameId={gameId} />
           </>
         ) : (
           <div className="flex flex-col gap-2">

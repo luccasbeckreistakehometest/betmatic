@@ -134,3 +134,14 @@ describe("role gate for sports without minutes", () => {
     expect(Number.isNaN(r!.minutesPerGame)).toBe(true);
   });
 });
+
+describe("kelly", () => {
+  it("stakes a quarter of full Kelly and nothing without an edge", async () => {
+    const { kellyFraction } = await import("@/lib/odds");
+    // 2.00 at 55%: full Kelly = (1*0.55 - 0.45)/1 = 0.10 → quarter = 0.025
+    expect(kellyFraction(2.0, 0.55)).toBeCloseTo(0.025, 6);
+    expect(kellyFraction(2.0, 0.5)).toBe(0);
+    expect(kellyFraction(1.5, 0.6)).toBe(0); // implied 66.7% > 60%: negative edge
+    expect(kellyFraction(NaN, 0.6)).toBe(0);
+  });
+});

@@ -1,0 +1,63 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { Logo } from "@/components/Logo";
+import { readLedger } from "@/lib/ledger/store";
+import { findBySlug } from "@/lib/ledger/proof";
+import { scrubText } from "@/lib/server/whitelabel";
+import { normaliseLang } from "@/lib/i18n";
+import { formatDecimal } from "@/lib/odds";
+
+export const dynamic = "force-dynamic";
+
+const C = {
+  pt: { back: "← Prova pública", generated: "Gerado em", settled: "Liquidado em", pending: "Aguardando o jogo", predicted: "probabilidade estimada", legs: "Pernas", share: "Compartilhar no WhatsApp", copy: "Este bilhete tem um link fixo: o resultado fica aqui, ganhe ou perca.", cta: "Ver os bilhetes de hoje",
+    outcome: { won: "GANHOU", lost: "PERDEU", push: "PUSH", void: "ANULADO", pending: "PENDENTE" }, leg: { won: "✓", lost: "✗", push: "=", void: "–", pending: "·" },
+    wa: (t: string, o: string, odds: string, url: string) => `Bilhete Betmatic — ${t}\n${odds} · ${o}\n${url}` },
+  en: { back: "← Track record", generated: "Generated", settled: "Settled", pending: "Awaiting kickoff", predicted: "estimated probability", legs: "Legs", share: "Share on WhatsApp", copy: "This ticket has a permanent link: the result stays here, win or lose.", cta: "See today's tickets",
+    outcome: { won: "WON", lost: "LOST", push: "PUSH", void: "VOID", pending: "PENDING" }, leg: { won: "✓", lost: "✗", push: "=", void: "–", pending: "·" },
+    wa: (t: string, o: string, odds: string, url: string) => `Betmatic ticket — ${t}\n${odds} · ${o}\n${url}` },
+};
+
+export default async function TicketPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const { slug } = await params;
+  const q = await searchParams;
+  const lang = normaliseLang(typeof q.lang === "string" ? q.lang : undefined);
+  const c = C[lang];
+  const e = findBySlug(readLedger(), slug);
+  if (!e) notFound();
+  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  const url = `${base}/p/${slug}?lang=${lang}`;
+  const tone: Record<string, string> = { won: "text-signal-400 border-signal-400/30", lost: "text-warn-400 border-warn-400/30", push: "text-mist-300 border-ink-700", void: "text-mist-500 border-ink-700", pending: "text-mist-400 border-ink-700" };
+  const fmt = (iso?: string) => (iso ? new Date(iso).toLocaleString(lang === "pt" ? "pt-BR" : "en-US") : "—");
+
+  return (
+    <main className="min-h-screen bg-ink-950 text-mist-100">
+      <header className="border-b border-ink-800/80"><div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-4"><Logo /><Link href={{ pathname: "/prova", query: { lang } }} className="text-[13px] text-mist-400 hover:text-mist-100">{c.back}</Link></div></header>
+      <section className="mx-auto max-w-3xl px-5 py-12" data-testid="ticket-page">
+        <div className={"inline-block rounded-full border px-3 py-1 text-[12px] font-semibold tracking-wider " + tone[e.outcome]}>{c.outcome[e.outcome]}</div>
+        <h1 className="mt-4 text-3xl font-semibold tracking-tight">{scrubText(e.title, lang)}</h1>
+        <p className="mt-1 text-[15px] text-mist-400">{scrubText(e.matchup, lang)}</p>
+        <div className="mt-6 flex flex-wrap gap-6 text-[13px] text-mist-400">
+          <span><span className="text-mist-500">{c.generated}:</span> {fmt(e.createdAt)}</span>
+          <span><span className="text-mist-500">{e.outcome === "pending" ? c.pending : c.settled}:</span> {e.outcome === "pending" ? "—" : fmt(e.settledAt)}</span>
+          <span className="nums"><span className="text-mist-500">odd:</span> {formatDecimal(e.combinedDecimal)}</span>
+          <span className="nums"><span className="text-mist-500">{c.predicted}:</span> {(e.modelledProbability * 100).toFixed(0)}%</span>
+        </div>
+        <h2 className="mt-8 text-[11px] uppercase tracking-wider text-mist-500">{c.legs}</h2>
+        <ul className="mt-2 divide-y divide-ink-800 rounded-xl border border-ink-800">
+          {e.legs.map((l, i) => (
+            <li key={i} className="flex items-start gap-3 px-4 py-3 text-[14px]">
+              <span className={"w-5 font-bold " + tone[l.outcome].split(" ")[0]}>{c.leg[l.outcome]}</span>
+              <div className="min-w-0 flex-1"><p className="text-mist-100">{scrubText(l.selection, lang)}</p><p className="text-[12px] text-mist-500">{l.market} · <span className="nums">{formatDecimal(l.oddsDecimal)}</span> · {(l.predictedProbability * 100).toFixed(0)}%{l.actual ? ` · ${scrubText(l.actual, lang)}` : ""}</p></div>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-6 text-[13px] text-mist-500">{c.copy}</p>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <a href={`https://wa.me/?text=${encodeURIComponent(c.wa(scrubText(e.title, lang), c.outcome[e.outcome], formatDecimal(e.combinedDecimal), url))}`} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-signal-400/40 px-4 py-2 text-[13px] font-semibold text-signal-400 hover:bg-signal-400/10" data-testid="share-wa">{c.share}</a>
+          <Link href="/signup" className="rounded-lg bg-edge-400 px-4 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500">{c.cta}</Link>
+        </div>
+      </section>
+    </main>
+  );
+}

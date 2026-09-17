@@ -108,3 +108,15 @@ export function formatDecimal(decimal: number): string {
 export function formatPercent(p: number, digits = 1): string {
   return Number.isFinite(p) ? `${(p * 100).toFixed(digits)}%` : "—";
 }
+
+/**
+ * Fractional Kelly stake as a share of bankroll. Full Kelly maximises log growth but assumes the
+ * probability is exactly right; a quarter is what most disciplined bettors actually use, because a
+ * model's edge is never as sharp as it looks. Returns 0 when there is no edge.
+ */
+export function kellyFraction(decimal: number, fairProb: number, fraction = 0.25): number {
+  if (!Number.isFinite(decimal) || decimal <= 1 || !(fairProb > 0 && fairProb < 1)) return 0;
+  const b = decimal - 1;
+  const full = (b * fairProb - (1 - fairProb)) / b;
+  return full > 0 ? Number((full * fraction).toFixed(4)) : 0;
+}

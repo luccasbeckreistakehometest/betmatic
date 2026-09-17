@@ -58,6 +58,10 @@ const ARTICLES: Record<string, Record<Gender, string>> = {
 
 const ARTICLE_GROUP = Object.keys(ARTICLES).join("|");
 
+export function scrubText(text: string | undefined, lang: "pt" | "en"): string {
+  return scrub(text, lang);
+}
+
 function scrub(text: string | undefined, lang: "pt" | "en"): string {
   if (!text) return "";
   return SOURCE_RULES.reduce((acc, rule) => {

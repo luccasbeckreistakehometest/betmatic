@@ -32,6 +32,8 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
             <a href="#como" className="transition hover:text-mist-100">{c.navHow}</a>
             <a href="#esportes" className="transition hover:text-mist-100">{c.navSports}</a>
             <a href="#planos" className="transition hover:text-mist-100">{c.navPricing}</a>
+            <Link href={{ pathname: "/prova", query: { lang } }} className="transition hover:text-mist-100">{lang === "pt" ? "Prova" : "Track record"}</Link>
+            <Link href={{ pathname: "/ferramentas", query: { lang } }} className="transition hover:text-mist-100">{lang === "pt" ? "Ferramentas" : "Free tools"}</Link>
           </nav>
           <div className="ml-auto flex items-center gap-3">
             <LandingLang />

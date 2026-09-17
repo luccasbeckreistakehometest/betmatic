@@ -173,6 +173,23 @@ function migrate(d: Database.Database): void {
     );
     CREATE INDEX IF NOT EXISTS idx_learning_created ON learning_runs(createdAt DESC);
 
+    -- A user's own bankroll: generated tickets saved with a stake inherit the ledger's automatic
+    -- grading; bets placed elsewhere are logged and graded by the user.
+    CREATE TABLE IF NOT EXISTS bankroll_entries (
+      id TEXT PRIMARY KEY,
+      userId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      source TEXT NOT NULL,                         -- ticket | manual
+      ledgerId TEXT,
+      title TEXT NOT NULL DEFAULT '',
+      matchup TEXT NOT NULL DEFAULT '',
+      combinedDecimal REAL NOT NULL,
+      stake REAL NOT NULL,
+      outcome TEXT NOT NULL DEFAULT 'pending',      -- manual entries only; ticket entries read the ledger
+      createdAt TEXT NOT NULL,
+      settledAt TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_bankroll_user ON bankroll_entries(userId, createdAt DESC);
+
     CREATE TABLE IF NOT EXISTS job_runs (
       id TEXT PRIMARY KEY,
       job TEXT NOT NULL,

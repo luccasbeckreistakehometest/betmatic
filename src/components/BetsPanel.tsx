@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
+
 import { Chip, Empty } from "@/components/ui";
-import { formatDecimal, formatPercent, getBand } from "@/lib/odds";
+import { kellyFraction, formatDecimal, formatPercent, getBand } from "@/lib/odds";
 import { makeT, type Lang } from "@/lib/i18n";
 import type { BetSlate, BetSuggestion } from "@/lib/types";
 
@@ -29,10 +31,20 @@ function EdgeTag({ edgePct }: { edgePct: number | undefined }) {
   );
 }
 
-function Ticket({ bet, lang }: { bet: BetSuggestion; lang: Lang }) {
+function Ticket({ bet, lang, gameId }: { bet: BetSuggestion; lang: Lang; gameId?: string }) {
   const t = makeT(lang);
   const band = getBand(bet.bandKey);
   const longshot = bet.combinedDecimal >= 20;
+  // Quarter Kelly from the ticket's own modelled probability: the stake a disciplined bettor would size.
+  const kelly = kellyFraction(bet.combinedDecimal, bet.modelledProbability);
+  const [stake, setStake] = useState("");
+  const [saved, setSaved] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  async function addToBankroll() {
+    if (!gameId) return;
+    setSaved("saving");
+    const r = await fetch("/api/bankroll", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "ticket", gameId, bandKey: bet.bandKey, selections: bet.legs.map((l) => l.selection), stake: Number(stake) }) });
+    setSaved(r.ok ? "saved" : "error");
+  }
 
   return (
     <li className="rounded-xl border border-ink-800 bg-ink-850/50">
@@ -120,11 +132,26 @@ function Ticket({ bet, lang }: { bet: BetSuggestion; lang: Lang }) {
           </p>
         )}
       </div>
+      {(kelly > 0 || gameId) && (
+        <div className="flex flex-wrap items-center gap-3 border-t border-ink-800 px-3.5 py-2.5 text-[12px]" data-testid="ticket-bankroll">
+          {kelly > 0 && <span className="text-mist-400">{lang === "pt" ? "stake sugerido" : "suggested stake"}: <span className="nums text-mist-100">{(kelly * 100).toFixed(1)}%</span> {lang === "pt" ? "da banca" : "of bankroll"} <span className="text-mist-600">(¼ Kelly)</span></span>}
+          {gameId && (
+            <span className="ml-auto flex items-center gap-2">
+              {saved === "saved" ? <span className="text-signal-400">✓ {t("saved")}</span> : saved === "error" ? <span className="text-warn-400">{lang === "pt" ? "entre para salvar" : "sign in to save"}</span> : (
+                <>
+                  <input value={stake} onChange={(e) => setStake(e.target.value)} placeholder={t("stake")} inputMode="decimal" className="nums w-20 rounded border border-ink-700 bg-ink-900 px-2 py-1 text-[12px] text-mist-100 outline-none focus:border-edge-400" data-testid="ticket-stake" />
+                  <button onClick={addToBankroll} disabled={!(Number(stake) > 0) || saved === "saving"} className="rounded border border-ink-700 px-2 py-1 text-mist-300 hover:border-ink-600 hover:text-mist-100 disabled:opacity-40" data-testid="ticket-add">{t("addToBankroll")}</button>
+                </>
+              )}
+            </span>
+          )}
+        </div>
+      )}
     </li>
   );
 }
 
-export function BetsPanel({ slate, lang }: { slate: BetSlate | null | undefined; lang: Lang }) {
+export function BetsPanel({ slate, lang, gameId }: { slate: BetSlate | null | undefined; lang: Lang; gameId?: string }) {
   const t = makeT(lang);
   if (!slate?.suggestions.length) {
     return (
@@ -139,7 +166,7 @@ export function BetsPanel({ slate, lang }: { slate: BetSlate | null | undefined;
     <div className="flex flex-col gap-3">
       <ul className="flex flex-col gap-3">
         {slate.suggestions.map((bet) => (
-          <Ticket key={bet.id} bet={bet} lang={lang} />
+          <Ticket key={bet.id} bet={bet} lang={lang} gameId={gameId} />
         ))}
       </ul>
       {slate.dataNote && (
