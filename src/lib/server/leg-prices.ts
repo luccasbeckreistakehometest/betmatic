@@ -85,15 +85,18 @@ export function closeOf(row: Pick<Row, "kind" | "marketKey" | "athleteId" | "sid
 const bookOf = (lines: ProviderLines[]) => lines.find((l) => /draft/i.test(l.provider)) ?? lines.find((l) => l.open || l.current || l.close) ?? null;
 
 /**
- * The close job. Pending legs whose game starts within 15 minutes are priced from the current line
+ * The close job. Pending legs whose game starts within 30 minutes are priced from the current line
  * (which is the close for our purposes); ones that started up to 30 minutes ago use the book's official
- * close when ESPN has it; anything older without a close is marked no_close. Idempotent.
+ * close when ESPN has it; anything older without a close is marked no_close. Idempotent. The window
+ * is wider than the stack's cron gap (jobs + a 900 s sleep), so every game gets at least one tick.
  */
+export const CLOSE_WINDOW_MS = 30 * 60_000;
+
 export async function runCloseJob(opts: { now?: Date } = {}): Promise<{ games: number; closed: number; moved: number; noClose: number }> {
   const now = (opts.now ?? new Date()).getTime();
   const db = getDb();
   const rows = db.prepare("SELECT * FROM leg_prices WHERE status='pending' AND startsAt IS NOT NULL AND startsAt <= ? ORDER BY startsAt LIMIT 400")
-    .all(new Date(now + 15 * 60_000).toISOString()) as Row[];
+    .all(new Date(now + CLOSE_WINDOW_MS).toISOString()) as Row[];
   const byGame = new Map<string, Row[]>();
   for (const r of rows) byGame.set(`${r.sportKey}:${r.gameId}`, [...(byGame.get(`${r.sportKey}:${r.gameId}`) ?? []), r]);
   const out = { games: 0, closed: 0, moved: 0, noClose: 0 };

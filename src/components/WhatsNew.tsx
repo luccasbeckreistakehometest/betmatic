@@ -7,7 +7,7 @@ import type { Lang } from "@/lib/i18n";
 const KEY = "bm_whats_new_r3";
 
 const ITEMS: { href: (sport: string, lang: Lang) => string; pt: [string, string]; en: [string, string] }[] = [
-  { href: (s, l) => `/app?sport=${s}&lang=${l}`, pt: ["Plano B em cada bilhete", "duas alternativas embaixo de cada um"], en: ["A backup on every ticket", "two alternatives under each one"] },
+  { href: (s, l) => `/app?sport=${s}&lang=${l}`, pt: ["Plano B nos bilhetes", "até duas alternativas embaixo de cada um"], en: ["A plan B on tickets", "up to two alternatives under each one"] },
   { href: (s, l) => `/app?sport=${s}&lang=${l}`, pt: ["Vigia de escalação", "jogador no banco vira selo na perna"], en: ["Lineup watch", "a benched player turns into a badge"] },
   { href: (s, l) => `/app/bankroll?sport=${s}&lang=${l}`, pt: ["Manda o print", "seu bilhete da casa entra na banca"], en: ["Snap your slip", "your book slip goes into the bankroll"] },
   { href: (s, l) => `/app/tipster?sport=${s}&lang=${l}`, pt: ["Raio-x do tipster", "o acerto real antes de pagar VIP"], en: ["Tipster audit", "the real record before you pay"] },

@@ -84,8 +84,8 @@ export const SPORT_LANDINGS: SportLanding[] = [
       en: "A confirmed lineup changes everything, and your slip hears about it first.",
     },
     sub: {
-      pt: "Finalizações, faltas e impedimentos de cada jogador entram no bilhete com a odd que a casa publicou. Uma hora antes do jogo a gente confere a escalação: se quem está na sua perna ficar no banco, você fica sabendo e a alternativa sem ele aparece do lado.",
-      en: "Each player's shots, fouls and offsides go on the ticket at the price the book posted. An hour before kickoff we check the lineup: if the player on your leg is benched, you hear about it and the backup without him shows up beside it.",
+      pt: "Finalizações, faltas e impedimentos de cada jogador entram no bilhete com a odd que a casa publicou. Uma hora antes do jogo a gente confere a escalação: se quem está na sua perna ficar no banco, você fica sabendo e, quando existe, a alternativa sem ele aparece do lado.",
+      en: "Each player's shots, fouls and offsides go on the ticket at the price the book posted. An hour before kickoff we check the lineup: if the player on your leg is benched, you hear about it and, when there is one, the backup without him shows up beside it.",
     },
     angle: {
       pt: [

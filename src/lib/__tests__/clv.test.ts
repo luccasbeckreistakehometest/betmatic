@@ -57,7 +57,8 @@ describe("CLV maths", () => {
 
 describe("close job", () => {
   it("records taken prices once, closes the legs of a game about to start, and does nothing on a rerun", async () => {
-    const startsAt = new Date(Date.now() + 10 * 60_000).toISOString();
+    // 25 minutes out: inside the close window, which is wider than the cron gap
+    const startsAt = new Date(Date.now() + 25 * 60_000).toISOString();
     const leg = (settlement: object, oddsDecimal: number, athleteId?: string) => ({ oddsDecimal, athleteId, settlement: { sourceBasis: "", ...settlement } as never });
     const input = [
       { ledgerId: "T1", legIndex: 0, gameId: "777", sportKey: "wnba", startsAt, homeAbbr: "AUR", leg: leg({ type: "total", line: 160.5, side: "over" }, 2.05) },

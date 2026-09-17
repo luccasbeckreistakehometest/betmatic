@@ -111,11 +111,11 @@ const PT: LandingCopy = {
   edgeTitle: "O que só o Betmatic tem",
   edgeSub: "Quem vende palpite esconde o histórico e some quando erra. A gente construiu o contrário: cada bilhete conferido, vigiado e comparado com o mercado.",
   edges: [
-    { title: "Se a escalação mudar, seu bilhete avisa", body: "Uma hora antes do jogo a gente confere quem entrou em campo. Jogador no banco? A perna fica marcada em vermelho e a alternativa sem ele aparece do lado.", href: "/futebol" },
-    { title: "Plano B embaixo de cada bilhete", body: "Todo bilhete vem com duas alternativas que mantêm a mesma ideia. Mudou a linha ou caiu um titular, você já sabe pra onde ir.", href: "/signup" },
+    { title: "Se a escalação mudar, seu bilhete avisa", body: "Uma hora antes do jogo a gente confere quem entrou em campo. Jogador no banco? A perna fica marcada em vermelho e, quando existe, a alternativa sem ele aparece do lado.", href: "/futebol" },
+    { title: "Plano B embaixo do bilhete", body: "Quando os dados sustentam, o bilhete vem com até duas alternativas que mantêm a mesma ideia. Mudou a linha ou caiu um titular, você já sabe pra onde ir.", href: "/signup" },
     { title: "Manda o print, a gente confere", body: "Fez o bilhete na casa? Manda o print. Ele entra na sua banca e é liquidado sozinho quando o jogo acaba. A imagem não fica guardada.", href: "/signup" },
     { title: "Antes de pagar grupo VIP, passa ele no raio-x", body: "Cola as mensagens do tipster e veja quanto ele acertou de verdade, inclusive os \"greens\" postados depois que o jogo já tinha começado. É privado: o nome nunca aparece.", href: "/raio-x-tipster" },
-    { title: "Prova pública: o mercado concordou com a gente?", body: "Toda perna é comparada com a odd de fechamento. Pegar preço melhor que o fechamento com frequência é o sinal mais honesto de que a análise presta, e está na página de prova, pra todo mundo ver.", href: "/prova" },
+    { title: "Prova pública: o mercado concordou com a gente?", body: "Cada perna com odd de fechamento disponível é comparada com ela. Pegar preço melhor que o fechamento com frequência é o sinal mais honesto de que a análise presta, e está na página de prova, pra todo mundo ver.", href: "/prova" },
     { title: "Odd de verdade em cada perna de jogador", body: "Linha e preço publicados e, do lado, quantas vezes o jogador passou dessa linha nos últimos 5, 10 e na temporada. Quem joga pouco nem entra na lista.", href: "/basquete" },
   ],
   howTitle: "Como funciona",
@@ -128,9 +128,9 @@ const PT: LandingCopy = {
     },
     {
       n: "02",
-      title: "Cada bilhete vem com a chance real e dois planos B",
+      title: "Cada bilhete vem com a chance real e, quando dá, um plano B",
       body:
-        "Do seguro ao ousado, cada perna vem com o motivo, o preço e o histórico naquela linha. Embaixo, duas alternativas com a mesma ideia. Se os dados não sustentam um bilhete, a gente não inventa um.",
+        "Do seguro ao ousado, cada perna vem com o motivo, o preço e o histórico naquela linha. Embaixo, até duas alternativas com a mesma ideia. Se os dados não sustentam um bilhete, a gente não inventa um.",
     },
     {
       n: "03",
@@ -142,7 +142,7 @@ const PT: LandingCopy = {
       n: "04",
       title: "Depois do jogo, tudo é conferido em público",
       body:
-        "Cada bilhete é liquidado contra o placar oficial e cada perna é comparada com a odd de fechamento. Acerto, retorno e CLV ficam na página de prova, bons ou ruins.",
+        "Cada bilhete é liquidado contra o placar oficial e cada perna com odd de fechamento disponível é comparada com ela. Acerto, retorno e CLV ficam na página de prova, bons ou ruins.",
     },
   ],
 
@@ -267,11 +267,11 @@ const EN: LandingCopy = {
   edgeTitle: "What only Betmatic does",
   edgeSub: "Pick sellers hide their record and vanish when they miss. We built the opposite: every ticket graded, watched and held up against the market.",
   edges: [
-    { title: "Your slip watches the lineup for you", body: "An hour before kickoff we check who actually starts. A player on the bench? That leg turns red and the backup without him shows up right beside it.", href: "/soccer" },
-    { title: "Two backups under every ticket", body: "Every ticket ships with two alternatives that keep the same idea. If a line moves or a starter drops out, you already know where to go.", href: "/signup" },
+    { title: "Your slip watches the lineup for you", body: "An hour before kickoff we check who actually starts. A player on the bench? That leg turns red and, when there is one, the backup without him shows up right beside it.", href: "/soccer" },
+    { title: "A plan B under the ticket", body: "When the data supports it, a ticket ships with up to two alternatives that keep the same idea. If a line moves or a starter drops out, you already know where to go.", href: "/signup" },
     { title: "Snap your slip, we grade it", body: "Placed a bet at the book? Send the screenshot. It lands in your bankroll and grades itself when the game ends. The image is never kept.", href: "/signup" },
     { title: "Audit that VIP group before you pay", body: "Paste the tipster's messages and see what they really hit, including the \"wins\" posted after the game had already started. Private: the name never shows anywhere.", href: "/tipster-audit" },
-    { title: "Public record: did the market agree with us?", body: "Every leg is compared with the closing price. Beating the close often is the most honest sign the analysis is any good, and it sits on the public record for anyone to check.", href: "/prova" },
+    { title: "Public record: did the market agree with us?", body: "Every leg with a closing price available is compared with it. Beating the close often is the most honest sign the analysis is any good, and it sits on the public record for anyone to check.", href: "/prova" },
     { title: "Real prices on every player leg", body: "The posted line and price, and next to it how often the player cleared that line over the last 5, the last 10 and the season. Players who barely play never make the list.", href: "/basketball" },
   ],
   howTitle: "How it works",
@@ -284,9 +284,9 @@ const EN: LandingCopy = {
     },
     {
       n: "02",
-      title: "Every ticket ships with the real chance and two backups",
+      title: "Every ticket ships with the real chance and, when it can, a plan B",
       body:
-        "From short to ambitious, every leg carries the reason, the price and the record at that line. Underneath, two alternatives with the same idea. When the data doesn't support a ticket, we don't invent one.",
+        "From short to ambitious, every leg carries the reason, the price and the record at that line. Underneath, up to two alternatives with the same idea. When the data doesn't support a ticket, we don't invent one.",
     },
     {
       n: "03",
@@ -298,7 +298,7 @@ const EN: LandingCopy = {
       n: "04",
       title: "After the game, everything is graded in public",
       body:
-        "Each ticket is settled against the official score and each leg is compared with the closing price. Hit rate, return and CLV sit on the public record, good or bad.",
+        "Each ticket is settled against the official score and each leg with a closing price available is compared with it. Hit rate, return and CLV sit on the public record, good or bad.",
     },
   ],
 
