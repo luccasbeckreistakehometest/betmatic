@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-
+import { AiBudgetExceededError, recordAiSpend } from "@/lib/server/ai-budget";
 
 /** Judgement work: the synthesis brief. */
 export const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5";
@@ -32,6 +32,7 @@ export class AiNotConfiguredError extends Error {
  */
 export function describeAiError(error: unknown): string | null {
   if (error instanceof AiNotConfiguredError) return error.message;
+  if (error instanceof AiBudgetExceededError) return error.message;
 
   // Check the message before the subclass: this arrives as a plain 400 through the streaming
   // helper, so an `instanceof BadRequestError` test misses it.
@@ -92,5 +93,11 @@ export function recordUsage(label: string, usage: Anthropic.Usage | undefined, m
   console.log(
     `[ai] ${label.padEnd(22)} in=${input} out=${output} cacheRead=${cacheRead} → $${costUsd.toFixed(4)}`,
   );
+  // The spend ceiling reads these rows; a failed write must not lose the model's answer.
+  try {
+    recordAiSpend({ label, model, inputTokens: input + cacheRead + cacheWrite, outputTokens: output, costUsd });
+  } catch (error) {
+    console.warn("[ai] could not record spend:", error instanceof Error ? error.message : error);
+  }
   return record;
 }

@@ -2,6 +2,7 @@ import type { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import type Anthropic from "@anthropic-ai/sdk";
 import { AiNotConfiguredError, EXTRACTION_MODEL, MODEL, aiConfigured, getClient, recordUsage } from "@/lib/ai/client";
+import { assertAiBudget } from "@/lib/server/ai-budget";
 import type { ScrapeCapture } from "@/lib/types";
 
 const LIMITS = { api: 130_000, tables: 60_000, text: 80_000 };
@@ -87,6 +88,7 @@ export async function extractFromCapture<T extends z.ZodType>(
   args: ExtractArgs<T>,
 ): Promise<z.infer<T>> {
   if (!aiConfigured()) throw new AiNotConfiguredError();
+  assertAiBudget();
   const { schema, capture, instructions, context, useVision = false, maxTokens = 16000 } = args;
 
   const content: Anthropic.ContentBlockParam[] = [];
@@ -135,6 +137,7 @@ export async function generateStructured<T extends z.ZodType>(args: {
   model?: string;
 }): Promise<z.infer<T>> {
   if (!aiConfigured()) throw new AiNotConfiguredError();
+  assertAiBudget();
   const maxTokens = args.maxTokens ?? 16000;
   const model = args.model ?? MODEL;
 

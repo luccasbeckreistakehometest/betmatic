@@ -25,7 +25,7 @@ export async function GET() {
     db.prepare("SELECT COALESCE(SUM(-delta),0) AS n FROM coin_ledger WHERE delta < 0").get() as { n: number }
   ).n;
   const byPlan = db.prepare("SELECT planId, COUNT(*) AS n FROM users GROUP BY planId").all();
-  const users = listUsers(100).map((u) => ({
+  const users = listUsers({ limit: 100 }).map((u) => ({
     id: u.id, email: u.email, name: u.name, role: u.role, planId: u.planId,
     planExpiresAt: u.planExpiresAt, coins: u.coins, createdAt: u.createdAt, lastSeenAt: u.lastSeenAt,
   }));

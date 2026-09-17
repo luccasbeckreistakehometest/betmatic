@@ -2,7 +2,7 @@ import Database from "better-sqlite3";
 import fs from "node:fs";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
-import { hashPassword } from "@/lib/server/auth";
+import { hashPasswordSync } from "@/lib/server/auth";
 
 const DATA_DIR = process.env.DATA_DIR ?? path.join(process.cwd(), "data");
 let db: Database.Database | null = null;
@@ -13,12 +13,34 @@ let db: Database.Database | null = null;
 export function getDb(): Database.Database {
   if (db) return db;
   fs.mkdirSync(DATA_DIR, { recursive: true });
-  db = new Database(path.join(DATA_DIR, "betmatic.db"));
-  db.pragma("journal_mode = WAL");
-  db.pragma("foreign_keys = ON");
-  migrate(db);
-  ensureAdmin(db);
+  const opened = new Database(path.join(DATA_DIR, "betmatic.db"));
+  // `next build` imports this module from several workers against the same file: wait for the lock
+  // instead of failing, and make every schema step idempotent.
+  opened.pragma("busy_timeout = 10000");
+  opened.pragma("journal_mode = WAL");
+  opened.pragma("foreign_keys = ON");
+  opened.transaction(() => migrate(opened)).immediate();
+  opened.transaction(() => ensureAdmin(opened)).immediate();
+  db = opened;
   return db;
+}
+
+/**
+ * ALTER TABLE for databases created before a column existed. Safe to race: two workers can both see
+ * the column missing, and the loser's "duplicate column" error is the expected outcome.
+ */
+export function addColumn(database: Pick<Database.Database, "prepare" | "exec">, table: string, column: string, definition: string): void {
+  const columns = (database.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]).map((c) => c.name);
+  if (columns.length === 0 || columns.includes(column)) return;
+  try {
+    database.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  } catch (error) {
+    if (!(error instanceof Error && /duplicate column name/i.test(error.message))) throw error;
+  }
+}
+
+export function addColumnIfMissing(table: string, column: string, definition: string): void {
+  addColumn(getDb(), table, column, definition);
 }
 
 /**
@@ -31,10 +53,14 @@ function ensureAdmin(d: Database.Database): void {
   const password = process.env.ADMIN_PASSWORD ?? (prod ? "" : "betmatic2026");
   if (!email || !password) return;
   if (d.prepare("SELECT 1 FROM users WHERE email = ?").get(email)) return;
-  // A paid plan needs an expiry to count as active; the admin's never runs out.
-  d.prepare("INSERT INTO users (id,email,name,passwordHash,role,planId,planPeriod,planExpiresAt,coins,lang,createdAt) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
-    .run(`usr_${randomBytes(10).toString("hex")}`, email, "Admin", hashPassword(password), "admin", "max", "yearly", "2099-01-01T00:00:00.000Z", 0, "pt", new Date().toISOString());
+  // A paid plan needs an expiry to count as active; the admin's never runs out. The only synchronous
+  // scrypt in the app: it runs once per fresh data directory, never on a request.
+  d.prepare("INSERT OR IGNORE INTO users (id,email,name,passwordHash,role,planId,planPeriod,planExpiresAt,coins,lang,createdAt) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
+    .run(`usr_${randomBytes(10).toString("hex")}`, email, "Admin", hashPasswordSync(password), "admin", "max", "annual", "2099-01-01T00:00:00.000Z", 0, "pt", new Date().toISOString());
 }
+
+/** Payment rows outlive a deleted account (accounting); they are re-pointed at this inert row. */
+export const DELETED_USER_ID = "usr_deleted";
 
 function migrate(d: Database.Database): void {
   d.exec(`
@@ -295,6 +321,89 @@ function migrate(d: Database.Database): void {
       createdAt TEXT NOT NULL,
       PRIMARY KEY (ledgerId, lang)
     );
+
+    -- Mercado Pago notifications already acted on. The key is "<paymentId>:credit" or
+    -- "<paymentId>:reversal"; inserting it inside the crediting transaction is the idempotency guard.
+    CREATE TABLE IF NOT EXISTS processed_payments (
+      key TEXT PRIMARY KEY,
+      paymentId TEXT NOT NULL,
+      paymentRowId TEXT,
+      action TEXT NOT NULL,                         -- credit | reversal | ignored
+      status TEXT NOT NULL,
+      amount REAL,
+      processedAt TEXT NOT NULL
+    );
+
+    -- Every model call and what it cost: the daily spend ceiling reads this, not an estimate.
+    CREATE TABLE IF NOT EXISTS ai_usage (
+      id TEXT PRIMARY KEY,
+      label TEXT NOT NULL,
+      model TEXT NOT NULL,
+      inputTokens INTEGER NOT NULL DEFAULT 0,
+      outputTokens INTEGER NOT NULL DEFAULT 0,
+      costUsd REAL NOT NULL DEFAULT 0,
+      createdAt TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_ai_usage_created ON ai_usage(createdAt);
+
+    -- Operator-facing errors (AI failures, payment lookups, job failures). Users see a neutral message;
+    -- the detail lands here and in the server log.
+    CREATE TABLE IF NOT EXISTS ops_log (
+      id TEXT PRIMARY KEY,
+      level TEXT NOT NULL,                          -- error | warn | info
+      scope TEXT NOT NULL,
+      message TEXT NOT NULL,
+      meta TEXT NOT NULL DEFAULT '{}',
+      createdAt TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_ops_log_created ON ops_log(createdAt DESC);
+
+    -- The in-app contact form. Status is the admin's inbox state.
+    CREATE TABLE IF NOT EXISTS contact_messages (
+      id TEXT PRIMARY KEY,
+      userId TEXT,
+      name TEXT NOT NULL DEFAULT '',
+      email TEXT NOT NULL,
+      topic TEXT NOT NULL DEFAULT 'other',
+      message TEXT NOT NULL,
+      lang TEXT NOT NULL DEFAULT 'pt',
+      status TEXT NOT NULL DEFAULT 'open',          -- open | answered | closed
+      adminNote TEXT NOT NULL DEFAULT '',
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_contact_created ON contact_messages(status, createdAt DESC);
+
+    -- Plans with a daily game allowance (free): the games a user opened today, in the order opened.
+    CREATE TABLE IF NOT EXISTS user_game_unlocks (
+      userId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      dayKey TEXT NOT NULL,
+      gameId TEXT NOT NULL,
+      sportKey TEXT NOT NULL,
+      createdAt TEXT NOT NULL,
+      PRIMARY KEY (userId, dayKey, gameId)
+    );
+  `);
+
+  // Columns added after the first release. Each is idempotent and safe under parallel workers.
+  addColumn(d, "users", "sessionVersion", "INTEGER NOT NULL DEFAULT 0");
+  addColumn(d, "users", "disabledAt", "TEXT");
+  addColumn(d, "users", "termsAcceptedAt", "TEXT");
+  addColumn(d, "users", "termsVersion", "TEXT");
+  addColumn(d, "users", "mustChangePassword", "INTEGER NOT NULL DEFAULT 0");
+  addColumn(d, "payments", "preferenceId", "TEXT");
+  addColumn(d, "payments", "providerPaymentId", "TEXT");
+  addColumn(d, "payments", "statusDetail", "TEXT");
+  addColumn(d, "payments", "reversedAt", "TEXT");
+  addColumn(d, "payments", "formerUserRef", "TEXT");
+  // Referrals credit on the referred user's first paid purchase; rows from before this were credited at signup.
+  addColumn(d, "referrals", "status", "TEXT NOT NULL DEFAULT 'credited'");
+  addColumn(d, "referrals", "creditedAt", "TEXT");
+  addColumn(d, "generation_requests", "scope", "TEXT NOT NULL DEFAULT 'game'");
+  d.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_provider_payment ON payments(providerPaymentId) WHERE providerPaymentId IS NOT NULL;
+    CREATE INDEX IF NOT EXISTS idx_payments_preference ON payments(preferenceId);
+    CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals(referrerId, status, creditedAt);
   `);
 }
 

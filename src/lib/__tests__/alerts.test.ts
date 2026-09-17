@@ -81,14 +81,14 @@ describe("alert rules", () => {
   });
 });
 
+const alice = await createUser({ email: "alice@x.com", name: "Alice", password: "password123", lang: "pt" });
+const bob = await createUser({ email: "bob@x.com", name: "Bob", password: "password123", lang: "en" });
+
 describe("telegram link flow", () => {
   const sent: { chatId: string; text: string }[] = [];
   const capture = () => tg.setTelegramTransport(async (chatId, text) => { sent.push({ chatId, text }); return { ok: true }; });
   capture();
   beforeEach(capture);
-  createUser({ email: "admin@x.com", name: "A", password: "password123" }); // first account = admin
-  const alice = createUser({ email: "alice@x.com", name: "Alice", password: "password123", lang: "pt" });
-  const bob = createUser({ email: "bob@x.com", name: "Bob", password: "password123", lang: "en" });
 
   it("issues a one-time code, the bot consumes it once, and the account is linked", async () => {
     const status = tg.issueLinkCode(alice.id);
