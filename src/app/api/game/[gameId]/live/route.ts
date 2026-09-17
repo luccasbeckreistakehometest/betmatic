@@ -30,15 +30,21 @@ export async function GET(request: Request, ctx: { params: Promise<{ gameId: str
   const q = parse(request, gameId);
   if (!q) return apiError("not_found", lang, 404);
   if (pauseState(user.id).paused) return NextResponse.json({ paused: true });
-  const acct = hit("playerAccount", accountKey(user.id));
+  // Its own bucket: the panel polls once a minute, and a user watching a game still opens players.
+  const acct = hit("liveAccount", accountKey(user.id));
   if (!acct.ok) return rateLimited(acct, lang);
   const { snapshot, tickets } = await liveTracker(user, q.sportKey, gameId, q.dateKey, lang);
-  const read = latestLiveRead(q.sportKey, gameId, q.dateKey, lang);
+  // The live read is a Pro/Max feature: another reader paid for it, so nobody else on a plan without
+  // it receives it, and a plan that has it still only sees its own bands.
+  const canRead = canReadLive(user);
+  const read = canRead ? latestLiveRead(q.sportKey, gameId, q.dateKey, lang) : null;
   const role = user.role === "admin" ? "admin" : "user";
+  const bands = new Set(user.plan.bands);
+  const slate = read ? scrubSlate(role === "admin" ? read.slate : { ...read.slate, suggestions: read.slate.suggestions.filter((s) => bands.has(s.bandKey)) }, role, lang) : null;
   return NextResponse.json({
     snapshot, tickets,
-    read: read ? { ...read, slate: scrubSlate(read.slate, role, lang) } : null,
-    canRead: canReadLive(user),
+    read: read && slate ? { ...read, slate } : null,
+    canRead,
     nextReadAt: read ? new Date(Date.parse(read.generatedAt) + LIVE_COOLDOWN_MS).toISOString() : null,
   });
 }

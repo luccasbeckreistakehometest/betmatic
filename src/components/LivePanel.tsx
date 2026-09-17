@@ -133,7 +133,7 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
         )}
         <div className="border-t border-ink-800 pt-3" data-testid="live-read">
           <h3 className="text-[10px] font-semibold uppercase tracking-wider text-mist-500">{c.read}</h3>
-          {data.read && (
+          {data.canRead && data.read && (
             <div className="mt-1.5">
               <p className="text-[11px] text-mist-500">{c.readAt.replace("{m}", String(data.read.minute)).replace("{t}", formatTime(data.read.generatedAt, lang))}</p>
               <ul className="mt-1 flex flex-col gap-1.5">

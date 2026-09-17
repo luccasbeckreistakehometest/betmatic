@@ -13,11 +13,12 @@ import { todayKey } from "@/lib/sources/espn";
 import { normaliseLang, type Lang } from "@/lib/i18n";
 import {
   BOT_REPLY, LINK_CODE_LENGTH, LINK_CODE_TTL_MS, codeIsLive, digestDue, digestText, matchFollowers, newLinkCode,
-  parseStartCommand, ticketAlertText, type DigestItem, type FollowKind, type FollowRef,
+  parseStartCommand, ticketAlertText, ticketNoticeText, type DigestItem, type FollowKind, type FollowRef,
 } from "@/lib/alerts";
 import type { BetSlate, BetSuggestion } from "@/lib/types";
 import { baseUrlOrEmpty } from "@/lib/base-url";
 import { recentFeaturedIds } from "@/lib/server/featured-store";
+import { visibleSuggestionIds } from "@/lib/server/entitlement";
 
 /**
  * Telegram alerts. The bot only ever receives `/start <code>` and `/stop`; everything else is
@@ -250,21 +251,39 @@ export function markNotificationsRead(userId: string, ids: string[] | null): num
 
 export interface NotifyArgs {
   gameId: string; sportKey: string; matchup: string; teamIds: string[];
+  /** The dateKey the tickets were saved under; the entitlement pass reads that row. */
+  dateKey?: string;
   primary: Lang; slates: Partial<Record<Lang, BetSlate>>; base: string;
 }
 
-/** Called right after a game's tickets are saved. Each follower hears once, in their own language. */
+/**
+ * Called right after a game's tickets are saved. Each follower hears once, in their own language,
+ * and only about the tickets their plan shows on the page right now (same pass as /api/predictions);
+ * a follower whose plan shows none yet gets a pick-free notice pointing to the game page.
+ */
 export async function notifyFollowers(args: NotifyArgs, send: TelegramTransport = sendTelegram): Promise<{ users: number; telegram: number; inapp: number }> {
   const out = { users: 0, telegram: 0, inapp: 0 };
   const primarySlate = args.slates[args.primary];
   if (!primarySlate?.suggestions.length) return out;
   for (const userId of followersOf(args.sportKey, args.teamIds)) {
-    const user = findById(userId);
-    if (!user) continue;
+    const row = findById(userId);
+    if (!row || row.disabledAt) continue;
+    const user = toPublic(row);
     const lang = normaliseLang(user.lang);
-    const { text, slugs } = ticketAlertText({ gameId: args.gameId, matchup: args.matchup, lang, primary: primarySlate.suggestions, localised: args.slates[lang]?.suggestions, base: args.base });
+    const visible = visibleSuggestionIds(user, { sportKey: args.sportKey, gameId: args.gameId, lang: args.primary, dateKey: args.dateKey });
+    const primary = primarySlate.suggestions.filter((s) => visible.has(s.id));
     const title = scrubText(lang === "pt" ? `Bilhetes novos — ${args.matchup}` : `New tickets — ${args.matchup}`, lang);
-    const where = await deliver({ userId, kind: "tickets", dedupeKey: `tickets:${args.gameId}`, title, body: text, url: `${args.base}/p/${slugs[0]}?lang=${lang}` }, send);
+    let body: string;
+    let url: string;
+    if (primary.length) {
+      const alert = ticketAlertText({ gameId: args.gameId, matchup: args.matchup, lang, primary, localised: args.slates[lang]?.suggestions, base: args.base });
+      body = alert.text;
+      url = `${args.base}/p/${alert.slugs[0]}?lang=${lang}`;
+    } else {
+      url = `${args.base}/app/game/${args.gameId}?sport=${args.sportKey}&lang=${lang}`;
+      body = ticketNoticeText({ matchup: args.matchup, lang, url });
+    }
+    const where = await deliver({ userId, kind: "tickets", dedupeKey: `tickets:${args.gameId}`, title, body, url }, send);
     if (!where) continue;
     out.users += 1;
     if (where === "telegram") out.telegram += 1; else out.inapp += 1;

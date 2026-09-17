@@ -61,7 +61,7 @@ export async function generateGame(args: { sportKey: string; dateKey: string; de
     catch (error) { notes.push(`${lang}: ${error instanceof Error ? error.message : "?"}`); }
   }
   // Followers hear after every language is saved, so each gets the ticket in their own words.
-  void notifyFollowers({ gameId: detail.game.id, sportKey, matchup, teamIds: [detail.game.home.id, detail.game.away.id], primary, slates, base })
+  void notifyFollowers({ gameId: detail.game.id, sportKey, matchup, teamIds: [detail.game.home.id, detail.game.away.id], dateKey, primary, slates, base })
     .catch((error) => console.warn("[telegram] notify failed:", error instanceof Error ? error.message : error));
   return { primary: primarySlate, costUsd: cost, notes, info };
 }

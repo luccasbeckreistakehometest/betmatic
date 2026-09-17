@@ -121,3 +121,10 @@ export function lineupAlertText(a: Pick<LegAlert, "kind" | "player">, selection:
     ? { title: `Escalação — ${matchup}`, body: `${pt[a.kind]} A perna "${selection}" perdeu a base. Se quiser, confira a alternativa sem ele na página do jogo.` }
     : { title: `Lineup — ${matchup}`, body: `${en[a.kind]} The leg "${selection}" lost its footing. The backup without him is on the game page if you want it.` };
 }
+
+/** For a follower whose plan does not show the affected ticket: the lineup moved, no player, no pick. */
+export function lineupNoticeText(matchup: string, lang: "pt" | "en"): { title: string; body: string } {
+  return lang === "pt"
+    ? { title: `Escalação — ${matchup}`, body: `A escalação de ${matchup} mudou e mexe em bilhetes do jogo. Os detalhes que o seu plano mostra estão na página do jogo.` }
+    : { title: `Lineup — ${matchup}`, body: `The ${matchup} lineup changed and it touches tickets on this game. The details your plan shows are on the game page.` };
+}

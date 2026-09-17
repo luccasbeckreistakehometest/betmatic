@@ -69,5 +69,11 @@ test("live panel: legs tracked with the chance now, polling only while visible, 
   await expect(free.getByTestId("live-panel")).toBeVisible({ timeout: 30_000 });
   await expect(free.getByTestId("live-read-plan")).toContainText("Pro e Max");
   await expect(free.getByTestId("live-read-btn")).toHaveCount(0);
+  // ...and never the read the Pro reader paid for, on the page or through the API.
+  await expect(free.getByTestId("live-read-ticket")).toHaveCount(0);
+  const api = await free.evaluate(async () => (await fetch(document.querySelector("[data-live-url]")?.getAttribute("data-live-url") ?? "")).json());
+  expect(api.canRead).toBe(false);
+  expect(api.read).toBeNull();
+  expect(api.nextReadAt).toBeNull();
   await ctx.close();
 });

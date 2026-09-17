@@ -8,7 +8,8 @@ process.env.DATA_DIR = DIR; process.env.AUTH_SECRET = "test-secret-that-is-long-
 fs.rmSync(DIR, { recursive: true, force: true });
 const { newLinkCode, parseStartCommand, matchFollowers, ticketAlertText, digestText, digestDue, codeIsLive, LINK_CODE_TTL_MS } = await import("@/lib/alerts");
 const tg = await import("@/lib/server/telegram");
-const { createUser } = await import("@/lib/server/users");
+const { createUser, setPlanByAdmin } = await import("@/lib/server/users");
+const { dayKeyFor } = await import("@/lib/server/unlocks");
 const { savePrediction } = await import("@/lib/server/predictions");
 const { getDb } = await import("@/lib/server/db");
 
@@ -132,24 +133,47 @@ describe("telegram link flow", () => {
     expect(await tg.deliver({ userId: alice.id, kind: "system", dedupeKey: "k2", title: "t", body: "fallback", url: "" })).toBe("inapp");
     expect(tg.listNotifications(alice.id)[0]).toMatchObject({ channel: "inapp", status: "unread", error: "boom" });
   });
-  it("notifies league and team followers in their own language, whitelabelled, once per game", async () => {
+  it("notifies league and team followers in their own language, whitelabelled, once per game, within each plan", async () => {
     sent.length = 0;
     expect(tg.follow(alice.id, { kind: "league", sportKey: "soccer-esp", key: "", label: "" })).toBe(true);
     expect(tg.follow(bob.id, { kind: "team", sportKey: "soccer-esp", key: "243", label: "Sevilla" })).toBe(true);
     expect(tg.follow(bob.id, { kind: "team", sportKey: "nope", key: "1", label: "" })).toBe(false);
     expect(tg.listFollows(bob.id)).toHaveLength(1);
-    const slates = { pt: { suggestions: [s("a", "Sevilha vence", 60)], dataNote: "" }, en: { suggestions: [s("a", "Sevilla to win", 60)], dataNote: "" } };
-    const r = await tg.notifyFollowers({ gameId: "g9", sportKey: "soccer-esp", matchup: "Valencia @ Sevilla", teamIds: ["243", "94"], primary: "pt", slates, base: "https://x.y" });
+    // bob pays for Pro; alice stays on the free plan (value band only, two-hour delay, one chosen game)
+    setPlanByAdmin(bob.id, "pro", new Date(Date.now() + 30 * 86_400_000).toISOString());
+    const safe = { ...s("b", "Sevilha segura", 90, ["Sevilha dupla chance"]), bandKey: "safe" };
+    const slates = {
+      pt: { suggestions: [s("a", "Sevilha vence", 60), safe], dataNote: "" },
+      en: { suggestions: [s("a", "Sevilla to win", 60), { ...safe, title: "Sevilla safe" }], dataNote: "" },
+    };
+    for (const lang of ["pt", "en"] as const) savePrediction({ scope: "game", sportKey: "soccer-esp", gameId: "g9", dateKey: "20260917", lang, matchup: "Valencia @ Sevilla", startsAt: new Date(Date.now() + 6 * 3_600_000).toISOString(), slate: slates[lang] });
+    const args = { gameId: "g9", sportKey: "soccer-esp", matchup: "Valencia @ Sevilla", teamIds: ["243", "94"], dateKey: "20260917", primary: "pt" as const, slates, base: "https://x.y" };
+    const r = await tg.notifyFollowers(args);
     expect(r).toEqual({ users: 2, telegram: 1, inapp: 1 });
     expect(sent).toHaveLength(1);
-    expect(sent[0].text).toContain("Sevilha vence");
-    expect(sent[0].text).not.toMatch(/Betano|ESPN/);
+    // alice's plan shows none of these tickets yet: she hears that the game has tickets, and no pick
+    expect(sent[0].text).toContain("ganhou bilhetes novos");
+    expect(sent[0].text).not.toMatch(/Sevilha vence|segura|dupla chance|Betano|ESPN/);
+    expect(sent[0].text).toContain("https://x.y/app/game/g9?sport=soccer-esp&lang=pt");
     const bobs = tg.listNotifications(bob.id).filter((n) => n.kind === "tickets");
     expect(bobs).toHaveLength(1);
     expect(bobs[0].body).toContain("Sevilla to win");
+    expect(bobs[0].body).toContain("Sevilla safe");
+    expect(bobs[0].body).not.toMatch(/Betano|ESPN/);
     expect(bobs[0].url).toMatch(/https:\/\/x\.y\/p\/[0-9a-f]{10}\?lang=en/);
     // regeneration of the same game is silent
-    expect(await tg.notifyFollowers({ gameId: "g9", sportKey: "soccer-esp", matchup: "Valencia @ Sevilla", teamIds: ["243", "94"], primary: "pt", slates, base: "https://x.y" })).toEqual({ users: 0, telegram: 0, inapp: 0 });
+    expect(await tg.notifyFollowers(args)).toEqual({ users: 0, telegram: 0, inapp: 0 });
+    // once the free delay has passed and alice picked this game, she reads the value ticket and never the safe one
+    getDb().prepare("UPDATE predictions SET generatedAt=? WHERE gameId='g9'").run(new Date(Date.now() - 3 * 3_600_000).toISOString());
+    getDb().prepare("INSERT INTO user_game_unlocks (userId, dayKey, gameId, sportKey, createdAt) VALUES (?,?,?,?,?)").run(alice.id, dayKeyFor(), "g9", "soccer-esp", new Date().toISOString());
+    sent.length = 0;
+    getDb().prepare("DELETE FROM alert_log WHERE userId=? AND kind='tickets'").run(alice.id);
+    expect(await tg.notifyFollowers(args)).toMatchObject({ users: 1, telegram: 1 });
+    expect(sent[0].text).toContain("Sevilha vence");
+    expect(sent[0].text).not.toMatch(/segura|dupla chance/);
+    getDb().prepare("DELETE FROM predictions WHERE gameId='g9'").run();
+    getDb().prepare("DELETE FROM user_game_unlocks WHERE userId=?").run(alice.id);
+    setPlanByAdmin(bob.id, "free", null);
     expect(tg.unfollow(bob.id, "team", "soccer-esp", "243")).toBe(true);
     expect(tg.listFollows(bob.id)).toHaveLength(0);
   });

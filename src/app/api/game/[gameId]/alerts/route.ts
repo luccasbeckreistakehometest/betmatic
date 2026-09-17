@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/server/session";
-import { servePredictionsDetailed } from "@/lib/server/predictions";
-import { ownGeneratedGames, unlockedGames } from "@/lib/server/unlocks";
+import { servedGameFor } from "@/lib/server/entitlement";
 import { pauseState } from "@/lib/server/settings";
 import { alertsForGame } from "@/lib/server/lineups";
-import { getPlan } from "@/lib/plans";
 import { normaliseLang } from "@/lib/i18n";
 import { SOLD_SPORTS } from "@/lib/sports";
 
@@ -24,12 +22,7 @@ export async function GET(request: Request, ctx: { params: Promise<{ gameId: str
   if (!/^[\w-]{1,40}$/.test(gameId) || !SOLD_SPORTS.some((s) => s.key === sportKey) || !/^\d{8}$/.test(date)) return NextResponse.json({ alerts: [] });
   const user = await currentUser();
   if (!user || pauseState(user.id).paused) return NextResponse.json({ alerts: [] });
-  const plan = user.planActive ? user.plan : getPlan("free");
-  const since = new Date(Date.now() - 2 * 86_400_000).toISOString();
-  const served = servePredictionsDetailed({
-    scope: "game", sportKey, dateKey: date, lang, plan, role: user.role,
-    viewer: { unlocked: new Set(plan.gamesPerDay !== null ? unlockedGames(user.id).map((g) => g.gameId) : []), ownGenerated: ownGeneratedGames(user.id, since) },
-  }).predictions.find((p) => p.gameId === gameId);
+  const served = servedGameFor(user, { sportKey, gameId, dateKey: date, lang });
   if (!served) return NextResponse.json({ alerts: [] });
   const visible = new Set(served.slate.suggestions.map((s) => s.id));
   const alerts = alertsForGame(gameId)

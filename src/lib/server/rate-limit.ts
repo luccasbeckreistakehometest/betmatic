@@ -25,6 +25,7 @@ export const RULES = {
   slipAccount: { max: 10, windowMs: 60 * MIN },
   reviewAccount: { max: 20, windowMs: 60 * MIN },
   playerAccount: { max: 90, windowMs: 60 * MIN },
+  liveAccount: { max: 150, windowMs: 60 * MIN },
   eventsIp: { max: 240, windowMs: 10 * MIN },
   exportAccount: { max: 5, windowMs: 60 * MIN },
   webhookIp: { max: 120, windowMs: MIN },

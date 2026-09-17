@@ -5,12 +5,10 @@ import { parseLiveSnapshot, type LiveSnapshot } from "@/lib/live/snapshot";
 import { ticketChance, trackLeg, type LegTrack, type PreMatch } from "@/lib/live/tracker";
 import { historyFor } from "@/lib/props/candidates";
 import { measureProp, resolveStatLabels } from "@/lib/props/history";
-import { servePredictionsDetailed } from "@/lib/server/predictions";
-import { ownGeneratedGames, unlockedGames } from "@/lib/server/unlocks";
+import { servedGameFor } from "@/lib/server/entitlement";
 import { getDb } from "@/lib/server/db";
 import { readLedger } from "@/lib/ledger/store";
 import { normaliseName } from "@/lib/resolve/names";
-import { getPlan } from "@/lib/plans";
 import { getSport } from "@/lib/sports";
 import type { PublicUser } from "@/lib/server/users";
 import type { Settlement } from "@/lib/types";
@@ -69,11 +67,7 @@ export async function liveTracker(user: PublicUser, sportKey: string, gameId: st
   if (!snapshot) return { snapshot: null, tickets: [] };
   const detail = await getGameDetail(gameId, false, sportKey).catch(() => null);
   const game = { total: detail?.game.odds?.overUnder ?? null, spread: detail?.game.odds?.spread ?? null };
-  const plan = user.planActive ? user.plan : getPlan("free");
-  const served = servePredictionsDetailed({
-    scope: "game", sportKey, dateKey, lang, plan, role: user.role,
-    viewer: { unlocked: new Set(plan.gamesPerDay !== null ? unlockedGames(user.id).map((g) => g.gameId) : []), ownGenerated: ownGeneratedGames(user.id, new Date(Date.now() - 2 * 86_400_000).toISOString()) },
-  }).predictions.find((p) => p.gameId === gameId);
+  const served = servedGameFor(user, { sportKey, gameId, dateKey, lang });
   const tickets: TrackedTicket[] = [];
   for (const s of (served?.slate.suggestions ?? []).filter((x) => !x.alternativeFor).slice(0, 8)) {
     const legs = await track(sportKey, s.legs, snapshot, lang, game);
