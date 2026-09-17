@@ -10,6 +10,6 @@ export async function GET(request: Request, ctx: { params: Promise<{ code: strin
   // Behind the reverse proxy the request URL names the internal host, so the public base wins.
   const base = configuredBaseUrl() ?? url.origin;
   const res = NextResponse.redirect(new URL(`/signup?lang=${lang}&ref=${encodeURIComponent(code)}`, base));
-  res.cookies.set(REF_COOKIE, code.slice(0, 16), { httpOnly: true, sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 30 });
+  res.cookies.set(REF_COOKIE, code.slice(0, 16), { httpOnly: true, sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 30, secure: process.env.NODE_ENV === "production" });
   return res;
 }

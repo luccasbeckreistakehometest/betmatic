@@ -5,6 +5,7 @@ import { MarketingFooter, MarketingHeader } from "@/components/MarketingShell";
 import { ProofStrip } from "@/components/ProofStrip";
 import { DEFAULT_META, langFrom, pageMetadata, type SearchProps } from "@/lib/seo";
 import { formatMoneyBRL } from "@/lib/format";
+import { currentUser } from "@/lib/server/session";
 import { LADDER, landingCopy } from "@/lib/landing-copy";
 import { normaliseLang } from "@/lib/i18n";
 import { SPORT_LANDINGS } from "@/lib/sport-landing";
@@ -26,6 +27,8 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
   const query = await searchParams;
   const lang = normaliseLang(typeof query.lang === "string" ? query.lang : undefined);
   const c = landingCopy(lang);
+  // Visitors carry the chosen plan through signup straight to checkout; members pick the period on /planos.
+  const signedIn = !!(await currentUser());
   const stake = lang === "pt" ? 10 : 10;
   const maxReturn = Math.max(...LADDER.map((l) => l.decimal)) * stake;
 
@@ -256,7 +259,7 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
                     ))}
                   </ul>
                   <Link
-                    href={plan.id === "free" ? `/signup?lang=${lang}` : `/planos?lang=${lang}`}
+                    href={plan.id === "free" ? (signedIn ? `/app?lang=${lang}` : `/signup?lang=${lang}`) : signedIn ? `/planos?lang=${lang}` : `/signup?lang=${lang}&plan=${plan.id}&period=monthly`}
                     data-testid={`landing-plan-${plan.id}`}
                     className={`mt-6 rounded-lg px-4 py-2.5 text-center text-[13px] font-semibold transition ${
                       featured

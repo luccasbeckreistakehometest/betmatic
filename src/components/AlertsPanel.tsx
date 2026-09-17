@@ -34,7 +34,7 @@ export function AlertsPanel() {
   const tg = data?.telegram;
   const followingLeague = (key: string) => data?.follows.some((f) => f.kind === "league" && f.sportKey === key) ?? false;
   const teams = data?.follows.filter((f) => f.kind === "team") ?? [];
-  const groups = [["basketball", lang === "pt" ? "Basquete" : "Basketball"], ["soccer", lang === "pt" ? "Futebol" : "Soccer"], ["tennis", lang === "pt" ? "Tênis" : "Tennis"]] as const;
+  const groups = [["basketball", lang === "pt" ? "Basquete" : "Basketball"], ["soccer", lang === "pt" ? "Futebol" : "Soccer"]] as const;
   const when = (iso: string) => formatDateTime(iso, lang);
 
   return (
