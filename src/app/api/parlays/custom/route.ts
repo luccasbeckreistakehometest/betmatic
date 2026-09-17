@@ -77,7 +77,8 @@ export async function POST(request: Request) {
     let result = readCache<Cached>(cacheKey, 15 * 60_000);
     const cachedHit = !!result;
     if (!result) {
-      const { pool, dateKey } = await buildLegPool(c.sport, { lang, includeTicketLegs: paid });
+      const { pool, dateKey, games } = await buildLegPool(c.sport, { lang, includeTicketLegs: paid });
+      const kickoff = new Map(games.map((g) => [g.id, g.startsAt]));
       const solved = solveCustomParlay(pool, c);
       if (!solved.reachable) {
         result = { reachable: false, nearest: solved.nearest, reason: solved.reason, tickets: [], aiWritten: false };
@@ -95,6 +96,7 @@ export async function POST(request: Request) {
         } else {
           tickets = templateCustomTickets(solved.tickets, lang);
         }
+        tickets = tickets.map((t) => ({ ...t, legs: t.legs.map((l) => ({ ...l, startsAt: kickoff.get(l.gameId) })) }));
         result = { reachable: true, nearest: solved.nearest, reason: "ok", tickets, aiWritten };
         void dateKey;
       }

@@ -12,6 +12,7 @@ import { currentUser } from "@/lib/server/session";
 import { listFollows } from "@/lib/server/telegram";
 import { makeT, normaliseLang } from "@/lib/i18n";
 import { getSport, sportSellsTickets } from "@/lib/sports";
+import { getGameLines, type ProviderLines } from "@/lib/sources/espn-props";
 import type { InjuryEntry, TeamRef } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -72,6 +73,39 @@ function InjuryList({ injuries, abbreviation }: { injuries: InjuryEntry[]; abbre
   );
 }
 
+/** "abriu 1,67 → agora 1,62 ↘": how the first book with an opening line has moved. */
+function LineMovement({ lines, home, away, lang }: { lines: ProviderLines[]; home: string; away: string; lang: "pt" | "en" }) {
+  const book = lines.find((l) => l.open && l.current);
+  if (!book?.open || !book.current) return null;
+  const fmt = (n: number) => (lang === "pt" ? n.toFixed(2).replace(".", ",") : n.toFixed(2));
+  const rows: { label: string; from: number; to: number; isLine?: boolean }[] = [];
+  const add = (label: string, from: number | null, to: number | null, isLine = false) => {
+    if (from !== null && to !== null && Math.abs(from - to) >= (isLine ? 0.25 : 0.01)) rows.push({ label, from, to, isLine });
+  };
+  add(away, book.open.awayMl, book.current.awayMl);
+  add(home, book.open.homeMl, book.current.homeMl);
+  add(lang === "pt" ? "linha de total" : "total line", book.open.total, book.current.total, true);
+  add(lang === "pt" ? "mais de" : "over", book.open.over, book.current.over);
+  if (!rows.length) return null;
+  return (
+    <div className="mt-3 border-t border-ink-800 pt-2.5" data-testid="line-movement">
+      <h3 className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-mist-500">{lang === "pt" ? "Movimento desde a abertura" : "Movement since the open"}</h3>
+      <ul className="flex flex-col gap-0.5">
+        {rows.map((r) => {
+          // A shorter price means money came in on that side; a higher total line means the market expects more.
+          const up = r.to > r.from;
+          return (
+            <li key={r.label} className="nums flex items-center justify-between gap-2 text-[12px] text-mist-300">
+              <span className="truncate">{r.label}</span>
+              <span>{r.isLine ? r.from : fmt(r.from)} → {r.isLine ? r.to : fmt(r.to)} <span className={up ? "text-warn-400" : "text-edge-400"}>{up ? "↗" : "↘"}</span></span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 export default async function GamePage({ params, searchParams }: PageProps<"/app/game/[gameId]">) {
   const { gameId } = await params;
   const query = await searchParams;
@@ -89,6 +123,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
   const followOf = (teamId: string) => ({ sportKey: sport.key, initial: followed.has(teamId), signedIn: !!user });
 
   const { game, books, ats, injuries, teamStats, predictor, leaders, lastMeetings } = detail;
+  const lines = sportSellsTickets(sport) && game.status === "scheduled" ? await getGameLines(sport.key, game.id).catch(() => []) : [];
 
   return (
     <div className="flex flex-col gap-5">
@@ -211,6 +246,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
             ) : (
               <Empty>{t("noLines")}</Empty>
             )}
+            <LineMovement lines={lines} home={game.home.displayName} away={game.away.displayName} lang={lang} />
             {ats.length > 0 && (
               <div className="mt-3 border-t border-ink-800 pt-2.5">
                 <h3 className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-mist-500">

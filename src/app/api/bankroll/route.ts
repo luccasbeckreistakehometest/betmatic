@@ -30,7 +30,7 @@ function addCustom(userId: string, input: { slipId: string; ticketIndex: number;
   const games = [...new Set(ticket.legs.map((l) => l.matchup))];
   return addWithLegs(userId, {
     source: "custom", title: ticket.title, matchup: games.length === 1 ? games[0] : `${games.length} jogos`, odds: Number(ticket.decimal.toFixed(2)), stake: input.stake,
-    legs: ticket.legs.map((l) => ({ selection: l.selection, market: l.market, odds: l.decimal, gameId: l.gameId, sportKey: (JSON.parse(row!.legs) as { sport?: string }).sport ?? null, settlement: l.settlement })),
+    legs: ticket.legs.map((l) => ({ selection: l.selection, market: l.market, odds: l.decimal, gameId: l.gameId, sportKey: (JSON.parse(row!.legs) as { sport?: string }).sport ?? null, startsAt: l.startsAt ?? null, athleteId: l.athleteId ?? null, settlement: l.settlement })),
   });
 }
 

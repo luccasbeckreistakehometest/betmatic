@@ -13,6 +13,8 @@ import type { Settlement } from "@/lib/types";
 export interface CustomLegView {
   key: string; gameId: string; matchup: string; selection: string; market: string; decimal: number;
   fairProbability: number; measured: boolean; evidence: string; note: string; settlement: Settlement; athleteId?: string;
+  /** Kickoff of the leg's game, attached by the route (the lineup watcher and the close job read it). */
+  startsAt?: string;
 }
 export interface CustomTicketView {
   title: string; background: string; riskNote: string;

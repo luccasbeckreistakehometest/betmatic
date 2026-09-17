@@ -2,7 +2,8 @@ import { z } from "zod";
 import { generateStructured } from "@/lib/ai/extract";
 import { getPrompt } from "@/lib/server/prompts";
 import { calibrationPrompt } from "@/lib/ledger/calibrate";
-import { recordPredictions } from "@/lib/ledger/store";
+import { ledgerIdFor, recordPredictions } from "@/lib/ledger/store";
+import { recordLegPrices } from "@/lib/server/leg-prices";
 import { settlePending } from "@/lib/ledger/settle";
 import {
   ODDS_BANDS, expectedValue, formatAmerican, getBand, impliedProbability, parlayDecimal, parseOdds,
@@ -304,7 +305,12 @@ export async function buildBets(args: BuildArgs): Promise<BetSlate> {
   const suggestions = priceAll(result.suggestions, { props, sportKey: game.sportKey, game, lines });
 
   // Log every ticket at generation time so it can be graded once the game finishes.
-  if (record) recordPredictions(game, suggestions);
+  if (record) {
+    recordPredictions(game, suggestions);
+    recordLegPrices(suggestions.flatMap((s) => s.legs.map((leg, legIndex) => ({
+      ledgerId: ledgerIdFor(game.id, s), legIndex, gameId: game.id, sportKey: game.sportKey, startsAt: game.startsAt, homeAbbr: game.home.abbreviation, leg,
+    }))));
+  }
   return { suggestions, dataNote: result.dataNote };
 }
 
@@ -381,10 +387,11 @@ export async function buildSlateBets(args: SlateBuildArgs): Promise<BetSlate> {
   if (games.length) {
     // Label it as what it is; using the first game's matchup made a slate ticket look single-game.
     const label = `${games.length} ${games[0].game.sportKey} games`;
+    const slateId = `slate:${games.map((g) => g.game.id).join("+")}`.slice(0, 120);
     recordPredictions(
       {
         ...games[0].game,
-        id: `slate:${games.map((g) => g.game.id).join("+")}`.slice(0, 120),
+        id: slateId,
         home: { ...games[0].game.home, displayName: label, name: label },
         away: { ...games[0].game.away, displayName: "cross-game", name: "cross-game" },
       },
@@ -392,6 +399,12 @@ export async function buildSlateBets(args: SlateBuildArgs): Promise<BetSlate> {
       // Public only once every game on it has started; before that the remaining legs are still bettable.
       { startsAt: games.map((g) => g.game.startsAt).filter(Boolean).sort().at(-1) },
     );
+    // Each leg is closed against its own game.
+    const byId = new Map(games.map((g) => [g.game.id, g.game]));
+    recordLegPrices(suggestions.flatMap((s) => s.legs.flatMap((leg, legIndex) => {
+      const g = leg.gameId ? byId.get(leg.gameId) : undefined;
+      return g ? [{ ledgerId: ledgerIdFor(slateId, s), legIndex, gameId: g.id, sportKey: g.sportKey, startsAt: g.startsAt, homeAbbr: g.home.abbreviation, leg }] : [];
+    })));
   }
 
   return { suggestions, dataNote: result.dataNote };

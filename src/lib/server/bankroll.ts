@@ -4,6 +4,7 @@ import { ticketSlug } from "@/lib/ledger/proof";
 import { gradeLegAgainst, ticketOutcome } from "@/lib/ledger/settle";
 import { getGameDetail } from "@/lib/sources/espn";
 import { alertsForEntries } from "@/lib/server/lineups";
+import { clvByLedger, recordLegPrices } from "@/lib/server/leg-prices";
 import type { LedgerEntry, LegOutcome, Settlement, SettledLeg } from "@/lib/types";
 
 export interface BankrollRow {
@@ -17,13 +18,15 @@ export interface BankrollView extends Omit<BankrollRow, "userId"> {
   slug: string | null;
   /** Legs of a custom/scanned entry that the server grades by itself. */
   autoLegs?: number;
+  /** Mean closing line value of the entry's legs that have a close. */
+  clv?: { pct: number; n: number; moved: number };
   /** Lineup watcher: legs of this entry that lost their player before kickoff. */
   alerts?: { kind: string; player: string }[];
 }
 
 interface LegRow { entryId: string; idx: number; selection: string; market: string; odds: number | null; gameId: string | null; sportKey: string | null; startsAt: string | null; settlement: string | null; outcome: LegOutcome; actual: string }
 
-export interface NewLeg { selection: string; market: string; odds: number | null; gameId: string | null; sportKey: string | null; startsAt?: string | null; settlement: Settlement | null }
+export interface NewLeg { selection: string; market: string; odds: number | null; gameId: string | null; sportKey: string | null; startsAt?: string | null; athleteId?: string | null; settlement: Settlement | null }
 
 const legView = (r: LegRow): SettledLeg => ({
   selection: r.selection, market: r.market, sourceBasis: r.settlement ? "auto" : "manual",
@@ -41,6 +44,7 @@ export function listBankroll(userId: string): { entries: BankrollView[]; totals:
   const byEntry = new Map<string, LegRow[]>();
   for (const r of legRows) byEntry.set(r.entryId, [...(byEntry.get(r.entryId) ?? []), r]);
   const alerts = alertsForEntries(rows.filter((r) => r.outcome === "pending" || r.source === "ticket"));
+  const clv = clvByLedger(rows.flatMap((r) => (r.ledgerId ? [r.ledgerId, `bl:${r.id}`] : [`bl:${r.id}`])));
   const entries: BankrollView[] = rows.map((r) => {
     const l = r.ledgerId ? ledger.get(r.ledgerId) : undefined;
     const outcome = r.source === "ticket" && l ? l.outcome : r.outcome;
@@ -51,6 +55,7 @@ export function listBankroll(userId: string): { entries: BankrollView[]; totals:
       legs: l?.legs ?? own?.map(legView), slug: r.ledgerId ? ticketSlug(r.ledgerId) : null,
       autoLegs: own ? own.filter((x) => x.settlement).length : undefined,
       alerts: outcome === "pending" ? alerts.get(r.id) : undefined,
+      clv: clv.get(r.ledgerId ?? "") ?? clv.get(`bl:${r.id}`),
     };
   });
   const decided = entries.filter((e) => e.outcome === "won" || e.outcome === "lost");
@@ -100,6 +105,10 @@ export function addWithLegs(userId: string, input: { source: "custom" | "scan"; 
     const insert = db.prepare("INSERT INTO bankroll_legs (entryId,idx,selection,market,odds,gameId,sportKey,startsAt,settlement) VALUES (?,?,?,?,?,?,?,?,?)");
     input.legs.slice(0, 20).forEach((l, i) => insert.run(rowId, i, l.selection.slice(0, 200), l.market.slice(0, 60), l.odds, l.gameId, l.sportKey, l.startsAt ?? null, l.settlement ? JSON.stringify(l.settlement) : null));
   }).immediate();
+  // Legs matched to a game also get a price to compare with the close (CLV).
+  recordLegPrices(input.legs.slice(0, 20).flatMap((l, i) => (l.gameId && l.sportKey && l.settlement && l.odds
+    ? [{ ledgerId: `bl:${rowId}`, legIndex: i, gameId: l.gameId, sportKey: l.sportKey, startsAt: l.startsAt ?? null, homeAbbr: null, leg: { athleteId: l.athleteId ?? undefined, oddsDecimal: l.odds, settlement: l.settlement } }]
+    : [])));
   return listBankroll(userId).entries.find((e) => e.id === rowId) ?? null;
 }
 

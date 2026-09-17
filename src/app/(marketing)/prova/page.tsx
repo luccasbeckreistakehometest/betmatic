@@ -7,6 +7,7 @@ import { readLedger } from "@/lib/ledger/store";
 import { mainTickets, proofMinDecided, proofPublishable, proofStats, publicTickets, recentTickets, ticketSlug } from "@/lib/ledger/proof";
 import { scrubText } from "@/lib/server/whitelabel";
 import { EquityChart } from "@/components/EquityChart";
+import { ClvBlock } from "@/components/ClvBlock";
 import { toRows } from "@/lib/ledger/backtest";
 import { normaliseLang } from "@/lib/i18n";
 import { formatDecimal } from "@/lib/odds";
@@ -61,6 +62,8 @@ export default async function ProofPage({ searchParams }: SearchProps) {
           <p className="mt-2 text-[13.5px] leading-relaxed text-mist-400">{c.methodBody}</p>
           {!publish && <p className="mt-2 text-[13.5px] leading-relaxed text-mist-300" data-testid="proof-method">{c.method.replace("{n}", String(proofMinDecided()))}</p>}
         </div>
+
+        <ClvBlock lang={lang} />
 
         {publish && <><div className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-ink-800 bg-ink-800 sm:grid-cols-5" data-testid="proof-stats">
           {[[c.generated, s.generated], [c.settled, s.settled], [c.hit, s.settled ? pct(s.hitRate) : "—"], [c.roi, s.settled ? `${s.roi >= 0 ? "+" : ""}${pct(s.roi)}` : "—"], [c.pending, s.pending]].map(([k, v], i) => (

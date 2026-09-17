@@ -488,6 +488,34 @@ function migrateRound3(d: Database.Database): void {
       PRIMARY KEY (ledgerId, legIndex, kind)
     );
     CREATE INDEX IF NOT EXISTS idx_leg_alerts_game ON leg_alerts(gameId, detectedAt);
+
+    -- CLV: the price each leg was taken at, and the market's close at kickoff. ledgerId is a ledger
+    -- ticket id, or bl:<entryId> for a bankroll leg built here or read from a print.
+    CREATE TABLE IF NOT EXISTS leg_prices (
+      ledgerId TEXT NOT NULL,
+      legIndex INTEGER NOT NULL,
+      gameId TEXT NOT NULL,
+      sportKey TEXT NOT NULL,
+      startsAt TEXT,
+      kind TEXT NOT NULL,                           -- ml | total | spread | prop
+      marketKey TEXT NOT NULL DEFAULT '',
+      athleteId TEXT,
+      side TEXT,
+      line REAL,
+      takenDecimal REAL NOT NULL,
+      openDecimal REAL,
+      closeDecimal REAL,
+      closeFair REAL,
+      closeLine REAL,
+      clvPct REAL,
+      basis TEXT,                                   -- novig | raw
+      direction TEXT,                               -- favor | against (line_moved only)
+      status TEXT NOT NULL DEFAULT 'pending',       -- pending | closed | line_moved | no_close
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL,
+      PRIMARY KEY (ledgerId, legIndex)
+    );
+    CREATE INDEX IF NOT EXISTS idx_leg_prices_pending ON leg_prices(status, startsAt);
   `);
   addColumn(d, "user_slips", "kind", "TEXT NOT NULL DEFAULT 'analysis'");
 }

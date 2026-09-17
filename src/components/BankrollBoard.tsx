@@ -12,7 +12,7 @@ import { curvePath } from "@/lib/ledger/backtest";
 import { LossReview } from "@/components/LossReview";
 
 interface EntryLeg { selection: string; outcome: string; actual?: string; settlement?: unknown }
-interface Entry { id: string; source: "ticket" | "manual" | "custom" | "scan"; title: string; matchup: string; combinedDecimal: number; stake: number; outcome: string; pnl: number; createdAt: string; settledAt: string | null; slug: string | null; legs?: EntryLeg[]; autoLegs?: number; alerts?: { kind: string; player: string }[] }
+interface Entry { id: string; source: "ticket" | "manual" | "custom" | "scan"; title: string; matchup: string; combinedDecimal: number; stake: number; outcome: string; pnl: number; createdAt: string; settledAt: string | null; slug: string | null; legs?: EntryLeg[]; autoLegs?: number; alerts?: { kind: string; player: string }[]; clv?: { pct: number; n: number; moved: number } }
 interface Payload { entries: Entry[]; totals: { staked: number; profit: number; roi: number; won: number; lost: number; pending: number }; streak?: { streak: number; notice: boolean }; pause?: { paused: boolean; until: string | null }; error?: string }
 
 export function BankrollBoard() {
@@ -75,6 +75,11 @@ export function BankrollBoard() {
                 </span>
               ) : null}
               <span className="nums text-mist-400">{formatDecimal(e.combinedDecimal)} · {money(e.stake)}</span>
+              {e.clv && (e.clv.n > 0 || e.clv.moved > 0) && (
+                <span className={`nums text-[11px] ${e.clv.n && e.clv.pct > 0 ? "text-signal-400" : "text-mist-500"}`} data-testid="entry-clv" title={lang === "pt" ? "Preço que você pegou comparado com o fechamento, sem a margem" : "Your price compared with the close, margin removed"}>
+                  {e.clv.n ? `CLV ${e.clv.pct > 0 ? "+" : ""}${(e.clv.pct * 100).toFixed(1).replace(".", lang === "pt" ? "," : ".")}%` : lang === "pt" ? "linha mudou" : "line moved"}
+                </span>
+              )}
               <span className={"nums w-24 text-right " + tone(e.outcome)}>{e.outcome === "won" || e.outcome === "lost" ? `${e.pnl >= 0 ? "+" : ""}${money(e.pnl)}` : ""}</span>
               {e.source !== "ticket" && e.outcome === "pending" && (
                 <span className="flex gap-1 text-[11px]">{(["won", "lost", "void"] as const).map((o) => <button key={o} onClick={() => grade(e.id, o)} className="rounded border border-ink-700 px-1.5 py-0.5 text-mist-400 hover:text-mist-100">{{ won: t("markWon"), lost: t("markLost"), void: t("markVoid") }[o]}</button>)}</span>
