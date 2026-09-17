@@ -55,6 +55,17 @@ describe("leg tracker", () => {
     expect(t.state).toBe("alive");
     expect(t.probability!).toBeLessThan(0.05);
     const ml = trackLeg({ type: "moneyline", teamAbbreviation: "TUP", sourceBasis: "" }, null, soccer, { total: 2.5 });
+    // Live payloads print subbedIn as an object: a bench player who never came on is flagged.
+    const withBench = parseLiveSnapshot({
+      header: { competitions: [{ status: { displayClock: "60'", period: 2, type: { state: "in" } }, competitors: [] }] },
+      rosters: [{ team: { abbreviation: "TUP" }, roster: [
+        { starter: false, subbedIn: { didSub: false }, athlete: { displayName: "Téo Lins" }, stats: [{ name: "totalShots", value: 0 }] },
+        { starter: false, subbedIn: { didSub: true }, athlete: { displayName: "Ugo Paz" }, stats: [{ name: "totalShots", value: 1 }] },
+      ] }],
+    }, "s", "soccer");
+    const shots = (player: string) => ({ type: "player_prop" as const, player, stat: "shots", line: 1.5, side: "over" as const, sourceBasis: "" });
+    expect(trackLeg(shots("Téo Lins"), ["SHOT"], withBench, { average: 2 }).flags).toEqual(["benched"]);
+    expect(trackLeg(shots("Ugo Paz"), ["SHOT"], withBench, { average: 2 }).flags).toEqual([]);
     expect(ml.probability!).toBeGreaterThan(0.7);
   });
 

@@ -92,7 +92,9 @@ export function parseLiveSnapshot(summary: Json, gameId: string, sportGroup: "ba
           const label = SOCCER_STATS[String(s.name)];
           if (label) stats[label] = n(s.value ?? s.displayValue);
         }
-        players.push({ id: String(p.athlete?.id ?? ""), name: String(p.athlete?.displayName ?? ""), team, stats: { ...stats, STARTER: p.starter ? 1 : 0, SUBBED_IN: p.subbedIn ? 1 : 0 } });
+        // ESPN prints subbedIn as an object ({ didSub: false }) on live payloads, a boolean on some older ones.
+        const subbedIn = p.subbedIn === true || p.subbedIn?.didSub === true;
+        players.push({ id: String(p.athlete?.id ?? ""), name: String(p.athlete?.displayName ?? ""), team, stats: { ...stats, STARTER: p.starter ? 1 : 0, SUBBED_IN: subbedIn ? 1 : 0 } });
       }
     }
   }

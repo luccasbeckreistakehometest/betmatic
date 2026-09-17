@@ -122,7 +122,7 @@ function summary(g: FakeGame) {
     out.rosters = lineupOut || g.state !== "pre"
       ? [g.home, g.away].map((t) => ({
           team: { id: t.id, abbreviation: t.abbr }, formation: "4-3-3",
-          roster: t.players.map((p) => ({ starter: p.id !== "88002", subbedIn: false, athlete: { id: p.id, displayName: p.name }, position: { abbreviation: p.pos }, stats: g.state === "post" ? [{ name: "totalShots", value: 2 }, { name: "foulsCommitted", value: 1 }] : [] })),
+          roster: t.players.map((p) => ({ starter: p.id !== "88002", subbedIn: { didSub: false }, athlete: { id: p.id, displayName: p.name }, position: { abbreviation: p.pos }, stats: g.state === "post" ? [{ name: "totalShots", value: 2 }, { name: "foulsCommitted", value: 1 }] : [] })),
         }))
       : [];
     out.boxscore = { teams: [g.home, g.away].map((t, i) => ({ team: { abbreviation: t.abbr, id: t.id }, statistics: [{ name: "foulsCommitted", displayValue: String(10 + i) }, { name: "yellowCards", displayValue: String(1 + i) }, { name: "wonCorners", displayValue: "4" }, { name: "shotsOnTarget", displayValue: "3" }, { name: "totalShots", displayValue: "9" }] })), players: [] };
