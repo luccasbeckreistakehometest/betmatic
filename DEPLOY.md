@@ -54,7 +54,22 @@ evento *Pagamentos*. Coins e planos entram sozinhos.
   popula nem em janela; bet365 é ilegível; mercados de faltas por jogador só existem em
   alguns jogos. O app é honesto sobre isso nas notas de cada bilhete.
 
-## 7. Operar
+## 7. Telegram (alertas dos times seguidos)
+1. Crie o bot no @BotFather: o token vai em `TELEGRAM_BOT_TOKEN`, o @ do bot (sem @) em `TELEGRAM_BOT_USERNAME`.
+2. Aponte o webhook para o app, com o mesmo segredo de `TELEGRAM_WEBHOOK_SECRET`:
+   ```bash
+   curl "https://api.telegram.org/bot$TOKEN/setWebhook?url=https://seu-dominio.com/api/telegram/webhook&secret_token=$TELEGRAM_WEBHOOK_SECRET"
+   ```
+3. O usuário conecta em `/app/alerts` (código de uso único, `/start CÓDIGO` no bot) e segue ligas e times.
+   Quando o jogo de um deles ganha bilhetes, o aviso chega no Telegram; sem chat conectado, fica na
+   lista de avisos do próprio app.
+4. Resumo "seus bilhetes de hoje": o sidecar chama `?job=digest` de hora em hora e o servidor envia uma
+   vez por dia depois de `TELEGRAM_DIGEST_HOUR` (padrão 9, horário de Brasília). Para disparar na mão:
+   `POST /api/cron/refresh?job=digest&force=1` com `x-cron-secret` ou logado como admin.
+
+Sem `TELEGRAM_BOT_TOKEN` o recurso fica escondido no app e nada é chamado.
+
+## 8. Operar
 ```bash
 docker compose logs --tail 200 app
 cp data/betmatic.db backups/$(date +%F).db      # cron diário
