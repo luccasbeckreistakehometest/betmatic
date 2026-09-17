@@ -147,6 +147,16 @@ export interface PropRow {
   note?: string;
   /** Computed from ESPN game logs, independent of whatever the source tool claimed. */
   measured?: HitRate | null;
+  athleteId?: string;
+  /** MarketDef.key within the sport. */
+  marketKey?: string;
+  /** The posted decimal price at this exact line; absent on an unpriced candidate. */
+  decimal?: number;
+  /** The price the book opened this line at, when it has not moved the line since. */
+  openDecimal?: number | null;
+  /** The side's chance with the book margin removed (two-sided markets only). */
+  noVigFair?: number | null;
+  priced?: boolean;
 }
 
 export interface PickRow {
@@ -205,6 +215,14 @@ export interface BetLeg {
   evidence: string;
   fairProbability: number;
   settlement?: Settlement;
+  /** For cross-game tickets: the game this leg belongs to. */
+  gameId?: string;
+  /** ESPN athlete id for player legs — links the leg to the player deep dive. */
+  athleteId?: string;
+  /** The book's opening price for this line, when it is known and the line has not moved. */
+  openOdds?: number;
+  /** Measured record at this exact line, attached in code (never by the model). */
+  measured?: { last5: string; last10: string; season: string; rate: number };
 }
 
 export type LegOutcome = "won" | "lost" | "push" | "void" | "pending";
@@ -240,6 +258,10 @@ export interface LedgerEntry {
   modelledProbability: number;
   /** The generator's 0–100 evidence score at creation; absent on tickets logged before it was recorded. */
   evidenceScore?: number;
+  /** The suggestion id inside its stored slate (links alerts and prices to the served ticket). */
+  suggestionId?: string;
+  /** Ledger id of the main ticket this one backs up. The public record counts main tickets by default. */
+  alternativeOf?: string;
   legs: SettledLeg[];
   outcome: LegOutcome;
 }
@@ -285,6 +307,8 @@ export interface BetSuggestion {
   evidenceNotes: string[];
   /** Id of the ticket this one is a fallback for. Markets close; a reader needs a second door. */
   alternativeFor?: string;
+  /** When to switch to this alternative ("se o Fulano for vetado"). */
+  swapReason?: string;
 }
 
 export interface BetSlate {

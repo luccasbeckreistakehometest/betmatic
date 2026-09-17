@@ -3,6 +3,8 @@ import { buildBets } from "@/lib/bets/builder";
 import { localiseSlate } from "@/lib/bets/localise";
 import { getGameDetail } from "@/lib/sources/espn";
 import { buildPropCandidates } from "@/lib/props/candidates";
+import { consensusFromFeeds } from "@/lib/props/consensus";
+import { getGameLines } from "@/lib/sources/espn-props";
 import { refereeForMatch } from "@/lib/signals/referee";
 import { computeDvp } from "@/lib/signals/dvp";
 import { getSport } from "@/lib/sports";
@@ -21,19 +23,26 @@ export type Detail = NonNullable<Awaited<ReturnType<typeof getGameDetail>>>;
  * the judgement model, and the derived languages by the cheaper one. Shared by the background job
  * and by on-demand generation so both spend tokens the same way.
  */
-export async function generateGame(args: { sportKey: string; dateKey: string; detail: Detail; langs: Lang[] }): Promise<{ primary: BetSlate; costUsd: number; notes: string[] }> {
+export async function generateGame(args: { sportKey: string; dateKey: string; detail: Detail; langs: Lang[] }): Promise<{ primary: BetSlate; costUsd: number; notes: string[]; info: string[] }> {
   const { sportKey, dateKey, detail } = args;
   const [primary, ...derived] = args.langs;
   const notes: string[] = [];
+  const info: string[] = [];
   let cost = 0;
   const spend = () => { const c = lastUsage?.costUsd ?? 0; cost += c; return c; };
 
-  const props = await buildPropCandidates(detail).catch(() => []);
-  const sportDef = getSport(sportKey);
-  const referee = sportDef.group === "soccer"
+  // Priced player legs, gated by minutes/role before the prompt; a failing feed falls back to
+  // unpriced candidates (which the builder never lets into a ticket).
+  const sportDefinition = getSport(sportKey);
+  const candidates = await buildPropCandidates(detail).catch(() => null);
+  const props = candidates?.props ?? [];
+  const lines = await getGameLines(sportKey, detail.game.id).catch(() => []);
+  if (candidates?.dropped.length) info.push(`role gate dropped: ${candidates.dropped.join(", ")}`);
+  const consensus = consensusFromFeeds(props, sportDefinition.group === "soccer" ? lines : [], { home: detail.game.home.displayName, away: detail.game.away.displayName });
+  const referee = sportDefinition.group === "soccer"
     ? await refereeForMatch(detail.game.home.displayName, detail.game.away.displayName, dateKey).catch(() => null)
     : null;
-  const dvp = sportDef.group === "basketball"
+  const dvp = sportDefinition.group === "basketball"
     ? { home: await computeDvp(sportKey, detail.game.home.id, detail.game.home.abbreviation).catch(() => null),
         away: await computeDvp(sportKey, detail.game.away.id, detail.game.away.abbreviation).catch(() => null) }
     : undefined;
@@ -43,7 +52,7 @@ export async function generateGame(args: { sportKey: string; dateKey: string; de
   const save = (lang: Lang, slate: BetSlate, costUsd: number) =>
     savePrediction({ scope: "game", sportKey, gameId: detail.game.id, dateKey, lang, matchup, startsAt: detail.game.startsAt, slate, costUsd });
 
-  const primarySlate = await buildBets({ game: detail.game, detail, props, picks: [], dimers: [], x: null, bands: BANDS, lang: primary, referee, dvp });
+  const primarySlate = await buildBets({ game: detail.game, detail, props, picks: [], dimers: [], x: null, bands: BANDS, lang: primary, referee, dvp, roles: candidates?.roles ?? [], consensus, lines });
   save(primary, primarySlate, spend());
   void announceTickets({ gameId: detail.game.id, matchup, sportKey, lang: primary, suggestions: primarySlate.suggestions, base });
   const slates: Partial<Record<Lang, BetSlate>> = { [primary]: primarySlate };
@@ -54,5 +63,5 @@ export async function generateGame(args: { sportKey: string; dateKey: string; de
   // Followers hear after every language is saved, so each gets the ticket in their own words.
   void notifyFollowers({ gameId: detail.game.id, sportKey, matchup, teamIds: [detail.game.home.id, detail.game.away.id], primary, slates, base })
     .catch((error) => console.warn("[telegram] notify failed:", error instanceof Error ? error.message : error));
-  return { primary: primarySlate, costUsd: cost, notes };
+  return { primary: primarySlate, costUsd: cost, notes, info };
 }

@@ -102,7 +102,7 @@ async function generateShared(sportKey: string, gameId: string, user: PublicUser
       .run(reqId, user.id, sportKey, gameId, dateKey, "running", nowIso());
     try {
       const out = await generateGame({ sportKey, dateKey, detail, langs });
-      getDb().prepare("UPDATE generation_requests SET status=?, costUsd=?, finishedAt=?, note=? WHERE id=?").run("ok", out.costUsd, nowIso(), out.notes.join(" | "), reqId);
+      getDb().prepare("UPDATE generation_requests SET status=?, costUsd=?, finishedAt=?, note=? WHERE id=?").run("ok", out.costUsd, nowIso(), [...out.notes, ...out.info].join(" | ").slice(0, 500), reqId);
       return { status: "generated", dateKey };
     } catch (error) {
       // The operator sees the reason (admin panel + log); the user sees a neutral message.

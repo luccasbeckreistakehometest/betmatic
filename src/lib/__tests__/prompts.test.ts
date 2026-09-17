@@ -47,3 +47,13 @@ describe("prompt versions", () => {
     expect(listPromptVersions("game").filter((v) => v.active).map((v) => v.lang).sort()).toEqual(["en", "pt"]);
   });
 });
+
+describe("alternatives rule upgrade", async () => {
+  const { upgradeAlternativesRule, ALTERNATIVES_RULE } = await import("@/lib/server/prompts");
+  it("replaces the old isAlternative paragraph and leaves current prompts alone", () => {
+    const old = "intro\n- ALWAYS pair each main ticket with at least one alternative, flagged with isAlternative, placed\n  immediately after it. blah rather than restating the same bet at a worse price.\nend";
+    expect(upgradeAlternativesRule(old)).toBe(`intro\n${ALTERNATIVES_RULE}\nend`);
+    expect(upgradeAlternativesRule("edited by hand: use isAlternative")).toContain(ALTERNATIVES_RULE);
+    expect(upgradeAlternativesRule("already current")).toBeNull();
+  });
+});

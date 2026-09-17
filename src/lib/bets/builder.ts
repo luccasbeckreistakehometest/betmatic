@@ -19,6 +19,10 @@ import { dvpPrompt, type DvpProfile } from "@/lib/signals/dvp";
 import { consensusPrompt, type ConsensusProp } from "@/lib/props/consensus";
 import { livePrompt, type LiveState } from "@/lib/live/state";
 import { rolePrompt, type RoleProfile } from "@/lib/props/role";
+import { anchoredOdds, enrichLeg, type EnrichContext } from "@/lib/bets/enrich";
+import { linkAlternatives, ticketId } from "@/lib/bets/alternatives";
+import type { ProviderLines } from "@/lib/sources/espn-props";
+import { mockGameSlate, mockSlateBets } from "@/lib/ai/mocks";
 
 const LegSchema = z.object({
   selection: z.string().describe("The exact bet, including the number. e.g. 'Paolo Banchero over 22.5 points'"),
@@ -40,7 +44,8 @@ const LegSchema = z.object({
 
 const SuggestionSchema = z.object({
   kind: z.enum(["single", "parlay"]),
-  isAlternative: z.boolean().describe("True when this ticket is a fallback for the one before it."),
+  alternativeOf: z.number().int().nullable().describe("null for a main ticket. For an alternative: the 0-based index, in this same suggestions list, of the main ticket it backs up."),
+  swapReason: z.string().nullable().describe("For an alternative: when to switch to it, e.g. 'se o Fulano for vetado' or 'se a linha passar de 2,5'. null for a main ticket."),
   title: z.string().describe("Short label for the ticket."),
   background: z.string().describe("The situation that makes this worth a look: matchup context, injury picture, market read. Two or three sentences."),
   legs: z.array(LegSchema).min(1),
@@ -49,8 +54,9 @@ const SuggestionSchema = z.object({
 });
 
 export type RawSuggestion = z.infer<typeof SuggestionSchema>;
+export type RawLeg = z.infer<typeof LegSchema>;
 
-const SlateSchema = z.object({
+export const SlateSchema = z.object({
   suggestions: z.array(SuggestionSchema),
   dataNote: z.string().describe("What was missing or thin in the inputs, so the reader can weigh the tickets."),
 });
@@ -65,7 +71,7 @@ function describeProps(props: PropRow[]): string {
       const measuredText = measured
         ? ` | MEASURED ${measured.side} ${measured.line} ${measured.stat}: L5 ${measured.last5.hits}/${measured.last5.of}, L10 ${measured.last10.hits}/${measured.last10.of}, season ${measured.season.hits}/${measured.season.of} (${(measured.impliedFair * 100).toFixed(0)}%), avg ${measured.average}, median ${measured.median} [${measured.sampleNote}]`
         : " | MEASURED: none — no game log matched this player/market";
-      return `- ${p.player} ${p.market} ${p.side ?? ""} ${p.line ?? "?"} @ ${p.odds ?? "no price"} (${p.book ?? "?"})${p.projection !== undefined ? ` toolProj ${p.projection}` : ""}${p.edgePct !== undefined ? ` toolEdge ${p.edgePct}%` : ""}${measuredText}`;
+      return `- ${p.player} ${p.market} ${p.side ?? ""} ${p.line ?? "?"} @ ${p.odds ?? "no price"} (${p.book ?? "?"})${p.note ? ` [${p.note}]` : ""}${p.projection !== undefined ? ` toolProj ${p.projection}` : ""}${p.edgePct !== undefined ? ` toolEdge ${p.edgePct}%` : ""}${measuredText}`;
     })
     .join("\n");
 }
@@ -85,6 +91,12 @@ export interface BuildArgs {
   roles?: RoleProfile[];
   /** Present once the match has kicked off; changes the question from 90 minutes to what is left. */
   live?: LiveState | null;
+  /** Open/current/close game lines: anchor prices and show movement. */
+  lines?: ProviderLines[];
+  /** Live reads and previews are not logged to the public ledger. */
+  record?: boolean;
+  /** Defaults to the judgement model. */
+  model?: string;
   props: PropRow[];
   picks: PickRow[];
   dimers: PickRow[];
@@ -133,7 +145,6 @@ function scoreEvidence(legs: BetLeg[]): { score: number; notes: string[] } {
 export function priceSuggestion(
   raw: z.infer<typeof SuggestionSchema>,
   bandKey: string,
-  index: number,
 ): BetSuggestion | null {
   const legs: BetLeg[] = [];
   for (const leg of raw.legs) {
@@ -147,6 +158,7 @@ export function priceSuggestion(
       explanation: leg.explanation,
       evidence: leg.evidence,
       fairProbability: Math.min(Math.max(leg.fairProbability, 0.001), 0.999),
+      gameId: leg.gameId ?? undefined,
       settlement: {
         type: leg.settlementType,
         teamAbbreviation: leg.settlementTeam ?? undefined,
@@ -179,8 +191,7 @@ export function priceSuggestion(
   const evidence = scoreEvidence(legs);
 
   return {
-    alternativeFor: raw.isAlternative ? `${bandKey}-${Math.max(0, index - 1)}` : undefined,
-    id: `${bandKey}-${index}`,
+    id: ticketId(bandKey, legs.map((l) => l.selection)),
     kind: legs.length > 1 ? "parlay" : "single",
     bandKey,
     title: raw.title,
@@ -198,8 +209,38 @@ export function priceSuggestion(
   };
 }
 
+/**
+ * Anchors every leg to the posted price, prices each ticket in code, attaches the measured record and
+ * orders the result. The model's own odds text is used only where no feed carries the market.
+ */
+export function priceAll(raws: RawSuggestion[], ctx: EnrichContext, opts: { oneLegPerGame?: boolean } = {}): BetSuggestion[] {
+  const items = raws.map((raw) => {
+    const anchored: RawSuggestion = { ...raw, legs: raw.legs.map((l) => ({ ...l, odds: anchoredOdds(l, ctx) })) };
+    const decimalGuess = parlayDecimal(
+      anchored.legs.map((l) => parseOdds(l.odds)).filter((d) => Number.isFinite(d) && d > 1),
+    );
+    // Classify by the price actually computed, not by whatever band the model thought it hit.
+    const band = ODDS_BANDS.find((b) => decimalGuess >= b.min && decimalGuess < b.max);
+    let priced = priceSuggestion(anchored, band?.key ?? "unbanded");
+    // Books discount legs from the same game, so a product of their prices would overstate the payout.
+    if (priced && opts.oneLegPerGame && !independentGames(priced)) priced = null;
+    return {
+      alternativeOf: raw.alternativeOf,
+      swapReason: raw.swapReason,
+      priced: priced ? { ...priced, legs: priced.legs.map((leg, j) => enrichLeg(leg, anchored.legs[j], ctx)) } : null,
+    };
+  });
+  return linkAlternatives(items);
+}
+
+/** A cross-game ticket needs one leg per game, each leg naming its game. */
+export function independentGames(bet: Pick<BetSuggestion, "legs">): boolean {
+  const ids = bet.legs.map((l) => l.gameId);
+  return ids.every((id) => !!id) && new Set(ids).size === ids.length;
+}
+
 export async function buildBets(args: BuildArgs): Promise<BetSlate> {
-  const { game, detail, props, picks, dimers, x, bands, lang, duels = [], referee = null, dvp, consensus = [], roles = [], live = null, maxPerBand = 2 } = args;
+  const { game, detail, props, picks, dimers, x, bands, lang, duels = [], referee = null, dvp, consensus = [], roles = [], live = null, maxPerBand = 2, lines = [], record = true } = args;
   // Grade anything finished first, so this build reasons over the newest track record.
   await settlePending(10).catch(() => null);
   const targets = bands.map((b) => getBand(b));
@@ -255,22 +296,15 @@ export async function buildBets(args: BuildArgs): Promise<BetSlate> {
     system: getPrompt("game", lang),
     prompt,
     maxTokens: 16000,
+    label: live ? "live" : "game",
+    model: args.model,
+    mock: () => mockGameSlate({ game, detail, props, lang, bands, live: !!live }),
   });
 
-  const suggestions = result.suggestions
-    .map((s, i) => {
-      const decimalGuess = parlayDecimal(
-        s.legs.map((l) => parseOdds(l.odds)).filter((d) => Number.isFinite(d) && d > 1),
-      );
-      // Classify by the price actually computed, not by whatever band the model thought it hit.
-      const band = ODDS_BANDS.find((b) => decimalGuess >= b.min && decimalGuess < b.max);
-      return priceSuggestion(s, band?.key ?? "unbanded", i);
-    })
-    .filter((s): s is BetSuggestion => s !== null)
-    .sort((a, b) => a.combinedDecimal - b.combinedDecimal);
+  const suggestions = priceAll(result.suggestions, { props, sportKey: game.sportKey, game, lines });
 
   // Log every ticket at generation time so it can be graded once the game finishes.
-  recordPredictions(game, suggestions);
+  if (record) recordPredictions(game, suggestions);
   return { suggestions, dataNote: result.dataNote };
 }
 
@@ -328,6 +362,7 @@ export async function buildSlateBets(args: SlateBuildArgs): Promise<BetSlate> {
     ...targets.map((b) => `- ${b.key}: combined ${b.min}x to ${b.max}x (${b.typicalLegs})`),
     "",
     "Only use prices that appear above. If a band cannot be reached with the published prices, skip it and say so in dataNote.",
+    "Every leg must set gameId to the GAME id it belongs to, and a ticket may hold at most ONE leg per game: books discount same-game legs, so a ticket with two legs from one game is discarded.",
   ].join("\n");
 
   const result = await generateStructured({
@@ -335,18 +370,12 @@ export async function buildSlateBets(args: SlateBuildArgs): Promise<BetSlate> {
     system: getPrompt("slate", lang),
     prompt,
     maxTokens: 16000,
+    label: "slate",
+    mock: () => mockSlateBets({ games, lang }),
   });
 
-  const suggestions = result.suggestions
-    .map((s, i) => {
-      const decimalGuess = parlayDecimal(
-        s.legs.map((l) => parseOdds(l.odds)).filter((d) => Number.isFinite(d) && d > 1),
-      );
-      const band = ODDS_BANDS.find((bd) => decimalGuess >= bd.min && decimalGuess < bd.max);
-      return priceSuggestion(s, band?.key ?? "unbanded", i);
-    })
-    .filter((s): s is BetSuggestion => s !== null)
-    .sort((a, b) => a.combinedDecimal - b.combinedDecimal);
+  const allProps = games.flatMap((g) => g.props ?? []);
+  const suggestions = priceAll(result.suggestions, { props: allProps, sportKey: games[0]?.game.sportKey ?? "" }, { oneLegPerGame: true });
 
   // Cross-game tickets are logged against a synthetic game id so they can still be settled per leg.
   if (games.length) {

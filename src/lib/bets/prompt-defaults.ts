@@ -24,11 +24,14 @@ Hard rules:
   mostly slightly negative EV. If nearly every ticket you built comes out positive, your probability
   estimates are optimistic rather than the book being wrong many times over — lower them, and say in
   dataNote that the read skewed optimistic. Most real tickets should be negative or near zero.
-- ALWAYS pair each main ticket with at least one alternative, flagged with isAlternative, placed
-  immediately after it. Markets suspend and prices move between generation and the moment someone
-  reads this, so a single suggestion with no second door is of little use. A good alternative
-  reaches a similar thesis through a different market — a double chance instead of the win, a
-  different total line, a different player — rather than restating the same bet at a worse price.
+- ALWAYS give every main ticket at least TWO alternatives (never more than two). Set alternativeOf on
+  each alternative to the 0-based index of its main ticket in this same suggestions list (main
+  tickets carry alternativeOf null), and write swapReason: the moment to switch, e.g. "se o Fulano
+  for vetado" or "se a linha passar de 2,5". Markets suspend, lines move and players get ruled out
+  between generation and the bet, so a ticket with no second door is of little use. An alternative
+  keeps the same thesis and roughly the same band and changes one or two legs — a double chance
+  instead of the win, a different total line, a different player — rather than restating the same
+  bet at a worse price. When a leg depends on one player, at least one alternative must avoid him.
 - The market list you are given is the whole pool of what is actually open. Prefer a leg that
   exists in it over a market you assume is offered; if a thesis needs a market that is not listed,
   say so instead of inventing the leg.

@@ -39,6 +39,10 @@ function writeAll(entries: LedgerEntry[]): void {
   fs.writeFileSync(FILE, entries.map((e) => JSON.stringify(e)).join("\n") + "\n", "utf8");
 }
 
+/** The ledger id of a ticket: game + band + the exact leg text (the primary generation language). */
+export const ledgerIdFor = (gameId: string, s: Pick<BetSuggestion, "bandKey" | "legs">): string =>
+  `${gameId}:${s.bandKey}:${s.legs.map((l) => l.selection).join("|")}`;
+
 /** `startsAt` overrides the game's kickoff (a cross-game ticket goes public when its last game starts). */
 export function recordPredictions(game: Game, suggestions: BetSuggestion[], opts: { startsAt?: string } = {}): number {
   if (!suggestions.length) return 0;
@@ -47,9 +51,10 @@ export function recordPredictions(game: Game, suggestions: BetSuggestion[], opts
   const matchup = `${game.away.displayName} @ ${game.home.displayName}`;
 
   const fresh: LedgerEntry[] = [];
+  const ledgerIdOf = new Map(suggestions.map((s) => [s.id, ledgerIdFor(game.id, s)]));
   for (const s of suggestions) {
     // Same game + same ticket shape must not be logged twice across re-gathers.
-    const id = `${game.id}:${s.bandKey}:${s.legs.map((l) => l.selection).join("|")}`;
+    const id = ledgerIdOf.get(s.id)!;
     if (seen.has(id)) continue;
     seen.add(id);
     fresh.push({
@@ -65,6 +70,8 @@ export function recordPredictions(game: Game, suggestions: BetSuggestion[], opts
       combinedDecimal: s.combinedDecimal,
       modelledProbability: s.modelledProbability,
       evidenceScore: s.evidenceScore,
+      suggestionId: s.id,
+      alternativeOf: s.alternativeFor ? ledgerIdOf.get(s.alternativeFor) : undefined,
       outcome: "pending",
       legs: s.legs.map<SettledLeg>((l) => ({
         selection: l.selection,
