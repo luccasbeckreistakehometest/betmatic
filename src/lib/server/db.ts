@@ -269,6 +269,17 @@ function migrate(d: Database.Database): void {
     );
     CREATE UNIQUE INDEX IF NOT EXISTS idx_alert_dedupe ON alert_log(userId, dedupeKey);
     CREATE INDEX IF NOT EXISTS idx_alert_user ON alert_log(userId, createdAt DESC);
+
+    -- "Por que perdi?": the model's post-mortem of one lost ticket, generated once per language.
+    CREATE TABLE IF NOT EXISTS ticket_reviews (
+      ledgerId TEXT NOT NULL,
+      lang TEXT NOT NULL,
+      payload TEXT NOT NULL,
+      model TEXT NOT NULL DEFAULT '',
+      costUsd REAL NOT NULL DEFAULT 0,
+      createdAt TEXT NOT NULL,
+      PRIMARY KEY (ledgerId, lang)
+    );
   `);
 }
 

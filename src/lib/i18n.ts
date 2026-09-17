@@ -188,6 +188,20 @@ const DICT = {
   },
 
   ownCurve: { pt: "Sua banca ao longo do tempo", en: "Your bankroll over time" },
+  // ---- why did it lose ----
+  whyLost: { pt: "Por que perdi?", en: "Why did it lose?" },
+  reviewAssumed: { pt: "O que o modelo assumiu", en: "What the model assumed" },
+  reviewHappened: { pt: "O que aconteceu", en: "What happened" },
+  reviewVerdict: { pt: "Veredito", en: "Verdict" },
+  reviewVariance: { pt: "Variância", en: "Variance" },
+  reviewError: { pt: "Erro repetível", en: "Repeatable error" },
+  reviewMixed: { pt: "Um pouco dos dois", en: "A bit of both" },
+  reviewKeyLeg: { pt: "Perna decisiva", en: "Deciding leg" },
+  reviewWatch: { pt: "No que ficar de olho da próxima vez", en: "What to watch next time" },
+  reviewLoading: { pt: "Revisando o bilhete…", en: "Reviewing the ticket…" },
+  reviewUnavailable: { pt: "A explicação por IA está desligada neste servidor. Ficam as pernas liquidadas:", en: "The AI explanation is off on this server. Here are the settled legs:" },
+  reviewFailed: { pt: "Não deu para revisar agora.", en: "Couldn't review right now." },
+  reviewCached: { pt: "gerada em", en: "generated" },
   // ---- alerts ----
   navAlerts: { pt: "Alertas", en: "Alerts" },
   alertsTitle: { pt: "Alertas no Telegram", en: "Telegram alerts" },

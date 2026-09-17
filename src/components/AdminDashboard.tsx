@@ -18,6 +18,7 @@ interface AdminPayload {
   ledger: { total: number; pending: number; settled: number; won: number };
   onboarding?: { started: number; completed: number };
   alerts?: { linked: number; digest: number; follows: number; sent: number; inapp: number };
+  reviews?: { reviews: number; costUsd: number };
 }
 
 function Stat({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
@@ -111,6 +112,7 @@ export function AdminDashboard() {
         <Stat label="Predições" value={data?.predictions.total ?? 0} />
         <Stat label="Tour concluído" value={`${data?.onboarding?.completed ?? 0}/${data?.onboarding?.started ?? 0}`} hint="primeiros acessos" />
         <Stat label="Telegram" value={`${data?.alerts?.linked ?? 0} · ${data?.alerts?.sent ?? 0}`} hint={`contas · enviados · ${data?.alerts?.follows ?? 0} follows`} />
+        <Stat label="Por que perdi?" value={data?.reviews?.reviews ?? 0} hint={`$${(data?.reviews?.costUsd ?? 0).toFixed(2)} em revisões`} />
         <Stat
           label="Custo IA"
           value={`$${(data?.predictions.costUsd ?? 0).toFixed(2)}`}

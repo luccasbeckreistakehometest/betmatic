@@ -1,12 +1,13 @@
 import { getDb, newId, nowIso } from "@/lib/server/db";
 import { readLedger } from "@/lib/ledger/store";
+import { ticketSlug } from "@/lib/ledger/proof";
 import type { LedgerEntry, LegOutcome } from "@/lib/types";
 
 export interface BankrollRow {
   id: string; userId: string; source: "ticket" | "manual"; ledgerId: string | null; title: string; matchup: string;
   combinedDecimal: number; stake: number; outcome: LegOutcome; createdAt: string; settledAt: string | null;
 }
-export interface BankrollView extends Omit<BankrollRow, "userId"> { pnl: number; legs?: LedgerEntry["legs"] }
+export interface BankrollView extends Omit<BankrollRow, "userId"> { pnl: number; legs?: LedgerEntry["legs"]; /** Public permalink id for ticket entries. */ slug: string | null }
 
 const pnlOf = (outcome: LegOutcome, stake: number, odds: number) => (outcome === "won" ? stake * (odds - 1) : outcome === "lost" ? -stake : 0);
 
@@ -18,7 +19,7 @@ export function listBankroll(userId: string): { entries: BankrollView[]; totals:
     const l = r.ledgerId ? ledger.get(r.ledgerId) : undefined;
     const outcome = r.source === "ticket" && l ? l.outcome : r.outcome;
     const { userId: _u, ...rest } = r; void _u;
-    return { ...rest, outcome, settledAt: l?.settledAt ?? r.settledAt, pnl: pnlOf(outcome, r.stake, r.combinedDecimal), legs: l?.legs };
+    return { ...rest, outcome, settledAt: l?.settledAt ?? r.settledAt, pnl: pnlOf(outcome, r.stake, r.combinedDecimal), legs: l?.legs, slug: r.ledgerId ? ticketSlug(r.ledgerId) : null };
   });
   const decided = entries.filter((e) => e.outcome === "won" || e.outcome === "lost");
   const staked = decided.reduce((a, e) => a + e.stake, 0), profit = decided.reduce((a, e) => a + e.pnl, 0);
@@ -50,4 +51,9 @@ export function gradeManual(userId: string, id: string, outcome: "won" | "lost" 
 
 export function removeEntry(userId: string, id: string): boolean {
   return getDb().prepare("DELETE FROM bankroll_entries WHERE id=? AND userId=?").run(id, userId).changes > 0;
+}
+
+/** Whether this user saved the ticket to their bankroll — the gate for "why did it lose?". */
+export function userHasTicket(userId: string, ledgerId: string): boolean {
+  return !!getDb().prepare("SELECT 1 FROM bankroll_entries WHERE userId=? AND ledgerId=? LIMIT 1").get(userId, ledgerId);
 }

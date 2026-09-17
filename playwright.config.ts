@@ -2,8 +2,9 @@ import { defineConfig, devices } from "@playwright/test";
 
 /**
  * E2E against the dev server with a throwaway database seeded by global-setup (the Sevilla x
- * Valencia slate). No AI key is needed: the app serves pre-generated inventory; generation is a
- * background job and is not exercised here.
+ * Valencia slate). No AI key is used: the app serves pre-generated inventory; generation is a
+ * background job and is not exercised here. The key is blanked on purpose so a developer's
+ * .env.local can never make a spec call the model (existing env wins over .env files).
  */
 export default defineConfig({
   testDir: "tests/e2e",
@@ -14,7 +15,7 @@ export default defineConfig({
   use: { baseURL: "http://localhost:3300", trace: "retain-on-failure", screenshot: "only-on-failure", locale: "pt-BR" },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: "DATA_DIR=data/e2e ADMIN_EMAIL=admin@betmatic.app ADMIN_PASSWORD=betmatic2026 TELEGRAM_BOT_TOKEN=e2e-token TELEGRAM_BOT_USERNAME=betmatic_e2e_bot TELEGRAM_TRANSPORT=file npx next dev -p 3300",
+    command: "DATA_DIR=data/e2e ANTHROPIC_API_KEY= ANTHROPIC_AUTH_TOKEN= ADMIN_EMAIL=admin@betmatic.app ADMIN_PASSWORD=betmatic2026 TELEGRAM_BOT_TOKEN=e2e-token TELEGRAM_BOT_USERNAME=betmatic_e2e_bot TELEGRAM_TRANSPORT=file npx next dev -p 3300",
     url: "http://localhost:3300/login",
     reuseExistingServer: false,
     timeout: 180_000,

@@ -59,6 +59,12 @@ export function findPrediction(input: { scope: "game" | "slate"; sportKey: strin
   ).get(input.scope, input.sportKey, input.gameId ?? "", input.dateKey, input.lang) as { generatedAt: string; payload: string } | undefined) ?? null;
 }
 
+/** The newest stored slate for one game in one language, whatever day it was filed under. */
+export function findGamePrediction(gameId: string, lang: string): { generatedAt: string; payload: string } | null {
+  return (getDb().prepare("SELECT generatedAt, payload FROM predictions WHERE scope='game' AND gameId=? AND lang=? ORDER BY generatedAt DESC LIMIT 1")
+    .get(gameId, lang) as { generatedAt: string; payload: string } | undefined) ?? null;
+}
+
 /** The most recent day that has game tickets — the landing falls back to it when today has none yet. */
 export function latestPredictionDateKey(): string | null {
   const row = getDb().prepare("SELECT dateKey FROM predictions WHERE scope='game' ORDER BY dateKey DESC LIMIT 1").get() as { dateKey: string } | undefined;

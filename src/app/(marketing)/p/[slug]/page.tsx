@@ -6,6 +6,9 @@ import { findBySlug } from "@/lib/ledger/proof";
 import { scrubText } from "@/lib/server/whitelabel";
 import { normaliseLang } from "@/lib/i18n";
 import { formatDecimal } from "@/lib/odds";
+import { LossReview } from "@/components/LossReview";
+import { currentUser } from "@/lib/server/session";
+import { userHasTicket } from "@/lib/server/bankroll";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +28,9 @@ export default async function TicketPage({ params, searchParams }: { params: Pro
   const c = C[lang];
   const e = findBySlug(readLedger(), slug);
   if (!e) notFound();
+  // "Why did it lose?" is for the people who followed the ticket: the admin, or anyone with it in their bankroll.
+  const viewer = await currentUser();
+  const canReview = e.outcome === "lost" && !!viewer && (viewer.role === "admin" || userHasTicket(viewer.id, e.id));
   const base = process.env.NEXT_PUBLIC_BASE_URL ?? "";
   const url = `${base}/p/${slug}?lang=${lang}`;
   const tone: Record<string, string> = { won: "text-signal-400 border-signal-400/30", lost: "text-warn-400 border-warn-400/30", push: "text-mist-300 border-ink-700", void: "text-mist-500 border-ink-700", pending: "text-mist-400 border-ink-700" };
@@ -52,6 +58,7 @@ export default async function TicketPage({ params, searchParams }: { params: Pro
             </li>
           ))}
         </ul>
+        {canReview && <div className="mt-6" data-testid="ticket-review"><LossReview slug={slug} lang={lang} /></div>}
         <p className="mt-6 text-[13px] text-mist-500">{c.copy}</p>
         <div className="mt-6 flex flex-wrap gap-3">
           <a href={`https://wa.me/?text=${encodeURIComponent(c.wa(scrubText(e.title, lang), c.outcome[e.outcome], formatDecimal(e.combinedDecimal), url))}`} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-signal-400/40 px-4 py-2 text-[13px] font-semibold text-signal-400 hover:bg-signal-400/10" data-testid="share-wa">{c.share}</a>

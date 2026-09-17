@@ -8,8 +8,9 @@ import { makeT } from "@/lib/i18n";
 import { formatDecimal } from "@/lib/odds";
 import { EquityChart } from "@/components/EquityChart";
 import { curvePath } from "@/lib/ledger/backtest";
+import { LossReview } from "@/components/LossReview";
 
-interface Entry { id: string; source: "ticket" | "manual"; title: string; matchup: string; combinedDecimal: number; stake: number; outcome: string; pnl: number; createdAt: string; settledAt: string | null }
+interface Entry { id: string; source: "ticket" | "manual"; title: string; matchup: string; combinedDecimal: number; stake: number; outcome: string; pnl: number; createdAt: string; settledAt: string | null; slug: string | null }
 interface Payload { entries: Entry[]; totals: { staked: number; profit: number; roi: number; won: number; lost: number; pending: number }; error?: string }
 
 export function BankrollBoard() {
@@ -59,6 +60,7 @@ export function BankrollBoard() {
                 <span className="flex gap-1 text-[11px]">{(["won", "lost", "void"] as const).map((o) => <button key={o} onClick={() => grade(e.id, o)} className="rounded border border-ink-700 px-1.5 py-0.5 text-mist-400 hover:text-mist-100">{{ won: t("markWon"), lost: t("markLost"), void: t("markVoid") }[o]}</button>)}</span>
               )}
               <button onClick={() => remove(e.id)} className="text-[11px] text-mist-600 hover:text-warn-400">✕</button>
+              {e.source === "ticket" && e.outcome === "lost" && e.slug && <div className="basis-full pt-1"><LossReview slug={e.slug} lang={lang} compact /></div>}
             </li>
           )) : <li className="py-4"><Empty>{t("bankrollEmpty")}</Empty></li>}
         </ul>
