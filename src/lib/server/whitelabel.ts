@@ -1,4 +1,4 @@
-import type { BetLeg, BetSlate, BetSuggestion } from "@/lib/types";
+import type { BetLeg, BetSlate, BetSuggestion, GameDetail } from "@/lib/types";
 import type { Role } from "@/lib/plans";
 
 /**
@@ -115,5 +115,25 @@ export function scrubSlate(slate: BetSlate, role: Role, lang: "pt" | "en"): BetS
   return {
     suggestions: slate.suggestions.map((s) => scrubSuggestion(s, lang)),
     dataNote: scrub(slate.dataNote, lang),
+  };
+}
+
+/**
+ * The game page's research block. Non-admins see the numbers without the names behind them: every
+ * sportsbook becomes "Casa de apostas N" and no free text keeps a source name.
+ */
+export function scrubGameDetail<T extends GameDetail>(detail: T, role: Role, lang: "pt" | "en"): T {
+  if (role === "admin") return detail;
+  const generic = (i: number) => `${GENERIC_BOOK[lang]}${detail.books.length > 1 ? ` ${i + 1}` : ""}`;
+  return {
+    ...detail,
+    game: {
+      ...detail.game,
+      odds: detail.game.odds ? { ...detail.game.odds, provider: detail.game.odds.provider ? GENERIC_BOOK[lang] : undefined } : undefined,
+      broadcast: detail.game.broadcast ? scrub(detail.game.broadcast, lang) : detail.game.broadcast,
+    },
+    books: detail.books.map((b, i) => ({ ...b, provider: b.provider ? generic(i) : undefined })),
+    injuries: detail.injuries.map((inj) => ({ ...inj, detail: inj.detail ? scrub(inj.detail, lang) : inj.detail })),
+    lastMeetings: detail.lastMeetings.map((m) => ({ ...m, summary: scrub(m.summary, lang) })),
   };
 }

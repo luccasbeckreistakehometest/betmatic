@@ -2,6 +2,13 @@ import { getDb, nowIso } from "@/lib/server/db";
 
 export interface OnboardingRow { id: string; tourCompleted: number; tourStep: number; firstSeenAt: string; completedAt: string | null; events: string }
 
+/** Read-only: an owner with no row yet reads as a fresh, unfinished tour (GET must not write). */
+export function peekOnboarding(ownerId: string): Pick<OnboardingRow, "tourCompleted" | "tourStep"> {
+  const row = getDb().prepare("SELECT tourCompleted, tourStep FROM onboarding WHERE id = ?").get(ownerId) as Pick<OnboardingRow, "tourCompleted" | "tourStep"> | undefined;
+  return row ?? { tourCompleted: 0, tourStep: 0 };
+}
+
+/** Creates the row on first use; only POST paths call this. */
 export function getOnboarding(ownerId: string): OnboardingRow {
   const db = getDb();
   let row = db.prepare("SELECT * FROM onboarding WHERE id = ?").get(ownerId) as OnboardingRow | undefined;

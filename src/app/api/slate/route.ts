@@ -1,21 +1,23 @@
 import { NextResponse } from "next/server";
 import { getSlateOrNearest, todayKey } from "@/lib/sources/espn";
+import { currentUser } from "@/lib/server/session";
+import { apiError, requestLang } from "@/lib/server/api";
+import { reportError } from "@/lib/server/ops-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const date = url.searchParams.get("date") ?? todayKey();
-  const force = url.searchParams.get("force") === "1";
+  const raw = url.searchParams.get("date") ?? todayKey();
+  const date = /^\d{8}$/.test(raw) ? raw : todayKey();
+  const user = await currentUser();
+  const force = user?.role === "admin" && url.searchParams.get("force") === "1";
   const sport = url.searchParams.get("sport") ?? undefined;
   try {
-    const slate = await getSlateOrNearest(date, force, sport);
-    return NextResponse.json(slate);
+    return NextResponse.json(await getSlateOrNearest(date, force, sport));
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to load slate" },
-      { status: 502 },
-    );
+    reportError("data.slate", error, { date, sport }, "warn");
+    return apiError("slate_unavailable", requestLang(request, user?.lang), 502);
   }
 }

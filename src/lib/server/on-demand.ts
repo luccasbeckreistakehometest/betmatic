@@ -4,22 +4,25 @@ import { generateGame } from "@/lib/server/generate-game";
 import { onDemandCaps, onDemandVerdict, type OnDemandVerdict } from "@/lib/server/on-demand-policy";
 import { refreshConfig } from "@/lib/server/refresh-policy";
 import { espnDateKey, getGameDetail } from "@/lib/sources/espn";
-import { SPORTS } from "@/lib/sports";
-import { aiConfigured, describeAiError } from "@/lib/ai/client";
+import { SPORTS, sportSellsTickets } from "@/lib/sports";
+import { aiConfigured } from "@/lib/ai/client";
+import { AiBudgetExceededError, brasiliaDayStart } from "@/lib/server/ai-budget";
+import { reportError } from "@/lib/server/ops-log";
 import type { PublicUser } from "@/lib/server/users";
 import type { Lang } from "@/lib/i18n";
 
 export type OnDemandResult =
   | { status: OnDemandVerdict | "generated"; dateKey: string }
-  | { status: "not_found" | "ai_off" }
-  | { status: "error"; message: string };
+  | { status: "not_found" | "ai_off" | "unsupported" | "ai_budget" }
+  | { status: "error" };
 
 /** Ten people opening the same game at once share one generation instead of paying ten times. */
 const inflight = new Map<string, Promise<OnDemandResult>>();
 
+/** Counted per Brasília calendar day, the same day the plan's game allowance uses. */
 const todayCounts = (userId: string) => {
   const db = getDb();
-  const since = new Date(Date.now() - 86_400_000).toISOString();
+  const since = brasiliaDayStart();
   return {
     user: (db.prepare("SELECT COUNT(*) n FROM generation_requests WHERE userId = ? AND createdAt > ?").get(userId, since) as { n: number }).n,
     global: (db.prepare("SELECT COUNT(*) n FROM generation_requests WHERE createdAt > ?").get(since) as { n: number }).n,
@@ -28,7 +31,10 @@ const todayCounts = (userId: string) => {
 
 export async function ensureGameGenerated(args: { sportKey: string; gameId: string; user: PublicUser }): Promise<OnDemandResult> {
   const { sportKey, gameId, user } = args;
-  if (!SPORTS.some((s) => s.key === sportKey)) return { status: "not_found" };
+  const sport = SPORTS.find((s) => s.key === sportKey);
+  if (!sport) return { status: "not_found" };
+  // Tennis has no price feed, so a generation would spend tokens and return no ticket.
+  if (!sportSellsTickets(sport)) return { status: "unsupported" };
   const key = `${sportKey}:${gameId}`;
   const running = inflight.get(key);
   if (running) return running;
@@ -57,10 +63,11 @@ export async function ensureGameGenerated(args: { sportKey: string; gameId: stri
       getDb().prepare("UPDATE generation_requests SET status=?, costUsd=?, finishedAt=?, note=? WHERE id=?").run("ok", out.costUsd, nowIso(), out.notes.join(" | "), reqId);
       return { status: "generated", dateKey };
     } catch (error) {
-      const message = describeAiError(error) ?? (error instanceof Error ? error.message : "failed");
+      // The operator sees the reason (admin panel + log); the user sees a neutral message.
+      reportError("ai.generate", error, { sportKey, gameId });
       // A failed attempt is not charged against the caps: the row is removed so a retry is allowed.
       getDb().prepare("DELETE FROM generation_requests WHERE id = ?").run(reqId);
-      return { status: "error", message };
+      return error instanceof AiBudgetExceededError ? { status: "ai_budget" } : { status: "error" };
     }
   })();
 

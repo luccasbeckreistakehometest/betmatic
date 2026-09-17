@@ -239,14 +239,9 @@ export async function getGameDetail(
   sportKey = DEFAULT_SPORT,
 ): Promise<GameDetail | null> {
   const sport = getSport(sportKey);
-  const summary = await cached(
-    `espn-summary-${sport.key}-${gameId}`,
-    TTL.summary,
-    () => getJson(`${base(sport)}/summary?event=${gameId}`),
-    force,
-  );
 
-  // Tennis summaries have no header competition; the slate entry is the source of truth.
+  // ESPN answers 400 to the summary endpoint for tennis, so tennis never calls it: the match lives
+  // inside the tournament's scoreboard entry, which is the source of truth.
   if (sport.kind === "tennis") {
     let match: Game | undefined;
     for (let offset = 0; offset <= 14 && !match; offset += 1) {
@@ -267,6 +262,12 @@ export async function getGameDetail(
     };
   }
 
+  const summary = await cached(
+    `espn-summary-${sport.key}-${gameId}`,
+    TTL.summary,
+    () => getJson(`${base(sport)}/summary?event=${gameId}`),
+    force,
+  );
   const header = summary.header ?? {};
   const game = mapGame(
     {
@@ -381,19 +382,40 @@ function shiftKey(dateKey: string, days: number): string {
   return `${dt.getUTCFullYear()}${String(dt.getUTCMonth() + 1).padStart(2, "0")}${String(dt.getUTCDate()).padStart(2, "0")}`;
 }
 
-/** One range query beats walking day by day — ESPN supports dates=YYYYMMDD-YYYYMMDD. */
-async function nearestGameDay(sport: SportDef, fromKey: string, toKey: string, pick: "first" | "last"): Promise<string | null> {
-  try {
-    const data = await getJson(`${base(sport)}/scoreboard?dates=${fromKey}-${toKey}&limit=300`);
-    const dates = ((data.events ?? []) as Json[])
-      .map((ev) => (ev.date ? espnDateKey(new Date(ev.date)) : null))
-      .filter((d): d is string => Boolean(d))
-      .sort();
-    if (!dates.length) return null;
-    return pick === "first" ? dates[0] : dates[dates.length - 1];
-  } catch {
-    return null;
+/**
+ * Game days a league has published around a date. ESPN rejects the `dates=FROM-TO` range query
+ * (400 since Sept 2026), but every single-date scoreboard carries `leagues[0].calendar`: the season's
+ * game days. A date in the offseason returns the season that just ended, so a few probes ahead
+ * pick up the next one. Cached for half a day.
+ */
+async function calendarDays(sport: SportDef, dateKey: string): Promise<string[]> {
+  return cached(`espn-calendar-${sport.key}-${dateKey}`, 12 * 60 * 60_000, async () => {
+    const data = await getJson(`${base(sport)}/scoreboard?dates=${dateKey}&limit=1`);
+    const raw = (data.leagues?.[0]?.calendar ?? []) as unknown[];
+    // Day calendars are ISO strings; week-style calendars nest entries with startDate.
+    const isoList = raw.flatMap((c) => (typeof c === "string" ? [c] : ((c as Json)?.entries ?? []).map((e: Json) => e?.startDate)))
+      .filter((v): v is string => typeof v === "string");
+    return [...new Set(isoList.map((iso) => espnDateKey(new Date(iso))))].sort();
+  });
+}
+
+const PROBE_OFFSETS = [0, 30, 75];
+
+/** Nearest published game day strictly after (forward) or before (backward) `fromKey`. */
+async function nearestGameDay(sport: SportDef, fromKey: string, direction: "forward" | "backward", spanDays: number): Promise<string[]> {
+  const offsets = direction === "forward" ? PROBE_OFFSETS : [0];
+  const days = new Set<string>();
+  for (const offset of offsets) {
+    const list = await calendarDays(sport, shiftKey(fromKey, offset)).catch(() => []);
+    list.forEach((d) => days.add(d));
+    const limit = shiftKey(fromKey, direction === "forward" ? spanDays : -spanDays);
+    const found = [...days].filter((d) => (direction === "forward" ? d > fromKey && d <= limit : d < fromKey && d >= limit));
+    if (found.length) return direction === "forward" ? found.sort() : found.sort().reverse();
   }
+  // No calendar (or an empty one): probe single dates close by.
+  const near: string[] = [];
+  for (let i = 1; i <= 7; i += 1) near.push(shiftKey(fromKey, direction === "forward" ? i : -i));
+  return near;
 }
 
 /**
@@ -410,20 +432,22 @@ export async function getSlateOrNearest(
   const direct = await getSlate(dateKey, force, sport.key);
   if (direct.length) return { dateKey, requestedKey: dateKey, games: direct, shifted: false };
 
-  const forward = await nearestGameDay(sport, shiftKey(dateKey, 1), shiftKey(dateKey, spanDays), "first");
-  const backward = await nearestGameDay(sport, shiftKey(dateKey, -spanDays), shiftKey(dateKey, -1), "last");
+  const [forward, backward] = await Promise.all([
+    nearestGameDay(sport, dateKey, "forward", spanDays),
+    nearestGameDay(sport, dateKey, "backward", spanDays),
+  ]);
 
-  // Prefer whichever is fewer days away; ties go to the upcoming slate.
-  const distance = (key: string | null) => {
-    if (!key) return Number.POSITIVE_INFINITY;
-    const toDate = (k: string) => Date.UTC(+k.slice(0, 4), +k.slice(4, 6) - 1, +k.slice(6, 8));
-    return Math.abs(toDate(key) - toDate(dateKey));
-  };
-  const chosen = distance(forward) <= distance(backward) ? forward : backward;
-  if (!chosen) return { dateKey, requestedKey: dateKey, games: [], shifted: false };
-
-  const games = await getSlate(chosen, force, sport.key);
-  return { dateKey: chosen, requestedKey: dateKey, games, shifted: true };
+  // Candidates ordered by distance; ties go to the upcoming slate. A calendar day can still be
+  // empty (postponements, preseason placeholders), so each is confirmed with a real slate.
+  const toDate = (k: string) => Date.UTC(+k.slice(0, 4), +k.slice(4, 6) - 1, +k.slice(6, 8));
+  const distance = (key: string) => Math.abs(toDate(key) - toDate(dateKey));
+  const candidates = [...forward.slice(0, 4), ...backward.slice(0, 4)]
+    .sort((a, b) => distance(a) - distance(b) || (a > dateKey ? -1 : 1));
+  for (const key of candidates.slice(0, 6)) {
+    const games = await getSlate(key, force, sport.key).catch(() => []);
+    if (games.length) return { dateKey: key, requestedKey: dateKey, games, shifted: true };
+  }
+  return { dateKey, requestedKey: dateKey, games: [], shifted: false };
 }
 
 export { shiftKey };

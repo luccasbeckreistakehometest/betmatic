@@ -53,8 +53,8 @@ export function Empty({ children }: { children: ReactNode }) {
   return <p className="text-[13px] leading-relaxed text-mist-500">{children}</p>;
 }
 
-export function KeyValue({ rows }: { rows: { label: string; value: string; hint?: string }[] }) {
-  if (!rows.length) return <Empty>Nothing reported.</Empty>;
+export function KeyValue({ rows, emptyText = "—" }: { rows: { label: string; value: string; hint?: string }[]; emptyText?: string }) {
+  if (!rows.length) return <Empty>{emptyText}</Empty>;
   return (
     <dl className="divide-y divide-ink-800">
       {rows.map((row, i) => (

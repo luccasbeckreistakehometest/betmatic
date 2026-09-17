@@ -93,27 +93,42 @@ export interface ServedPrediction {
   startsAt: string | null;
   generatedAt: string;
   slate: BetSlate;
-  /** True when the plan's delay is still hiding a fresher generation. */
+  /** True when the viewer's plan shows tickets on a delay (this one is already past it). */
   delayed: boolean;
+}
+
+/** A game the viewer may see, whose newest tickets are still inside the plan's delay. */
+export interface DelayedGame {
+  gameId: string | null;
+  matchup: string;
+  availableAt: string;
+}
+
+/** Who is reading: a signed-in viewer on a plan with a daily allowance reads the games they chose. */
+export interface Viewer {
+  unlocked: Set<string>;
+  ownGenerated: Set<string>;
 }
 
 /**
  * Reads inventory for a viewer, applying the plan's limits and the whitelabel scrub in one place.
  * The FE never filters entitlements itself — anything it receives, the user is allowed to see.
  */
-export function servePredictions(input: {
+export function servePredictionsDetailed(input: {
   scope: "game" | "slate";
   sportKey: string;
   dateKey: string;
   lang: Lang;
   plan: Plan;
   role: Role;
-  limit?: number;
-}): ServedPrediction[] {
-  const { scope, sportKey, dateKey, lang, plan, role } = input;
+  viewer?: Viewer;
+  now?: number;
+}): { predictions: ServedPrediction[]; delayedGames: DelayedGame[] } {
+  const { scope, sportKey, dateKey, lang, plan, role, viewer } = input;
+  const empty = { predictions: [], delayedGames: [] };
 
-  if (plan.sports.length && !plan.sports.includes(sportKey)) return [];
-  if (scope === "slate" && !plan.crossGame) return [];
+  if (role !== "admin" && plan.sports.length && !plan.sports.includes(sportKey)) return empty;
+  if (role !== "admin" && scope === "slate" && !plan.crossGame) return empty;
 
   const rows = getDb()
     .prepare(
@@ -123,29 +138,42 @@ export function servePredictions(input: {
     )
     .all(scope, sportKey, dateKey, lang) as StoredPrediction[];
 
-  const cutoff = Date.now() - plan.delayMinutes * 60_000;
-  const capped = plan.gamesPerDay === null ? rows : rows.slice(0, plan.gamesPerDay);
+  const now = input.now ?? Date.now();
+  const delayMs = role === "admin" ? 0 : plan.delayMinutes * 60_000;
+  // A daily allowance means the games the viewer chose; an anonymous visitor gets the first ones.
+  const capped = role === "admin" || plan.gamesPerDay === null
+    ? rows
+    : viewer
+      ? rows.filter((r) => r.gameId !== null && viewer.unlocked.has(r.gameId))
+      : rows.slice(0, plan.gamesPerDay);
 
-  return capped
-    .map((row) => {
-      const fresh = Date.parse(row.generatedAt) > cutoff;
-      // A delayed plan still sees the ticket, just not the newest regeneration of it.
-      if (fresh && plan.delayMinutes > 0) return null;
-      const slate = JSON.parse(row.payload) as BetSlate;
-      const allowed: BetSlate = {
-        ...slate,
-        suggestions: slate.suggestions.filter((s) => plan.bands.includes(s.bandKey)),
-      };
-      return {
-        gameId: row.gameId,
-        matchup: row.matchup,
-        startsAt: row.startsAt,
-        generatedAt: row.generatedAt,
-        slate: scrubSlate(allowed, role, lang),
-        delayed: plan.delayMinutes > 0,
-      };
-    })
-    .filter((p): p is ServedPrediction => p !== null);
+  const predictions: ServedPrediction[] = [];
+  const delayedGames: DelayedGame[] = [];
+  for (const row of capped) {
+    const generated = Date.parse(row.generatedAt);
+    const own = !!(row.gameId && viewer?.ownGenerated.has(row.gameId));
+    if (delayMs > 0 && !own && generated + delayMs > now) {
+      delayedGames.push({ gameId: row.gameId, matchup: row.matchup, availableAt: new Date(generated + delayMs).toISOString() });
+      continue;
+    }
+    const slate = JSON.parse(row.payload) as BetSlate;
+    const allowed: BetSlate = role === "admin"
+      ? slate
+      : { ...slate, suggestions: slate.suggestions.filter((s) => plan.bands.includes(s.bandKey)) };
+    predictions.push({
+      gameId: row.gameId,
+      matchup: row.matchup,
+      startsAt: row.startsAt,
+      generatedAt: row.generatedAt,
+      slate: scrubSlate(allowed, role, lang),
+      delayed: delayMs > 0,
+    });
+  }
+  return { predictions, delayedGames };
+}
+
+export function servePredictions(input: Parameters<typeof servePredictionsDetailed>[0]): ServedPrediction[] {
+  return servePredictionsDetailed(input).predictions;
 }
 
 export function predictionStats() {

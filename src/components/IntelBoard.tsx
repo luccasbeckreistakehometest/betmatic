@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import { BetsPanel } from "@/components/BetsPanel";
 import { useNavState } from "@/components/Controls";
 import { Empty, Panel } from "@/components/ui";
-import { makeT } from "@/lib/i18n";
+import { makeT, type DictKey } from "@/lib/i18n";
+import { formatDate, formatTime } from "@/lib/format";
 import type { BetSlate } from "@/lib/types";
 
 interface Served {
@@ -18,40 +20,55 @@ interface Served {
 
 interface Payload {
   predictions: Served[];
-  plan: { id: string; name: string; bands: string[]; delayMinutes: number };
+  delayedGames: { gameId: string | null; matchup: string; availableAt: string }[];
+  plan: { id: string; name: string; bands: string[]; delayMinutes: number; gamesPerDay: number | null };
+  unlocked: { gameId: string; sportKey: string }[] | null;
   authenticated: boolean;
   paused: { until: string | null } | null;
 }
 
-function relTime(iso?: string, lang: "pt" | "en" = "pt"): string {
+type GenState =
+  | "idle" | "running" | "done" | "capUser" | "capGlobal" | "gameStarted" | "aiOff" | "generateFailed"
+  | "aiBudget" | "tennisUnsupported" | "planSport" | "rateLimited";
+
+const STATUS_MAP: Record<string, GenState> = {
+  generated: "done", exists: "done", cap_user: "capUser", cap_global: "capGlobal", started: "gameStarted",
+  ai_off: "aiOff", ai_budget: "aiBudget", unsupported: "tennisUnsupported", plan_sport: "planSport",
+};
+
+function relTime(iso: string | undefined, lang: "pt" | "en"): string {
   if (!iso) return "";
   const mins = Math.round((Date.now() - Date.parse(iso)) / 60_000);
   if (!Number.isFinite(mins)) return "";
   if (mins < 1) return lang === "pt" ? "agora" : "just now";
-  if (mins < 60) return lang === "pt" ? `há ${mins}min` : `${mins}m ago`;
+  if (mins < 60) return lang === "pt" ? `há ${mins} min` : `${mins}m ago`;
   const hours = Math.round(mins / 60);
-  if (hours < 24) return lang === "pt" ? `há ${hours}h` : `${hours}h ago`;
-  return lang === "pt" ? `há ${Math.round(hours / 24)}d` : `${Math.round(hours / 24)}d ago`;
+  if (hours < 24) return lang === "pt" ? `há ${hours} h` : `${hours}h ago`;
+  return lang === "pt" ? `há ${Math.round(hours / 24)} d` : `${Math.round(hours / 24)}d ago`;
 }
 
 /**
- * Reads pre-generated tickets for one game. Generation happens in the background job — a user
- * opening a page must never spend model credit, or cost would scale with traffic.
+ * The tickets of one game. Opening the page asks the server for them: on a plan with a daily
+ * allowance that is the moment the game becomes the user's pick, and a game without tickets is
+ * built on the spot (signed-in only; the server enforces every cap).
  */
 export function IntelBoard({ gameId, dateKey }: { gameId: string; dateKey?: string }) {
   const { lang, sport } = useNavState();
   const t = makeT(lang);
+  const pathname = usePathname();
+  const search = useSearchParams();
   const [data, setData] = useState<Payload | null>(null);
   const [loading, setLoading] = useState(true);
-  const [gen, setGen] = useState<"idle" | "running" | "done" | "capUser" | "capGlobal" | "gameStarted" | "aiOff" | "generateFailed">("idle");
+  const [gen, setGen] = useState<GenState>("idle");
+  const [genMessage, setGenMessage] = useState<string | null>(null);
+  const [chosen, setChosen] = useState<{ gameId: string; sportKey: string }[]>([]);
 
   const load = useCallback(async () => {
-    setLoading(true);
     try {
       const params = new URLSearchParams({ scope: "game", sport: sport.key, lang });
       if (dateKey) params.set("date", dateKey);
       const response = await fetch(`/api/predictions?${params}`, { cache: "no-store" });
-      setData(await response.json());
+      setData(response.ok ? await response.json() : null);
     } catch {
       setData(null);
     } finally {
@@ -67,27 +84,114 @@ export function IntelBoard({ gameId, dateKey }: { gameId: string; dateKey?: stri
   }, [load]);
 
   const mine = data?.predictions.find((p) => p.gameId === gameId) ?? null;
+  const delayed = data?.delayedGames?.find((g) => g.gameId === gameId) ?? null;
 
-  // Opening a game that has no tickets yet builds them. Signed-in only; the server enforces caps.
   const generate = useCallback(async () => {
     setGen("running");
+    setGenMessage(null);
     try {
-      const r = await fetch(`/api/game/${gameId}/generate?sport=${sport.key}`, { method: "POST" });
+      const r = await fetch(`/api/game/${gameId}/generate?sport=${sport.key}&lang=${lang}`, { method: "POST" });
       const j = await r.json().catch(() => ({ status: "error" }));
-      const map: Record<string, typeof gen> = { generated: "done", exists: "done", cap_user: "capUser", cap_global: "capGlobal", started: "gameStarted", ai_off: "aiOff" };
-      setGen(map[j.status] ?? "generateFailed");
-      if (j.status === "generated" || j.status === "exists") await load();
-    } catch { setGen("generateFailed"); }
-  }, [gameId, sport.key, load]);
+      if (r.status === 429) {
+        setGen("rateLimited");
+        setGenMessage(j.message ?? null);
+        return;
+      }
+      const next = STATUS_MAP[j.status] ?? "generateFailed";
+      if (next === "capUser" && Array.isArray(j.unlocked)) setChosen(j.unlocked);
+      if (next === "generateFailed" || next === "aiBudget") setGenMessage(j.message ?? null);
+      setGen(next);
+      if (next === "done") await load();
+    } catch {
+      setGen("generateFailed");
+      setGenMessage(t("networkError"));
+    }
+  }, [gameId, sport.key, lang, load, t]);
 
   const authenticated = data?.authenticated ?? false;
   const paused = !!data?.paused;
   useEffect(() => {
-    if (loading || !authenticated || paused || mine || gen !== "idle") return;
+    if (loading || !authenticated || paused || mine || delayed || gen !== "idle") return;
     // Deferred so the effect itself does not set state synchronously (React Compiler rule).
     const id = setTimeout(() => void generate(), 0);
     return () => clearTimeout(id);
-  }, [loading, authenticated, paused, mine, gen, generate]);
+  }, [loading, authenticated, paused, mine, delayed, gen, generate]);
+
+  const here = `${pathname}${search.toString() ? `?${search.toString()}` : ""}`;
+  const signupHref = `/signup?lang=${lang}&next=${encodeURIComponent(here)}`;
+  const plansHref = `/planos?lang=${lang}`;
+
+  let body: React.ReactNode;
+  if (loading) {
+    body = <Empty>{t("loadingTickets")}</Empty>;
+  } else if (data?.paused) {
+    body = (
+      <p className="rounded-lg border border-warn-400/25 bg-warn-400/5 px-3 py-2 text-[13px] text-warn-400" data-testid="tickets-paused">
+        {t("pausedTickets").replace("{date}", data.paused.until ? formatDate(data.paused.until, lang, { year: true }) : "—")}
+      </p>
+    );
+  } else if (mine) {
+    body = (
+      <>
+        {mine.delayed && (
+          <p className="mb-3 rounded-lg border border-warn-400/25 bg-warn-400/5 px-3 py-2 text-[12px] text-warn-400">{t("delayedNotice")}</p>
+        )}
+        <BetsPanel slate={mine.slate} lang={lang} gameId={gameId} />
+      </>
+    );
+  } else if (delayed) {
+    body = (
+      <div className="flex flex-col gap-2" data-testid="tickets-delayed">
+        <p className="rounded-lg border border-warn-400/25 bg-warn-400/5 px-3 py-2 text-[13px] text-warn-400">
+          {t("delayedUntil").replace("{time}", formatTime(delayed.availableAt, lang))}
+        </p>
+        <Link href={plansHref} className="w-fit rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500">{t("seePlans")}</Link>
+      </div>
+    );
+  } else if (!authenticated) {
+    body = (
+      <div className="flex flex-col gap-2">
+        <Empty>{t("signInForTickets")}</Empty>
+        <Link href={signupHref} data-testid="signup-for-tickets" className="w-fit rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500">
+          {t("startFreeCta")}
+        </Link>
+      </div>
+    );
+  } else if (gen === "running") {
+    body = (
+      <div className="flex items-center gap-3 rounded-lg border border-ink-700 bg-ink-850 px-3 py-3 text-[13px] text-mist-300" data-testid="generating">
+        <span className="h-3 w-3 animate-pulse rounded-full bg-edge-400" />{t("generatingTickets")}
+      </div>
+    );
+  } else if (gen === "capUser") {
+    const other = chosen.find((g) => g.gameId !== gameId);
+    body = (
+      <div className="flex flex-col gap-2" data-testid="cap-user">
+        <Empty>{data?.plan.gamesPerDay ? t("freeGameChosen") : t("capUser")}</Empty>
+        <div className="flex flex-wrap gap-2">
+          {other && (
+            <Link href={`/app/game/${other.gameId}?sport=${other.sportKey}&lang=${lang}`} className="w-fit rounded-lg border border-ink-700 px-3.5 py-1.5 text-[13px] text-mist-200 transition hover:border-ink-600">
+              {t("openChosenGame")}
+            </Link>
+          )}
+          <Link href={plansHref} className="w-fit rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500">{t("seePlans")}</Link>
+        </div>
+      </div>
+    );
+  } else {
+    const message = gen === "idle" || gen === "done" ? t("noTicketsYet") : genMessage ?? t(gen as DictKey);
+    body = (
+      <div className="flex flex-col gap-2">
+        <Empty>{message}</Empty>
+        {(gen === "generateFailed" || gen === "done") && (
+          <button onClick={() => void generate()} className="w-fit rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500">{t("generateNow")}</button>
+        )}
+        {gen === "planSport" && (
+          <Link href={plansHref} className="w-fit rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500">{t("seePlans")}</Link>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -97,45 +201,12 @@ export function IntelBoard({ gameId, dateKey }: { gameId: string; dateKey?: stri
         status={loading ? "pending" : mine ? "ok" : "empty"}
         meta={mine ? relTime(mine.generatedAt, lang) : undefined}
         action={
-          <Link href="/app/slip" className="rounded-md border border-ink-700 px-2 py-0.5 text-[11px] text-mist-400 transition hover:border-ink-600 hover:text-mist-100">
+          <Link href={`/app/slip?sport=${sport.key}&lang=${lang}`} className="rounded-md border border-ink-700 px-2 py-0.5 text-[11px] text-mist-400 transition hover:border-ink-600 hover:text-mist-100">
             {t("mySlip")}
           </Link>
         }
       >
-        {loading ? (
-          <Empty>{t("loadingTickets")}</Empty>
-        ) : data?.paused ? (
-          <p className="rounded-lg border border-warn-400/25 bg-warn-400/5 px-3 py-2 text-[13px] text-warn-400" data-testid="tickets-paused">
-            {t("pausedTickets").replace("{date}", data.paused.until ? new Date(data.paused.until).toLocaleDateString(lang === "pt" ? "pt-BR" : "en-US") : "—")}
-          </p>
-        ) : mine ? (
-          <>
-            {mine.delayed && (
-              <p className="mb-3 rounded-lg border border-warn-400/25 bg-warn-400/5 px-3 py-2 text-[12px] text-warn-400">
-                {t("delayedNotice")}
-              </p>
-            )}
-            <BetsPanel slate={mine.slate} lang={lang} gameId={gameId} />
-          </>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {gen === "running" ? (
-              <div className="flex items-center gap-3 rounded-lg border border-ink-700 bg-ink-850 px-3 py-3 text-[13px] text-mist-300" data-testid="generating">
-                <span className="h-3 w-3 animate-pulse rounded-full bg-edge-400" />{t("generatingTickets")}
-              </div>
-            ) : (
-              <Empty>{!data?.authenticated ? t("signInForTickets") : gen === "idle" || gen === "done" ? t("noTicketsYet") : t(gen)}</Empty>
-            )}
-            {data?.authenticated && (gen === "generateFailed" || gen === "done") && !mine && (
-              <button onClick={() => void generate()} className="w-fit rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500">{t("generateNow")}</button>
-            )}
-            {!data?.authenticated && (
-              <Link href="/signup" className="w-fit rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500">
-                {t("startFreeCta")}
-              </Link>
-            )}
-          </div>
-        )}
+        {body}
       </Panel>
     </div>
   );

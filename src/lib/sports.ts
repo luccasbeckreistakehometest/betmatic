@@ -165,6 +165,17 @@ export const SPORTS: SportDef[] = [
 
 export const DEFAULT_SPORT = "nba";
 
+/**
+ * Whether the product builds and sells tickets for a sport. Tennis is listed for its schedule, but
+ * the free feed publishes no prices for it, and a ticket without a price is not shown — so tennis is
+ * not offered in the picker, the copy or the plans.
+ */
+export const sportSellsTickets = (sport: Pick<SportDef, "kind">) => sport.kind !== "tennis";
+export const SOLD_SPORTS: SportDef[] = SPORTS.filter(sportSellsTickets);
+
+/** First sport tried when the visitor gave none; the app picks the first of these with games today. */
+export const DEFAULT_SPORT_ORDER = ["soccer-bra", "nba", "wnba", "soccer-eng", "soccer-esp", "soccer-ucl", "soccer-lib"];
+
 export function getSport(key: string | undefined): SportDef {
   return SPORTS.find((s) => s.key === key) ?? SPORTS.find((s) => s.key === DEFAULT_SPORT)!;
 }

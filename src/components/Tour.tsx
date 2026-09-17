@@ -1,25 +1,29 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useNavState } from "@/components/Controls";
 
 /**
  * First-visit tour over the real interface. Progress and completion are saved on the server (per
  * user, or per anonymous cookie) with the first session's events, so it never replays.
  */
-const STEPS = [
-  { anchor: "sport", pt: ["Escolha o esporte", "Basquete (NBA e WNBA), futebol e tênis. Cada esporte tem seus mercados e seus bilhetes."], en: ["Pick a sport", "Basketball (NBA and WNBA), soccer and tennis. Each sport has its own markets and tickets."] },
-  { anchor: "games", pt: ["Os jogos do dia", "Cada card é um jogo. Dentro dele: notícias, props medidas com histórico real e os bilhetes prontos."], en: ["Today's games", "Every card is a game. Inside: news, props measured against real history, and the tickets, ready."] },
+const ALL_STEPS = [
+  { anchor: "sport", pt: ["Escolha o esporte", "Basquete (NBA e WNBA) e futebol, com as ligas de cada um. Cada esporte tem seus mercados e seus bilhetes."], en: ["Pick a sport", "Basketball (NBA and WNBA) and soccer, league by league. Each sport has its own markets and tickets."] },
+  { anchor: "games", pt: ["Os jogos do dia", "Cada card é um jogo. Abra um: se ele ainda não tiver bilhete, a gente monta na hora, com as odds e o histórico daquele momento."], en: ["Today's games", "Every card is a game. Open one: if it has no ticket yet, we build it on the spot from that moment's odds and history."] },
   { anchor: "nav", pt: ["Múltiplas e histórico", "Combine jogos em múltiplas, monte seu próprio bilhete e acompanhe o histórico do que acertamos e erramos."], en: ["Parlays and track record", "Combine games into parlays, build your own slip, and follow the record of what we got right and wrong."] },
   { anchor: "bankroll", pt: ["Sua banca e a curva", "Salve bilhetes com o valor apostado: liquidação automática, lucro, ROI, e a curva de unidades do histórico inteiro — filtrada por faixa, esporte e evidência."], en: ["Your bankroll and the curve", "Save tickets with the amount you staked: automatic grading, profit, ROI, and the equity curve of the whole record — filtered by band, sport and evidence."] },
-  { anchor: "alerts", pt: ["Alertas dos seus times", "Siga times e ligas e receba os bilhetes no Telegram na hora que saem — ou aqui, na lista de avisos."], en: ["Alerts for your teams", "Follow teams and leagues and get their tickets on Telegram the moment they are built — or here, in the notice list."] },
+  { anchor: "alerts", telegram: true, pt: ["Alertas dos seus times", "Siga times e ligas e receba os bilhetes no Telegram assim que saem — ou aqui, na lista de avisos."], en: ["Alerts for your teams", "Follow teams and leagues and get their tickets on Telegram as soon as they are built — or here, in the notice list."] },
+  { anchor: "alerts", telegram: false, pt: ["Avisos dos seus times", "Siga times e ligas: quando os bilhetes de um jogo deles saem, o aviso aparece aqui, na sua lista."], en: ["Notices for your teams", "Follow teams and leagues: when one of their games gets tickets, the notice lands here, in your list."] },
   { anchor: "settings", pt: ["Seus limites", "Teto de aposta por dia e por semana, lembrete de tempo, aviso de sequência ruim e uma pausa de 7 ou 30 dias. Aposta não é investimento."], en: ["Your limits", "Daily and weekly stake ceilings, a time reminder, a losing-streak notice and a 7- or 30-day pause. Betting is not investing."] },
-  { anchor: "account", pt: ["Seu plano e seus coins", "Bilhetes são gerados no servidor a cada 4 horas. O plano define quantos jogos e faixas você vê; coins liberam análises extras."], en: ["Your plan and coins", "Tickets are generated on the server every 4 hours. Your plan sets how many games and bands you see; coins unlock extra analysis."] },
+  { anchor: "account", pt: ["Seu plano, seus coins e o menu", "Os bilhetes são montados quando alguém abre o jogo. O plano define quantos jogos e faixas você vê; coins pagam análises só suas. Tudo o mais — conta, planos, sair — fica no menu."], en: ["Your plan, coins and the menu", "Tickets are built when someone opens the game. Your plan sets how many games and bands you see; coins pay for analysis made just for you. Everything else — account, plans, log out — is in the menu."] },
 ] as const;
+/** One of the two alert steps is shown, so every visitor sees the same number of steps. */
+const STEP_COUNT = ALL_STEPS.length - 1;
 type Rect = { top: number; left: number; width: number; height: number };
 
-export function Tour() {
+export function Tour({ telegram = false }: { telegram?: boolean }) {
   const { lang } = useNavState();
+  const STEPS = useMemo(() => ALL_STEPS.filter((s) => !("telegram" in s) || s.telegram === telegram), [telegram]);
   const [state, setState] = useState<"idle" | "welcome" | "running" | "done">("idle");
   const [step, setStep] = useState(0);
   const [rect, setRect] = useState<Rect | null>(null);
@@ -33,7 +37,7 @@ export function Tour() {
       if (j.tourCompleted) return setState("done");
       const seen = sessionStorage.getItem("bm_tour_seen");
       if (!seen) { sessionStorage.setItem("bm_tour_seen", "1"); save(0, false, "visit"); }
-      if (j.tourStep > 0 && j.tourStep < STEPS.length) { setStep(j.tourStep); setState("running"); }
+      if (j.tourStep > 0 && j.tourStep < STEP_COUNT) { setStep(j.tourStep); setState("running"); }
       else if (!seen) setState("welcome");
     }).catch(() => {});
   }, [save]);
@@ -42,8 +46,10 @@ export function Tour() {
     const el = document.querySelector<HTMLElement>(`[data-tour="${STEPS[step].anchor}"]`);
     if (!el) return setRect(null);
     const r = el.getBoundingClientRect();
+    // Anchors inside the phone menu are hidden: show the card without a spotlight.
+    if (r.width === 0 && r.height === 0) return setRect(null);
     setRect({ top: r.top - 8, left: r.left - 8, width: r.width + 16, height: r.height + 16 });
-  }, [step]);
+  }, [step, STEPS]);
 
   useLayoutEffect(() => {
     if (state !== "running") return;
