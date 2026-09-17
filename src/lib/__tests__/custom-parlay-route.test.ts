@@ -15,7 +15,7 @@ const poolFn = vi.fn();
 vi.mock("@/lib/server/leg-pool", () => ({ buildLegPool: (...a: unknown[]) => poolFn(...a) }));
 
 const { POST } = await import("@/app/api/parlays/custom/route");
-const { createUser, toPublic, adjustCoins, findById } = await import("@/lib/server/users");
+const { createUser, toPublic, adjustCoins, findById, setPlanByAdmin } = await import("@/lib/server/users");
 
 const leg = (key: string, gameId: string, decimal: number, fair: number) => ({
   key, gameId, matchup: gameId, selection: key, market: "points", decimal, fairProbability: fair, measured: true, measuredRate: fair, evidence: "L5 3/5",
@@ -64,5 +64,26 @@ describe("custom parlay route", async () => {
     adjustCoins(row.id, -18, "test");
     sessionUser = toPublic(findById(row.id)!);
     expect((await POST(body(10))).status).toBe(402);
+  });
+
+  it("adds ticket legs only from the sports and bands the plan shows", async () => {
+    const starter = await createUser({ email: `cs${Date.now()}@example.com`, name: "s", password: "password123" });
+    setPlanByAdmin(starter.id, "starter", new Date(Date.now() + 30 * 86_400_000).toISOString());
+    adjustCoins(starter.id, 100, "test");
+    const req = (sport: string, target: number) => new Request("http://x/api/parlays/custom", { method: "POST", body: JSON.stringify({ sport, target, maxLegs: 4, measuredOnly: true, minRate: 0.5 }) });
+    sessionUser = toPublic(findById(starter.id)!);
+    await POST(req("wnba", 9));
+    expect(poolFn.mock.calls.at(-1)?.[1]).toMatchObject({ ticketBands: ["mid", "safe", "value"] });
+    // Starter covers basketball only: football tickets stay out of its pool
+    await POST(req("soccer-bra", 9));
+    expect(poolFn.mock.calls.at(-1)?.[1]).toMatchObject({ ticketBands: [] });
+    // the free plan never pools ticket legs, and a cached Starter result is not reused for it
+    const free = await createUser({ email: `cf${Date.now()}@example.com`, name: "f", password: "password123" });
+    adjustCoins(free.id, 100, "test");
+    sessionUser = toPublic(findById(free.id)!);
+    const calls = poolFn.mock.calls.length;
+    await POST(req("wnba", 9));
+    expect(poolFn.mock.calls.length).toBe(calls + 1);
+    expect(poolFn.mock.calls.at(-1)?.[1]).toMatchObject({ ticketBands: [] });
   });
 });

@@ -72,13 +72,17 @@ export async function POST(request: Request) {
   };
 
   try {
-    const paid = user.role === "admin" || user.plan.id !== "free";
-    const hash = createHash("sha1").update(JSON.stringify({ ...c, paid, withAi })).digest("hex").slice(0, 16);
+    // Ticket legs join the pool only as far as the plan shows tickets: its sports and its bands.
+    const admin = user.role === "admin";
+    const plan = user.plan;
+    const sportInPlan = !plan.sports.length || plan.sports.includes(c.sport);
+    const ticketBands: string[] | null = admin ? null : plan.id !== "free" && sportInPlan ? [...plan.bands].sort() : [];
+    const hash = createHash("sha1").update(JSON.stringify({ ...c, ticketBands, withAi })).digest("hex").slice(0, 16);
     const cacheKey = `custom-parlay-${hash}`;
     let result = readCache<Cached>(cacheKey, 15 * 60_000);
     const cachedHit = !!result;
     if (!result) {
-      const { pool, dateKey, games } = await buildLegPool(c.sport, { lang, includeTicketLegs: paid });
+      const { pool, dateKey, games } = await buildLegPool(c.sport, { lang, ticketBands });
       const kickoff = new Map(games.map((g) => [g.id, g.startsAt]));
       const solved = solveCustomParlay(pool, c);
       if (!solved.reachable) {

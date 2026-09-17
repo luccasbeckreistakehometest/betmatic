@@ -47,7 +47,11 @@ function gameLineLegs(detail: GameDetail, lines: Awaited<ReturnType<typeof getGa
   return out;
 }
 
-export async function buildLegPool(sportKey: string, opts: { lang: Lang; includeTicketLegs: boolean; maxGames?: number }): Promise<{ pool: PoolLeg[]; games: PoolGame[]; dateKey: string }> {
+/**
+ * `ticketBands`: legs of the stored tickets join the pool only from these bands (null = every band,
+ * the admin view; empty = none). The caller passes what the viewer's plan shows for this sport.
+ */
+export async function buildLegPool(sportKey: string, opts: { lang: Lang; ticketBands: string[] | null; maxGames?: number }): Promise<{ pool: PoolLeg[]; games: PoolGame[]; dateKey: string }> {
   const slate = await getSlateOrNearest(todayKey(), false, sportKey);
   const upcoming = slate.games.filter((g) => g.status === "scheduled" && Date.parse(g.startsAt) > Date.now()).slice(0, opts.maxGames ?? 8);
   const pool: PoolLeg[] = [];
@@ -75,10 +79,12 @@ export async function buildLegPool(sportKey: string, opts: { lang: Lang; include
         athleteId: p.athleteId,
       });
     }
-    if (opts.includeTicketLegs) {
+    if (opts.ticketBands === null || opts.ticketBands.length) {
       const stored = findPrediction({ scope: "game", sportKey, gameId: g.id, dateKey: slate.dateKey, lang: opts.lang });
       const slateJson = stored ? (JSON.parse(stored.payload) as BetSlate) : null;
+      const bands = opts.ticketBands === null ? null : new Set(opts.ticketBands);
       for (const s of slateJson?.suggestions ?? []) {
+        if (bands && !bands.has(s.bandKey)) continue;
         for (const leg of s.legs) {
           const key = `${g.id}:ticket:${leg.selection}`;
           if (!leg.settlement || !(leg.oddsDecimal > 1) || pool.some((x) => x.key === key || x.selection === leg.selection)) continue;
