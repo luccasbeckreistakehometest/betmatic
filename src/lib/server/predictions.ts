@@ -65,6 +65,22 @@ export function findGamePrediction(gameId: string, lang: string): { generatedAt:
     .get(gameId, lang) as { generatedAt: string; payload: string } | undefined) ?? null;
 }
 
+/** Where a game lives — sport, matchup, kickoff, slate day — from whatever language was stored last. */
+export function findGameInfo(gameId: string): { sportKey: string; matchup: string; startsAt: string | null; dateKey: string; generatedAt: string } | null {
+  return (getDb().prepare("SELECT sportKey, matchup, startsAt, dateKey, generatedAt FROM predictions WHERE scope='game' AND gameId=? ORDER BY generatedAt DESC LIMIT 1")
+    .get(gameId) as { sportKey: string; matchup: string; startsAt: string | null; dateKey: string; generatedAt: string } | undefined) ?? null;
+}
+
+/** Games with tickets on the given slate days — the sitemap's list of public game pages. */
+export function listUpcomingGames(dateKeys: string[]): { gameId: string; sportKey: string; generatedAt: string }[] {
+  if (!dateKeys.length) return [];
+  return getDb().prepare(
+    `SELECT gameId, sportKey, MAX(generatedAt) AS generatedAt FROM predictions
+     WHERE scope='game' AND gameId IS NOT NULL AND dateKey IN (${dateKeys.map(() => "?").join(",")})
+     GROUP BY gameId ORDER BY generatedAt DESC`,
+  ).all(...dateKeys) as { gameId: string; sportKey: string; generatedAt: string }[];
+}
+
 /** The most recent day that has game tickets — the landing falls back to it when today has none yet. */
 export function latestPredictionDateKey(): string | null {
   const row = getDb().prepare("SELECT dateKey FROM predictions WHERE scope='game' ORDER BY dateKey DESC LIMIT 1").get() as { dateKey: string } | undefined;

@@ -15,8 +15,8 @@ import type { BetSuggestion } from "@/lib/types";
  * Nothing here is written by hand, so it can never drift from the product's real record.
  */
 const C = {
-  pt: { eyebrow: "Prova ao vivo", generated: "bilhetes gerados", hit: "acerto", roi: "ROI a 1 unidade", all: "ver todos os bilhetes →", today: "Bilhete do dia", latest: "Último bilhete gerado", legs: "pernas", cta: "Ver as pernas grátis", none: "O primeiro bilhete de hoje aparece assim que um jogo for aberto." },
-  en: { eyebrow: "Live proof", generated: "tickets generated", hit: "hit rate", roi: "ROI at 1 unit", all: "see every ticket →", today: "Ticket of the day", latest: "Latest ticket", legs: "legs", cta: "See the legs for free", none: "Today's first ticket appears as soon as a game is opened." },
+  pt: { eyebrow: "Prova ao vivo", generated: "bilhetes gerados", hit: "acerto", roi: "ROI a 1 unidade", all: "ver todos os bilhetes →", today: "Bilhete do dia", latest: "Último bilhete gerado", legs: "pernas", cta: "Ver as pernas grátis", none: "O primeiro bilhete de hoje aparece assim que um jogo for aberto.", gamePage: "página do jogo →" },
+  en: { eyebrow: "Live proof", generated: "tickets generated", hit: "hit rate", roi: "ROI at 1 unit", all: "see every ticket →", today: "Ticket of the day", latest: "Latest ticket", legs: "legs", cta: "See the legs for free", none: "Today's first ticket appears as soon as a game is opened.", gamePage: "game page →" },
 };
 
 function bestFor(dateKey: string, lang: Lang, sportKeys?: string[]): { bet: BetSuggestion; matchup: string; gameId: string | null } | null {
@@ -64,7 +64,10 @@ export function ProofStrip({ lang, sportKeys }: { lang: Lang; sportKeys?: string
               <div className="flex flex-wrap items-center gap-3"><span className="text-[15px] font-semibold text-white">{top.bet.title}</span><span className="nums rounded-lg bg-signal-500/12 px-2 py-0.5 text-[13px] font-bold text-signal-400">{formatDecimal(top.bet.combinedDecimal)}</span></div>
               <p className="mt-1 text-[13px] text-mist-400">{top.matchup} · {top.bet.legs.length} {c.legs}</p>
               <p className="mt-2 line-clamp-2 text-[13px] text-mist-300">{top.bet.background}</p>
-              <Link href={{ pathname: "/signup", query: { lang } }} className="mt-3 inline-block rounded-lg bg-edge-400 px-4 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500">{c.cta}</Link>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <Link href={{ pathname: "/signup", query: { lang } }} className="inline-block rounded-lg bg-edge-400 px-4 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500">{c.cta}</Link>
+                {top.gameId && <Link href={{ pathname: `/jogo/${top.gameId}`, query: { lang } }} className="text-[13px] text-mist-400 hover:text-mist-100" data-testid="ticket-game-link">{c.gamePage}</Link>}
+              </div>
             </div>
           ) : <p className="mt-2 text-[13px] text-mist-500">{c.none}</p>}
         </div>

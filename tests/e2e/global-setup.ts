@@ -12,7 +12,14 @@ export default async function globalSetup() {
   // just-written row would be invisible to free accounts in the specs.
   const Database = (await import("better-sqlite3")).default;
   const db = new Database(path.join(dir, "betmatic.db"));
-  db.prepare("UPDATE predictions SET generatedAt = ?").run(new Date(Date.now() - 3 * 3_600_000).toISOString());
+  const generatedAt = new Date(Date.now() - 3 * 3_600_000).toISOString();
+  db.prepare("UPDATE predictions SET generatedAt = ?").run(generatedAt);
+  // A game on today's slate (ESPN knows nothing about it) so the sitemap and the public game page
+  // have an upcoming fixture to list and to render from the stored slate alone.
+  const todayKey = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()).replace(/-/g, "");
+  const src = db.prepare("SELECT payload FROM predictions WHERE gameId = '401882878' AND lang = 'pt'").get() as { payload: string };
+  db.prepare("INSERT INTO predictions (id,scope,sportKey,gameId,dateKey,lang,matchup,startsAt,payload,generatedAt,costUsd) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
+    .run("pred_e2e_today", "game", "soccer-esp", "990000001", todayKey, "pt", "Girona @ Betis", new Date(Date.now() + 3 * 3_600_000).toISOString(), src.payload, generatedAt, 0);
   db.close();
   // A small settled ledger so the public track record, permalinks and the bankroll have data.
   const ledgerDir = path.join(dir, "ledger");
