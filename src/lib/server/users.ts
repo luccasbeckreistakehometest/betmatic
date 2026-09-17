@@ -223,14 +223,24 @@ export function nextPlanExpiry(current: Pick<UserRow, "planId" | "planExpiresAt"
   return base;
 }
 
-export function activatePlan(userId: string, planId: string, period: BillingPeriod, meta: Record<string, unknown> = {}): void {
+/** An account's plan at one moment; payments keep the state before and after each plan purchase. */
+export interface PlanState { planId: string; planPeriod: BillingPeriod; planExpiresAt: string | null }
+
+export const planStateOf = (row: Pick<UserRow, "planId" | "planPeriod" | "planExpiresAt">): PlanState =>
+  ({ planId: row.planId, planPeriod: row.planPeriod, planExpiresAt: row.planExpiresAt ?? null });
+
+export function activatePlan(userId: string, planId: string, period: BillingPeriod, meta: Record<string, unknown> = {}, now = new Date()): { before: PlanState; after: PlanState } {
   const db = getDb();
   const plan = getPlan(planId);
-  const expiry = nextPlanExpiry(findById(userId), plan.id, period);
-  db.prepare("UPDATE users SET planId = ?, planPeriod = ?, planExpiresAt = ? WHERE id = ?").run(plan.id, period, expiry.toISOString(), userId);
+  const current = findById(userId);
+  if (!current) throw new Error("user_not_found");
+  const before = planStateOf(current);
+  const after: PlanState = { planId: plan.id, planPeriod: period, planExpiresAt: nextPlanExpiry(current, plan.id, period, now).toISOString() };
+  db.prepare("UPDATE users SET planId = ?, planPeriod = ?, planExpiresAt = ? WHERE id = ?").run(after.planId, after.planPeriod, after.planExpiresAt, userId);
   if (plan.coinsPerPeriod > 0) {
     adjustCoins(userId, plan.coinsPerPeriod, `plan:${planId}:${period}`, meta);
   }
+  return { before, after };
 }
 
 /** Admin override: any plan with an explicit expiry (null expiry = free). */

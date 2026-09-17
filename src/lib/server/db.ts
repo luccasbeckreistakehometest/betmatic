@@ -396,9 +396,13 @@ function migrate(d: Database.Database): void {
   addColumn(d, "payments", "statusDetail", "TEXT");
   addColumn(d, "payments", "reversedAt", "TEXT");
   addColumn(d, "payments", "formerUserRef", "TEXT");
+  // The account's plan right before and right after a plan purchase: a refund rebuilds from these.
+  addColumn(d, "payments", "planBefore", "TEXT");
+  addColumn(d, "payments", "planAfter", "TEXT");
   // Referrals credit on the referred user's first paid purchase; rows from before this were credited at signup.
   addColumn(d, "referrals", "status", "TEXT NOT NULL DEFAULT 'credited'");
   addColumn(d, "referrals", "creditedAt", "TEXT");
+  addColumn(d, "referrals", "paymentRowId", "TEXT");
   addColumn(d, "generation_requests", "scope", "TEXT NOT NULL DEFAULT 'game'");
   d.exec(`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_provider_payment ON payments(providerPaymentId) WHERE providerPaymentId IS NOT NULL;

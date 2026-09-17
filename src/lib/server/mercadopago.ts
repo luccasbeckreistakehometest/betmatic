@@ -1,8 +1,9 @@
 import { createHmac } from "node:crypto";
 import { getDb, newId, nowIso } from "@/lib/server/db";
 import { getCoinPack, getPlan, PERIOD, periodPrice, type BillingPeriod } from "@/lib/plans";
-import { activatePlan, adjustCoins, findById } from "@/lib/server/users";
-import { creditReferralOnPurchase } from "@/lib/server/referral";
+import { activatePlan, adjustCoins, findById, nextPlanExpiry, type PlanState, type UserRow } from "@/lib/server/users";
+import { creditReferralOnPurchase, reverseReferralForPayment } from "@/lib/server/referral";
+import { reportError } from "@/lib/server/ops-log";
 import { requireBaseUrl } from "@/lib/base-url";
 import { safeEqual } from "@/lib/server/auth";
 
@@ -75,6 +76,8 @@ export interface PaymentRow {
   createdAt: string;
   settledAt: string | null;
   reversedAt: string | null;
+  planBefore?: string | null;
+  planAfter?: string | null;
 }
 
 /** The row id travels as external_reference, so the webhook credits exactly this purchase. */
@@ -145,23 +148,72 @@ function rowForPayment(payment: Record<string, unknown>): PaymentRow | null {
   return (getDb().prepare("SELECT * FROM payments WHERE id = ?").get(ref.slice(REF_PREFIX.length)) as PaymentRow | undefined) ?? null;
 }
 
-function creditRow(row: PaymentRow, paymentId: string): void {
+function creditRow(row: PaymentRow, paymentId: string, settledAt: string): void {
   const meta = { paymentId, paymentRow: row.id };
   if (row.kind === "coins") {
     const pack = getCoinPack(row.reference);
     if (!pack) throw new Error(`unknown pack ${row.reference}`);
     adjustCoins(row.userId, pack.coins + pack.bonus, `purchase:${pack.id}`, meta);
   } else {
-    activatePlan(row.userId, row.reference, (row.period ?? "monthly") as BillingPeriod, meta);
+    const { before, after } = activatePlan(row.userId, row.reference, (row.period ?? "monthly") as BillingPeriod, meta, new Date(settledAt));
+    getDb().prepare("UPDATE payments SET planBefore = ?, planAfter = ? WHERE id = ?").run(JSON.stringify(before), JSON.stringify(after), row.id);
   }
 }
 
-/** Undo a credit after a refund or chargeback: coins come back out (never below zero), paid time is removed. */
+function parsePlanState(json: string | null | undefined): PlanState | null {
+  try {
+    const v = json ? (JSON.parse(json) as PlanState) : null;
+    return v && typeof v.planId === "string" ? { planId: v.planId, planPeriod: v.planPeriod ?? "monthly", planExpiresAt: v.planExpiresAt ?? null } : null;
+  } catch {
+    return null;
+  }
+}
+
+const matches = (state: PlanState, user: Pick<UserRow, "planId" | "planExpiresAt">) =>
+  state.planId === user.planId && state.planExpiresAt === (user.planExpiresAt ?? null);
+
+/**
+ * Takes a refunded plan purchase out of the account's history. The plan is rebuilt from the state
+ * right before that purchase, replaying every later plan purchase that still stands at the moment it
+ * was paid — so days converted out of the refunded plan into another one leave with it. When the
+ * account no longer matches what those purchases produced (an admin changed it since), nothing is
+ * guessed: the operator gets an ops_log row to settle it by hand.
+ * Returns false for rows credited before the states were recorded.
+ */
+function removePlanPurchase(row: PaymentRow, user: UserRow, paymentId: string): boolean {
+  const before = parsePlanState(row.planBefore);
+  if (!before) return false;
+  const db = getDb();
+  const chain = db.prepare("SELECT * FROM payments WHERE userId = ? AND kind = 'plan' AND status = 'approved' ORDER BY settledAt ASC, rowid ASC").all(row.userId) as PaymentRow[];
+  const later = chain.slice(chain.findIndex((p) => p.id === row.id) + 1);
+  const expected = parsePlanState((later.at(-1) ?? row).planAfter);
+  if (!expected || later.some((p) => !parsePlanState(p.planAfter) || !p.settledAt) || !matches(expected, user)) {
+    reportError("payments.reversal", new Error("the plan changed outside purchases since this payment — adjust it by hand in /admin"), { paymentId, paymentRow: row.id, userId: row.userId });
+    return true;
+  }
+  let state = before;
+  for (const p of later) {
+    const period = (p.period ?? "monthly") as BillingPeriod;
+    const next: PlanState = { planId: getPlan(p.reference).id, planPeriod: period, planExpiresAt: nextPlanExpiry(state, p.reference, period, new Date(p.settledAt!)).toISOString() };
+    db.prepare("UPDATE payments SET planBefore = ?, planAfter = ? WHERE id = ?").run(JSON.stringify(state), JSON.stringify(next), p.id);
+    state = next;
+  }
+  const lapsed = state.planId === "free" || !state.planExpiresAt || state.planExpiresAt <= nowIso();
+  db.prepare("UPDATE users SET planId = ?, planPeriod = ?, planExpiresAt = ? WHERE id = ?")
+    .run(lapsed ? "free" : state.planId, lapsed ? "monthly" : state.planPeriod, lapsed ? null : state.planExpiresAt, row.userId);
+  return true;
+}
+
+/**
+ * Undo a credit after a refund or chargeback: coins come back out (never below zero, so coins
+ * already spent stay spent), paid time is removed, and a referral this purchase paid is taken back.
+ */
 function reverseRow(row: PaymentRow, paymentId: string): void {
   const meta = { paymentId, paymentRow: row.id };
   const db = getDb();
   const user = findById(row.userId);
   if (!user) return; // erased account: nothing left to take back
+  reverseReferralForPayment(row.userId, row.id);
   const claw = (coins: number, reason: string) => {
     const amount = Math.min(coins, findById(row.userId)?.coins ?? 0);
     if (amount > 0) adjustCoins(row.userId, -amount, reason, meta);
@@ -173,6 +225,8 @@ function reverseRow(row: PaymentRow, paymentId: string): void {
   }
   const plan = getPlan(row.reference);
   claw(plan.coinsPerPeriod, `reversal:plan:${plan.id}`);
+  if (removePlanPurchase(row, user, paymentId)) return;
+  // Rows credited before plan states were recorded: take the months off when the plan still matches.
   if (user.planId !== plan.id || !user.planExpiresAt) return;
   const expiry = new Date(user.planExpiresAt);
   expiry.setMonth(expiry.getMonth() - (PERIOD[(row.period ?? "monthly") as BillingPeriod]?.months ?? 1));
@@ -208,17 +262,25 @@ export async function handleWebhook(paymentId: string): Promise<{ outcome: Webho
 
     if (status === "approved") {
       if (!mark(`${paymentId}:credit`, "credit")) return { outcome: "already_processed", note: row.id };
-      // A row is paid once. A second approved payment for the same row is recorded, not credited.
-      if (row.status === "approved" || row.providerPaymentId) return { outcome: "already_processed", note: `row ${row.id} already paid` };
+      // A row is paid once. A second approved payment for the same checkout is not credited: the buyer
+      // paid twice, so the operator is told to refund it.
+      if (row.status === "approved" || row.providerPaymentId) {
+        const note = `duplicate payment ${paymentId} for a row already paid by ${row.providerPaymentId ?? "?"}: refund it in Mercado Pago`;
+        db.prepare("UPDATE payments SET statusDetail = ? WHERE id = ?").run(note.slice(0, 200), row.id);
+        reportError("payments.duplicate", new Error(note), { paymentId, paymentRow: row.id, userId: row.userId, amount: Number(payment.transaction_amount ?? 0) });
+        return { outcome: "already_processed", note: `row ${row.id} already paid` };
+      }
       const paid = Number(payment.transaction_amount ?? 0);
       const currency = String(payment.currency_id ?? "BRL");
       if (currency !== "BRL" || paid + 0.005 < row.amount) {
         db.prepare("UPDATE payments SET statusDetail = ? WHERE id = ?").run(`amount mismatch: ${currency} ${paid}`, row.id);
+        reportError("payments.amount_mismatch", new Error(`payment ${paymentId} paid ${currency} ${paid} for a R$ ${row.amount} row: not credited, refund or credit by hand`), { paymentId, paymentRow: row.id, userId: row.userId });
         return { outcome: "ignored_amount_mismatch", note: `${currency} ${paid} < ${row.amount}` };
       }
-      creditRow(row, paymentId);
+      const settledAt = nowIso();
+      creditRow(row, paymentId, settledAt);
       db.prepare("UPDATE payments SET status='approved', settledAt=?, providerPaymentId=?, statusDetail=? WHERE id=?")
-        .run(nowIso(), paymentId, String(payment.status_detail ?? ""), row.id);
+        .run(settledAt, paymentId, String(payment.status_detail ?? ""), row.id);
       creditReferralOnPurchase(row.userId, row.id);
       return { outcome: "credited", note: `${row.kind}:${row.reference}` };
     }

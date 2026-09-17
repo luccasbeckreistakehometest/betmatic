@@ -46,9 +46,28 @@ export function creditReferralOnPurchase(referredId: string, paymentRowId: strin
   adjustCoins(referredId, REFERRAL_COINS, "referral:welcome", { referrer: row.referrerId, payment: paymentRowId });
   if (underCap) adjustCoins(row.referrerId, REFERRAL_COINS, "referral:invited", { referred: referredId, payment: paymentRowId });
   const status = underCap ? "credited" : "capped";
-  db.prepare("UPDATE referrals SET status = ?, coins = ?, creditedAt = ? WHERE referredId = ?")
-    .run(status, underCap ? REFERRAL_COINS : 0, now.toISOString(), referredId);
+  db.prepare("UPDATE referrals SET status = ?, coins = ?, creditedAt = ?, paymentRowId = ? WHERE referredId = ?")
+    .run(status, underCap ? REFERRAL_COINS : 0, now.toISOString(), paymentRowId, referredId);
   return status;
+}
+
+/**
+ * The purchase that paid a referral was refunded: both sides give the coins back (never below zero)
+ * and the referral is closed, so a buy-and-refund loop pays nothing.
+ */
+export function reverseReferralForPayment(referredId: string, paymentRowId: string): boolean {
+  const db = getDb();
+  const row = db.prepare("SELECT referrerId, status FROM referrals WHERE referredId = ? AND paymentRowId = ? AND status IN ('credited','capped')")
+    .get(referredId, paymentRowId) as { referrerId: string; status: string } | undefined;
+  if (!row) return false;
+  const claw = (userId: string, reason: string) => {
+    const amount = Math.min(REFERRAL_COINS, findById(userId)?.coins ?? 0);
+    if (amount > 0) adjustCoins(userId, -amount, reason, { payment: paymentRowId, referred: referredId });
+  };
+  claw(referredId, "reversal:referral:welcome");
+  if (row.status === "credited" && findById(row.referrerId)) claw(row.referrerId, "reversal:referral:invited");
+  db.prepare("UPDATE referrals SET status = 'reversed', coins = 0 WHERE referredId = ?").run(referredId);
+  return true;
 }
 
 export function referralStats(userId: string): { code: string; invited: number; converted: number; coinsEarned: number } {

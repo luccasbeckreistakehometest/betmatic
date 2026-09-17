@@ -157,6 +157,102 @@ describe("webhook", () => {
   });
 });
 
+describe("refunds after switching plans", () => {
+  const DAY = 86_400_000;
+  let seq = 3000;
+  const daysLeft = (userId: string) => (Date.parse(findById(userId)!.planExpiresAt!) - Date.now()) / DAY;
+  async function buy(userId: string, planId: string, period: "monthly" | "annual"): Promise<string> {
+    const out = await mp.createPlanCheckout(userId, planId, period);
+    const amount = (getDb().prepare("SELECT amount FROM payments WHERE id = ?").get(out.paymentId) as { amount: number }).amount;
+    const id = String(++seq);
+    payments.set(id, { id: Number(id), status: "approved", external_reference: `bm:${out.paymentId}`, transaction_amount: amount, currency_id: "BRL" });
+    expect((await mp.handleWebhook(id)).outcome).toBe("credited");
+    return id;
+  }
+  async function refund(id: string, status = "refunded") {
+    payments.set(id, { ...payments.get(id)!, status });
+    expect((await mp.handleWebhook(id)).outcome).toBe("reversed");
+  }
+
+  it("refunding the first plan takes back the days that were converted into the second", async () => {
+    const u = await createUser({ email: "switch1@x.com", name: "S1", password: "password123" });
+    const starter = await buy(u.id, "starter", "annual");
+    await buy(u.id, "max", "monthly");
+    expect(findById(u.id)!.planId).toBe("max");
+    expect(daysLeft(u.id)).toBeGreaterThan(95); // a year of Starter converted at 39/199, plus a month
+    await refund(starter);
+    expect(findById(u.id)!.planId).toBe("max");
+    expect(daysLeft(u.id)).toBeGreaterThan(27);
+    expect(daysLeft(u.id)).toBeLessThan(32); // only the Max month that was paid for
+  });
+
+  it("a chargeback on an annual Max never leaves years of a cheaper plan behind", async () => {
+    const u = await createUser({ email: "switch2@x.com", name: "S2", password: "password123" });
+    const max = await buy(u.id, "max", "annual");
+    await buy(u.id, "starter", "monthly");
+    expect(daysLeft(u.id)).toBeGreaterThan(1000);
+    await refund(max, "charged_back");
+    expect(findById(u.id)!.planId).toBe("starter");
+    expect(daysLeft(u.id)).toBeLessThan(32);
+  });
+
+  it("refunding the newer plan puts the older one back as it was", async () => {
+    const u = await createUser({ email: "switch3@x.com", name: "S3", password: "password123" });
+    await buy(u.id, "starter", "annual");
+    const annualExpiry = findById(u.id)!.planExpiresAt;
+    const max = await buy(u.id, "max", "monthly");
+    await refund(max);
+    expect(findById(u.id)!.planId).toBe("starter");
+    expect(findById(u.id)!.planExpiresAt).toBe(annualExpiry);
+  });
+
+  it("refunding the only plan purchase returns the account to free", async () => {
+    const u = await createUser({ email: "switch4@x.com", name: "S4", password: "password123" });
+    const pro = await buy(u.id, "pro", "monthly");
+    await refund(pro);
+    expect(findById(u.id)).toMatchObject({ planId: "free", planExpiresAt: null });
+  });
+
+  it("does not guess when an admin changed the plan after the purchase", async () => {
+    const { setPlanByAdmin } = await import("@/lib/server/users");
+    const u = await createUser({ email: "switch5@x.com", name: "S5", password: "password123" });
+    const pro = await buy(u.id, "pro", "monthly");
+    setPlanByAdmin(u.id, "max", "2030-01-01T00:00:00.000Z");
+    await refund(pro);
+    expect(findById(u.id)).toMatchObject({ planId: "max", planExpiresAt: "2030-01-01T00:00:00.000Z" });
+    const ops = getDb().prepare("SELECT meta FROM ops_log WHERE scope = 'payments.reversal'").all() as { meta: string }[];
+    expect(ops.some((o) => o.meta.includes(u.id))).toBe(true);
+  });
+
+  it("a refund takes back the referral coins that purchase paid, on both sides", async () => {
+    const referrer = await createUser({ email: "refowner@x.com", name: "Owner", password: "password123" });
+    const invited = await createUser({ email: "refbuyer@x.com", name: "Buyer", password: "password123" });
+    recordReferral(invited.id, refCodeFor(referrer.id));
+    const out = await mp.createCoinCheckout(invited.id, "pack_50");
+    payments.set("3900", { id: 3900, status: "approved", external_reference: `bm:${out.paymentId}`, transaction_amount: 19, currency_id: "BRL" });
+    await mp.handleWebhook("3900");
+    expect(findById(referrer.id)!.coins).toBe(5);
+    await refund("3900");
+    expect(findById(referrer.id)!.coins).toBe(0);
+    expect(findById(invited.id)!.coins).toBe(0);
+    expect((getDb().prepare("SELECT status FROM referrals WHERE referredId = ?").get(invited.id) as { status: string }).status).toBe("reversed");
+  });
+
+  it("a second approved payment on a paid checkout is not credited and is flagged for refund", async () => {
+    const u = await createUser({ email: "dupe@x.com", name: "Dupe", password: "password123" });
+    const out = await mp.createCoinCheckout(u.id, "pack_50");
+    payments.set("3950", { id: 3950, status: "approved", external_reference: `bm:${out.paymentId}`, transaction_amount: 19, currency_id: "BRL" });
+    payments.set("3951", { id: 3951, status: "approved", external_reference: `bm:${out.paymentId}`, transaction_amount: 19, currency_id: "BRL" });
+    expect((await mp.handleWebhook("3950")).outcome).toBe("credited");
+    expect((await mp.handleWebhook("3951")).outcome).toBe("already_processed");
+    expect(findById(u.id)!.coins).toBe(50);
+    const ops = getDb().prepare("SELECT message FROM ops_log WHERE scope = 'payments.duplicate'").all() as { message: string }[];
+    expect(ops.some((o) => o.message.includes("3951"))).toBe(true);
+    const row = getDb().prepare("SELECT statusDetail FROM payments WHERE id = ?").get(out.paymentId) as { statusDetail: string };
+    expect(row.statusDetail).toMatch(/duplicate payment 3951/);
+  });
+});
+
 describe("webhook signature", () => {
   it("accepts a correct x-signature and rejects anything else when a secret is set", () => {
     const secret = "whsec";
