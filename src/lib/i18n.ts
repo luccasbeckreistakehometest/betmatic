@@ -231,6 +231,16 @@ const DICT = {
   handleTaken: { pt: "Esse apelido já está em uso.", en: "That handle is taken." },
   handleInvalid: { pt: "Apelido: 3 a 16 letras, números ou _.", en: "Handle: 3–16 letters, digits or _." },
   shownAs: { pt: "aparece como", en: "shown as" },
+  // ---- leaderboard ----
+  signInForRanking: { pt: "Entre na sua conta para ver o ranking.", en: "Sign in to see the leaderboard." },
+  rankingMembers: { pt: "participando", en: "opted in" },
+  rankingWeek: { pt: "Semana", en: "Week" },
+  rankingAll: { pt: "Geral", en: "All-time" },
+  rankingIntro: { pt: "ROI e unidades sobre a banca liquidada de quem escolheu aparecer, sob apelido. Só entra quem tem pelo menos {n} apostas decididas — dez acertos seguidos são uma boa semana, não um histórico.", en: "ROI and units over the settled bankroll of members who chose to appear, under a handle. Only members with at least {n} decided bets are ranked — ten wins in a row is a good week, not a record." },
+  rankingNotIn: { pt: "Você não está no ranking. Para aparecer, ative em", en: "You are not on the board. To appear, opt in under" },
+  rankingUnits: { pt: "Unidades", en: "Units" },
+  rankingYou: { pt: "você", en: "you" },
+  rankingEmpty: { pt: "Ninguém com apostas decididas suficientes neste período ainda.", en: "Nobody with enough decided bets in this period yet." },
   // ---- why did it lose ----
   whyLost: { pt: "Por que perdi?", en: "Why did it lose?" },
   reviewAssumed: { pt: "O que o modelo assumiu", en: "What the model assumed" },

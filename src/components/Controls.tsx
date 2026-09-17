@@ -90,6 +90,7 @@ const NAV: { href: string; key: DictKey; tour?: string }[] = [
   { href: "/app/track", key: "navTrack" },
   { href: "/app/bankroll", key: "bankroll", tour: "bankroll" },
   { href: "/app/alerts", key: "navAlerts", tour: "alerts" },
+  { href: "/app/ranking", key: "navRanking" },
   { href: "/app/referral", key: "referral" },
   { href: "/app/settings", key: "navSettings", tour: "settings" },
 ];
