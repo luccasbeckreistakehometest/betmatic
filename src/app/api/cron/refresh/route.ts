@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { envValue } from "@/lib/env";
 import { requireAdmin } from "@/lib/server/session";
 import { runRefresh } from "@/lib/server/refresh-job";
 import { settlePending } from "@/lib/ledger/settle";
@@ -21,7 +22,7 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: Request) {
   const url = new URL(request.url);
-  const secret = process.env.CRON_SECRET;
+  const secret = envValue("CRON_SECRET");
   const provided = request.headers.get("x-cron-secret");
   const byCron = !!secret && safeEqual(provided, secret);
   if (!byCron && !(await requireAdmin())) return NextResponse.json({ error: "unauthorized" }, { status: 401 });

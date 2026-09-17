@@ -1,12 +1,13 @@
 import { createHash, createHmac, randomBytes, scrypt, scryptSync, timingSafeEqual } from "node:crypto";
+import { validSecret } from "@/lib/env";
 
 export const SESSION_COOKIE = "betmatic_session";
 export const SESSION_DAYS = 30;
 const KEY_LENGTH = 32;
 
 function secret(): string {
-  const value = process.env.AUTH_SECRET;
-  if (!value || value.length < 16) {
+  const value = (process.env.AUTH_SECRET ?? "").trim();
+  if (!validSecret(value)) {
     // Failing loudly beats signing sessions with a guessable default. There is no fallback on purpose.
     throw new Error("AUTH_SECRET is missing or too short — set a long random value (openssl rand -hex 32).");
   }
@@ -15,7 +16,7 @@ function secret(): string {
 
 /** True when the process can sign sessions; production startup refuses to run without it. */
 export function authSecretConfigured(): boolean {
-  return (process.env.AUTH_SECRET ?? "").length >= 16;
+  return validSecret(process.env.AUTH_SECRET);
 }
 
 function scryptAsync(password: string, salt: string): Promise<Buffer> {

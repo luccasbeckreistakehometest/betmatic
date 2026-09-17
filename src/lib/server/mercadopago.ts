@@ -6,12 +6,13 @@ import { creditReferralOnPurchase, reverseReferralForPayment } from "@/lib/serve
 import { reportError } from "@/lib/server/ops-log";
 import { requireBaseUrl } from "@/lib/base-url";
 import { safeEqual } from "@/lib/server/auth";
+import { envValue } from "@/lib/env";
 
 /** MP_API_BASE exists only so the e2e suite can point checkout at a local fake. */
 const apiBase = () => process.env.MP_API_BASE || "https://api.mercadopago.com";
 
 export function mpConfigured(): boolean {
-  return (process.env.MP_ACCESS_TOKEN ?? "").trim().length > 0;
+  return envValue("MP_ACCESS_TOKEN").length > 0;
 }
 
 /** Thrown when Mercado Pago cannot be reached or answers with an error; the webhook maps it to 5xx. */
@@ -28,7 +29,7 @@ const liveFetcher: Fetcher = async (path, init) => {
   const res = await fetch(apiBase() + path, {
     ...init,
     headers: {
-      Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`,
+      Authorization: `Bearer ${envValue("MP_ACCESS_TOKEN")}`,
       "Content-Type": "application/json",
       ...(init?.headers ?? {}),
     },
@@ -315,7 +316,7 @@ export async function handleWebhook(paymentId: string): Promise<{ outcome: Webho
  * Optional authenticity check (MP_WEBHOOK_SECRET, from the Mercado Pago dashboard). The handler
  * re-reads every payment from the API anyway, so this is defence in depth, not the only guard.
  */
-export function verifyWebhookSignature(input: { signature: string | null; requestId: string | null; dataId: string | null }, secret = process.env.MP_WEBHOOK_SECRET): boolean {
+export function verifyWebhookSignature(input: { signature: string | null; requestId: string | null; dataId: string | null }, secret = envValue("MP_WEBHOOK_SECRET")): boolean {
   if (!secret) return true;
   if (!input.signature || !input.dataId) return false;
   const parts = Object.fromEntries(input.signature.split(",").map((p) => p.trim().split("=", 2) as [string, string]));

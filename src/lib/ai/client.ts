@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { envValue } from "@/lib/env";
 import { AiBudgetExceededError, recordAiSpend } from "@/lib/server/ai-budget";
 
 /** Judgement work: the synthesis brief. */
@@ -9,7 +10,7 @@ export const EXTRACTION_MODEL = process.env.ANTHROPIC_EXTRACTION_MODEL ?? "claud
 let client: Anthropic | null = null;
 
 export function aiConfigured(): boolean {
-  const key = process.env.ANTHROPIC_API_KEY ?? process.env.ANTHROPIC_AUTH_TOKEN ?? "";
+  const key = envValue("ANTHROPIC_API_KEY") || envValue("ANTHROPIC_AUTH_TOKEN");
   // The .env.local.example placeholder would otherwise read as configured and fail with a 401.
   return key.length > 20 && !key.includes("...");
 }

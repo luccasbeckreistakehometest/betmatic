@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { envValue } from "@/lib/env";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { getDb, newId, nowIso } from "@/lib/server/db";
@@ -24,8 +25,8 @@ import { baseUrlOrEmpty } from "@/lib/base-url";
  */
 export type TelegramTransport = (chatId: string, text: string) => Promise<{ ok: boolean; error?: string }>;
 
-export const telegramConfigured = (): boolean => !!process.env.TELEGRAM_BOT_TOKEN;
-export const botUsername = (): string => (process.env.TELEGRAM_BOT_USERNAME ?? "").replace(/^@/, "");
+export const telegramConfigured = (): boolean => !!envValue("TELEGRAM_BOT_TOKEN");
+export const botUsername = (): string => envValue("TELEGRAM_BOT_USERNAME").replace(/^@/, "");
 export const deepLinkFor = (code: string): string | null => (botUsername() ? `https://t.me/${botUsername()}?start=${code}` : null);
 
 const outboxFile = () => path.join(process.env.DATA_DIR ?? path.join(process.cwd(), "data"), "telegram-outbox.jsonl");
@@ -38,7 +39,7 @@ const fileTransport: TelegramTransport = async (chatId, text) => {
 };
 
 const botApiTransport: TelegramTransport = async (chatId, text) => {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const token = envValue("TELEGRAM_BOT_TOKEN");
   if (!token) return { ok: false, error: "TELEGRAM_BOT_TOKEN not set" };
   try {
     // Plain text on purpose: Markdown escaping of team names and odds is a bug factory.

@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { hashPasswordSync } from "@/lib/server/auth";
+import { envValue } from "@/lib/env";
 
 const DATA_DIR = process.env.DATA_DIR ?? path.join(process.cwd(), "data");
 let db: Database.Database | null = null;
@@ -49,9 +50,10 @@ export function addColumnIfMissing(table: string, column: string, definition: st
  */
 function ensureAdmin(d: Database.Database): void {
   const prod = process.env.NODE_ENV === "production";
-  const email = (process.env.ADMIN_EMAIL ?? (prod ? "" : "admin@betmatic.app")).trim().toLowerCase();
-  const password = process.env.ADMIN_PASSWORD ?? (prod ? "" : "betmatic2026");
-  if (!email || !password) return;
+  // A value that is really a comment (see lib/env.ts) counts as unset: it must never become a login.
+  const email = (process.env.ADMIN_EMAIL === undefined ? (prod ? "" : "admin@betmatic.app") : envValue("ADMIN_EMAIL")).toLowerCase();
+  const password = process.env.ADMIN_PASSWORD === undefined ? (prod ? "" : "betmatic2026") : envValue("ADMIN_PASSWORD");
+  if (!email.includes("@") || !password) return;
   if (d.prepare("SELECT 1 FROM users WHERE email = ?").get(email)) return;
   // A paid plan needs an expiry to count as active; the admin's never runs out. The only synchronous
   // scrypt in the app: it runs once per fresh data directory, never on a request.
