@@ -58,11 +58,26 @@ export function rankCandidates(rows: PropRow[], limit = 40): PropRow[] {
   return [...trimmed, ...unpriced].slice(0, limit);
 }
 
+/** ESPN numbers these leagues' seasons by the year they END (NBA 2025-26 is season=2026). */
+const END_YEAR_LEAGUES = new Set(["nba"]);
+
+/**
+ * The `season` parameter of the season before the current one. WNBA and football are numbered by the
+ * year they start, so that is last calendar year; the NBA tips off in October, and from then on the
+ * current season ends next year, so the previous one is this year's number.
+ */
+export function previousSeasonParam(sportKey: string, now = new Date()): number {
+  const year = now.getUTCFullYear();
+  if (!END_YEAR_LEAGUES.has(getSport(sportKey).espnLeague)) return year - 1;
+  const currentEnds = now.getUTCMonth() >= 9 ? year + 1 : year;
+  return currentEnds - 1;
+}
+
 export async function historyFor(sportKey: string, athleteId: string): Promise<PlayerHistory | null> {
   const current = await getPlayerHistory(sportKey, athleteId).catch(() => null);
   if (current && current.games.length >= 8) return current;
   // Early in a season the current log is a rumour; the previous season is the sample to lean on.
-  const previous = await getPlayerHistory(sportKey, athleteId, false, new Date().getUTCFullYear() - 1).catch(() => null);
+  const previous = await getPlayerHistory(sportKey, athleteId, false, previousSeasonParam(sportKey)).catch(() => null);
   if (!previous?.games.length) return current;
   const seen = new Set((current?.games ?? []).map((g) => g.eventId));
   return {

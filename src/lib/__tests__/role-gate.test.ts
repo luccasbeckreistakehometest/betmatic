@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gateByRole, rankCandidates } from "@/lib/props/candidates";
+import { gateByRole, previousSeasonParam, rankCandidates } from "@/lib/props/candidates";
 import { buildRoleFromStarts, buildRoleProfile, rolePrompt } from "@/lib/props/role";
 import type { PlayerHistory, PropRow } from "@/lib/types";
 
@@ -42,5 +42,19 @@ describe("candidate ranking", () => {
   it("puts priced rows first, by measured gap, and keeps two rungs per player and market", () => {
     const ranked = rankCandidates([row("A", 0.05), row("A", 0.2), row("A", 0.1), row("B", 0.15), row("C", 0.4, false)]);
     expect(ranked.map((r) => `${r.player}:${r.measured!.impliedFair.toFixed(2)}`)).toEqual(["A:0.70", "B:0.65", "A:0.60", "C:0.90"]);
+  });
+});
+
+describe("previous-season fallback", () => {
+  it("asks ESPN for the NBA season that ended last, including from the October tip-off", () => {
+    // ESPN: nba gamelog?season=2025 is 2024-25; the 2026-27 season starts in October 2026.
+    expect(previousSeasonParam("nba", new Date("2026-09-17T12:00:00Z"))).toBe(2025);
+    expect(previousSeasonParam("nba", new Date("2026-10-25T12:00:00Z"))).toBe(2026);
+    expect(previousSeasonParam("nba", new Date("2026-12-31T23:00:00Z"))).toBe(2026);
+    expect(previousSeasonParam("nba", new Date("2027-02-10T12:00:00Z"))).toBe(2026);
+  });
+  it("uses last calendar year for leagues numbered by the year they start", () => {
+    expect(previousSeasonParam("wnba", new Date("2026-10-25T12:00:00Z"))).toBe(2025);
+    expect(previousSeasonParam("soccer-bra", new Date("2026-10-25T12:00:00Z"))).toBe(2025);
   });
 });
