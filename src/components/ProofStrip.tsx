@@ -8,29 +8,29 @@ import { todayKey } from "@/lib/sources/espn";
 import { formatDecimal } from "@/lib/odds";
 import type { Lang } from "@/lib/i18n";
 import type { BetSuggestion } from "@/lib/types";
+import { legsLabel, pickTeaser, teaserHeadline } from "@/lib/teaser";
 
 /**
  * The landing's honesty strip: live numbers from the public ledger and, when there is one, today's
- * best-evidenced ticket exactly as a free visitor would see it (whitelabelled, free-plan bands).
+ * best-evidenced ticket as a teaser: its shape and price, never the pick (see lib/teaser.ts).
  * Nothing here is written by hand, so it can never drift from the product's real record.
  */
 const C = {
-  pt: { method: "Como medimos: todo bilhete gerado fica registrado na hora e é liquidado sozinho contra o placar oficial — ganhou, perdeu ou anulou. Os números de acerto e ROI aparecem aqui quando houver pelo menos {n} bilhetes decididos; antes disso, seria sorte ou azar.", methodTitle: "Prova pública, com método", eyebrow: "Prova ao vivo", generated: "bilhetes gerados", hit: "acerto", roi: "ROI a 1 unidade", all: "ver todos os bilhetes →", today: "Bilhete do dia", latest: "Último bilhete gerado", legs: "pernas", cta: "Ver as pernas grátis", none: "O primeiro bilhete de hoje aparece assim que um jogo for aberto.", gamePage: "página do jogo →" },
-  en: { method: "How we measure: every generated ticket is logged the moment it is built and graded automatically against the official score — won, lost or void. Hit rate and ROI appear here once at least {n} tickets are decided; before that, it would be luck.", methodTitle: "Public record, with a method", eyebrow: "Live proof", generated: "tickets generated", hit: "hit rate", roi: "ROI at 1 unit", all: "see every ticket →", today: "Ticket of the day", latest: "Latest ticket", legs: "legs", cta: "See the legs for free", none: "Today's first ticket appears as soon as a game is opened.", gamePage: "game page →" },
+  pt: { method: "Como medimos: todo bilhete gerado fica registrado na hora e é liquidado sozinho contra o placar oficial — ganhou, perdeu ou anulou. Os números de acerto e ROI aparecem aqui quando houver pelo menos {n} bilhetes decididos; antes disso, seria sorte ou azar.", methodTitle: "Prova pública, com método", eyebrow: "Prova ao vivo", generated: "bilhetes gerados", hit: "acerto", roi: "ROI a 1 unidade", all: "ver todos os bilhetes →", today: "Bilhete do dia", latest: "Último bilhete gerado", cta: "Ver as pernas grátis", ctaPaid: "Ver planos", blurb: "As pernas e a chance medida de cada uma ficam no app.", confidence: "confiança", none: "O primeiro bilhete de hoje aparece assim que um jogo for aberto.", gamePage: "página do jogo →" },
+  en: { method: "How we measure: every generated ticket is logged the moment it is built and graded automatically against the official score — won, lost or void. Hit rate and ROI appear here once at least {n} tickets are decided; before that, it would be luck.", methodTitle: "Public record, with a method", eyebrow: "Live proof", generated: "tickets generated", hit: "hit rate", roi: "ROI at 1 unit", all: "see every ticket →", today: "Ticket of the day", latest: "Latest ticket", cta: "See the legs for free", ctaPaid: "See plans", blurb: "The legs and each one's measured chance are in the app.", confidence: "confidence", none: "Today's first ticket appears as soon as a game is opened.", gamePage: "game page →" },
 };
 
 type TopPick = { bet: BetSuggestion; matchup: string; gameId: string | null; sportKey: string };
 
-function bestFor(dateKey: string, lang: Lang, sportKeys?: string[]): TopPick | null {
-  let best: TopPick | null = null;
+function bestFor(dateKey: string, lang: Lang, sportKeys?: string[]): (TopPick & { free: boolean }) | null {
+  const all: TopPick[] = [];
   for (const s of SOLD_SPORTS.filter((x) => !sportKeys || sportKeys.includes(x.key))) {
-    // The full plan's view, whitelabelled: the strip shows title, price and context — never the legs,
-    // which is what the free plan's delay protects. A visitor sees what exists, not a hollowed slate.
+    // The full plan's view, whitelabelled, so the strip reflects what exists; only the ticket's shape is shown.
     for (const p of servePredictions({ scope: "game", sportKey: s.key, dateKey, lang, plan: getPlan("pro"), role: "user" })) {
-      for (const bet of p.slate.suggestions) if (!best || bet.evidenceScore > best.bet.evidenceScore) best = { bet, matchup: p.matchup, gameId: p.gameId, sportKey: s.key };
+      for (const bet of p.slate.suggestions) all.push({ bet, matchup: p.matchup, gameId: p.gameId, sportKey: s.key });
     }
   }
-  return best;
+  return pickTeaser(all);
 }
 
 /** Today's best-evidenced ticket; before today has one, the latest day's, labelled as such. */
@@ -68,11 +68,13 @@ export function ProofStrip({ lang, sportKeys }: { lang: Lang; sportKeys?: string
           <p className="text-[11px] uppercase tracking-[0.18em] text-mist-500">{isToday ? c.today : c.latest}</p>
           {top ? (
             <div className="mt-2" data-testid="ticket-of-day">
-              <div className="flex flex-wrap items-center gap-3"><span className="text-[15px] font-semibold text-white">{top.bet.title}</span><span className="nums rounded-lg bg-signal-500/12 px-2 py-0.5 text-[13px] font-bold text-signal-400">{formatDecimal(top.bet.combinedDecimal)}</span></div>
-              <p className="mt-1 text-[13px] text-mist-400">{top.matchup} · {top.bet.legs.length} {c.legs}</p>
-              <p className="mt-2 line-clamp-2 text-[13px] text-mist-300">{top.bet.background}</p>
+              <div className="flex flex-wrap items-center gap-3"><span className="text-[15px] font-semibold text-white">{teaserHeadline(top.bet, lang)}</span><span className="nums rounded-lg bg-signal-500/12 px-2 py-0.5 text-[13px] font-bold text-signal-400">{formatDecimal(top.bet.combinedDecimal)}</span></div>
+              <p className="mt-1 text-[13px] text-mist-400">{top.matchup} · {legsLabel(top.bet.legs.length, lang)} · <span className="nums">{c.confidence} {top.bet.evidenceScore}</span></p>
+              <p className="mt-2 text-[13px] text-mist-300">{c.blurb}</p>
               <div className="mt-3 flex flex-wrap items-center gap-3">
-                <Link href={{ pathname: "/signup", query: { lang, next: top.gameId ? `/app/game/${top.gameId}?sport=${top.sportKey}&lang=${lang}` : `/app?lang=${lang}` } }} className="inline-block rounded-lg bg-edge-400 px-4 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500">{c.cta}</Link>
+                {top.free
+                  ? <Link href={{ pathname: "/signup", query: { lang, next: top.gameId ? `/app/game/${top.gameId}?sport=${top.sportKey}&lang=${lang}` : `/app?lang=${lang}` } }} className="inline-block rounded-lg bg-edge-400 px-4 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500">{c.cta}</Link>
+                  : <Link href={{ pathname: "/planos", query: { lang } }} className="inline-block rounded-lg bg-edge-400 px-4 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500">{c.ctaPaid}</Link>}
                 {top.gameId && <Link href={{ pathname: `/jogo/${top.gameId}`, query: { sport: top.sportKey, lang } }} className="text-[13px] text-mist-400 hover:text-mist-100" data-testid="ticket-game-link">{c.gamePage}</Link>}
               </div>
             </div>

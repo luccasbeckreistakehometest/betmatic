@@ -39,7 +39,8 @@ function writeAll(entries: LedgerEntry[]): void {
   fs.writeFileSync(FILE, entries.map((e) => JSON.stringify(e)).join("\n") + "\n", "utf8");
 }
 
-export function recordPredictions(game: Game, suggestions: BetSuggestion[]): number {
+/** `startsAt` overrides the game's kickoff (a cross-game ticket goes public when its last game starts). */
+export function recordPredictions(game: Game, suggestions: BetSuggestion[], opts: { startsAt?: string } = {}): number {
   if (!suggestions.length) return 0;
   const existing = readLedger();
   const seen = new Set(existing.map((e) => e.id));
@@ -57,6 +58,7 @@ export function recordPredictions(game: Game, suggestions: BetSuggestion[]): num
       sportKey: game.sportKey,
       matchup,
       createdAt: new Date().toISOString(),
+      startsAt: opts.startsAt ?? game.startsAt,
       bandKey: s.bandKey,
       kind: s.kind,
       title: s.title,

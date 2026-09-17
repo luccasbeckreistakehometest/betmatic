@@ -50,6 +50,36 @@ test("visitors never see source names in the ledger API, the game API or its err
   expect(adminLedger.calibration.bySource).toBeDefined();
 });
 
+test("a ticket stays private until its game starts: no visitor surface carries its pick", async ({ page }) => {
+  const privatePicks = /Sevilha ou empate|Sevilha não perde|Betis vence|Betis em casa/;
+  const ledger = await page.request.get("/api/ledger?entries=1").then((r) => r.json());
+  const titles = ledger.entries.map((e: { title: string }) => e.title);
+  expect(titles).toEqual(expect.arrayContaining(["Sevilha vence em casa", "Jogo aberto", "Virada do Sevilha"]));
+  expect(JSON.stringify(ledger.entries)).not.toMatch(privatePicks);
+  expect(await page.request.get("/api/public/ledger").then((r) => r.text())).not.toMatch(privatePicks);
+  expect(await page.request.get("/api/public/backtest").then((r) => r.text())).not.toMatch(/Sevilha|Betis/);
+  expect(await page.request.get("/prova?lang=pt").then((r) => r.text())).not.toMatch(privatePicks);
+  expect(await page.request.get("/?lang=pt").then((r) => r.text())).not.toMatch(privatePicks);
+
+  // The permalink of a private ticket shows the matchup and the kickoff, not the pick — nor does its card.
+  const { createHash } = await import("node:crypto");
+  const slug = createHash("sha1").update("990000001:value:Betis vence|Mais de 1,5 gols").digest("hex").slice(0, 10);
+  await page.goto(`/p/${slug}?lang=pt`);
+  await expect(page.getByTestId("ticket-locked")).toBeVisible();
+  await expect(page.getByTestId("ticket-locked")).toContainText("Girona @ Betis");
+  expect(await page.content()).not.toMatch(privatePicks);
+  await expect(page).toHaveTitle(/abre quando a bola rolar/);
+  const legacy = createHash("sha1").update("401882878:safe:Sevilha ou empate").digest("hex").slice(0, 10);
+  expect(await page.request.get(`/p/${legacy}`).then((r) => r.text())).not.toMatch(privatePicks);
+
+  // A paying user reads tickets in the app, not here; the operator sees everything.
+  await loginAdmin(page);
+  const admin = await page.request.get("/api/ledger?entries=1").then((r) => r.json());
+  expect(JSON.stringify(admin.entries)).toMatch(/Betis vence/);
+  await page.goto(`/p/${slug}?lang=pt`);
+  await expect(page.getByTestId("ticket-page")).toContainText("Betis vence");
+});
+
 test("health is public and read-only; the tour GET writes nothing", async ({ page }) => {
   const health = await page.request.get("/api/health");
   expect(health.status()).toBe(200);

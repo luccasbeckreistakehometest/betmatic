@@ -4,6 +4,7 @@ import { calibrate, ledgerSummary, specialisation } from "@/lib/ledger/calibrate
 import { readLedger } from "@/lib/ledger/store";
 import { currentUser, requireAdmin } from "@/lib/server/session";
 import { publicEntry } from "@/lib/ledger/public-view";
+import { publicTickets } from "@/lib/ledger/proof";
 import { normaliseLang } from "@/lib/i18n";
 
 export const runtime = "nodejs";
@@ -12,7 +13,8 @@ export const maxDuration = 300;
 
 /**
  * The track record. Read-only (the cron settles). Non-admins get the whitelabelled view: totals,
- * per-market calibration and scrubbed entries, never the per-source breakdown.
+ * per-market calibration and scrubbed entries of tickets whose game has started, never the
+ * per-source breakdown and never a ticket that can still be bet.
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -21,10 +23,11 @@ export async function GET(request: Request) {
   const admin = user?.role === "admin";
   const lang = normaliseLang(url.searchParams.get("lang") ?? user?.lang);
   const report = calibrate();
-  const entries = includeEntries ? readLedger().slice(-100).reverse() : undefined;
   if (admin) {
+    const entries = includeEntries ? readLedger().slice(-100).reverse() : undefined;
     return NextResponse.json({ admin: true, summary: ledgerSummary(), calibration: report, specialisation: specialisation(), entries });
   }
+  const entries = includeEntries ? publicTickets(readLedger()).slice(-100).reverse() : undefined;
   return NextResponse.json({
     admin: false,
     summary: ledgerSummary(),

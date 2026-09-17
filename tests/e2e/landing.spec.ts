@@ -31,6 +31,10 @@ test("the landing shows live proof numbers and today's whitelabelled ticket", as
   await expect(strip).toContainText("bilhetes gerados");
   await expect(strip).toContainText("50.0%");
   await expect(page.getByTestId("ticket-of-day")).toBeVisible();
+  // the teaser is a ticket a free account can open, described by its shape — never the pick itself
+  await expect(page.getByTestId("ticket-of-day")).toContainText("Múltipla de 3 pernas");
+  await expect(page.getByTestId("ticket-of-day")).not.toContainText("Agoumé");
+  await expect(page.getByTestId("ticket-of-day").getByRole("link", { name: "Ver as pernas grátis" })).toBeVisible();
   const html = await page.content();
   expect(html).not.toMatch(/Betano|ESPN|DraftKings/);
 });

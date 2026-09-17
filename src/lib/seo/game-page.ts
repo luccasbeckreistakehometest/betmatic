@@ -30,11 +30,11 @@ export function gamePageTitle(teams: Teams, date: string, lang: Lang): string {
 export function gamePageDescription(teams: Teams, league: string, lang: Lang, teaser: { title: string; odds: string } | null): string {
   if (lang === "pt") {
     return teaser
-      ? `Palpite para ${teams.away} x ${teams.home} (${league}): "${teaser.title}" a ${teaser.odds}, com a chance real ao lado e histórico público liquidado automaticamente.`
+      ? `Palpite para ${teams.away} x ${teams.home} (${league}): ${teaser.title}, odd ${teaser.odds}, com a chance real ao lado e histórico público liquidado automaticamente.`
       : `Palpite para ${teams.away} x ${teams.home} (${league}) com dados medidos e histórico público liquidado automaticamente.`;
   }
   return teaser
-    ? `${teams.away} vs ${teams.home} (${league}) prediction: "${teaser.title}" at ${teaser.odds}, with the real chance next to it and a public, auto-graded record.`
+    ? `${teams.away} vs ${teams.home} (${league}) prediction: ${teaser.title}, odds ${teaser.odds}, with the real chance next to it and a public, auto-graded record.`
     : `${teams.away} vs ${teams.home} (${league}) prediction from measured data, with a public, auto-graded record.`;
 }
 
@@ -42,7 +42,7 @@ export interface FaqInput {
   teams: Teams;
   league: string;
   lang: Lang;
-  teaser: { title: string; odds: string; legs: number } | null;
+  teaser: { title: string; odds: string; legs: number; free?: boolean } | null;
   proof: { settled: number; hitRate: number; roi: number };
 }
 
@@ -60,13 +60,13 @@ export function gameFaq(i: FaqInput): { q: string; a: string }[] {
       : `No ${league} ticket has settled yet; the public record starts with the first finished game.`;
   if (lang === "pt") {
     return [
-      { q: `Qual é o palpite para ${teams.away} x ${teams.home}?`, a: teaser ? `O bilhete com mais evidência é "${teaser.title}", a ${teaser.odds}, com ${teaser.legs} ${teaser.legs === 1 ? "perna" : "pernas"}. As pernas e a chance real de cada uma ficam disponíveis com uma conta grátis.` : `O bilhete deste jogo ainda não foi montado. Ele é gerado com escalações e linhas atualizadas e aparece aqui assim que existir.` },
+      { q: `Qual é o palpite para ${teams.away} x ${teams.home}?`, a: teaser ? `O bilhete em destaque tem ${teaser.legs} ${teaser.legs === 1 ? "perna" : "pernas"}, com odd combinada de ${teaser.odds}. ${teaser.free === false ? "Ele faz parte dos planos pagos; com a conta grátis você vê os bilhetes de valor do jogo que escolher." : "As pernas e a chance real de cada uma ficam disponíveis com uma conta grátis."} Depois que a bola rola, o bilhete completo fica público.` : `O bilhete deste jogo ainda não foi montado. Ele é gerado com escalações e linhas atualizadas e aparece aqui assim que existir.` },
       { q: `Esse palpite é confiável?`, a: `Cada bilhete gerado entra num histórico público e é liquidado sozinho contra o placar real — nada é apagado depois. ${record}` },
       { q: `Isso é recomendação de aposta?`, a: `Não. É uma ferramenta de pesquisa: mostra a chance estimada ao lado da odd para você decidir. Aposta não é investimento — só aposte o que pode perder.` },
     ];
   }
   return [
-    { q: `What is the prediction for ${teams.away} vs ${teams.home}?`, a: teaser ? `The best-evidenced ticket is "${teaser.title}" at ${teaser.odds}, with ${teaser.legs} ${teaser.legs === 1 ? "leg" : "legs"}. The legs and each one's real chance open with a free account.` : `This game's ticket has not been built yet. It is generated from current line-ups and lines and appears here as soon as it exists.` },
+    { q: `What is the prediction for ${teams.away} vs ${teams.home}?`, a: teaser ? `The featured ticket has ${teaser.legs} ${teaser.legs === 1 ? "leg" : "legs"} at combined odds of ${teaser.odds}. ${teaser.free === false ? "It belongs to the paid plans; a free account shows the value tickets of the game you pick." : "The legs and each one's real chance open with a free account."} Once the game kicks off, the full ticket goes public.` : `This game's ticket has not been built yet. It is generated from current line-ups and lines and appears here as soon as it exists.` },
     { q: `Can this prediction be trusted?`, a: `Every ticket generated goes into a public record and is graded automatically against the real score — nothing is deleted afterwards. ${record}` },
     { q: `Is this betting advice?`, a: `No. It is a research tool: it shows the estimated chance next to the price so you can decide. Betting is not investing — only stake what you can afford to lose.` },
   ];

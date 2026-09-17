@@ -228,6 +228,11 @@ export interface LedgerEntry {
   matchup: string;
   createdAt: string;
   settledAt?: string;
+  /**
+   * Kickoff of the ticket's game (the latest one for a cross-game ticket). Until then the ticket is
+   * paid content and stays out of every public view; absent on tickets logged before it was recorded.
+   */
+  startsAt?: string;
   bandKey: string;
   kind: "single" | "parlay";
   title: string;

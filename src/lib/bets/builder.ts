@@ -355,6 +355,8 @@ export async function buildSlateBets(args: SlateBuildArgs): Promise<BetSlate> {
         away: { ...games[0].game.away, displayName: "cross-game", name: "cross-game" },
       },
       suggestions,
+      // Public only once every game on it has started; before that the remaining legs are still bettable.
+      { startsAt: games.map((g) => g.game.startsAt).filter(Boolean).sort().at(-1) },
     );
   }
 

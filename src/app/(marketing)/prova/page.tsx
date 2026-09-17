@@ -4,7 +4,7 @@ import { MarketingPage } from "@/components/MarketingShell";
 import { langFrom, langPaths, pageMetadata, type SearchProps } from "@/lib/seo";
 import { formatDate } from "@/lib/format";
 import { readLedger } from "@/lib/ledger/store";
-import { proofMinDecided, proofPublishable, proofStats, recentTickets, ticketSlug } from "@/lib/ledger/proof";
+import { proofMinDecided, proofPublishable, proofStats, publicTickets, recentTickets, ticketSlug } from "@/lib/ledger/proof";
 import { scrubText } from "@/lib/server/whitelabel";
 import { EquityChart } from "@/components/EquityChart";
 import { toRows } from "@/lib/ledger/backtest";
@@ -25,12 +25,12 @@ export async function generateMetadata({ searchParams }: SearchProps): Promise<M
 }
 
 const C = {
-  pt: { eyebrow: "Prova pública", title: "Todos os bilhetes. Nenhum escondido.", sub: "Cada bilhete que o Betmatic gera entra aqui no momento em que nasce e é liquidado sozinho contra o placar real. Sem seleção, sem editar depois. Se um dia ficar feio, vai ficar feio aqui também.",
+  pt: { eyebrow: "Prova pública", title: "Todos os bilhetes. Nenhum escondido.", sub: "Cada bilhete que o Betmatic gera fica registrado no momento em que nasce, aparece aqui quando o jogo começa e é liquidado sozinho contra o placar real. Sem seleção, sem editar depois. Se um dia ficar feio, vai ficar feio aqui também.",
     generated: "gerados", settled: "liquidados", hit: "acerto", roi: "ROI a 1 unidade", pending: "aguardando jogo", byMarket: "Por mercado", bySport: "Por esporte", byBand: "Por faixa de odd", recent: "Últimos bilhetes", none: "Ainda não há bilhete liquidado. O primeiro aparece assim que um jogo com bilhete terminar.",
-    won: "ganhou", lost: "perdeu", push: "push", void: "anulado", pend: "pendente", cta: "Ver os bilhetes de hoje", csv: "Baixar tudo em CSV", legs: "pernas", small: "Amostra pequena: menos de 30 bilhetes decididos ainda não diz nada sobre o longo prazo.", unit: "u", method: "Os números agregados (acerto, ROI, curva) aparecem quando houver pelo menos {n} bilhetes decididos. Até lá, a lista abaixo mostra cada bilhete e o seu resultado, sem filtro.", methodTitle: "Como medimos", methodBody: "Todo bilhete é salvo no momento em que é gerado, com as odds e a chance estimada. Quando o jogo termina, cada perna é conferida contra o placar e as estatísticas oficiais: se não dá para conferir com certeza, a perna é anulada — nunca chutada. O ROI considera 1 unidade apostada em cada bilhete decidido." },
-  en: { eyebrow: "Public track record", title: "Every ticket. None hidden.", sub: "Every ticket Betmatic generates lands here the moment it is born and is graded automatically against the real score. No curation, no edits after the fact. If it ever looks bad, it looks bad here too.",
+    won: "ganhou", lost: "perdeu", push: "push", void: "anulado", pend: "pendente", cta: "Ver os bilhetes de hoje", csv: "Baixar tudo em CSV", legs: "pernas", small: "Amostra pequena: menos de 30 bilhetes decididos ainda não diz nada sobre o longo prazo.", unit: "u", method: "Os números agregados (acerto, ROI, curva) aparecem quando houver pelo menos {n} bilhetes decididos. Até lá, a lista abaixo mostra cada bilhete e o seu resultado, sem filtro.", methodTitle: "Como medimos", methodBody: "Todo bilhete é salvo no momento em que é gerado, com as odds e a chance estimada, e fica visível para todo mundo assim que a bola rola. Quando o jogo termina, cada perna é conferida contra o placar e as estatísticas oficiais: se não dá para conferir com certeza, a perna é anulada — nunca chutada. O ROI considera 1 unidade apostada em cada bilhete decidido." },
+  en: { eyebrow: "Public track record", title: "Every ticket. None hidden.", sub: "Every ticket Betmatic generates is logged the moment it is born, shows up here once its game kicks off, and is graded automatically against the real score. No curation, no edits after the fact. If it ever looks bad, it looks bad here too.",
     generated: "generated", settled: "settled", hit: "hit rate", roi: "ROI at 1 unit", pending: "awaiting kickoff", byMarket: "By market", bySport: "By sport", byBand: "By odds band", recent: "Latest tickets", none: "No settled ticket yet. The first one appears once a game with a ticket ends.",
-    won: "won", lost: "lost", push: "push", void: "void", pend: "pending", cta: "See today's tickets", csv: "Download everything as CSV", legs: "legs", small: "Small sample: fewer than 30 decided tickets says nothing about the long run.", unit: "u", method: "Aggregate numbers (hit rate, ROI, curve) appear once at least {n} tickets are decided. Until then, the list below shows every ticket and its result, unfiltered.", methodTitle: "How we measure", methodBody: "Every ticket is saved the moment it is generated, with its odds and modelled probability. When the game ends, each leg is checked against the official score and stats: if it cannot be graded with certainty, the leg is voided — never guessed. ROI assumes 1 unit staked on every decided ticket." },
+    won: "won", lost: "lost", push: "push", void: "void", pend: "pending", cta: "See today's tickets", csv: "Download everything as CSV", legs: "legs", small: "Small sample: fewer than 30 decided tickets says nothing about the long run.", unit: "u", method: "Aggregate numbers (hit rate, ROI, curve) appear once at least {n} tickets are decided. Until then, the list below shows every ticket and its result, unfiltered.", methodTitle: "How we measure", methodBody: "Every ticket is saved the moment it is generated, with its odds and modelled probability, and becomes visible to everyone at kickoff. When the game ends, each leg is checked against the official score and stats: if it cannot be graded with certainty, the leg is voided — never guessed. ROI assumes 1 unit staked on every decided ticket." },
 };
 
 export default async function ProofPage({ searchParams }: SearchProps) {
@@ -39,7 +39,9 @@ export default async function ProofPage({ searchParams }: SearchProps) {
   const c = C[lang];
   const entries = readLedger();
   const s = proofStats(entries);
-  const recent = recentTickets(entries, 40);
+  // Counts cover everything; a ticket's content appears only once its game has started.
+  const visible = publicTickets(entries);
+  const recent = recentTickets(visible, 40);
   const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
   const roiTone = (r: number) => (r > 0 ? "text-signal-400" : r < 0 ? "text-warn-400" : "text-mist-300");
   const outcomeLabel: Record<string, string> = { won: c.won, lost: c.lost, push: c.push, void: c.void, pending: c.pend };
@@ -66,7 +68,7 @@ export default async function ProofPage({ searchParams }: SearchProps) {
         </div>
         {s.settled > 0 && s.settled < 30 && <p className="mt-3 text-[12px] text-mist-500">{c.small}</p>}
 
-        <div className="mt-8"><EquityChart rows={toRows(entries, (e) => ticketSlug(e.id))} lang={lang} /></div>
+        <div className="mt-8"><EquityChart rows={toRows(visible, (e) => ticketSlug(e.id))} lang={lang} /></div>
         </>}
 
         {publish && s.settled > 0 && (

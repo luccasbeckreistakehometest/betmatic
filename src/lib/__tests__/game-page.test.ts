@@ -21,14 +21,17 @@ describe("game page text", () => {
     expect(formatKickoff("nope", "en").full).toBe("");
   });
   it("writes a description with the teaser when there is one", () => {
-    expect(gamePageDescription({ away: "Valencia", home: "Sevilla" }, "La Liga", "pt", { title: "Agoumé comete falta", odds: "1.09x" })).toContain('"Agoumé comete falta" a 1.09x');
+    expect(gamePageDescription({ away: "Valencia", home: "Sevilla" }, "La Liga", "pt", { title: "Aposta simples · faixa Valor", odds: "2.10x" })).toContain("Aposta simples · faixa Valor, odd 2.10x");
     expect(gamePageDescription({ away: "Valencia", home: "Sevilla" }, "La Liga", "en", null)).toContain("Valencia vs Sevilla (La Liga) prediction");
   });
   it("answers the FAQ with the sport's own record and never calls it advice", () => {
-    const faq = gameFaq({ teams: { away: "Valencia", home: "Sevilla" }, league: "La Liga", lang: "pt", teaser: { title: "Agoumé comete falta", odds: "1.09x", legs: 1 }, proof: { settled: 2, hitRate: 0.5, roi: 0 } });
+    const faq = gameFaq({ teams: { away: "Valencia", home: "Sevilla" }, league: "La Liga", lang: "pt", teaser: { title: "Aposta simples · faixa Valor", odds: "2.10x", legs: 1 }, proof: { settled: 2, hitRate: 0.5, roi: 0 } });
     expect(faq).toHaveLength(3);
     expect(faq[0].q).toBe("Qual é o palpite para Valencia x Sevilla?");
-    expect(faq[0].a).toContain("1 perna");
+    expect(faq[0].a).toContain("1 perna, com odd combinada de 2.10x");
+    expect(faq[0].a).toContain("conta grátis");
+    const paid = gameFaq({ teams: { away: "A", home: "B" }, league: "NBA", lang: "pt", teaser: { title: "x", odds: "8.00x", legs: 3, free: false }, proof: { settled: 0, hitRate: 0, roi: 0 } });
+    expect(paid[0].a).toContain("planos pagos");
     expect(faq[1].a).toContain("2 bilhetes de La Liga já liquidados, 50.0% de acerto e ROI de +0.0%");
     expect(faq[2].a).toContain("Aposta não é investimento");
     const empty = gameFaq({ teams: { away: "A", home: "B" }, league: "NBA", lang: "en", teaser: null, proof: { settled: 0, hitRate: 0, roi: 0 } });
