@@ -35,7 +35,7 @@ test("free calculators work without an account", async ({ page }) => {
   await page.goto("/ferramentas?lang=pt");
   await page.getByTestId("ev-odds").fill("2.10");
   await page.getByTestId("ev-prob").fill("52");
-  await expect(page.getByTestId("ev-result")).toContainText("+9.2%");
+  await expect(page.getByTestId("ev-result")).toContainText(/\+9,2\s*%/);
   await page.getByTestId("leg-0").fill("2.00");
   await page.getByTestId("leg-1").fill("2.00");
   await page.getByTestId("leg-2").fill("2.00");
