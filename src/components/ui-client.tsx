@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
-import { cx, IconButton } from "@/components/ui";
+import { Button, cx, IconButton } from "@/components/ui";
 
 /**
  * The interactive half of the primitive layer: everything that needs a hook, a focus trap or a
@@ -341,5 +341,17 @@ export function DensitySwitch({ labels }: { labels?: { density: string; compact:
         { id: "comfortable", label: copy.comfortable },
       ]}
     />
+  );
+}
+
+/* ── Print ─────────────────────────────────────────────────────────────────────────────────────
+ * The two screens that produce a document — the weekly report and the public record — offer the
+ * sheet directly. The print rules in globals.css strip the chrome and leave one column.
+ */
+export function PrintButton({ label }: { label: string }) {
+  return (
+    <Button icon="printer" className="print-hide" onClick={() => window.print()}>
+      {label}
+    </Button>
   );
 }

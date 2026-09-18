@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { MarketingPage } from "@/components/MarketingShell";
 import { langFrom, langPaths, pageMetadata, type SearchProps } from "@/lib/seo";
 import { formatDate, formatPercent } from "@/lib/format";
-import { KPI, LinkButton, Notice, Panel, Table, Td, Th, Tr } from "@/components/ui";
+import { KPI, LinkButton, Notice, Panel, PrintButton, Table, Td, Th, Tr } from "@/components/ui";
 import { readLedger } from "@/lib/ledger/store";
 import { mainTickets, proofMinDecided, proofPublishable, proofStats, publicTickets, recentTickets, ticketSlug } from "@/lib/ledger/proof";
 import { scrubText } from "@/lib/server/whitelabel";
@@ -123,7 +123,8 @@ export default async function ProofPage({ searchParams }: SearchProps) {
           </div>
         )}
         <div className="mt-10 flex flex-wrap items-center gap-4">
-          <LinkButton variant="primary" href={`/signup?lang=${lang}`} className="h-10 px-5 text-base">{c.cta}</LinkButton>
+          <LinkButton variant="primary" href={`/signup?lang=${lang}`} className="h-10 px-5 text-base print-hide">{c.cta}</LinkButton>
+          <PrintButton label={lang === "pt" ? "Imprimir" : "Print"} />
           <Link href={{ pathname: "/prova", query: withAlternatives ? { lang } : { lang, alts: "1" } }} className="text-sm text-fg-muted underline-offset-4 hover:text-fg hover:underline" data-testid="alts-toggle">{withAlternatives ? c.mainOnly : c.withAlts}</Link>
           <a href={`/api/public/ledger?lang=${lang}`} className="text-sm text-fg-muted underline-offset-4 hover:text-fg hover:underline" data-testid="csv-link">{c.csv}</a>
         </div>

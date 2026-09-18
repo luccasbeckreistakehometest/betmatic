@@ -114,7 +114,7 @@ export function ParlayBuilder() {
           <BetsPanel slate={slate.slate} lang={lang} sportKey={sport.key} />
         ) : build === "running" ? (
           <div className="flex items-center gap-3 rounded-control border border-line-strong bg-surface-2 px-3 py-3 text-sm text-fg-muted" data-testid="generating-slate">
-            <span className="h-3 w-3 animate-pulse rounded-full bg-action" />{t("generatingSlate")}
+            <span aria-hidden="true" className="live-dot size-1.5 rounded-full bg-fg-dim" />{t("generatingSlate")}
           </div>
         ) : (
           <div className="flex flex-col gap-3">

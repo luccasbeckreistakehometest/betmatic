@@ -7,6 +7,7 @@ import { useNavState } from "@/components/Controls";
 import { Empty, Panel } from "@/components/ui";
 import { formatDate, formatDateTime, formatMoneyBRL } from "@/lib/format";
 import { paymentLabel } from "@/lib/plans";
+import { PanelSkeleton } from "@/components/AppPageHead";
 
 interface AccountData {
   user: { name: string; email: string; role: string; coins: number; createdAt: string; mustChangePassword: boolean; termsAcceptedAt: string | null };
@@ -103,7 +104,7 @@ export function AccountPanel() {
     setBusy(null);
   }
 
-  if (state === "loading") return <div className="h-40 animate-pulse rounded-panel bg-surface-1" />;
+  if (state === "loading") return <PanelSkeleton />;
   if (state === "anon" || !data) {
     return (
       <div className="flex flex-col gap-3">

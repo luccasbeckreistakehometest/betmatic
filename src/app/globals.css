@@ -698,6 +698,35 @@ tr[data-selected="true"] > *:first-child {
     font-size: 0.6875rem;
     color: var(--fg-muted);
   }
+  /* The chrome is not part of the document: the rail, the bottom bar, the topbar and every
+     control that only exists to change what is on screen leave the page. */
+  header[class*="sticky"],
+  nav[aria-label],
+  .print-hide,
+  button,
+  [role="radiogroup"],
+  select {
+    display: none !important;
+  }
+  /* What is left is a document: one column, comfortable, edge to edge of the sheet. */
+  :root {
+    --row-h: 24px;
+    --cell-px: 8px;
+    --panel-p: 12px;
+  }
+  main {
+    padding: 0 !important;
+  }
+  section,
+  table {
+    border-color: var(--line) !important;
+  }
+  figure {
+    max-width: 100% !important;
+  }
+  @page {
+    margin: 16mm;
+  }
 }
 
 /* The platform's own date button is hidden everywhere: the control draws its own calendar glyph,

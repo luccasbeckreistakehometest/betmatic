@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AccountPanel } from "@/components/AccountPanel";
 import { langFrom, type SearchProps } from "@/lib/seo";
+import { PanelSkeleton } from "@/components/AppPageHead";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,7 @@ export async function generateMetadata({ searchParams }: SearchProps): Promise<M
 
 export default function AccountPage() {
   return (
-    <Suspense fallback={<div className="h-40 animate-pulse rounded-panel bg-surface-1" />}>
+    <Suspense fallback={<PanelSkeleton />}>
       <AccountPanel />
     </Suspense>
   );

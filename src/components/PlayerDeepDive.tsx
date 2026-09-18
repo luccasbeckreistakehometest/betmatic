@@ -11,6 +11,7 @@ import { PlayerReadCard, type ReadState } from "@/components/PlayerReadCard";
 import { gameTotal, rateAt, rateTable } from "@/lib/props/rates";
 import { lineRange, type PlayerProfileView } from "@/lib/props/player-view";
 import { formatDate, formatDateTime } from "@/lib/format";
+import { PanelSkeleton } from "@/components/AppPageHead";
 
 interface Payload { profile: PlayerProfileView; read: ReadState["read"]; access: { unlimited: boolean; used: number; limit: number | null }; readPrice: number; coins: number; aiReady: boolean }
 type Load = { state: "loading" } | { state: "ok"; data: Payload } | { state: "error"; code: "signin" | "cap" | "notfound" | "failed" };
@@ -55,7 +56,7 @@ export function PlayerDeepDive({ athleteId, gameId }: { athleteId: string; gameI
     }).reverse();
   }, [profile, market, windowSize, lang]);
 
-  if (load.state === "loading") return <div className="h-60 animate-pulse rounded-panel bg-surface-1" aria-label={c.loading} />;
+  if (load.state === "loading") return <PanelSkeleton rows={8} />;
   if (load.state === "error") {
     const back = gameId ? <Link href={{ pathname: `/app/game/${gameId}`, query: { sport: sport.key, lang } }} className="text-tiny text-fg-dim hover:text-fg-muted">{c.back}</Link> : null;
     if (load.code === "cap") {

@@ -95,7 +95,7 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
   return (
     <section className="rounded-panel border border-focus bg-surface-1" data-testid="live-panel" data-live-url={`/api/game/${gameId}/live?sport=${sportKey}&lang=${lang}&date=${dateKey}`}>
       <header className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-2.5">
-        <span className={`size-2 rounded-full ${s.state === "in" ? "animate-pulse bg-neg" : "bg-fg-dim"}`} aria-hidden />
+        <span className={`size-2 rounded-full ${s.state === "in" ? "live-dot bg-neg" : "bg-fg-dim"}`} aria-hidden />
         <h2 className="text-sm font-semibold text-fg">{c.title}</h2>
         <span className="nums text-sm text-fg" data-testid="live-score">{s.away.abbr} {s.away.score} × {s.home.score} {s.home.abbr}</span>
         <span className="nums text-label text-fg-dim">{s.clock}</span>

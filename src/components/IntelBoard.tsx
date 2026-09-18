@@ -213,7 +213,7 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
   } else if (gen === "running") {
     body = (
       <div className="flex items-center gap-3 rounded-control border border-line-strong bg-surface-2 px-3 py-3 text-sm text-fg-muted" data-testid="generating">
-        <span className="h-3 w-3 animate-pulse rounded-full bg-action" />{t("generatingTickets")}
+        <span aria-hidden="true" className="live-dot size-1.5 rounded-full bg-fg-dim" />{t("generatingTickets")}
       </div>
     );
   } else if (gen === "capUser") {
