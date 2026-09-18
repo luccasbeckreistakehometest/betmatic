@@ -80,7 +80,7 @@ export function LineChart({
   const id = testId ?? "chart";
 
   return (
-    <figure className={cx("m-0", className)}>
+    <figure className={cx("m-0 max-w-[46rem]", className)}>
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="block h-auto w-full max-w-full"

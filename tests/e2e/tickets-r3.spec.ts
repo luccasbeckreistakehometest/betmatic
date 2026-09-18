@@ -4,7 +4,7 @@ import { registerUser, setPlan, skipTour, withAiMock } from "./helpers";
 withAiMock();
 
 const generated = async (page: import("@playwright/test").Page) =>
-  Number((await page.getByTestId("proof-stats").locator("div.nums").first().textContent())?.trim() ?? "0");
+  Number((await page.getByTestId("proof-stats").locator(".nums").first().textContent())?.trim() ?? "0");
 
 test("a paid user gets priced player legs, line movement and two alternatives under a ticket", async ({ page }) => {
   const { email } = await registerUser(page, "pro");

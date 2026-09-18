@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatPercent, formatUnits } from "@/lib/format";
 import { LineChart } from "@/components/Chart";
 import { Empty, Panel, Select, Skeleton, Table, Td, Th, Tr } from "@/components/ui";
 import { bandComparison, equityCurve, type BacktestRow } from "@/lib/ledger/backtest";
@@ -27,8 +27,8 @@ const C = {
   },
 };
 
-const fmtU = (n: number) => `${n > 0 ? "+" : ""}${n.toFixed(2)}u`;
-const fmtPct = (n: number) => `${n > 0 ? "+" : ""}${(n * 100).toFixed(1)}%`;
+const fmtU = (n: number, lang: Lang) => formatUnits(n, lang);
+const fmtPct = (n: number, lang: Lang) => formatPercent(n, lang, { signed: true });
 const tone = (n: number) => (n > 0 ? "text-pos" : n < 0 ? "text-neg" : "text-fg-muted");
 
 export function EquityChart({ rows: initial, lang, compact = false, className = "" }: { rows?: BacktestRow[]; lang: Lang; compact?: boolean; className?: string }) {
@@ -82,7 +82,7 @@ export function EquityChart({ rows: initial, lang, compact = false, className = 
 
       {/* The four numbers the curve is about, on one baseline — a row, not four boxes. */}
       <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 border-y border-line py-3 sm:grid-cols-4" data-testid="curve-stats">
-        {([[c.units, fmtU(summary.units), tone(summary.units)], [c.roi, summary.decided ? fmtPct(summary.roi) : "—", tone(summary.roi)], [c.drawdown, `−${summary.maxDrawdown.toFixed(2)}u`, "text-fg"], [c.streak, String(summary.longestLosingStreak), "text-fg"]] as const).map(([k, v, cls]) => (
+        {([[c.units, fmtU(summary.units, lang), tone(summary.units)], [c.roi, summary.decided ? fmtPct(summary.roi, lang) : "—", tone(summary.roi)], [c.drawdown, formatUnits(-summary.maxDrawdown, lang), "text-fg"], [c.streak, String(summary.longestLosingStreak), "text-fg"]] as const).map(([k, v, cls]) => (
           <div key={k} className="flex flex-col gap-1.5">
             <span className="text-label u-label text-fg-dim">{k}</span>
             <span className={`nums text-lead leading-none ${cls}`}>{v}</span>
@@ -117,8 +117,8 @@ export function EquityChart({ rows: initial, lang, compact = false, className = 
         ) : (
           <LineChart
             testId="curve"
-            caption={`${c.title} — ${fmtU(summary.units)}`}
-            formatValue={(v) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toFixed(2)}u`}
+            caption={`${c.title} — ${fmtU(summary.units, lang)}`}
+            formatValue={(v) => formatUnits(v, lang)}
             firstLabel={`${c.first}: ${day(summary.points[0].at)}`}
             lastLabel={`${c.last}: ${day(summary.points[summary.points.length - 1].at)}`}
             points={summary.points.map((p, i) => ({
@@ -126,7 +126,7 @@ export function EquityChart({ rows: initial, lang, compact = false, className = 
               value: p.units,
               label: day(p.at),
               href: `/p/${p.id}?lang=${lang}`,
-              title: `${day(p.at)} · ${fmtU(p.delta)} → ${fmtU(p.units)} · ${c.open}`,
+              title: `${day(p.at)} · ${fmtU(p.delta, lang)} → ${fmtU(p.units, lang)} · ${c.open}`,
             }))}
           />
         )}
@@ -155,9 +155,9 @@ export function EquityChart({ rows: initial, lang, compact = false, className = 
                     </button>
                   </Td>
                   <Td numeric label={c.decided} className="text-fg-muted">{s.won}W {s.lost}L</Td>
-                  <Td numeric label={c.units} className={tone(s.units)}>{fmtU(s.units)}</Td>
-                  <Td numeric label={c.roi} className={tone(s.roi)}>{fmtPct(s.roi)}</Td>
-                  <Td numeric label={c.drawdown} className="text-fg-muted">−{s.maxDrawdown.toFixed(2)}u</Td>
+                  <Td numeric label={c.units} className={tone(s.units)}>{fmtU(s.units, lang)}</Td>
+                  <Td numeric label={c.roi} className={tone(s.roi)}>{fmtPct(s.roi, lang)}</Td>
+                  <Td numeric label={c.drawdown} className="text-fg-muted">{formatUnits(-s.maxDrawdown, lang)}</Td>
                   <Td numeric label={c.streak} className="text-fg-muted">{s.longestLosingStreak}</Td>
                 </Tr>
               ))}

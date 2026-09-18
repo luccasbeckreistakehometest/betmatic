@@ -275,6 +275,21 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
                   </Tr>
                 ))}
                 <Tr>
+                  <Td label={lang === "pt" ? "O que muda" : "What differs"} className="align-top text-fg-muted">{lang === "pt" ? "Inclui" : "Includes"}</Td>
+                  {PLANS.map((plan) => (
+                    <Td key={plan.id} label={plan.name} className="align-top">
+                      <ul className="flex flex-col gap-1 py-2 text-tiny leading-snug text-fg-muted">
+                        {plan.highlights[lang].map((item) => (
+                          <li key={item} className="flex gap-1.5">
+                            <span aria-hidden="true" className="text-fg-faint">—</span>
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </Td>
+                  ))}
+                </Tr>
+                <Tr>
                   <Td label="" />
                   {PLANS.map((plan) => (
                     <Td key={plan.id} numeric label={plan.name}>

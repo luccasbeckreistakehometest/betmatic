@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useNavState } from "@/components/Controls";
-import { Empty, Panel } from "@/components/ui";
+import { Empty, KPI, Panel } from "@/components/ui";
+import { formatNumber } from "@/lib/format";
 import { formatDecimal } from "@/lib/odds";
 import { formatPercent as pctOf } from "@/lib/format";
 import { makeT } from "@/lib/i18n";
@@ -66,7 +67,7 @@ function CalibrationTable({ rows, lang }: { rows: CalibrationRow[]; lang: "pt" |
                   {pctOf(row.hitRate, lang, { digits: 0 })}
                 </td>
                 <td className="nums text-right text-fg-muted">{pctOf(row.averagePredicted, lang, { digits: 0 })}</td>
-                <td className={`pl-6 text-label ${over ? "text-warn" : under ? "text-pos" : "text-fg-dim"}`}>
+                <td className={`pl-6 text-label ${over ? "text-warn" : under ? "text-fg-muted" : "text-fg-dim"}`}>
                   {over
                     ? `${t("overconfident")} ${(row.calibrationError * 100).toFixed(0)}pts`
                     : under
@@ -125,8 +126,8 @@ export function TrackRecord() {
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-lead font-semibold tracking-tight text-fg">{t("trackRecord")}</h1>
-          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-fg-muted">{t("trackHint")}</p>
+          <h2 className="u-title text-lead text-fg">{t("trackRecord")}</h2>
+          <p className="mt-1 max-w-measure-app text-sm leading-relaxed text-fg-muted">{t("trackHint")}</p>
         </div>
         {data?.admin && (
           <button
@@ -141,17 +142,14 @@ export function TrackRecord() {
 
       {note && <p className="text-tiny text-fg-muted">{note}</p>}
 
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-panel border border-line bg-surface-3 sm:grid-cols-4">
-        {[
+      <div className="grid grid-cols-2 gap-x-8 gap-y-4 border-y border-line py-4 sm:grid-cols-4">
+        {([
           [t("legs"), summary?.total ?? 0],
           [t("pending"), summary?.pending ?? 0],
           [t("settled"), summary?.settled ?? 0],
           [t("won"), summary?.won ?? 0],
-        ].map(([label, value]) => (
-          <div key={String(label)} className="bg-surface-1 px-3 py-2.5 text-center">
-            <div className="text-micro u-label text-fg-dim">{label}</div>
-            <div className="nums text-lead font-semibold text-fg">{value}</div>
-          </div>
+        ] as const).map(([label, value]) => (
+          <KPI key={String(label)} label={String(label)} value={formatNumber(Number(value), lang)} />
         ))}
       </div>
 

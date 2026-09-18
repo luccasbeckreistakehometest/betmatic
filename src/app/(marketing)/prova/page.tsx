@@ -115,7 +115,7 @@ export default async function ProofPage({ searchParams }: SearchProps) {
                       <Link href={{ pathname: `/p/${ticketSlug(e.id)}`, query: { lang } }} className="text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{scrubText(e.title, lang)}</Link>
                     </Td>
                     <Td label={lang === "pt" ? "Jogo" : "Game"} className="text-fg-dim">{scrubText(e.matchup, lang)} · {e.legs.length} {c.legs}</Td>
-                    <Td numeric label={lang === "pt" ? "Data" : "Date"} className="text-fg-dim">{formatDate(e.settledAt ?? e.createdAt, lang, { year: true })}</Td>
+                    <Td numeric label={lang === "pt" ? "Data" : "Date"} className="whitespace-nowrap text-fg-dim">{formatDate(e.settledAt ?? e.createdAt, lang, { year: true })}</Td>
                   </Tr>
                 ))}
               </tbody>

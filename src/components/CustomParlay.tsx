@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useNavState } from "@/components/Controls";
-import { Empty, Odds, Panel } from "@/components/ui";
+import { Checkbox, Empty, Odds, Panel } from "@/components/ui";
 import { formatDecimal } from "@/lib/odds";
 import { formatPercent as pctOf } from "@/lib/format";
 import type { CustomTicketView } from "@/lib/bets/custom-writeup";
@@ -117,10 +117,11 @@ function CustomForm(props: {
   if (meta && !meta.signedIn) {
     return <Panel title={c.title}><div className="flex flex-col gap-2"><Empty>{c.signIn}</Empty><Link href={`/login?lang=${lang}`} className="w-fit inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{lang === "pt" ? "Entrar" : "Log in"}</Link></div></Panel>;
   }
-  const chip = (on: boolean) => `rounded-full border px-2.5 py-1 text-tiny transition-colors duration-(--dur-1) ease-(--ease-out) ${on ? "border-pos bg-action text-pos" : "border-line-strong text-fg-muted hover:border-line-control"}`;
+  // Selection is achromatic, exactly like the primary button: a chip is not a hue (§6.2).
+  const chip = (on: boolean) => `rounded-control border px-2.5 py-1 text-tiny transition-colors duration-(--dur-1) ease-(--ease-out) ${on ? "border-action bg-action text-action-fg" : "border-line-control text-fg-muted hover:bg-surface-2 hover:text-fg"}`;
   return (
     <Panel title={c.target}>
-      <div className="flex flex-col gap-4" data-testid="custom-form">
+      <div className="flex max-w-[56rem] flex-col gap-5" data-testid="custom-form">
         <div className="flex flex-wrap items-center gap-2">
           {PRESETS.map((p) => <button key={p} type="button" onClick={() => set.setTarget(p)} className={chip(state.target === p)} data-testid={`preset-${p}`}>{p}x</button>)}
           <input type="range" min={2} max={500} step={1} value={state.target} onChange={(e) => set.setTarget(Number(e.target.value))} aria-label={c.target} className="range min-w-0 flex-1" />
@@ -147,8 +148,8 @@ function CustomForm(props: {
           </div>
         )}
         <div className="flex flex-wrap items-center gap-4 text-sm text-fg-muted">
-          <label className="flex items-center gap-2"><input type="checkbox" checked={state.measuredOnly} onChange={(e) => set.setMeasuredOnly(e.target.checked)} /> {c.measured}</label>
-          <label className="flex items-center gap-2">{c.minRate} <input type="range" min={40} max={80} value={state.minRate} onChange={(e) => set.setMinRate(Number(e.target.value))} aria-label={c.minRate} /><span className="nums w-10">{state.minRate}%</span></label>
+          <Checkbox checked={state.measuredOnly} onChange={(e) => set.setMeasuredOnly(e.target.checked)} label={c.measured} />
+          <label className="flex items-center gap-2">{c.minRate} <input type="range" min={40} max={80} value={state.minRate} onChange={(e) => set.setMinRate(Number(e.target.value))} aria-label={c.minRate} className="range w-32" /><span className="nums w-12 text-fg">{pctOf(state.minRate / 100, lang, { digits: 0 })}</span></label>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <button type="button" onClick={props.onBuild} disabled={props.busy || !props.canAfford} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint" data-testid="custom-build">
