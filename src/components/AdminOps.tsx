@@ -34,7 +34,7 @@ export function AdminInbox() {
             <li key={m.id} className="py-3 text-sm">
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <span className="font-semibold text-fg">{m.name || "—"}</span>
-                <a href={`mailto:${m.email}`} className="text-pos hover:underline">{m.email}</a>
+                <a href={`mailto:${m.email}`} className="text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{m.email}</a>
                 {m.accountEmail && m.accountEmail !== m.email && <span className="text-fg-dim">conta: {m.accountEmail}</span>}
                 <span className="rounded-control border border-line-strong px-1.5 text-label text-fg-muted">{m.topic}</span>
                 <span className="text-label text-fg-dim">{m.lang} · {dt(m.createdAt)}</span>

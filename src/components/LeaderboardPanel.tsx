@@ -20,7 +20,7 @@ export function LeaderboardPanel() {
     return () => clearTimeout(id);
   }, [period]);
 
-  if (data?.error) return <Panel title={t("rankingTitle")}><Empty>{t("signInForRanking")}</Empty><Link href="/login" className="mt-2 inline-block text-sm text-pos hover:underline">{lang === "pt" ? "Entrar" : "Log in"}</Link></Panel>;
+  if (data?.error) return <Panel title={t("rankingTitle")}><Empty>{t("signInForRanking")}</Empty><Link href="/login" className="mt-2 inline-block text-sm text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{lang === "pt" ? "Entrar" : "Log in"}</Link></Panel>;
   const pct = (n: number) => `${n > 0 ? "+" : ""}${(n * 100).toFixed(1)}%`;
   const units = (n: number) => `${n > 0 ? "+" : ""}${n.toFixed(2)}u`;
   const tone = (n: number) => (n > 0 ? "text-pos" : n < 0 ? "text-neg" : "text-fg-muted");
@@ -37,7 +37,7 @@ export function LeaderboardPanel() {
         }>
         <p className="text-tiny text-fg-dim">{t("rankingIntro").replace("{n}", String(data?.minDecided ?? 10))}</p>
         {data && !data.viewer.optedIn && (
-          <p className="mt-2 text-tiny text-fg-muted" data-testid="ranking-not-in">{t("rankingNotIn")} <Link href={{ pathname: "/app/settings", query: { lang } }} className="text-pos hover:underline">{t("navSettings")} →</Link></p>
+          <p className="mt-2 text-tiny text-fg-muted" data-testid="ranking-not-in">{t("rankingNotIn")} <Link href={{ pathname: "/app/settings", query: { lang } }} className="text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{t("navSettings")} →</Link></p>
         )}
         {data?.rows.length ? (
           <table className="mt-4 w-full text-left text-sm" data-testid="ranking-table">

@@ -113,7 +113,7 @@ export function PlanPicker({ lang, signedIn, currentPlanId, paymentsReady, initi
                   <li key={item} className="flex gap-2 text-tiny leading-snug text-fg-muted"><span className="mt-[3px] text-fg-faint" aria-hidden>—</span>{item}</li>
                 ))}
               </ul>
-              {isCurrent && <p className="mt-4 text-tiny text-pos">{c.current}</p>}
+              {isCurrent && <p className="mt-4 text-tiny text-fg-muted">{c.current}</p>}
               {plan.monthlyPrice === 0 ? (
                 !signedIn && <Link href={signupFor({})} className="mt-6 inline-flex h-10 items-center justify-center rounded-control border border-line-control px-4 text-sm font-medium text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2">{c.startFree}</Link>
               ) : signedIn ? (

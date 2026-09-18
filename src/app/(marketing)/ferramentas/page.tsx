@@ -25,7 +25,7 @@ export default async function ToolsPage({ searchParams }: SearchProps) {
       <Calculators lang={lang} />
       <section className="mt-10 grid gap-4 md:grid-cols-2" data-testid="tools-more">
         <Link href={`/signup?lang=${lang}&next=${encodeURIComponent(`/app/bankroll?lang=${lang}`)}`} className="group rounded-panel border border-line bg-surface-1 p-(--panel-p) hover:border-pos">
-          <p className="text-base font-semibold text-fg group-hover:text-pos">{lang === "pt" ? "Manda o print do seu bilhete" : "Snap your slip"}</p>
+          <p className="text-base font-semibold text-fg">{lang === "pt" ? "Manda o print do seu bilhete" : "Snap your slip"}</p>
           <p className="mt-2 text-sm leading-relaxed text-fg-muted">
             {lang === "pt"
               ? "A mesma conta das calculadoras, feita no bilhete que você já apostou: a gente lê o print, confere se as odds batem com o total e liquida sozinho quando o jogo acaba. A imagem não fica guardada."
@@ -33,7 +33,7 @@ export default async function ToolsPage({ searchParams }: SearchProps) {
           </p>
         </Link>
         <Link href={lang === "pt" ? "/raio-x-tipster" : "/tipster-audit"} className="group rounded-panel border border-line bg-surface-1 p-(--panel-p) hover:border-pos">
-          <p className="text-base font-semibold text-fg group-hover:text-pos">{lang === "pt" ? "Raio-x do tipster" : "Tipster audit"}</p>
+          <p className="text-base font-semibold text-fg">{lang === "pt" ? "Raio-x do tipster" : "Tipster audit"}</p>
           <p className="mt-2 text-sm leading-relaxed text-fg-muted">
             {lang === "pt"
               ? "Antes de pagar grupo VIP, confira o acerto real dos palpites contra o placar oficial, inclusive os greens postados depois do jogo começar."

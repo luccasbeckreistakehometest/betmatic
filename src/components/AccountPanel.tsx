@@ -198,7 +198,7 @@ export function AccountPanel() {
           <Panel title={c.responsible} lang={lang}>
             <p className="text-sm text-fg-muted">{c.responsibleBody}</p>
             <div className="mt-3 flex flex-wrap gap-3 text-sm">
-              <Link href={`/app/settings?lang=${lang}`} className="text-pos hover:underline">{c.responsibleLink}</Link>
+              <Link href={`/app/settings?lang=${lang}`} className="text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{c.responsibleLink}</Link>
               <Link href={lang === "pt" ? "/jogo-responsavel" : "/responsible-gambling"} className="text-fg-muted hover:underline">{lang === "pt" ? "Onde buscar ajuda" : "Where to get help"}</Link>
             </div>
           </Panel>
@@ -225,7 +225,7 @@ export function AccountPanel() {
         )}
       </Panel>
 
-      <p className="text-sm text-fg-muted">{c.help} <Link href={`/contato?lang=${lang}`} className="text-pos hover:underline">{c.contact}</Link></p>
+      <p className="text-sm text-fg-muted">{c.help} <Link href={`/contato?lang=${lang}`} className="text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{c.contact}</Link></p>
     </div>
   );
 }

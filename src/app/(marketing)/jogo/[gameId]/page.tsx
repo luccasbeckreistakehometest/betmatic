@@ -178,7 +178,7 @@ export default async function GamePublicPage({ params, searchParams }: { params:
           ) : (
             <p className="mt-2 text-sm leading-relaxed text-fg-muted">{c.method}</p>
           )}
-          <Link href={{ pathname: "/prova", query: { lang } }} className="mt-3 inline-block text-sm text-pos hover:underline">{c.all}</Link>
+          <Link href={{ pathname: "/prova", query: { lang } }} className="mt-3 inline-block text-sm text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{c.all}</Link>
         </section>
 
         {injuries.length > 0 && (
@@ -207,7 +207,7 @@ export default async function GamePublicPage({ params, searchParams }: { params:
 
         {funnel && (
           <p className="mt-8 text-sm text-fg-dim">
-            {c.funnel} <Link href={`/${funnel.slug[lang]}`} className="text-pos hover:underline">{funnel.name[lang]}</Link>
+            {c.funnel} <Link href={`/${funnel.slug[lang]}`} className="text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{funnel.name[lang]}</Link>
           </p>
         )}
       </article>

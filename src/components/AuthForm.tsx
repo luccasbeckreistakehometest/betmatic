@@ -211,9 +211,9 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
               <input type="checkbox" required checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-[3px] size-4 appearance-none rounded-control border border-line-control bg-surface-3 checked:border-action checked:bg-action" data-testid="auth-consent" />
               <span>
                 {c.consentBefore}
-                <Link href={lang === "en" ? "/terms" : "/termos"} target="_blank" className="text-pos underline-offset-2 hover:underline">{c.terms}</Link>
+                <Link href={lang === "en" ? "/terms" : "/termos"} target="_blank" className="text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{c.terms}</Link>
                 {c.and}
-                <Link href={lang === "en" ? "/privacy" : "/privacidade"} target="_blank" className="text-pos underline-offset-2 hover:underline">{c.privacy}</Link>
+                <Link href={lang === "en" ? "/privacy" : "/privacidade"} target="_blank" className="text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{c.privacy}</Link>
                 {c.consentAfter}
               </span>
             </label>

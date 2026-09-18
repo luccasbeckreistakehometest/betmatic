@@ -30,7 +30,7 @@ export function AlertsPanel() {
     } finally { setBusy(false); }
   }, []);
 
-  if (data?.error) return <Panel title={t("alertsTitle")}><Empty>{t("signInForAlerts")}</Empty><Link href="/login" className="mt-2 inline-block text-sm text-pos hover:underline">{lang === "pt" ? "Entrar" : "Log in"}</Link></Panel>;
+  if (data?.error) return <Panel title={t("alertsTitle")}><Empty>{t("signInForAlerts")}</Empty><Link href="/login" className="mt-2 inline-block text-sm text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{lang === "pt" ? "Entrar" : "Log in"}</Link></Panel>;
 
   const tg = data?.telegram;
   const followingLeague = (key: string) => data?.follows.some((f) => f.kind === "league" && f.sportKey === key) ?? false;
@@ -116,7 +116,7 @@ export function AlertsPanel() {
                   <span className="nums ml-auto text-label text-fg-dim">{when(n.createdAt)}</span>
                 </div>
                 <pre className="whitespace-pre-wrap font-sans text-tiny leading-relaxed text-fg-muted">{n.body}</pre>
-                {n.url && <a href={n.url} className="w-fit text-tiny text-pos hover:underline">{t("openTicket")} →</a>}
+                {n.url && <a href={n.url} className="w-fit text-tiny text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{t("openTicket")} →</a>}
               </li>
             ))}
           </ul>

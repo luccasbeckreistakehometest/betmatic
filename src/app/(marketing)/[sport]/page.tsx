@@ -66,7 +66,7 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
               <Link
                 key={other.slug[lang]}
                 href={`/${other.slug[lang]}`}
-                className={other.slug[lang] === sport ? "text-pos" : "transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg"}
+                className={other.slug[lang] === sport ? "text-fg" : "transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg"}
               >
                 {other.name[lang]}
               </Link>
@@ -112,7 +112,7 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
           <div className={`grid gap-px overflow-hidden rounded-panel border border-line bg-surface-3 ${s.angle[lang].length > 3 ? "md:grid-cols-2 lg:grid-cols-4" : "md:grid-cols-3"}`}>
             {s.angle[lang].map((item, i) => (
               <div key={item.title} className="flex flex-col bg-surface-1 p-6">
-                <span className="nums text-label text-pos">{String(i + 1).padStart(2, "0")}</span>
+                <span className="nums text-label text-fg-faint">{String(i + 1).padStart(2, "0")}</span>
                 <h2 className="mt-3 text-base font-semibold text-fg">{item.title}</h2>
                 <p className="mt-2 text-sm leading-relaxed text-fg-muted">{item.body}</p>
               </div>
@@ -153,9 +153,9 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
                 href={destination(item.href)}
                 className="group flex flex-col rounded-panel border border-line bg-surface-1 p-(--panel-p) transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-pos"
               >
-                <h3 className="text-base font-semibold text-fg group-hover:text-pos">{item.title}</h3>
+                <h3 className="text-base font-semibold text-fg">{item.title}</h3>
                 <p className="mt-2 flex-1 text-sm leading-relaxed text-fg-muted">{item.body}</p>
-                <span className="mt-4 text-tiny text-pos">{item.cta} →</span>
+                <span className="mt-4 text-tiny text-fg underline decoration-line-control underline-offset-2 group-hover:decoration-fg">{item.cta} →</span>
               </Link>
             ))}
           </div>
@@ -204,7 +204,7 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
 
       <section>
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-5 px-5 py-20">
-          <LogoMark size={44} className="text-pos" />
+          <LogoMark size={40} className="text-fg" />
           <h2 className="max-w-2xl u-display text-display text-fg">
             {c.finalTitle}
           </h2>

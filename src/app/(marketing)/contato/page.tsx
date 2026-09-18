@@ -33,8 +33,8 @@ export default async function ContactPage({ searchParams }: SearchProps) {
       {(support.email || support.whatsapp) && (
         <p className="mt-8 flex flex-wrap gap-x-4 gap-y-1 text-sm text-fg-muted">
           {c.other}
-          {support.email && <a href={`mailto:${support.email}`} className="text-pos hover:underline">{support.email}</a>}
-          {support.whatsapp && <a href={`https://wa.me/${support.whatsapp}`} rel="noopener" className="text-pos hover:underline">WhatsApp</a>}
+          {support.email && <a href={`mailto:${support.email}`} className="text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{support.email}</a>}
+          {support.whatsapp && <a href={`https://wa.me/${support.whatsapp}`} rel="noopener" className="text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">WhatsApp</a>}
         </p>
       )}
     </MarketingPage>
