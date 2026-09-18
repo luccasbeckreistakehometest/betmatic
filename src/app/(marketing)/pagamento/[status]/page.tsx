@@ -8,6 +8,7 @@ import { formatDate, formatMoneyBRL } from "@/lib/format";
 import type { Lang } from "@/lib/i18n";
 import type { SearchParams } from "@/lib/seo";
 import { paymentLabel } from "@/lib/plans";
+import { buttonClass } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Pagamento", robots: { index: false, follow: false } };
@@ -74,12 +75,12 @@ export default async function PaymentResult({ params, searchParams }: { params: 
 
         <div className="mt-8 flex flex-wrap gap-3">
           {status === "sucesso" ? (
-            <Link href={`/app?lang=${lang}`} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{lang === "pt" ? "Ir para os jogos" : "Go to the games"}</Link>
+            <Link href={`/app?lang=${lang}`} className={buttonClass("primary")}>{lang === "pt" ? "Ir para os jogos" : "Go to the games"}</Link>
           ) : (
-            <Link href={`/planos?lang=${lang}`} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{lang === "pt" ? "Voltar aos planos" : "Back to plans"}</Link>
+            <Link href={`/planos?lang=${lang}`} className={buttonClass("primary")}>{lang === "pt" ? "Voltar aos planos" : "Back to plans"}</Link>
           )}
-          <Link href={`/app/conta?lang=${lang}`} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint">{lang === "pt" ? "Minha conta" : "My account"}</Link>
-          <Link href={`/contato?lang=${lang}&topic=payment`} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint">{lang === "pt" ? "Algo errado? Fale com a gente" : "Something wrong? Contact us"}</Link>
+          <Link href={`/app/conta?lang=${lang}`} className={buttonClass()}>{lang === "pt" ? "Minha conta" : "My account"}</Link>
+          <Link href={`/contato?lang=${lang}&topic=payment`} className={buttonClass()}>{lang === "pt" ? "Algo errado? Fale com a gente" : "Something wrong? Contact us"}</Link>
         </div>
       </div>
     </MarketingPage>

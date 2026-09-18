@@ -3,7 +3,7 @@ import { formatUsd } from "@/lib/format";
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Empty, Panel } from "@/components/ui";
+import { Empty, Panel, buttonClass } from "@/components/ui";
 
 interface Payload {
   games: { gameId: string; sportKey: string; rank: number; matchup: string; startsAt: string | null }[];
@@ -42,7 +42,7 @@ export function AdminFeatured() {
     <Panel
       title="Destaques de hoje"
       meta={data ? `${data.games.length}/${data.config.perDay} · ${formatUsd(data.costUsd, "pt")} hoje` : undefined}
-      action={<button onClick={() => void run()} disabled={running} data-testid="featured-run" className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{running ? "Gerando…" : "Gerar agora"}</button>}
+      action={<button onClick={() => void run()} disabled={running} data-testid="featured-run" className={buttonClass("primary")}>{running ? "Gerando…" : "Gerar agora"}</button>}
     >
       <div data-testid="admin-featured">
         {note && <p className="mb-2 text-tiny text-fg-muted">{note}</p>}

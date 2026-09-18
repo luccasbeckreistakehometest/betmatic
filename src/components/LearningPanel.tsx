@@ -2,7 +2,7 @@
 import { formatUsd } from "@/lib/format";
 
 import { useCallback, useEffect, useState } from "react";
-import { Panel } from "@/components/ui";
+import { Panel, buttonClass } from "@/components/ui";
 
 interface Run {
   id: string; status: string; windowStart: string; windowEnd: string; tickets: number; won: number; lost: number; summary: string;
@@ -71,7 +71,7 @@ export function LearningPanel() {
               <div className="mt-2 rounded-control border border-pos bg-action px-3 py-2">
                 <p className="text-micro u-label text-fg-dim">Proposta pro prompt</p>
                 <p className="mt-1 whitespace-pre-wrap text-fg">{r.promptFeedback}</p>
-                <div className="mt-2">{r.applied ? <span className="text-pos">aplicada ✓</span> : <button onClick={() => apply(r.id)} disabled={busy !== null} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint" data-testid="learn-apply">{busy === r.id ? "aplicando…" : "Aplicar no prompt"}</button>}</div>
+                <div className="mt-2">{r.applied ? <span className="text-pos">aplicada ✓</span> : <button onClick={() => apply(r.id)} disabled={busy !== null} className={buttonClass("primary")} data-testid="learn-apply">{busy === r.id ? "aplicando…" : "Aplicar no prompt"}</button>}</div>
               </div>
             )}
           </li>

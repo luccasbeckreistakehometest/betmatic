@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Lang } from "@/lib/i18n";
-import { Select } from "@/components/ui";
+import { Select, buttonClass } from "@/components/ui";
 
 const TOPICS = {
   pt: { account: "Minha conta ou senha", payment: "Pagamento", refund: "Reembolso / arrependimento", privacy: "Meus dados (LGPD)", bug: "Algo não funciona", other: "Outro assunto" },
@@ -64,7 +64,7 @@ export function ContactForm({ lang, defaultName = "", defaultEmail = "", default
       </div>
       <p className="text-tiny text-fg-dim">{c.hint}</p>
       {error && <p className="text-sm text-neg" role="alert" data-testid="contact-error">{error}</p>}
-      <button type="submit" disabled={state === "sending"} className="w-fit inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint" data-testid="contact-submit">
+      <button type="submit" disabled={state === "sending"} className={buttonClass("primary", "w-fit")} data-testid="contact-submit">
         {state === "sending" ? c.sending : c.send}
       </button>
     </form>

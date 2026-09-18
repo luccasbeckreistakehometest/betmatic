@@ -4,7 +4,7 @@ import { formatUsd } from "@/lib/format";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
-import { Empty, KPI, PageHead, Panel, Table, Td, Th, Tr } from "@/components/ui";
+import { Empty, KPI, PageHead, Panel, Table, Td, Th, Tr, buttonClass } from "@/components/ui";
 import { formatMoney, formatNumber } from "@/lib/format";
 import { PromptPanel } from "@/components/PromptPanel";
 import { LearningPanel } from "@/components/LearningPanel";
@@ -92,7 +92,7 @@ export function AdminDashboard() {
           <button
             onClick={() => void refresh()}
             disabled={running}
-            className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint"
+            className={buttonClass("primary")}
           >
             {running ? "Gerando…" : "Rodar refresh agora"}
           </button>

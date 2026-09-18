@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { MarketingFooter, MarketingHeader } from "@/components/MarketingShell";
+import { buttonClass } from "@/components/ui";
 
 export const metadata: Metadata = { title: "404", robots: { index: false, follow: true } };
 
@@ -22,10 +23,10 @@ export default async function NotFound() {
         <h1 className="mt-2 u-display text-display text-fg">{c.title}</h1>
         <p className="mt-3 text-base leading-relaxed text-fg-muted">{c.body}</p>
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link href={`/${q}`} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{c.home}</Link>
-          <Link href={`/app${q}`} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint">{c.app}</Link>
-          <Link href={`/prova${q}`} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint">{c.proof}</Link>
-          <Link href={`/contato${q}`} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint">{c.contact}</Link>
+          <Link href={`/${q}`} className={buttonClass("primary")}>{c.home}</Link>
+          <Link href={`/app${q}`} className={buttonClass()}>{c.app}</Link>
+          <Link href={`/prova${q}`} className={buttonClass()}>{c.proof}</Link>
+          <Link href={`/contato${q}`} className={buttonClass()}>{c.contact}</Link>
         </div>
       </main>
       <MarketingFooter lang={lang} />

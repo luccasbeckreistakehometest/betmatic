@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { BetsPanel } from "@/components/BetsPanel";
 import { useNavState } from "@/components/Controls";
-import { Empty, Panel } from "@/components/ui";
+import { Empty, Panel, buttonClass } from "@/components/ui";
 import { makeT } from "@/lib/i18n";
 import type { BetSlate } from "@/lib/types";
 
@@ -102,7 +102,7 @@ export function ParlayBuilder() {
             <Empty>{t("crossGameLocked")}</Empty>
             <Link
               href={`/planos?lang=${lang}`}
-              className="w-fit inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint"
+              className={buttonClass("primary", "w-fit")}
             >
               {t("seePlans")}
             </Link>
@@ -119,7 +119,7 @@ export function ParlayBuilder() {
               {build === "too_few_games" ? t("slateTooFew") : build === "cap_global" ? t("capGlobal") : build === "cap_user" ? t("slateCapUser") : build === "failed" ? buildMessage ?? t("generateFailed") : data?.authenticated ? t("slateEmpty") : t("signInForTickets")}
             </Empty>
             {canBuild && (build === "idle" || build === "failed") && (
-              <button onClick={() => void generate()} data-testid="build-slate" className="w-fit inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">
+              <button onClick={() => void generate()} data-testid="build-slate" className={buttonClass("primary", "w-fit")}>
                 {t("buildSlate")}
               </button>
             )}

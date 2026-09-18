@@ -8,6 +8,7 @@ import { formatDate } from "@/lib/format";
 import { formatOdds } from "@/lib/format";
 import { NOT_PRICED } from "@/lib/format";
 import type { Lang } from "@/lib/i18n";
+import { buttonClass } from "@/components/ui";
 
 const pct = (x: number | null, signed = false) => (x === null ? "—" : `${signed && x > 0 ? "+" : ""}${Math.round(x * 100)}%`);
 const TONE: Record<string, string> = { won: "text-pos", lost: "text-neg", push: "text-fg-muted", void: "text-fg-dim", pending: "text-fg-dim", unverifiable: "text-fg-dim" };
@@ -60,7 +61,7 @@ export function TipsterReport({ report, picks, lang, onDelete }: { report: Audit
         </ul>
       </details>
       <div className="flex flex-wrap items-center gap-3 text-tiny">
-        <button type="button" onClick={share} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint" data-testid="tipster-share">{c.share}</button>
+        <button type="button" onClick={share} className={buttonClass()} data-testid="tipster-share">{c.share}</button>
         <a href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noreferrer" className="text-fg-muted underline underline-offset-2 hover:text-fg" data-testid="tipster-share-wa">WhatsApp</a>
         {copied && <span className="text-pos">{c.copied}</span>}
         <span className="hidden" data-testid="tipster-share-text">{text}</span>

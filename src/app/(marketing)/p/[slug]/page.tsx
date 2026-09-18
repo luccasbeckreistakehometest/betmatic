@@ -13,6 +13,7 @@ import { LossReview } from "@/components/LossReview";
 import { currentUser } from "@/lib/server/session";
 import { userHasTicket } from "@/lib/server/bankroll";
 import { publicBaseUrl } from "@/lib/base-url";
+import { buttonClass } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -90,7 +91,7 @@ export default async function TicketPage({ params, searchParams }: { params: Pro
         <p className="mt-6 text-sm text-fg-dim">{c.copy}</p>
         <div className="mt-6 flex flex-wrap gap-3">
           <a href={`https://wa.me/?text=${encodeURIComponent(c.wa(scrubText(e.title, lang), c.outcome[e.outcome], formatDecimal(e.combinedDecimal, lang), url))}`} target="_blank" rel="noopener noreferrer" className="inline-flex h-(--row-h) items-center rounded-control border border-line-control px-4 text-sm font-medium text-fg transition-colors duration-(--dur-1) hover:bg-surface-2" data-testid="share-wa">{c.share}</a>
-          <Link href={`/signup?lang=${lang}`} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{c.cta}</Link>
+          <Link href={`/signup?lang=${lang}`} className={buttonClass("primary")}>{c.cta}</Link>
         </div>
         </div>
       </main>
@@ -113,7 +114,7 @@ function LockedTicket({ lang, slug, matchup, startsAt }: { lang: "pt" | "en"; sl
         {startsAt && <p className="mt-4 text-sm text-fg-muted"><span className="text-fg-dim">{c.kickoff}:</span> {formatDateTime(startsAt, lang)}</p>}
         <p className="mt-6 max-w-xl text-base leading-relaxed text-fg-muted">{c.lockedBody}</p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Link href={`/planos?lang=${lang}`} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{c.lockedCta}</Link>
+          <Link href={`/planos?lang=${lang}`} className={buttonClass("primary")}>{c.lockedCta}</Link>
         </div>
       </main>
       <MarketingFooter lang={lang} />

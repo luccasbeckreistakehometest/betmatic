@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useNavState } from "@/components/Controls";
-import { Empty, Panel } from "@/components/ui";
+import { Empty, Panel, buttonClass } from "@/components/ui";
 import { formatDate, formatDateTime, formatMoneyBRL } from "@/lib/format";
 import { paymentLabel } from "@/lib/plans";
 import { PanelSkeleton } from "@/components/AppPageHead";
@@ -109,7 +109,7 @@ export function AccountPanel() {
     return (
       <div className="flex flex-col gap-3">
         <Empty>{c.signIn}</Empty>
-        <Link href={`/login?lang=${lang}&next=${encodeURIComponent(`/app/conta?lang=${lang}`)}`} className="w-fit inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{c.login}</Link>
+        <Link href={`/login?lang=${lang}&next=${encodeURIComponent(`/app/conta?lang=${lang}`)}`} className={buttonClass("primary", "w-fit")}>{c.login}</Link>
       </div>
     );
   }
@@ -140,7 +140,7 @@ export function AccountPanel() {
           ) : (
             <p className="mt-1 text-sm text-fg-muted">{c.freePlan}</p>
           )}
-          <Link href={`/planos?lang=${lang}`} className="mt-3 inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{c.seePlans}</Link>
+          <Link href={`/planos?lang=${lang}`} className={buttonClass("primary", "mt-3")}>{c.seePlans}</Link>
         </Panel>
         <Panel title={c.coins} lang={lang}>
           <p className="nums text-lead font-semibold text-fg" data-testid="account-coins">{user.coins}</p>

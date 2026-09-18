@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Panel, Select } from "@/components/ui";
+import { Panel, Select, buttonClass } from "@/components/ui";
 import type { PlayerCopy } from "@/components/player-copy";
 import { splitWithWithout, type Rate, type RateTable } from "@/lib/props/rates";
 import type { PlayerMarketView, PlayerProfileView } from "@/lib/props/player-view";
@@ -145,5 +145,5 @@ export function SplitCard({ profile, market, line, side, lang, c }: { profile: P
 }
 
 export function PlansLink({ lang, label }: { lang: Lang; label: string }) {
-  return <Link href={{ pathname: "/planos", query: { lang } }} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{label}</Link>;
+  return <Link href={{ pathname: "/planos", query: { lang } }} className={buttonClass("primary")}>{label}</Link>;
 }

@@ -6,7 +6,7 @@ import { getPlan } from "@/lib/plans";
 import { SOLD_SPORTS } from "@/lib/sports";
 import { todayKey } from "@/lib/sources/espn";
 import { formatPercent } from "@/lib/format";
-import { Odds } from "@/components/ui";
+import { Odds, buttonClass } from "@/components/ui";
 import type { Lang } from "@/lib/i18n";
 import type { BetSuggestion } from "@/lib/types";
 import { legsLabel, pickTeaser, teaserHeadline } from "@/lib/teaser";
@@ -78,8 +78,8 @@ export function ProofStrip({ lang, sportKeys }: { lang: Lang; sportKeys?: string
               <p className="mt-2 text-sm text-fg-muted">{c.blurb}</p>
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 {top.free
-                  ? <Link href={{ pathname: "/signup", query: { lang, next: top.gameId ? `/app/game/${top.gameId}?sport=${top.sportKey}&lang=${lang}` : `/app?lang=${lang}` } }} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{c.cta}</Link>
-                  : <Link href={{ pathname: "/planos", query: { lang } }} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{c.ctaPaid}</Link>}
+                  ? <Link href={{ pathname: "/signup", query: { lang, next: top.gameId ? `/app/game/${top.gameId}?sport=${top.sportKey}&lang=${lang}` : `/app?lang=${lang}` } }} className={buttonClass("primary")}>{c.cta}</Link>
+                  : <Link href={{ pathname: "/planos", query: { lang } }} className={buttonClass("primary")}>{c.ctaPaid}</Link>}
                 {top.gameId && <Link href={{ pathname: `/jogo/${top.gameId}`, query: { sport: top.sportKey, lang } }} className="text-sm text-fg-muted hover:text-fg" data-testid="ticket-game-link">{c.gamePage}</Link>}
               </div>
             </div>

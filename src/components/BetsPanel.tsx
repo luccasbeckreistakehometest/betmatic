@@ -4,7 +4,7 @@ import { track } from "@/lib/track";
 import { useState } from "react";
 import Link from "next/link";
 
-import { Badge, Chip, Empty, Odds } from "@/components/ui";
+import { Badge, Chip, Empty, Odds, buttonClass } from "@/components/ui";
 import { formatNumber, formatPercent as pctOf } from "@/lib/format";
 import { groupAlternatives, legDiff } from "@/lib/bets/alternatives-view";
 import { kellyFraction, formatDecimal, getBand } from "@/lib/odds";
@@ -191,7 +191,7 @@ function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [] }:
             <span className="ml-auto flex items-center gap-2">
               {saved === "saved" ? <span className="text-pos">✓ {t("saved")}</span> : saved === "error" ? <span className="text-warn">{lang === "pt" ? "entre para salvar" : "sign in to save"}</span> : saved === "limit" ? <span className="text-warn" data-testid="ticket-limit">{limitNote}</span> : saved === "paused" ? <span className="text-warn" data-testid="ticket-paused">{t("pausedHint")}</span> : (
                 <>
-                  <input aria-label={lang === "pt" ? "Valor apostado (R$)" : "Stake (R$)"} value={stake} onChange={(e) => setStake(e.target.value)} placeholder={t("stake")} inputMode="decimal" className="w-20 inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint" data-testid="ticket-stake" />
+                  <input aria-label={lang === "pt" ? "Valor apostado (R$)" : "Stake (R$)"} value={stake} onChange={(e) => setStake(e.target.value)} placeholder={t("stake")} inputMode="decimal" className={buttonClass("secondary", "w-20")} data-testid="ticket-stake" />
                   <button onClick={addToBankroll} disabled={!(Number(stake) > 0) || saved === "saving"} className="rounded-control border border-line-control px-2 py-1 text-fg-muted hover:border-line-control hover:text-fg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="ticket-add">{t("addToBankroll")}</button>
                 </>
               )}

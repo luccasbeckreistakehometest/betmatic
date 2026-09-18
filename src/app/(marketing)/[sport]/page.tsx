@@ -4,7 +4,7 @@ import { ProofStrip } from "@/components/ProofStrip";
 import { notFound } from "next/navigation";
 import { LogoMark } from "@/components/Logo";
 import { MarketingFooter, MarketingHeader } from "@/components/MarketingShell";
-import { NumCell, Table, Td, Th, Tr, chanceStep } from "@/components/ui";
+import { NumCell, Table, Td, Th, Tr, buttonClass, chanceStep } from "@/components/ui";
 import { formatPercent } from "@/lib/format";
 import { pageMetadata } from "@/lib/seo";
 import { formatMoneyBRL } from "@/lib/format";
@@ -96,7 +96,7 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
             <Link
               href={appPath}
               data-testid="sport-cta"
-              className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint"
+              className={buttonClass("primary")}
             >
               {s.cta[lang]}
             </Link>
@@ -216,13 +216,13 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
           <div className="flex flex-wrap gap-3">
             <Link
               href={signupHref}
-              className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint"
+              className={buttonClass("primary")}
             >
               {c.finalCta}
             </Link>
             <Link
               href={`/planos?lang=${lang}`}
-              className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint"
+              className={buttonClass()}
             >
               {c.navPricing}
             </Link>

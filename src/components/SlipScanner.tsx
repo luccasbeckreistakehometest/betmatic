@@ -7,7 +7,7 @@ import { SCAN_COPY } from "@/components/scan-copy";
 import { checkText, slipChecks } from "@/lib/bets/slip-scan";
 import { SOLD_SPORTS } from "@/lib/sports";
 import type { Lang } from "@/lib/i18n";
-import { Select } from "@/components/ui";
+import { Select, buttonClass } from "@/components/ui";
 
 interface DraftLeg { event: string; selection: string; market: string; odds: string; matchup: string | null; auto: boolean }
 interface Draft { scanId: string; book: string; betType: "single" | "multiple" | "bet_builder" | null; stake: string; totalOdds: string; potentialReturn: string; legs: DraftLeg[]; unreadable: string[] }
@@ -100,7 +100,7 @@ export function SlipScanner({ lang, sportKey: initialSport, onSaved }: { lang: L
     <section className="rounded-panel border border-line-strong bg-surface-2 p-4" data-testid="slip-scanner">
       <div className="flex flex-wrap items-center gap-3">
         <button type="button" onClick={() => input.current?.click()} disabled={phase === "reading" || phase === "saving"} data-testid="scan-button"
-          className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">
+          className={buttonClass("primary")}>
           {phase === "reading" ? c.reading : c.button}
         </button>
         <input ref={input} type="file" accept="image/*" className="hidden" data-testid="scan-input" onChange={(e) => void onFile(e.target.files?.[0])} />
@@ -154,7 +154,7 @@ export function SlipScanner({ lang, sportKey: initialSport, onSaved }: { lang: L
           )}
           <p className="text-label text-fg-dim">{c.privacy}</p>
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={save} disabled={!ready || phase === "saving"} data-testid="scan-save" className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{phase === "saving" ? c.saving : c.save}</button>
+            <button type="button" onClick={save} disabled={!ready || phase === "saving"} data-testid="scan-save" className={buttonClass("primary")}>{phase === "saving" ? c.saving : c.save}</button>
             <button type="button" onClick={analyse}  data-testid="scan-analyse">{c.analyse}</button>
             <button type="button" onClick={() => { setDraft(null); setPhase("idle"); }} className="px-2 text-tiny text-fg-dim hover:text-fg-muted">{c.cancel}</button>
           </div>

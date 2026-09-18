@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useNavState } from "@/components/Controls";
-import { Panel, Select } from "@/components/ui";
+import { Panel, Select, buttonClass } from "@/components/ui";
 import { TIPSTER_COPY } from "@/components/tipster-copy";
 import { TipsterReport } from "@/components/TipsterReport";
 import { formatDate } from "@/lib/format";
@@ -98,7 +98,7 @@ export function TipsterAudit() {
               </label>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <button type="button" onClick={() => void run(false)} disabled={busy || (!text.trim() && !files.length) || state?.aiReady === false} data-testid="tipster-run" className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">
+              <button type="button" onClick={() => void run(false)} disabled={busy || (!text.trim() && !files.length) || state?.aiReady === false} data-testid="tipster-run" className={buttonClass("primary")}>
                 {busy ? c.running : c.run}
               </button>
               {state?.aiReady === false && <span className="text-tiny text-fg-dim">{c.aiOff}</span>}

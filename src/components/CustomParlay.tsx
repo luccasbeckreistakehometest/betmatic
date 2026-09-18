@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useNavState } from "@/components/Controls";
-import { Checkbox, Empty, Odds, Panel, Select } from "@/components/ui";
+import { Checkbox, Empty, Odds, Panel, Select, buttonClass } from "@/components/ui";
 import { formatDecimal } from "@/lib/odds";
 import { formatPercent as pctOf } from "@/lib/format";
 import { formatOdds } from "@/lib/format";
@@ -116,7 +116,7 @@ function CustomForm(props: {
 }) {
   const { c, lang, meta, games, state, set } = props;
   if (meta && !meta.signedIn) {
-    return <Panel title={c.title}><div className="flex flex-col gap-2"><Empty>{c.signIn}</Empty><Link href={`/login?lang=${lang}`} className="w-fit inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{lang === "pt" ? "Entrar" : "Log in"}</Link></div></Panel>;
+    return <Panel title={c.title}><div className="flex flex-col gap-2"><Empty>{c.signIn}</Empty><Link href={`/login?lang=${lang}`} className={buttonClass("primary", "w-fit")}>{lang === "pt" ? "Entrar" : "Log in"}</Link></div></Panel>;
   }
   // Selection is achromatic, exactly like the primary button: a chip is not a hue (§6.2).
   const chip = (on: boolean) => `rounded-control border px-2.5 py-1 text-tiny transition-colors duration-(--dur-1) ease-(--ease-out) ${on ? "border-action bg-action text-action-fg" : "border-line-control text-fg-muted hover:bg-surface-2 hover:text-fg"}`;
@@ -126,7 +126,7 @@ function CustomForm(props: {
         <div className="flex flex-wrap items-center gap-2">
           {PRESETS.map((p) => <button key={p} type="button" onClick={() => set.setTarget(p)} className={chip(state.target === p)} data-testid={`preset-${p}`}>{p}x</button>)}
           <input type="range" min={2} max={500} step={1} value={state.target} onChange={(e) => set.setTarget(Number(e.target.value))} aria-label={c.target} className="range min-w-0 flex-1" />
-          <input type="number" min={2} max={500} value={state.target} onChange={(e) => set.setTarget(Math.min(500, Math.max(2, Number(e.target.value) || 2)))} aria-label={c.target} className="w-20 inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint" data-testid="target-input" />
+          <input type="number" min={2} max={500} value={state.target} onChange={(e) => set.setTarget(Math.min(500, Math.max(2, Number(e.target.value) || 2)))} aria-label={c.target} className={buttonClass("secondary", "w-20")} data-testid="target-input" />
         </div>
         <label className="flex flex-wrap items-center gap-2 text-sm text-fg-muted">
           {c.legs}
@@ -153,7 +153,7 @@ function CustomForm(props: {
           <label className="flex items-center gap-2">{c.minRate} <input type="range" min={40} max={80} value={state.minRate} onChange={(e) => set.setMinRate(Number(e.target.value))} aria-label={c.minRate} className="range w-32" /><span className="nums w-12 text-fg">{pctOf(state.minRate / 100, lang, { digits: 0 })}</span></label>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <button type="button" onClick={props.onBuild} disabled={props.busy || !props.canAfford} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint" data-testid="custom-build">
+          <button type="button" onClick={props.onBuild} disabled={props.busy || !props.canAfford} className={buttonClass("primary")} data-testid="custom-build">
             {c.build} · {meta?.price ?? "…"} {c.coins}
           </button>
           {meta && !props.canAfford && <span className="text-tiny text-warn">{c.noCoins} <Link href={`/planos?lang=${lang}`} className="underline">{c.buy}</Link></span>}
@@ -222,7 +222,7 @@ function CustomTicket({ c, lang, ticket, index, slipId }: { c: Copy; lang: Lang;
       <footer className="flex flex-wrap items-center gap-2 border-t border-line px-3.5 py-2.5 text-tiny">
         {state === "saved" ? <span className="text-pos" data-testid="custom-saved">{c.saved}</span> : (
           <>
-            <input value={stake} onChange={(e) => setStake(e.target.value)} placeholder={c.stake} inputMode="decimal" aria-label={c.stake} className="w-20 inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint" data-testid="custom-stake" />
+            <input value={stake} onChange={(e) => setStake(e.target.value)} placeholder={c.stake} inputMode="decimal" aria-label={c.stake} className={buttonClass("secondary", "w-20")} data-testid="custom-stake" />
             <button type="button" onClick={() => void save()} disabled={!(Number(stake) > 0) || state === "saving" || !slipId} className="rounded-control border border-line-control px-2 py-1 text-fg-muted hover:text-fg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="custom-save">{c.save}</button>
             {state === "limit" && <span className="text-warn">{c.limit}</span>}
             {state === "paused" && <span className="text-warn">{c.paused}</span>}

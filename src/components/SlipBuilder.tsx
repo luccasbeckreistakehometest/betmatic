@@ -6,7 +6,7 @@ import { useNavState } from "@/components/Controls";
 import { DeepSlipTable } from "@/components/DeepSlipTable";
 import { SLIP_PREFILL_KEY, SlipScanner } from "@/components/SlipScanner";
 import type { DeepContext } from "@/lib/server/deep-slip";
-import { Chip, IconButton, Panel } from "@/components/ui";
+import { Chip, IconButton, Panel, buttonClass } from "@/components/ui";
 import { formatDecimal, parseOdds, parlayDecimal } from "@/lib/odds";
 import { formatPercent as pctOf } from "@/lib/format";
 import { ACTION_COST } from "@/lib/plans";
@@ -164,7 +164,7 @@ export function SlipBuilder() {
             <button
               onClick={() => void analyse()}
               disabled={!ready || busy}
-              className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint"
+              className={buttonClass("primary")}
             >
               {busy ? t("analysing") : t("analyseSlip")}
             </button>

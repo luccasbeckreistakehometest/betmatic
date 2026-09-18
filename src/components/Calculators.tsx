@@ -6,6 +6,7 @@ import { useState } from "react";
 import { expectedValue, formatDecimal, impliedProbability, parlayDecimal, parlayHold, parseOdds } from "@/lib/odds";
 import type { Lang } from "@/lib/i18n";
 import { formatPercent } from "@/lib/format";
+import { buttonClass } from "@/components/ui";
 
 /**
  * Free, no-signup calculators. They exist because a bettor searching "calculadora de múltipla" is a
@@ -24,7 +25,7 @@ const C = {
 };
 
 const Field = ({ label, value, onChange, testId }: { label: string; value: string; onChange: (v: string) => void; testId?: string }) => (
-  <label className="block text-tiny text-fg-muted">{label}<input value={value} onChange={(e) => onChange(e.target.value)} onBlur={() => { if (testId) track("tool_used", { tool: testId.split("-")[0] }); }} inputMode="decimal" data-testid={testId} className="mt-1 w-full inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint" /></label>
+  <label className="block text-tiny text-fg-muted">{label}<input value={value} onChange={(e) => onChange(e.target.value)} onBlur={() => { if (testId) track("tool_used", { tool: testId.split("-")[0] }); }} inputMode="decimal" data-testid={testId} className={buttonClass("secondary", "mt-1 w-full")} /></label>
 );
 /** One column of a single ruled group — not a floating card. The three share a frame, a top rule
  *  and the same internal order, so the reader compares tools instead of reading three panels. */
@@ -85,7 +86,7 @@ export function Calculators({ lang }: { lang: Lang }) {
           </div>
         </Card>
       </div>
-      <Link href="/signup" className="mt-10 inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{c.cta}</Link>
+      <Link href="/signup" className={buttonClass("primary", "mt-10")}>{c.cta}</Link>
     </section>
   );
 }
