@@ -851,6 +851,7 @@ DATA_DIR=data/design AUTH_SECRET=… APP_URL=http://localhost:3310 \
   SOFASCORE_DISABLED=1 PROOF_MIN_DECIDED=1 npx next start -p 3310
 
 # 4. shoot 1440×900 and 390×844 at DPR 2, both themes, and *look at the PNGs*
+#    /design needs ADMIN_EMAIL + ADMIN_PASSWORD on the server and a login in the script.
 ```
 
 Minimum set per wave: the landing, `/planos`, `/prova`, `/app`, `/app/bankroll`,
@@ -873,7 +874,7 @@ Written after building it, so the doc and the code agree. Branch `feat/design-sy
 | `src/components/ui.tsx` | the primitive layer (usage rules at the top of the file) |
 | `src/components/ui-client.tsx` | dialog, tabs, range, theme/density switches — re-exported from `ui.tsx` |
 | `src/lib/format.ts` | the pt-BR number set, with `src/lib/__tests__/format-numbers.test.ts` |
-| `src/app/design/page.tsx` + `src/components/DesignGallery.tsx` | `/design`, noindex and disallowed in `robots.ts` |
+| `src/app/design/page.tsx` + `src/components/DesignGallery.tsx` | `/design` — operator-only (`requireAdmin`, 404 to everyone else), noindex, disallowed in `robots.ts`, absent from the sitemap |
 
 **Names: contract → implementation.** Appendix A is the contract; this is how it is spelled in code.
 
@@ -909,7 +910,10 @@ Written after building it, so the doc and the code agree. Branch `feat/design-sy
 5. **A control's state change transitions colour for 90 ms.** §9 bans animating colour and also
    defines `--dur-1` as "state change on a control (hover, press, check)" — the transition is what
    that row means; keyframed motion is still opacity and transform only.
-6. **The collapsing table is markup-preserving.** `<Table>` renders `data-collapse="true"` and each
+6. **`/design` is admin-only.** It is a workbench, not a product surface: an anonymous request gets
+   a 404. The screenshot pass therefore signs in first — run the server with `ADMIN_EMAIL` and
+   `ADMIN_PASSWORD` set and use `scratchpad/shoot-design.mjs`, which logs in per browser context.
+7. **The collapsing table is markup-preserving.** `<Table>` renders `data-collapse="true"` and each
    cell carries `label`; below 768 px the CSS turns rows into definition lists and prints the column
    label from `data-label`. The header stays in the DOM for screen readers.
 

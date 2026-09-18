@@ -22,6 +22,7 @@ import {
   Radio,
   RangeField,
   Select,
+  Sheet,
   Skeleton,
   StatusBadge,
   Table,
@@ -195,7 +196,7 @@ function Icons() {
   );
 }
 
-function Controls({ onOpenDialog }: { onOpenDialog: () => void }) {
+function Controls({ onOpenDialog, onOpenSheet }: { onOpenDialog: () => void; onOpenSheet: () => void }) {
   return (
     <div className="grid grid-cols-12 gap-6">
       <div className="col-span-12 flex flex-col gap-5 md:col-span-6 lg:col-span-5">
@@ -240,6 +241,7 @@ function Controls({ onOpenDialog }: { onOpenDialog: () => void }) {
         </Spec>
         <Spec label="sobreposições">
           <Button onClick={onOpenDialog}>Abrir diálogo</Button>
+          <Button onClick={onOpenSheet}>Abrir gaveta</Button>
         </Spec>
       </div>
       <div className="col-span-12 flex flex-col gap-5 md:col-span-6 lg:col-span-4">
@@ -522,6 +524,7 @@ const INDEX = [
 
 export function DesignGallery() {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   return (
     <div className="min-h-dvh bg-surface-0 text-fg">
       <a href="#conteudo" className="sr-only focus:not-sr-only focus:absolute focus:m-2 focus:bg-action focus:px-3 focus:py-2 focus:text-action-fg">
@@ -615,7 +618,7 @@ export function DesignGallery() {
           title="Controles"
           note="Cada variante com repouso, foco, pressionado, desabilitado e carregando. O botão não muda de largura enquanto trabalha: o giro ocupa a vaga do ícone."
         >
-          <Controls onOpenDialog={() => setDialogOpen(true)} />
+          <Controls onOpenDialog={() => setDialogOpen(true)} onOpenSheet={() => setSheetOpen(true)} />
         </Section>
 
         <Section
@@ -685,6 +688,25 @@ export function DesignGallery() {
           </p>
         </footer>
       </main>
+
+      <Sheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        title="Filtros"
+        footer={
+          <>
+            <Button onClick={() => setSheetOpen(false)}>Limpar</Button>
+            <Button variant="primary" onClick={() => setSheetOpen(false)}>
+              Aplicar
+            </Button>
+          </>
+        }
+      >
+        <p className="max-w-measure-app">
+          No telefone, um painel de filtros entra por baixo em vez de cobrir a tela inteira: mesma armadilha de foco,
+          mesmo Esc, e o polegar alcança as ações.
+        </p>
+      </Sheet>
 
       <Dialog
         open={dialogOpen}

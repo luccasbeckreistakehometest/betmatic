@@ -81,6 +81,9 @@
   --dur-2: 140ms;
   --dur-3: 220ms;
   --dur-tip: 600ms;
+
+  /* How much of a phone screen a bottom sheet may take before it should have been a page. */
+  --sheet-h: 85dvh;
   --ease-out: cubic-bezier(0.2, 0.8, 0.3, 1);
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
   --ease-inout: cubic-bezier(0.4, 0, 0.2, 1);

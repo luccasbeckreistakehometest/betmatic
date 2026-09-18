@@ -14,21 +14,11 @@ import { cx, IconButton } from "@/components/ui";
  * trigger — three things a hand-rolled modal gets wrong. We supply the scrim, the radius and the
  * one shadow in the system that says "this floats and can be dismissed".
  */
-export function Dialog({
-  open,
-  onClose,
-  title,
-  children,
-  footer,
-  closeLabel = "Fechar",
-}: {
-  open: boolean;
-  onClose: () => void;
-  title: string;
-  children: ReactNode;
-  footer?: ReactNode;
-  closeLabel?: string;
-}) {
+/**
+ * Open/close a native <dialog> from a boolean, and report every close — the Esc key and the
+ * backdrop included — back to the owner of that boolean.
+ */
+function useDialogElement(open: boolean, onClose: () => void) {
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -54,6 +44,26 @@ export function Dialog({
     };
   }, [onClose]);
 
+  return ref;
+}
+
+export function Dialog({
+  open,
+  onClose,
+  title,
+  children,
+  footer,
+  closeLabel = "Fechar",
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: ReactNode;
+  footer?: ReactNode;
+  closeLabel?: string;
+}) {
+  const ref = useDialogElement(open, onClose);
+
   return (
     <dialog
       ref={ref}
@@ -67,6 +77,49 @@ export function Dialog({
         </span>
       </header>
       <div className="p-(--panel-p) text-sm text-fg-muted">{children}</div>
+      {footer && <footer className="flex items-center justify-end gap-2 border-t border-line px-(--cell-px) py-2">{footer}</footer>}
+    </dialog>
+  );
+}
+
+/* ── Sheet ─────────────────────────────────────────────────────────────────────────────────────
+ * The phone's dialog: anchored to the bottom edge, rounded only on the top corners, with a drag
+ * handle that says which way it leaves. Same native element, so the focus trap, Esc and the return
+ * of focus to the trigger come for free.
+ */
+export function Sheet({
+  open,
+  onClose,
+  title,
+  children,
+  footer,
+  closeLabel = "Fechar",
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: ReactNode;
+  footer?: ReactNode;
+  closeLabel?: string;
+}) {
+  const ref = useDialogElement(open, onClose);
+
+  return (
+    <dialog
+      ref={ref}
+      aria-label={title}
+      className="mt-auto mr-0 mb-0 ml-0 max-h-(--sheet-h) w-full max-w-full rounded-t-sheet border-t border-line bg-surface-1 p-0 text-fg shadow-dialog backdrop:bg-scrim"
+    >
+      <div className="flex justify-center pt-2 pb-1">
+        <span aria-hidden="true" className="h-1 w-9 rounded-full bg-line-strong" />
+      </div>
+      <header className="flex min-h-(--row-h) items-center gap-2 border-b border-line px-(--cell-px) py-1.5">
+        <h2 className="text-label u-label text-fg">{title}</h2>
+        <span className="ml-auto">
+          <IconButton icon="close" label={closeLabel} onClick={onClose} />
+        </span>
+      </header>
+      <div className="overflow-y-auto p-(--panel-p) text-sm text-fg-muted">{children}</div>
       {footer && <footer className="flex items-center justify-end gap-2 border-t border-line px-(--cell-px) py-2">{footer}</footer>}
     </dialog>
   );
