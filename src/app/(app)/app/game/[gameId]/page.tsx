@@ -90,7 +90,7 @@ function LineMovement({ lines, home, away, lang }: { lines: ProviderLines[]; hom
   if (!rows.length) return null;
   return (
     <div className="mt-3 border-t border-line pt-2.5" data-testid="line-movement">
-      <h3 className="mb-1 text-micro font-semibold uppercase tracking-wider text-fg-dim">{lang === "pt" ? "Movimento desde a abertura" : "Movement since the open"}</h3>
+      <h3 className="mb-1 text-micro u-label text-fg-dim">{lang === "pt" ? "Movimento desde a abertura" : "Movement since the open"}</h3>
       <ul className="flex flex-col gap-0.5">
         {rows.map((r) => {
           // A shorter price means money came in on that side; a higher total line means the market expects more.
@@ -139,7 +139,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
         <div className="flex flex-wrap items-center gap-4">
           <TeamHeading team={game.away} align="left" showScore={game.status !== "scheduled"} follow={followOf(game.away.id)} />
           <div className="flex shrink-0 flex-col items-center gap-1 px-2">
-            <span className="text-label uppercase tracking-widest text-fg-dim">
+            <span className="text-label u-label text-fg-dim">
               {game.status === "scheduled" ? kickoff(game.startsAt, lang) : localizeStatus(game.statusDetail, lang)}
             </span>
           </div>
@@ -181,13 +181,13 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
           <Panel title={t("injuryReport")} meta={admin ? "ESPN" : undefined}>
             <div className="flex flex-col gap-3">
               <div>
-                <h3 className="mb-1.5 text-micro font-semibold uppercase tracking-wider text-fg-dim">
+                <h3 className="mb-1.5 text-micro u-label text-fg-dim">
                   {game.away.displayName}
                 </h3>
                 <InjuryList injuries={injuries} abbreviation={game.away.abbreviation} />
               </div>
               <div className="border-t border-line pt-3">
-                <h3 className="mb-1.5 text-micro font-semibold uppercase tracking-wider text-fg-dim">
+                <h3 className="mb-1.5 text-micro u-label text-fg-dim">
                   {game.home.displayName}
                 </h3>
                 <InjuryList injuries={injuries} abbreviation={game.home.abbreviation} />
@@ -206,7 +206,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
                   if (!roster.length) return null;
                   return (
                     <div key={team.id}>
-                      <h3 className="mb-1 text-micro font-semibold uppercase tracking-wider text-fg-dim">{team.displayName}</h3>
+                      <h3 className="mb-1 text-micro u-label text-fg-dim">{team.displayName}</h3>
                       <div className="flex flex-wrap gap-1">
                         {roster.slice(0, 14).map((a) => (
                           <Link key={a.id} href={{ pathname: `/app/player/${a.id}`, query: { sport: sport.key, lang, game: game.id } }} className="rounded-control border border-line px-1.5 py-0.5 text-label text-fg-muted transition-colors duration-(--dur-1) hover:bg-surface-2 hover:text-fg">
@@ -249,7 +249,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
             <LineMovement lines={lines} home={game.home.displayName} away={game.away.displayName} lang={lang} />
             {ats.length > 0 && (
               <div className="mt-3 border-t border-line pt-2.5">
-                <h3 className="mb-1 text-micro font-semibold uppercase tracking-wider text-fg-dim">
+                <h3 className="mb-1 text-micro u-label text-fg-dim">
                   {t("againstSpread")}
                 </h3>
                 {ats.map((row) => (
@@ -280,7 +280,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
                   [game.home.abbreviation, teamStats.home],
                 ] as const).map(([abbr, stats]) => (
                   <div key={abbr}>
-                    <h3 className="mb-1.5 text-micro font-semibold uppercase tracking-wider text-fg-dim">{abbr}</h3>
+                    <h3 className="mb-1.5 text-micro u-label text-fg-dim">{abbr}</h3>
                     <KeyValue emptyText={t("nothingReported")} rows={stats.slice(0, 10).map((s) => ({ label: localizeStatLabel(s.label, lang), value: s.value, hint: s.rank }))} />
                   </div>
                 ))}

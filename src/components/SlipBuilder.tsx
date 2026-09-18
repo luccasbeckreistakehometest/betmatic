@@ -7,7 +7,8 @@ import { DeepSlipTable } from "@/components/DeepSlipTable";
 import { SLIP_PREFILL_KEY, SlipScanner } from "@/components/SlipScanner";
 import type { DeepContext } from "@/lib/server/deep-slip";
 import { Chip, Panel } from "@/components/ui";
-import { formatDecimal, formatPercent, parseOdds, parlayDecimal } from "@/lib/odds";
+import { formatDecimal, parseOdds, parlayDecimal } from "@/lib/odds";
+import { formatPercent as pctOf } from "@/lib/format";
 import { ACTION_COST } from "@/lib/plans";
 import { makeT } from "@/lib/i18n";
 
@@ -214,12 +215,12 @@ export function SlipBuilder() {
             <div className="grid grid-cols-2 gap-px overflow-hidden rounded-control border border-line bg-surface-3 sm:grid-cols-4">
               {[
                 [t("combined"), formatDecimal(analysis.combinedDecimal)],
-                [t("impliedChance"), formatPercent(analysis.impliedProbability, 2)],
-                [t("modelledChance"), formatPercent(analysis.modelledProbability, 2)],
+                [t("impliedChance"), pctOf(analysis.impliedProbability, lang, { digits: 2 })],
+                [t("modelledChance"), pctOf(analysis.modelledProbability, lang, { digits: 2 })],
                 [t("evLabel"), Number.isFinite(analysis.edgePct) ? `${analysis.edgePct > 0 ? "+" : ""}${analysis.edgePct.toFixed(1)}%` : "—"],
               ].map(([label, value]) => (
                 <div key={label} className="bg-surface-1 px-2 py-1.5 text-center">
-                  <div className="text-micro uppercase tracking-wider text-fg-dim">{label}</div>
+                  <div className="text-micro u-label text-fg-dim">{label}</div>
                   <div className="nums text-tiny text-fg">{value}</div>
                 </div>
               ))}
@@ -243,7 +244,7 @@ export function SlipBuilder() {
                     </span>
                     {leg.index === analysis.weakestIndex && <Chip tone="low">{t("slipWeakest")}</Chip>}
                     <span className="nums ml-auto text-label text-fg-muted">
-                      {formatPercent(leg.fairProbability, 0)}
+                      {pctOf(leg.fairProbability, lang, { digits: 0 })}
                     </span>
                   </div>
                   <p className="mt-1.5 text-tiny leading-relaxed text-fg-muted">{leg.assessment}</p>
@@ -253,7 +254,7 @@ export function SlipBuilder() {
 
             {analysis.swaps.length > 0 && (
               <div>
-                <h3 className="text-micro font-semibold uppercase tracking-wider text-fg-dim">{t("slipSwaps")}</h3>
+                <h3 className="text-micro u-label text-fg-dim">{t("slipSwaps")}</h3>
                 <ul className="mt-2 flex flex-col gap-2">
                   {analysis.swaps.map((swap, i) => (
                     <li key={i} className="rounded-control border border-line bg-surface-2 p-3">

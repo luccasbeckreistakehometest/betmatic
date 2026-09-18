@@ -73,7 +73,7 @@ export function AlertsPanel() {
 
       <Panel title={t("following")} meta={data ? `${data.follows.length}` : undefined}>
         {!tg?.configured && <p className="mb-3 text-tiny text-fg-dim">{t("alertsIntro")}</p>}
-        <h3 className="text-micro font-semibold uppercase tracking-wider text-fg-dim">{t("followLeagues")}</h3>
+        <h3 className="text-micro u-label text-fg-dim">{t("followLeagues")}</h3>
         <div className="mt-2 flex flex-col gap-2">
           {groups.map(([group, label]) => (
             <div key={group} className="flex flex-wrap items-center gap-2">
@@ -90,7 +90,7 @@ export function AlertsPanel() {
             </div>
           ))}
         </div>
-        <h3 className="mt-4 text-micro font-semibold uppercase tracking-wider text-fg-dim">{t("followTeams")}</h3>
+        <h3 className="mt-4 text-micro u-label text-fg-dim">{t("followTeams")}</h3>
         {teams.length ? (
           <ul className="mt-2 flex flex-wrap gap-2" data-testid="followed-teams">
             {teams.map((f) => (
@@ -112,7 +112,7 @@ export function AlertsPanel() {
                 <div className="flex flex-wrap items-center gap-2">
                   {n.status === "unread" && <span className="size-1.5 rounded-full bg-action" />}
                   <span className={n.status === "unread" ? "font-semibold text-fg" : "text-fg-muted"}>{n.title}</span>
-                  {n.channel === "telegram" && <span className="rounded-control border border-line-strong px-1.5 py-0.5 text-micro uppercase tracking-wide text-fg-dim">{t("sentOnTelegram")}</span>}
+                  {n.channel === "telegram" && <span className="rounded-control border border-line-strong px-1.5 py-0.5 text-micro u-label text-fg-dim">{t("sentOnTelegram")}</span>}
                   <span className="nums ml-auto text-label text-fg-dim">{when(n.createdAt)}</span>
                 </div>
                 <pre className="whitespace-pre-wrap font-sans text-tiny leading-relaxed text-fg-muted">{n.body}</pre>

@@ -49,7 +49,7 @@ function Report({ p, lang }: { p: WeeklyPayload; lang: Lang }) {
       <div className="grid grid-cols-3 gap-px overflow-hidden rounded-control border border-line bg-surface-3">
         {p.windows.map((w) => (
           <div key={w.days} className="bg-surface-1 px-3 py-2.5">
-            <div className="text-micro uppercase tracking-wider text-fg-dim">{c.windows} · {c.days.replace("{d}", String(w.days))}</div>
+            <div className="text-micro u-label text-fg-dim">{c.windows} · {c.days.replace("{d}", String(w.days))}</div>
             <div className={`nums text-lead font-semibold ${w.roi === null ? "text-fg-dim" : w.roi >= 0 ? "text-focus" : "text-warn"}`}>{w.bets ? pct(w.roi) : "—"}</div>
             <div className="nums text-micro text-fg-dim">{w.bets ? `${w.bets} ${c.bets} · ${money(w.staked, lang)} ${c.staked}` : c.noBets}</div>
           </div>
@@ -57,25 +57,25 @@ function Report({ p, lang }: { p: WeeklyPayload; lang: Lang }) {
       </div>
       <dl className="grid gap-2 text-tiny sm:grid-cols-2">
         <div className={`rounded-control border p-2.5 ${p.chasing.length ? "border-neg bg-neg-tint" : "border-line"}`} data-testid="report-chasing">
-          <dt className="text-micro font-semibold uppercase tracking-wider text-fg-dim">{c.chasing}</dt>
+          <dt className="text-micro u-label text-fg-dim">{c.chasing}</dt>
           <dd className={p.chasing.length ? "text-neg" : "text-fg-muted"}>{p.chasing.length ? c.chasingLead(p.chasing.length) : c.chasingNone}</dd>
           {p.chasing.slice(0, 5).map((x, i) => <dd key={i} className="nums text-tiny text-fg-dim">{formatDate(x.at, lang)} {formatTime(x.at, lang)} — {c.chasingItem.replace("{stake}", money(x.stake, lang)).replace("{m}", String(x.minutesAfterLoss)).replace("{prev}", money(x.previousStake, lang))}</dd>)}
         </div>
         <div className="rounded-control border border-line p-2.5">
-          <dt className="text-micro font-semibold uppercase tracking-wider text-fg-dim">{c.kelly}</dt>
+          <dt className="text-micro u-label text-fg-dim">{c.kelly}</dt>
           <dd className="text-fg-muted">{p.kelly.share === null ? c.kellyNone : c.kellyText(p.kelly.over, p.kelly.sized)}</dd>
         </div>
         <div className="rounded-control border border-line p-2.5">
-          <dt className="text-micro font-semibold uppercase tracking-wider text-fg-dim">{c.late}</dt>
+          <dt className="text-micro u-label text-fg-dim">{c.late}</dt>
           <dd className="text-fg-muted">{p.lateNight.late ? c.lateText(p.lateNight.late, Math.round((p.lateNight.share ?? 0) * 100)) : c.lateNone}</dd>
         </div>
         <div className="rounded-control border border-line p-2.5">
-          <dt className="text-micro font-semibold uppercase tracking-wider text-fg-dim">{c.long}</dt>
+          <dt className="text-micro u-label text-fg-dim">{c.long}</dt>
           <dd className="text-fg-muted">{p.longShots.count ? c.longText(p.longShots.count, Math.round((p.longShots.stakeShare ?? 0) * 100)) : c.longNone}</dd>
           {p.longShots.expectedCost !== null && p.longShots.expectedCost > 0 && <dd className="text-tiny text-fg-dim">{c.longCost(money(p.longShots.expectedCost, lang))}</dd>}
         </div>
         <div className="rounded-control border border-line p-2.5 sm:col-span-2">
-          <dt className="text-micro font-semibold uppercase tracking-wider text-fg-dim">{c.clv}</dt>
+          <dt className="text-micro u-label text-fg-dim">{c.clv}</dt>
           <dd className="text-fg-muted">{p.clv === null ? c.clvNone : pct(p.clv)}</dd>
         </div>
       </dl>

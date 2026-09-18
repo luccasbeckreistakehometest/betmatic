@@ -46,7 +46,7 @@ export function LeaderboardPanel() {
               {data.rows.map((r) => (
                 <tr key={r.handle} className={r.you ? "bg-action" : ""} data-testid="ranking-row" data-you={r.you ? "1" : "0"}>
                   <td className="nums py-2 text-fg-dim">{r.position}</td>
-                  <td className="py-2 text-fg">@{r.handle}{r.you && <span className="ml-2 rounded-control border border-pos px-1.5 py-0.5 text-micro uppercase tracking-wide text-pos">{t("rankingYou")}</span>}</td>
+                  <td className="py-2 text-fg">@{r.handle}{r.you && <span className="ml-2 rounded-control border border-pos px-1.5 py-0.5 text-micro u-label text-pos">{t("rankingYou")}</span>}</td>
                   <td className="nums py-2 text-right text-fg-muted">{r.won}W {r.lost}L</td>
                   <td className={`nums py-2 text-right font-semibold ${tone(r.roi)}`}>{pct(r.roi)}</td>
                   <td className={`nums py-2 text-right ${tone(r.units)}`}>{units(r.units)}</td>

@@ -41,7 +41,7 @@ export function TipsterFunnel({ lang }: { lang: Lang }) {
   return (
     <MarketingPage lang={lang} langHrefs={{ pt: "/raio-x-tipster", en: "/tipster-audit" }} wide>
       <section className="text-fg" data-testid="tipster-funnel">
-        <p className="text-label uppercase tracking-[0.18em] text-pos">{c.eyebrow}</p>
+        <p className="text-label u-label text-fg-dim">{c.eyebrow}</p>
         <h1 className="mt-2 max-w-3xl text-h1 font-semibold tracking-tight sm:text-h1">{c.title}</h1>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-fg-muted">{c.sub}</p>
         <div className="mt-6 flex flex-wrap items-center gap-4">

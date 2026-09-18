@@ -83,7 +83,7 @@ export function PlayerDeepDive({ athleteId, gameId }: { athleteId: string; gameI
         <Link href={{ pathname: `/app/game/${profile.game.id}`, query: { sport: profile.sportKey, lang } }} className="w-fit text-tiny text-fg-dim hover:text-fg-muted">← {c.back}</Link>
       )}
       <header className="rounded-panel border border-line bg-surface-1 p-(--panel-p)">
-        <p className="text-micro font-semibold uppercase tracking-widest text-pos">{c.title}</p>
+        <p className="text-micro u-label text-pos">{c.title}</p>
         <h1 className="mt-1 text-lead font-semibold tracking-tight text-fg" data-testid="player-name">{profile.name}</h1>
         <p className="text-tiny text-fg-dim">{[profile.teamAbbr, profile.position, profile.game ? `${profile.game.matchup} · ${formatDateTime(profile.game.startsAt, lang)}` : null].filter(Boolean).join(" · ")}</p>
         {load.data.access.limit !== null && <p className="mt-1.5 text-label text-warn/90">{c.freeLeft}</p>}
@@ -119,7 +119,7 @@ export function PlayerDeepDive({ athleteId, gameId }: { athleteId: string; gameI
             <button key={w} type="button" onClick={() => setWindowSize(w)} aria-pressed={windowSize === w} className={`rounded-control px-1.5 py-0.5 ${windowSize === w ? "bg-surface-3 text-fg" : "hover:text-fg-muted"}`}>{w === 10 ? c.last10 : w === 20 ? c.last20 : c.all}</button>
           ))}
         </div>
-        <h2 className="mb-1.5 mt-4 text-micro font-semibold uppercase tracking-wider text-fg-dim">{c.rates}</h2>
+        <h2 className="mb-1.5 mt-4 text-micro u-label text-fg-dim">{c.rates}</h2>
         <RatesGrid table={table} c={c} />
         <p className="mt-1.5 text-label text-fg-dim">{c.push}</p>
       </Panel>

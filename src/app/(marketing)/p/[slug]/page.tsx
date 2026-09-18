@@ -76,7 +76,7 @@ export default async function TicketPage({ params, searchParams }: { params: Pro
           <span className="nums"><span className="text-fg-dim">odd:</span> {formatDecimal(e.combinedDecimal)}</span>
           <span className="nums"><span className="text-fg-dim">{c.predicted}:</span> {(e.modelledProbability * 100).toFixed(0)}%</span>
         </div>
-        <h2 className="mt-8 text-label uppercase tracking-wider text-fg-dim">{c.legs}</h2>
+        <h2 className="mt-8 text-label u-label text-fg-dim">{c.legs}</h2>
         <ul className="mt-2 divide-y divide-line rounded-panel border border-line">
           {e.legs.map((l, i) => (
             <li key={i} className="flex items-start gap-3 px-4 py-3 text-base">

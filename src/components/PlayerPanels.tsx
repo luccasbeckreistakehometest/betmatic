@@ -16,7 +16,7 @@ export function RateCell({ label, rate, c }: { label: string; rate: Rate; c: Pla
   const tone = !rate.of ? "text-fg-dim" : rate.pct >= 0.6 ? "text-pos" : rate.pct >= 0.45 ? "text-warn" : "text-neg";
   return (
     <div className="bg-surface-1 px-2 py-2 text-center">
-      <div className="text-micro uppercase tracking-wider text-fg-dim">{label}</div>
+      <div className="text-micro u-label text-fg-dim">{label}</div>
       <div className={`nums text-base font-semibold ${tone}`}>{pctText(rate)}</div>
       <div className="nums text-micro text-fg-dim">{rate.of ? `${rate.hits}/${rate.of}` : c.noSample}</div>
     </div>

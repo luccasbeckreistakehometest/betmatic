@@ -281,7 +281,7 @@ function LineupBanner({ alerts, lang }: { alerts: LegAlertView[]; lang: "pt" | "
   }
   return (
     <div className="mb-3 rounded-control border border-neg bg-neg-tint px-3 py-2.5" data-testid="lineup-banner">
-      <p className="text-micro font-semibold uppercase tracking-wider text-neg">{lang === "pt" ? "Escalação" : "Lineup"}</p>
+      <p className="text-micro u-label text-neg">{lang === "pt" ? "Escalação" : "Lineup"}</p>
       <ul className="mt-1 flex flex-col gap-0.5 text-tiny text-fg">
         {[...byPlayer].map(([player, v]) => (
           <li key={player}>

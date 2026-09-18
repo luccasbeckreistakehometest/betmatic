@@ -37,7 +37,7 @@ export function DeepSlipTable({ ctx, lang, sportKey }: { ctx: DeepContext; lang:
             <div className="flex flex-wrap items-baseline gap-2">
               <span className="nums text-micro text-fg-faint">{l.index + 1}</span>
               <span className="font-medium text-fg">{l.selection}</span>
-              <span className="rounded-control bg-surface-3 px-1.5 py-0.5 text-micro uppercase tracking-wide text-fg-muted">{c.kind[l.kind]}</span>
+              <span className="rounded-control bg-surface-3 px-1.5 py-0.5 text-micro u-label text-fg-muted">{c.kind[l.kind]}</span>
               {l.matchup && <span className="text-label text-fg-dim">{l.matchup}</span>}
             </div>
             {l.kind === "unknown" ? (
@@ -57,7 +57,7 @@ export function DeepSlipTable({ ctx, lang, sportKey }: { ctx: DeepContext; lang:
         ))}
       </ul>
       <div className="mt-2 border-t border-line pt-2" data-testid="deep-flags">
-        <h3 className="text-micro font-semibold uppercase tracking-wider text-fg-dim">{c.flags}</h3>
+        <h3 className="text-micro u-label text-fg-dim">{c.flags}</h3>
         {ctx.flags.length ? (
           <ul className="mt-1 flex flex-col gap-1">{ctx.flags.map((f, i) => <li key={i} className="text-tiny text-warn">{f}</li>)}</ul>
         ) : (

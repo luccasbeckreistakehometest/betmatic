@@ -120,15 +120,15 @@ export function SlipScanner({ lang, sportKey: initialSport, onSaved }: { lang: L
             <p className="text-tiny text-fg-dim">{c.reviewHint}</p>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-            <label className="text-micro uppercase tracking-wider text-fg-dim">{c.book}<input className={field} value={draft.book} onChange={(e) => setDraft({ ...draft, book: e.target.value })} /></label>
-            <label className="text-micro uppercase tracking-wider text-fg-dim">{c.type}
+            <label className="text-micro u-label text-fg-dim">{c.book}<input className={field} value={draft.book} onChange={(e) => setDraft({ ...draft, book: e.target.value })} /></label>
+            <label className="text-micro u-label text-fg-dim">{c.type}
               <select className={field} value={draft.betType ?? ""} onChange={(e) => setDraft({ ...draft, betType: (e.target.value || null) as Draft["betType"] })}>
                 <option value="">—</option>{Object.entries(c.types).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </select>
             </label>
-            <label className="text-micro uppercase tracking-wider text-fg-dim">{c.stake}<input className={`${field} nums`} inputMode="decimal" value={draft.stake} onChange={(e) => setDraft({ ...draft, stake: e.target.value })} data-testid="scan-stake" /></label>
-            <label className="text-micro uppercase tracking-wider text-fg-dim">{c.total}<input className={`${field} nums`} inputMode="decimal" value={draft.totalOdds} onChange={(e) => setDraft({ ...draft, totalOdds: e.target.value })} data-testid="scan-total" /></label>
-            <label className="text-micro uppercase tracking-wider text-fg-dim">{c.ret}<input className={`${field} nums`} inputMode="decimal" value={draft.potentialReturn} onChange={(e) => setDraft({ ...draft, potentialReturn: e.target.value })} /></label>
+            <label className="text-micro u-label text-fg-dim">{c.stake}<input className={`${field} nums`} inputMode="decimal" value={draft.stake} onChange={(e) => setDraft({ ...draft, stake: e.target.value })} data-testid="scan-stake" /></label>
+            <label className="text-micro u-label text-fg-dim">{c.total}<input className={`${field} nums`} inputMode="decimal" value={draft.totalOdds} onChange={(e) => setDraft({ ...draft, totalOdds: e.target.value })} data-testid="scan-total" /></label>
+            <label className="text-micro u-label text-fg-dim">{c.ret}<input className={`${field} nums`} inputMode="decimal" value={draft.potentialReturn} onChange={(e) => setDraft({ ...draft, potentialReturn: e.target.value })} /></label>
           </div>
           <ul className="flex flex-col gap-2">
             {draft.legs.map((l, i) => (

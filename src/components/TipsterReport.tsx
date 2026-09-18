@@ -27,7 +27,7 @@ export function TipsterReport({ report, picks, lang, onDelete }: { report: Audit
           [c.total, String(report.total)], [c.verifiable, pct(report.verifiableShare)], [c.hit, pct(report.hitRate)],
           [c.roi, pct(report.roi, true)], [c.run_, String(report.longestLosingRun)], [c.avgOdds, report.averageOdds ? report.averageOdds.toFixed(2).replace(".", lang === "pt" ? "," : ".") : "—"],
         ].map(([k, v]) => (
-          <div key={k} className="bg-surface-1 px-3 py-2.5"><div className="text-micro uppercase tracking-wider text-fg-dim">{k}</div><div className="nums text-lead font-semibold text-fg">{v}</div></div>
+          <div key={k} className="bg-surface-1 px-3 py-2.5"><div className="text-micro u-label text-fg-dim">{k}</div><div className="nums text-lead font-semibold text-fg">{v}</div></div>
         ))}
       </div>
       {decided > 0 && decided < 20 && <p className="text-tiny text-fg-dim">{c.smallSample}</p>}
@@ -38,7 +38,7 @@ export function TipsterReport({ report, picks, lang, onDelete }: { report: Audit
         {report.total > report.verifiable && <li className="text-fg-muted">{c.unverifiable(report.total - report.verifiable)}</li>}
       </ul>
       <div data-testid="tipster-flags">
-        <h4 className="text-micro font-semibold uppercase tracking-wider text-fg-dim">{c.flags}</h4>
+        <h4 className="text-micro u-label text-fg-dim">{c.flags}</h4>
         {report.flags.length ? (
           <ul className="mt-1 flex flex-wrap gap-1.5">{report.flags.map((f) => <li key={f} className="rounded-control bg-neg-tint px-2 py-0.5 text-tiny text-neg">{RED_FLAGS.find((r) => r.key === f)?.label[lang] ?? f}</li>)}</ul>
         ) : <p className="mt-1 text-tiny text-fg-dim">{c.noFlags}</p>}

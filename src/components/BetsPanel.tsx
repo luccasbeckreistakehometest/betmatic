@@ -4,9 +4,10 @@ import { track } from "@/lib/track";
 import { useState } from "react";
 import Link from "next/link";
 
-import { Chip, Empty } from "@/components/ui";
+import { Badge, Chip, Empty, Odds } from "@/components/ui";
+import { formatPercent as pctOf } from "@/lib/format";
 import { groupAlternatives, legDiff } from "@/lib/bets/alternatives-view";
-import { kellyFraction, formatDecimal, formatPercent, getBand } from "@/lib/odds";
+import { kellyFraction, formatDecimal, getBand } from "@/lib/odds";
 import { makeT, type Lang } from "@/lib/i18n";
 import type { BetLeg, BetSlate, BetSuggestion } from "@/lib/types";
 
@@ -37,26 +38,21 @@ export function expectedLosers(modelledProbability: number): number {
   return Math.round(100 * (1 - Math.min(Math.max(modelledProbability, 0), 1)));
 }
 
-function EdgeTag({ edgePct }: { edgePct: number | undefined }) {
+/** EV is a measurement, not a result: it is set like every other number and carries its own sign.
+ *  Red belongs to a settled loss (§6.2); a negative edge is said by the minus and by the risk line. */
+function EdgeTag({ edgePct, lang }: { edgePct: number | undefined; lang: Lang }) {
   if (edgePct === undefined || !Number.isFinite(edgePct))
     return (
-      <span
-        className="rounded-control bg-surface-3 px-1.5 py-0.5 text-micro font-medium text-fg-dim"
-        title="Alguma perna está sem preço confirmado, então o retorno da múltipla não é calculável"
-      >
-        EV n/d
+      <span className="nums text-micro text-fg-dim" title="Alguma perna está sem preço confirmado, então o retorno da múltipla não é calculável">
+        EV —
       </span>
     );
-  const positive = edgePct > 0;
   return (
     <span
-      className={`nums rounded-control px-1.5 py-0.5 text-micro font-semibold ${
-        positive ? "bg-action text-pos" : "bg-neg-tint text-neg"
-      }`}
-      title={positive ? "Modelled probability beats the price" : "Price is worse than the modelled chance"}
+      className="nums text-micro text-fg-muted"
+      title={edgePct > 0 ? "Modelled probability beats the price" : "Price is worse than the modelled chance"}
     >
-      EV {positive ? "+" : ""}
-      {edgePct.toFixed(1)}%
+      EV {pctOf(edgePct / 100, lang, { signed: true })}
     </span>
   );
 }
@@ -85,44 +81,35 @@ function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [] }:
   }
 
   return (
-    <li className="rounded-panel border border-line bg-surface-2">
+    <li className="rounded-panel border border-line bg-surface-1">
       <div className="flex flex-wrap items-center gap-2 border-b border-line px-3.5 py-2.5">
         <Chip tone={bet.confidence}>{bet.kind === "parlay" ? t("parlay") : t("single")}</Chip>
         <span className="text-sm font-semibold text-fg">{bet.title}</span>
-        <span
-          className={`nums rounded-control px-1.5 py-0.5 text-micro font-semibold ${
-            bet.evidenceScore >= 70
-              ? "bg-action text-pos"
-              : bet.evidenceScore >= 45
-                ? "bg-warn-tint text-warn"
-                : "bg-neg-tint text-neg"
-          }`}
-          title={bet.evidenceNotes.join(" · ")}
-        >
-          {lang === "pt" ? "confiança" : "confidence"} {bet.evidenceScore}
+        <span title={bet.evidenceNotes.join(" · ")}>
+          <Badge tone={bet.evidenceScore >= 70 ? "neutral" : bet.evidenceScore >= 45 ? "warn" : "neg"}>
+            {lang === "pt" ? "confiança" : "confidence"} {bet.evidenceScore}
+          </Badge>
         </span>
         <span className="ml-auto flex items-center gap-2">
-          <EdgeTag edgePct={bet.edgePct} />
-          <span className="nums rounded-control bg-action px-2 py-0.5 text-sm font-bold text-focus">
-            {formatDecimal(bet.combinedDecimal)}
-          </span>
-          <span className="nums text-label text-fg-dim">{bet.combinedAmerican}</span>
+          <EdgeTag edgePct={bet.edgePct} lang={lang} />
+          {/* Never the multiplier alone: the primitive refuses to render half the pair (§11.4). */}
+          <Odds decimal={bet.combinedDecimal} probability={bet.modelledProbability} lang={lang} className="text-sm" />
         </span>
       </div>
 
       <div className="px-3.5 py-3">
         <div>
-          <h4 className="text-micro font-semibold uppercase tracking-wider text-fg-dim">{t("background")}</h4>
+          <h4 className="text-micro u-label text-fg-dim">{t("background")}</h4>
           <p className="mt-1 text-tiny leading-relaxed text-fg-muted">{bet.background}</p>
         </div>
 
-        <ol className="mt-3 flex flex-col gap-2">
+        <ol className="mt-3 flex flex-col border-t border-line">
           {bet.legs.map((leg, i) => (
-            <li key={i} className="rounded-control border border-line bg-surface-1 p-2.5">
+            <li key={i} className="border-b border-line py-2.5">
               <div className="flex flex-wrap items-baseline gap-2">
                 <span className="nums text-micro text-fg-faint">{i + 1}</span>
                 {leg.athleteId && sportKey ? (
-                  <Link href={{ pathname: `/app/player/${leg.athleteId}`, query: { sport: sportKey, lang, ...(gameId ? { game: gameId } : {}) } }} className="text-tiny font-medium text-fg underline decoration-line-control underline-offset-2 hover:decoration-pos" data-testid="leg-player-link">
+                  <Link href={{ pathname: `/app/player/${leg.athleteId}`, query: { sport: sportKey, lang, ...(gameId ? { game: gameId } : {}) } }} className="text-tiny font-medium text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg" data-testid="leg-player-link">
                     {leg.selection}
                   </Link>
                 ) : (
@@ -134,7 +121,7 @@ function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [] }:
                   <span key={a.kind} className="rounded-control bg-neg-tint px-1.5 py-0.5 text-micro font-semibold text-neg" data-testid="leg-alert">{ALERT_LABEL[a.kind][lang]}</span>
                 ))}
                 <span className="nums ml-auto text-micro text-fg-dim">
-                  {formatPercent(leg.fairProbability, 0)}
+                  {pctOf(leg.fairProbability, lang, { digits: 0 })}
                 </span>
               </div>
               {(leg.measured || leg.openOdds) && (
@@ -156,16 +143,16 @@ function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [] }:
           ))}
         </ol>
 
-        <div className="mt-3 grid grid-cols-2 gap-px overflow-hidden rounded-control border border-line bg-surface-3 sm:grid-cols-4">
+        <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 border-y border-line py-2.5 sm:grid-cols-4">
           {[
             [t("combined"), formatDecimal(bet.combinedDecimal)],
-            [t("impliedChance"), formatPercent(bet.impliedProbability, 2)],
-            [t("modelledChance"), formatPercent(bet.modelledProbability, 2)],
-            [t("evLabel"), Number.isFinite(bet.edgePct) ? `${bet.edgePct > 0 ? "+" : ""}${bet.edgePct.toFixed(1)}%` : "—"],
+            [t("impliedChance"), pctOf(bet.impliedProbability, lang, { digits: 2 })],
+            [t("modelledChance"), pctOf(bet.modelledProbability, lang, { digits: 2 })],
+            [t("evLabel"), Number.isFinite(bet.edgePct) ? pctOf(bet.edgePct / 100, lang, { signed: true }) : "—"],
           ].map(([label, value]) => (
-            <div key={label} className="bg-surface-1 px-2 py-1.5 text-center">
-              <div className="text-micro uppercase tracking-wider text-fg-dim">{label}</div>
-              <div className="nums text-tiny text-fg">{value}</div>
+            <div key={label} className="flex flex-col gap-1">
+              <span className="text-micro u-label text-fg-dim">{label}</span>
+              <span className="nums text-sm text-fg">{value}</span>
             </div>
           ))}
         </div>
@@ -179,20 +166,20 @@ function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [] }:
             ))}
           </ul>
         )}
-        <p className="mt-2.5 text-tiny leading-relaxed text-warn/90">
+        <p className="mt-2.5 border-l-2 border-warn pl-2.5 text-tiny leading-relaxed text-warn">
           <span className="font-medium">{t("risk")}: </span>
           {bet.riskNote}
         </p>
         {longshot && (
           <p className="mt-1.5 text-label leading-relaxed text-fg-dim">
-            {band.label[lang]} · {formatPercent(bet.impliedProbability, 2)} — {t("longshotWarning")}
+            {band.label[lang]} · {pctOf(bet.impliedProbability, lang, { digits: 2 })} — {t("longshotWarning")}
           </p>
         )}
         {bet.combinedDecimal >= 50 && (
           <p className="mt-1.5 text-tiny font-medium leading-relaxed text-warn" data-testid="expected-losers">
             {lang === "pt"
-              ? `Chance real ${formatPercent(bet.modelledProbability, 2)}: em 100 bilhetes assim, espere perder ~${expectedLosers(bet.modelledProbability)}.`
-              : `Real chance ${formatPercent(bet.modelledProbability, 2)}: out of 100 tickets like this, expect to lose ~${expectedLosers(bet.modelledProbability)}.`}
+              ? `Chance real ${pctOf(bet.modelledProbability, lang, { digits: 2 })}: em 100 bilhetes assim, espere perder ~${expectedLosers(bet.modelledProbability)}.`
+              : `Real chance ${pctOf(bet.modelledProbability, lang, { digits: 2 })}: out of 100 tickets like this, expect to lose ~${expectedLosers(bet.modelledProbability)}.`}
           </p>
         )}
         {alternatives.length > 0 && <Alternatives main={bet} alternatives={alternatives} lang={lang} gameId={gameId} sportKey={sportKey} flagged={alerts} />}
@@ -202,7 +189,7 @@ function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [] }:
           {kelly > 0 && <span className="text-fg-muted">{lang === "pt" ? "stake sugerido" : "suggested stake"}: <span className="nums text-fg">{(kelly * 100).toFixed(1)}%</span> {lang === "pt" ? "da banca" : "of bankroll"} <span className="text-fg-faint">(¼ Kelly)</span></span>}
           {gameId && (
             <span className="ml-auto flex items-center gap-2">
-              {saved === "saved" ? <span className="text-focus">✓ {t("saved")}</span> : saved === "error" ? <span className="text-warn">{lang === "pt" ? "entre para salvar" : "sign in to save"}</span> : saved === "limit" ? <span className="text-warn" data-testid="ticket-limit">{limitNote}</span> : saved === "paused" ? <span className="text-warn" data-testid="ticket-paused">{t("pausedHint")}</span> : (
+              {saved === "saved" ? <span className="text-pos">✓ {t("saved")}</span> : saved === "error" ? <span className="text-warn">{lang === "pt" ? "entre para salvar" : "sign in to save"}</span> : saved === "limit" ? <span className="text-warn" data-testid="ticket-limit">{limitNote}</span> : saved === "paused" ? <span className="text-warn" data-testid="ticket-paused">{t("pausedHint")}</span> : (
                 <>
                   <input aria-label={lang === "pt" ? "Valor apostado (R$)" : "Stake (R$)"} value={stake} onChange={(e) => setStake(e.target.value)} placeholder={t("stake")} inputMode="decimal" className="w-20 inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint" data-testid="ticket-stake" />
                   <button onClick={addToBankroll} disabled={!(Number(stake) > 0) || saved === "saving"} className="rounded-control border border-line-strong px-2 py-1 text-fg-muted hover:border-line-control hover:text-fg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="ticket-add">{t("addToBankroll")}</button>
@@ -227,7 +214,7 @@ function Alternatives({ main, alternatives, lang, flagged }: { main: BetSuggesti
   return (
     <details className="group mt-3 rounded-control border border-line-strong bg-surface-1" data-testid="alternatives" open={flaggedPlayers.size > 0} onToggle={(e) => { if (e.currentTarget.open) track("alt_expanded", { count: alternatives.length }); }}>
       <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-tiny font-medium text-fg">
-        <span className="text-pos transition-colors duration-(--dur-1) ease-(--ease-out) group-open:rotate-90">›</span>
+        <span className="text-fg-dim transition-transform duration-(--dur-1) ease-(--ease-out) group-open:rotate-90">›</span>
         {alternatives.length === 1 ? (lang === "pt" ? "1 alternativa" : "1 alternative") : lang === "pt" ? `${alternatives.length} alternativas` : `${alternatives.length} alternatives`}
         <span className="text-fg-dim">· {lang === "pt" ? "se essa cair, vai de…" : "if this one breaks, go with…"}</span>
       </summary>

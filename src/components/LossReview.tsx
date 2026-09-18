@@ -40,21 +40,21 @@ export function LossReview({ slug, lang, compact = false }: { slug: string; lang
       {data?.review ? (
         <>
           <div className="flex flex-wrap items-center gap-2">
-            <span className={`rounded-full border px-2.5 py-0.5 text-label font-semibold uppercase tracking-wider ${verdictTone[data.review.verdict]}`} data-testid="review-verdict">{verdictLabel[data.review.verdict]}</span>
+            <span className={`rounded-full border px-2.5 py-0.5 text-label u-label ${verdictTone[data.review.verdict]}`} data-testid="review-verdict">{verdictLabel[data.review.verdict]}</span>
             {data.createdAt && <span className="text-label text-fg-dim">{t("reviewCached")} {formatDate(data.createdAt, lang, { year: true })}</span>}
           </div>
-          <div><h4 className="text-micro font-semibold uppercase tracking-wider text-fg-dim">{t("reviewAssumed")}</h4><p className="mt-1 leading-relaxed text-fg-muted">{data.review.assumed}</p></div>
-          <div><h4 className="text-micro font-semibold uppercase tracking-wider text-fg-dim">{t("reviewHappened")}</h4><p className="mt-1 leading-relaxed text-fg-muted">{data.review.happened}</p></div>
-          <div><h4 className="text-micro font-semibold uppercase tracking-wider text-fg-dim">{t("reviewVerdict")}</h4><p className="mt-1 leading-relaxed text-fg-muted">{data.review.reasoning}</p></div>
+          <div><h4 className="text-micro u-label text-fg-dim">{t("reviewAssumed")}</h4><p className="mt-1 leading-relaxed text-fg-muted">{data.review.assumed}</p></div>
+          <div><h4 className="text-micro u-label text-fg-dim">{t("reviewHappened")}</h4><p className="mt-1 leading-relaxed text-fg-muted">{data.review.happened}</p></div>
+          <div><h4 className="text-micro u-label text-fg-dim">{t("reviewVerdict")}</h4><p className="mt-1 leading-relaxed text-fg-muted">{data.review.reasoning}</p></div>
           {data.review.keyLeg && <p className="text-tiny text-fg-muted"><span className="font-medium text-fg-muted">{t("reviewKeyLeg")}:</span> {data.review.keyLeg}</p>}
           {data.review.watchNext.length > 0 && (
-            <div><h4 className="text-micro font-semibold uppercase tracking-wider text-fg-dim">{t("reviewWatch")}</h4><ul className="mt-1 list-disc pl-4 text-fg-muted">{data.review.watchNext.map((w, i) => <li key={i} className="leading-relaxed">{w}</li>)}</ul></div>
+            <div><h4 className="text-micro u-label text-fg-dim">{t("reviewWatch")}</h4><ul className="mt-1 list-disc pl-4 text-fg-muted">{data.review.watchNext.map((w, i) => <li key={i} className="leading-relaxed">{w}</li>)}</ul></div>
           )}
         </>
       ) : null}
       {legs.length > 0 && (
         <div>
-          <h4 className="text-micro font-semibold uppercase tracking-wider text-fg-dim">{t("reviewHappened")}</h4>
+          <h4 className="text-micro u-label text-fg-dim">{t("reviewHappened")}</h4>
           <ul className="nums mt-1 space-y-0.5 text-tiny text-fg-muted" data-testid="review-legs">{legs.map((l, i) => <li key={i}>{l}</li>)}</ul>
         </div>
       )}

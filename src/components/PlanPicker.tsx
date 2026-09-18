@@ -65,7 +65,7 @@ export function PlanPicker({ lang, signedIn, currentPlanId, paymentsReady, initi
   return (
     <div className="flex flex-col gap-10" data-testid="plan-picker">
       <div className="flex flex-wrap items-center gap-3">
-        <span className="text-tiny uppercase tracking-wider text-fg-dim" id="period-label">{c.period}</span>
+        <span className="text-tiny u-label text-fg-dim" id="period-label">{c.period}</span>
         <div role="radiogroup" aria-labelledby="period-label" className="flex flex-wrap overflow-hidden rounded-control border border-line-strong">
           {PERIODS.map((p) => (
             <button

@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useNavState } from "@/components/Controls";
-import { Empty, Panel } from "@/components/ui";
-import { formatDecimal, formatPercent } from "@/lib/odds";
+import { Empty, Odds, Panel } from "@/components/ui";
+import { formatDecimal } from "@/lib/odds";
+import { formatPercent as pctOf } from "@/lib/format";
 import type { CustomTicketView } from "@/lib/bets/custom-writeup";
+import type { Lang } from "@/lib/i18n";
 
 interface Meta {
   signedIn: boolean; coins: number; price: number; aiReady: boolean;
@@ -98,7 +100,7 @@ export function CustomParlay() {
         onBuild={() => void build()}
       />
       {busy && <Empty>{c.running}</Empty>}
-      {result && <CustomResults c={c} result={result} target={target} />}
+      {result && <CustomResults c={c} lang={lang} result={result} target={target} />}
     </div>
   );
 }
@@ -131,14 +133,14 @@ function CustomForm(props: {
           </select>
         </label>
         <div>
-          <p className="text-label uppercase tracking-wider text-fg-dim">{c.markets} <span className="normal-case tracking-normal">({state.markets.length ? state.markets.length : c.allMarkets})</span></p>
+          <p className="text-label u-label text-fg-dim">{c.markets} <span className="normal-case tracking-normal">({state.markets.length ? state.markets.length : c.allMarkets})</span></p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {(meta?.markets ?? []).map((m) => <button key={m.key} type="button" onClick={() => set.toggleMarket(m.key)} className={chip(state.markets.includes(m.key))}>{m.label[lang]}</button>)}
           </div>
         </div>
         {games.length > 0 && (
           <div>
-            <p className="text-label uppercase tracking-wider text-fg-dim">{c.games} <span className="normal-case tracking-normal">({state.gameIds.length ? state.gameIds.length : c.allGames})</span></p>
+            <p className="text-label u-label text-fg-dim">{c.games} <span className="normal-case tracking-normal">({state.gameIds.length ? state.gameIds.length : c.allGames})</span></p>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {games.map((g) => <button key={g.id} type="button" onClick={() => set.toggleGame(g.id)} className={chip(state.gameIds.includes(g.id))}>{g.away.displayName} @ {g.home.displayName}</button>)}
             </div>
@@ -161,25 +163,25 @@ function CustomForm(props: {
   );
 }
 
-function CustomResults({ c, result, target }: { c: Copy; result: Result; target: number }) {
+function CustomResults({ c, lang, result, target }: { c: Copy; lang: Lang; result: Result; target: number }) {
   if (!result.reachable) {
     const text = result.reason === "empty_pool" ? c.empty
       : result.reason === "too_high" || result.reason === "too_low"
         ? c.unreachable.replace("{target}", `${target}x`).replace("{nearest}", result.nearest ? formatDecimal(result.nearest) : "—")
         : result.message ?? c.failed;
-    return <p className="rounded-control border border-warn bg-warn-tint px-3 py-2 text-sm text-warn" data-testid="custom-unreachable">{text}</p>;
+    return <p className="border-l-2 border-warn bg-warn-tint px-3 py-2 text-sm text-warn" data-testid="custom-unreachable">{text}</p>;
   }
   return (
     <div className="flex flex-col gap-3" data-testid="custom-results">
       <p className="text-tiny text-fg-dim">
         {c.spent} <span className="nums">{result.coinsSpent}</span> {c.coins}{result.cached ? ` · ${c.cached}` : ""}{result.aiWritten === false ? ` · ${c.template}` : ""}
       </p>
-      {result.tickets.map((t, i) => <CustomTicket key={i} c={c} ticket={t} index={i} slipId={result.slipId} />)}
+      {result.tickets.map((t, i) => <CustomTicket key={i} c={c} lang={lang} ticket={t} index={i} slipId={result.slipId} />)}
     </div>
   );
 }
 
-function CustomTicket({ c, ticket, index, slipId }: { c: Copy; ticket: CustomTicketView; index: number; slipId?: string }) {
+function CustomTicket({ c, lang, ticket, index, slipId }: { c: Copy; lang: Lang; ticket: CustomTicketView; index: number; slipId?: string }) {
   const [stake, setStake] = useState("");
   const [state, setState] = useState<"idle" | "saving" | "saved" | "limit" | "paused" | "error">("idle");
   async function save() {
@@ -188,35 +190,35 @@ function CustomTicket({ c, ticket, index, slipId }: { c: Copy; ticket: CustomTic
     setState(r.ok ? "saved" : r.status === 422 ? "limit" : r.status === 423 ? "paused" : "error");
   }
   return (
-    <article className="rounded-panel border border-line bg-surface-2" data-testid="custom-ticket">
+    <article className="rounded-panel border border-line bg-surface-1" data-testid="custom-ticket">
       <header className="flex flex-wrap items-center gap-2 border-b border-line px-3.5 py-2.5">
         <span className="text-sm font-semibold text-fg">{ticket.title}</span>
-        <span className="nums ml-auto rounded-control bg-action px-2 py-0.5 text-sm font-bold text-focus">{formatDecimal(ticket.decimal)}</span>
+        <span className="ml-auto"><Odds decimal={ticket.decimal} probability={ticket.fairProbability} lang={lang} className="text-sm" /></span>
       </header>
       <div className="px-3.5 py-3">
         <p className="text-tiny leading-relaxed text-fg-muted">{ticket.background}</p>
-        <ol className="mt-2.5 flex flex-col gap-1.5">
+        <ol className="mt-2.5 flex flex-col border-t border-line">
           {ticket.legs.map((l) => (
-            <li key={l.key} className="rounded-control border border-line bg-surface-1 p-2">
+            <li key={l.key} className="border-b border-line py-2">
               <div className="flex flex-wrap items-baseline gap-2">
                 <span className="text-tiny font-medium text-fg">{l.selection}</span>
                 <span className="nums text-tiny text-fg-muted">{l.decimal.toFixed(2)}</span>
                 <span className="text-label text-fg-dim">{l.matchup}</span>
-                <span className="nums ml-auto text-micro text-fg-dim">{formatPercent(l.fairProbability, 0)}</span>
+                <span className="nums ml-auto text-micro text-fg-dim">{pctOf(l.fairProbability, lang, { digits: 0 })}</span>
               </div>
               {l.note && <p className="mt-0.5 text-tiny text-fg-dim">{l.note}</p>}
             </li>
           ))}
         </ol>
-        <div className="mt-2.5 grid grid-cols-3 gap-px overflow-hidden rounded-control border border-line bg-surface-3 text-center">
-          {[[c.chance, formatPercent(ticket.fairProbability, 2)], [c.implied, formatPercent(ticket.impliedProbability, 2)], [c.ev, `${ticket.ev > 0 ? "+" : ""}${(ticket.ev * 100).toFixed(1)}%`]].map(([k, v]) => (
-            <div key={k} className="bg-surface-1 px-2 py-1.5"><div className="text-micro uppercase tracking-wider text-fg-dim">{k}</div><div className="nums text-tiny text-fg">{v}</div></div>
+        <div className="mt-2.5 grid grid-cols-3 gap-x-6 gap-y-3 border-y border-line py-2.5">
+          {[[c.chance, pctOf(ticket.fairProbability, lang, { digits: 2 })], [c.implied, pctOf(ticket.impliedProbability, lang, { digits: 2 })], [c.ev, pctOf(ticket.ev, lang, { signed: true })]].map(([k, v]) => (
+            <div key={k} className="flex flex-col gap-1"><span className="text-micro u-label text-fg-dim">{k}</span><span className="nums text-sm text-fg">{v}</span></div>
           ))}
         </div>
-        <p className="mt-2 text-tiny text-warn/90">{ticket.riskNote}</p>
+        <p className="mt-2.5 border-l-2 border-warn pl-2.5 text-tiny text-warn">{ticket.riskNote}</p>
       </div>
       <footer className="flex flex-wrap items-center gap-2 border-t border-line px-3.5 py-2.5 text-tiny">
-        {state === "saved" ? <span className="text-focus" data-testid="custom-saved">{c.saved}</span> : (
+        {state === "saved" ? <span className="text-pos" data-testid="custom-saved">{c.saved}</span> : (
           <>
             <input value={stake} onChange={(e) => setStake(e.target.value)} placeholder={c.stake} inputMode="decimal" aria-label={c.stake} className="w-20 inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint" data-testid="custom-stake" />
             <button type="button" onClick={() => void save()} disabled={!(Number(stake) > 0) || state === "saving" || !slipId} className="rounded-control border border-line-strong px-2 py-1 text-fg-muted hover:text-fg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="custom-save">{c.save}</button>

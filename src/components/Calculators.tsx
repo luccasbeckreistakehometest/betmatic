@@ -47,14 +47,14 @@ export function Calculators({ lang }: { lang: Lang }) {
 
   return (
     <section className="mx-auto max-w-5xl px-5 py-12">
-      <p className="text-label uppercase tracking-[0.18em] text-pos">{c.eyebrow}</p>
+      <p className="text-label u-label text-fg-dim">{c.eyebrow}</p>
       <h1 className="mt-2 text-h1 font-semibold tracking-tight sm:text-h1">{c.title}</h1>
       <p className="mt-3 text-base text-fg-muted">{c.sub}</p>
       <div className="mt-10 grid gap-5 lg:grid-cols-3">
         <Card title={c.ev} help={c.evHelp}>
           <div className="grid grid-cols-2 gap-3"><Field label={c.odds} value={evOdds} onChange={setEvOdds} testId="ev-odds" /><Field label={c.prob} value={evProb} onChange={setEvProb} testId="ev-prob" /></div>
           <div className="mt-4 rounded-control bg-surface-0 p-4" data-testid="ev-result">
-            <div className="text-micro uppercase tracking-wider text-fg-dim">{c.evResult}</div>
+            <div className="text-micro u-label text-fg-dim">{c.evResult}</div>
             <div className={"nums text-h2 font-semibold " + (ev > 0 ? "text-focus" : ev < 0 ? "text-warn" : "text-fg-muted")}>{Number.isFinite(ev) ? `${ev >= 0 ? "+" : ""}${pct(ev)}` : "—"}</div>
             <div className="mt-1 text-tiny text-fg-dim">{c.implied}: <span className="nums">{pct(impliedProbability(o))}</span> · {c.edge}: <span className="nums">{Number.isFinite(o) ? pct(p - impliedProbability(o)) : "—"}</span></div>
           </div>
@@ -63,7 +63,7 @@ export function Calculators({ lang }: { lang: Lang }) {
           <div className="space-y-2">{legs.map((v, i) => <Field key={i} label={`${c.leg} ${i + 1}`} value={v} onChange={(x) => setLegs(legs.map((l, j) => (j === i ? x : l)))} testId={`leg-${i}`} />)}</div>
           <div className="mt-2 flex gap-2 text-tiny"><button onClick={() => setLegs([...legs, "1.90"])} className="text-fg-muted hover:text-fg">+ {c.leg}</button>{legs.length > 2 && <button onClick={() => setLegs(legs.slice(0, -1))} className="text-fg-dim hover:text-fg">−</button>}</div>
           <div className="mt-4 rounded-control bg-surface-0 p-4" data-testid="parlay-result">
-            <div className="text-micro uppercase tracking-wider text-fg-dim">{c.combined}</div>
+            <div className="text-micro u-label text-fg-dim">{c.combined}</div>
             <div className="nums text-h2 font-semibold">{Number.isFinite(combined) ? formatDecimal(combined) : "—"}</div>
             <div className="mt-1 text-tiny text-fg-dim">{c.chance}: <span className="nums">{pct(impliedProbability(combined))}</span> · {c.hold}: <span className="nums text-warn">{pct(hold)}</span></div>
             <p className="mt-2 text-label text-fg-faint">{c.holdNote}</p>

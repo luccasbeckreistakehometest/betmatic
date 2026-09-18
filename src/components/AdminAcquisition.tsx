@@ -41,7 +41,7 @@ export function AdminAcquisition() {
       {!data ? <p className="text-tiny text-fg-dim">…</p> : (
         <div className="flex flex-col gap-4 text-tiny" data-testid="admin-acquisition">
           <div>
-            <h3 className="mb-1 text-micro font-semibold uppercase tracking-wider text-fg-dim">Visitantes por dia</h3>
+            <h3 className="mb-1 text-micro u-label text-fg-dim">Visitantes por dia</h3>
             {data.visitorsPerDay.length ? (
               <svg viewBox={`0 0 ${Math.max(1, data.visitorsPerDay.length) * 24} 80`} className="h-20 w-full" preserveAspectRatio="none" role="img" aria-label="Visitantes por dia">
                 {data.visitorsPerDay.map((d, i) => <rect key={d.day} x={i * 24 + 3} width={18} y={80 - (d.visitors / top) * 76} height={(d.visitors / top) * 76} rx={2} fill="var(--focus)"><title>{`${d.day}: ${d.visitors}`}</title></rect>)}
@@ -50,7 +50,7 @@ export function AdminAcquisition() {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left" data-testid="acq-funnel">
-              <thead><tr className="text-micro uppercase tracking-wider text-fg-dim"><th className="pb-1">Origem</th><th>Visitantes</th><th>Cadastros</th><th>Abriu jogo</th><th>Salvou</th><th>Pagou</th></tr></thead>
+              <thead><tr className="text-micro u-label text-fg-dim"><th className="pb-1">Origem</th><th>Visitantes</th><th>Cadastros</th><th>Abriu jogo</th><th>Salvou</th><th>Pagou</th></tr></thead>
               <tbody>
                 {data.funnel.map((f) => (
                   <tr key={f.source} className="nums text-fg">
@@ -63,21 +63,21 @@ export function AdminAcquisition() {
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             <div>
-              <h3 className="mb-1 text-micro font-semibold uppercase tracking-wider text-fg-dim">Páginas de jogo mais vistas</h3>
+              <h3 className="mb-1 text-micro u-label text-fg-dim">Páginas de jogo mais vistas</h3>
               {data.topGames.length ? <ul>{data.topGames.map((g) => <li key={g.path} className="nums flex justify-between gap-2"><span className="truncate text-fg-muted">{g.path}</span><span className="text-fg-dim">{g.views} · {g.signups} cad.</span></li>)}</ul> : <p className="text-fg-dim">—</p>}
             </div>
             <div>
-              <h3 className="mb-1 text-micro font-semibold uppercase tracking-wider text-fg-dim">Retorno</h3>
+              <h3 className="mb-1 text-micro u-label text-fg-dim">Retorno</h3>
               <p className="nums text-fg-muted">D1: {data.retention.d1.returned}/{data.retention.d1.eligible} ({pct(data.retention.d1.returned, data.retention.d1.eligible)})</p>
               <p className="nums text-fg-muted">D7: {data.retention.d7.returned}/{data.retention.d7.eligible} ({pct(data.retention.d7.returned, data.retention.d7.eligible)})</p>
             </div>
             <div>
-              <h3 className="mb-1 text-micro font-semibold uppercase tracking-wider text-fg-dim">Uso dos recursos</h3>
+              <h3 className="mb-1 text-micro u-label text-fg-dim">Uso dos recursos</h3>
               {data.features.length ? <ul>{data.features.map((f) => <li key={f.name} className="nums flex justify-between"><span className="text-fg-muted">{FEATURE_LABEL[f.name] ?? f.name}</span><span className="text-fg-dim">{f.count}</span></li>)}</ul> : <p className="text-fg-dim">—</p>}
             </div>
           </div>
           <div className="rounded-control border border-line p-3" data-testid="utm-builder">
-            <h3 className="mb-2 text-micro font-semibold uppercase tracking-wider text-fg-dim">Link com UTM (para WhatsApp, Instagram…)</h3>
+            <h3 className="mb-2 text-micro u-label text-fg-dim">Link com UTM (para WhatsApp, Instagram…)</h3>
             <div className="flex flex-wrap gap-2">
               <input aria-label="Página" className={field} value={utm.path} onChange={(e) => setUtm({ ...utm, path: e.target.value })} />
               <input aria-label="utm_source" className={field} value={utm.source} onChange={(e) => setUtm({ ...utm, source: e.target.value })} />

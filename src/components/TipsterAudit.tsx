@@ -77,7 +77,7 @@ export function TipsterAudit() {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <p className="text-label uppercase tracking-[0.18em] text-pos">{lang === "pt" ? "Antes de pagar grupo VIP" : "Before you pay for a VIP group"}</p>
+        <p className="text-label u-label text-fg-dim">{lang === "pt" ? "Antes de pagar grupo VIP" : "Before you pay for a VIP group"}</p>
         <h1 className="mt-1 text-lead font-semibold tracking-tight text-fg">{c.title}</h1>
         <p className="mt-1 max-w-2xl text-sm leading-relaxed text-fg-muted">{c.sub}</p>
         <p className="mt-2 max-w-2xl text-tiny text-fg-dim" data-testid="tipster-privacy">{c.privacy}</p>

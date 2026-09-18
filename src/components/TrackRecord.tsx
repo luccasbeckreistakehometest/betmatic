@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavState } from "@/components/Controls";
 import { Empty, Panel } from "@/components/ui";
-import { formatDecimal, formatPercent } from "@/lib/odds";
+import { formatDecimal } from "@/lib/odds";
+import { formatPercent as pctOf } from "@/lib/format";
 import { makeT } from "@/lib/i18n";
 import type { CalibrationReport, CalibrationRow, LedgerEntry } from "@/lib/types";
 
@@ -62,9 +63,9 @@ function CalibrationTable({ rows, lang }: { rows: CalibrationRow[]; lang: "pt" |
                     row.hitRate >= 0.55 ? "text-pos" : row.hitRate <= 0.45 ? "text-neg" : "text-fg"
                   }`}
                 >
-                  {formatPercent(row.hitRate, 0)}
+                  {pctOf(row.hitRate, lang, { digits: 0 })}
                 </td>
-                <td className="nums text-right text-fg-muted">{formatPercent(row.averagePredicted, 0)}</td>
+                <td className="nums text-right text-fg-muted">{pctOf(row.averagePredicted, lang, { digits: 0 })}</td>
                 <td className={`pl-6 text-label ${over ? "text-warn" : under ? "text-pos" : "text-fg-dim"}`}>
                   {over
                     ? `${t("overconfident")} ${(row.calibrationError * 100).toFixed(0)}pts`
@@ -148,7 +149,7 @@ export function TrackRecord() {
           [t("won"), summary?.won ?? 0],
         ].map(([label, value]) => (
           <div key={String(label)} className="bg-surface-1 px-3 py-2.5 text-center">
-            <div className="text-micro uppercase tracking-wider text-fg-dim">{label}</div>
+            <div className="text-micro u-label text-fg-dim">{label}</div>
             <div className="nums text-lead font-semibold text-fg">{value}</div>
           </div>
         ))}

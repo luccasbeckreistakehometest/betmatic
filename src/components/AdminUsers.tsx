@@ -137,7 +137,7 @@ export function AdminUsers() {
             {msg && <p className="text-focus" role="status">{msg}</p>}
 
             <div>
-              <p className="text-label uppercase tracking-wider text-fg-dim">Pagamentos</p>
+              <p className="text-label u-label text-fg-dim">Pagamentos</p>
               {detail.payments.length ? (
                 <ul className="mt-1 divide-y divide-line">
                   {detail.payments.map((p) => (
@@ -153,7 +153,7 @@ export function AdminUsers() {
               ) : <Empty>Nenhum pagamento.</Empty>}
             </div>
             <div>
-              <p className="text-label uppercase tracking-wider text-fg-dim">Coins</p>
+              <p className="text-label u-label text-fg-dim">Coins</p>
               <ul className="mt-1 max-h-48 divide-y divide-line overflow-y-auto">
                 {detail.coinHistory.map((c) => (
                   <li key={c.id} className="flex gap-3 py-1 text-tiny"><span className={`nums w-12 ${c.delta > 0 ? "text-pos" : "text-neg"}`}>{c.delta}</span><span className="text-fg-muted">{c.reason}</span><span className="ml-auto text-fg-dim">{dt(c.createdAt)}</span></li>

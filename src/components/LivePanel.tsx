@@ -2,7 +2,8 @@
 
 import { track } from "@/lib/track";
 import { useEffect, useRef, useState } from "react";
-import { formatDecimal, formatPercent } from "@/lib/odds";
+import { formatDecimal } from "@/lib/odds";
+import { formatPercent as pctOf } from "@/lib/format";
 import { formatTime } from "@/lib/format";
 import type { Lang } from "@/lib/i18n";
 import type { BetSlate } from "@/lib/types";
@@ -109,16 +110,16 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
               <li key={t.id} className="rounded-control border border-line bg-surface-2 p-3" data-testid="live-ticket">
                 <div className="flex flex-wrap items-baseline gap-2">
                   <span className="text-tiny font-semibold text-fg">{t.title}</span>
-                  <span className="text-micro uppercase tracking-wide text-fg-dim">{t.source === "saved" ? c.saved : c.served}</span>
+                  <span className="text-micro u-label text-fg-dim">{t.source === "saved" ? c.saved : c.served}</span>
                   <span className="nums ml-auto text-tiny text-fg-muted" data-testid="live-chance">
-                    {t.preChance !== null && <>{c.before} {formatPercent(t.preChance, 0)} · </>}{c.now} <span className="text-fg">{t.chanceNow === null ? "—" : formatPercent(t.chanceNow, 0)}</span>
+                    {t.preChance !== null && <>{c.before} {pctOf(t.preChance, lang, { digits: 0 })} · </>}{c.now} <span className="text-fg">{t.chanceNow === null ? "—" : pctOf(t.chanceNow, lang, { digits: 0 })}</span>
                   </span>
                 </div>
                 <ul className="mt-1.5 flex flex-col gap-1">
                   {t.legs.map((l, i) => (
                     <li key={i} className="flex flex-wrap items-baseline gap-2 text-tiny">
                       <span className={`nums rounded-control px-1.5 py-0.5 text-micro font-semibold ${CHIP[l.state]}`} data-testid="live-chip">
-                        {l.state === "alive" && l.probability !== null ? `${c.alive} ${formatPercent(l.probability, 0)}` : c[l.state]}
+                        {l.state === "alive" && l.probability !== null ? `${c.alive} ${pctOf(l.probability, lang, { digits: 0 })}` : c[l.state]}
                       </span>
                       <span className="text-fg">{l.selection}</span>
                       {l.flags.includes("foul_trouble") && <span className="rounded-control bg-warn-tint px-1 text-micro text-warn" data-testid="live-foul">{c.foul}</span>}
@@ -132,7 +133,7 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
           </ul>
         )}
         <div className="border-t border-line pt-3" data-testid="live-read">
-          <h3 className="text-micro font-semibold uppercase tracking-wider text-fg-dim">{c.read}</h3>
+          <h3 className="text-micro u-label text-fg-dim">{c.read}</h3>
           {data.canRead && data.read && (
             <div className="mt-1.5">
               <p className="text-label text-fg-dim">{c.readAt.replace("{m}", String(data.read.minute)).replace("{t}", formatTime(data.read.generatedAt, lang))}</p>
@@ -140,7 +141,7 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
                 {data.read.slate.suggestions.map((sug) => (
                   <li key={sug.id} className="rounded-control border border-line px-2.5 py-1.5 text-tiny" data-testid="live-read-ticket">
                     <span className="font-medium text-fg">{sug.title}</span> <span className="nums text-focus">{formatDecimal(sug.combinedDecimal)}</span>
-                    <span className="nums text-fg-dim"> · {formatPercent(sug.modelledProbability, 0)}</span>
+                    <span className="nums text-fg-dim"> · {pctOf(sug.modelledProbability, lang, { digits: 0 })}</span>
                     <p className="text-tiny text-fg-muted">{sug.legs.map((l) => l.selection).join(" · ")}</p>
                   </li>
                 ))}

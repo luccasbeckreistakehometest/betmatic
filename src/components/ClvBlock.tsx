@@ -30,19 +30,19 @@ export function ClvBlock({ lang }: { lang: Lang }) {
   try { s = publicClv(); } catch { return null; }
   return (
     <div className="mt-8 rounded-panel border border-line bg-surface-1 p-(--panel-p)" data-testid="clv-block">
-      <p className="text-label uppercase tracking-[0.18em] text-focus">CLV</p>
+      <p className="text-label u-label text-fg-dim">CLV</p>
       <h2 className="mt-1 text-body font-semibold text-fg">{c.title}</h2>
       <p className="mt-2 max-w-3xl text-sm leading-relaxed text-fg-muted">{c.body}</p>
       {s.publishable ? (
         <>
           <div className="mt-4 grid grid-cols-3 gap-px overflow-hidden rounded-control border border-line bg-surface-3">
             {[[c.mean, pct(s.mean), s.mean > 0 ? "text-focus" : s.mean < 0 ? "text-warn" : "text-fg"], [c.beat, `${(s.beat * 100).toFixed(0)}%`, "text-fg"], [c.n, String(s.n), "text-fg"]].map(([k, v, tone]) => (
-              <div key={k} className="bg-surface-1 px-3 py-3"><div className="text-micro uppercase tracking-wider text-fg-dim">{k}</div><div className={`nums mt-1 text-lead font-semibold ${tone}`}>{v}</div></div>
+              <div key={k} className="bg-surface-1 px-3 py-3"><div className="text-micro u-label text-fg-dim">{k}</div><div className={`nums mt-1 text-lead font-semibold ${tone}`}>{v}</div></div>
             ))}
           </div>
           {s.byMarket.length > 0 && (
             <div className="mt-4">
-              <p className="text-label uppercase tracking-wider text-fg-dim">{c.market}</p>
+              <p className="text-label u-label text-fg-dim">{c.market}</p>
               <ul className="mt-1.5 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2" data-testid="clv-markets">
                 {s.byMarket.slice(0, 8).map((m) => (
                   <li key={m.market} className="flex justify-between gap-3"><span className="text-fg-muted">{c.markets[m.market] ?? m.market}</span><span className="nums text-fg-muted">{pct(m.mean)} · {(m.beat * 100).toFixed(0)}% · n={m.n}</span></li>

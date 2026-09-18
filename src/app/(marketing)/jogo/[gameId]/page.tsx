@@ -128,7 +128,7 @@ export default async function GamePublicPage({ params, searchParams }: { params:
       <MarketingHeader lang={lang} langHrefs={{ pt: `/jogo/${gameId}?sport=${data.sportKey}`, en: `/jogo/${gameId}?sport=${data.sportKey}&lang=en` }} />
 
       <article className="mx-auto max-w-3xl px-5 py-10" data-testid="game-page">
-        <p className="text-label uppercase tracking-[0.18em] text-pos">{c.eyebrow} · {league}</p>
+        <p className="text-label u-label text-fg-dim">{c.eyebrow} · {league}</p>
         <h1 className="mt-2 text-h2 font-semibold tracking-tight sm:text-h1">{gamePageTitle(teams, kickoff.date, lang)}</h1>
         <p className="mt-3 text-base text-fg-muted">
           {kickoff.full ? <span>{c.kickoff}: {kickoff.full}</span> : null}
@@ -141,13 +141,13 @@ export default async function GamePublicPage({ params, searchParams }: { params:
         )}
 
         <section className="mt-8 rounded-panel border border-pos bg-surface-1 p-5" data-testid="game-teaser">
-          <p className="text-label uppercase tracking-[0.18em] text-fg-dim">{c.teaser}</p>
+          <p className="text-label u-label text-fg-dim">{c.teaser}</p>
           {best && teaser ? (
             <>
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <h2 className="text-lead font-semibold text-fg">{teaser.title}</h2>
                 <span className="nums rounded-control bg-action px-2 py-0.5 text-base font-bold text-focus">{teaser.odds}</span>
-                <span className="rounded-control border border-line-strong px-1.5 py-0.5 text-micro uppercase tracking-wide text-fg-muted">{getBand(best.bandKey).label[lang]}</span>
+                <span className="rounded-control border border-line-strong px-1.5 py-0.5 text-micro u-label text-fg-muted">{getBand(best.bandKey).label[lang]}</span>
                 <span className="nums text-label text-fg-dim">{c.confidence} {best.evidenceScore}</span>
               </div>
               <p className="mt-3 text-base leading-relaxed text-fg-muted">{c.teaserBody}</p>
@@ -168,7 +168,7 @@ export default async function GamePublicPage({ params, searchParams }: { params:
         </section>
 
         <section className="mt-8 rounded-panel border border-line bg-surface-1 p-(--panel-p)" data-testid="game-proof">
-          <p className="text-label uppercase tracking-[0.18em] text-fg-dim">{c.proof}</p>
+          <p className="text-label u-label text-fg-dim">{c.proof}</p>
           {showProof ? (
             <div className="mt-3 flex flex-wrap gap-8">
               {[[c.generated, String(proof.generated)], [c.hit, pct(proof.hitRate)], [c.roi, `${proof.roi >= 0 ? "+" : ""}${pct(proof.roi)}`]].map(([k, v]) => (
@@ -183,7 +183,7 @@ export default async function GamePublicPage({ params, searchParams }: { params:
 
         {injuries.length > 0 && (
           <section className="mt-8">
-            <h2 className="text-label uppercase tracking-[0.18em] text-fg-dim">{c.injuries}</h2>
+            <h2 className="text-label u-label text-fg-dim">{c.injuries}</h2>
             <ul className="mt-2 divide-y divide-line rounded-panel border border-line">
               {injuries.map((i, k) => (
                 <li key={k} className="flex flex-wrap items-baseline gap-2 px-4 py-2 text-sm">
