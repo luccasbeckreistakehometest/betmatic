@@ -27,7 +27,9 @@ describe("passwords and sessions", () => {
     const token = auth.signSession({ userId: "usr_1", role: "user", sv: 3 });
     expect(auth.verifySession(token)?.sv).toBe(3);
     const [body, sig] = token.split(".");
-    expect(auth.verifySession(`${body}.${sig.slice(0, -1)}A`)).toBeNull();
+    // Change the last character to one it is not: appending a fixed "A" left the signature intact
+    // whenever it already ended in "A", which failed this test on roughly one run in sixty-four.
+    expect(auth.verifySession(`${body}.${sig.slice(0, -1)}${sig.endsWith("A") ? "B" : "A"}`)).toBeNull();
     const forged = Buffer.from(JSON.stringify({ userId: "usr_1", role: "admin", sv: 3, exp: Date.now() + 1e6 })).toString("base64url");
     expect(auth.verifySession(`${forged}.${sig}`)).toBeNull();
   });
