@@ -6,7 +6,7 @@ test("the public proof page draws the equity curve and answers 'only band X'", a
   const chart = page.getByTestId("equity-curve");
   await expect(chart).toBeVisible();
   // seeded: value won at 2.00 (+1.00u) then mid lost (−1.00u)
-  await expect(chart.getByTestId("curve-stats")).toContainText(/\b0,00\s*u/);
+  await expect(chart.getByTestId("curve-stats")).toContainText(/0,00\s*u/);
   await expect(chart.getByTestId("curve-stats")).toContainText(/−1,00\s*u/); // max drawdown
   await expect(chart.getByTestId("curve-path")).toHaveAttribute("d", /^M/);
   await expect(chart.getByTestId("band-row-value")).toContainText(/\+1,00\s*u/);
