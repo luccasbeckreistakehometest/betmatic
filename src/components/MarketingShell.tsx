@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Logo } from "@/components/Logo";
 import { LangSwitch } from "@/components/LangSwitch";
 import { LegalLinks } from "@/components/LegalLinks";
+import { LinkButton } from "@/components/ui";
 import type { Lang } from "@/lib/i18n";
 import { supportChannels } from "@/lib/support";
 
@@ -17,56 +18,66 @@ const COPY = {
     support: "Support" },
 };
 
-/** Header of every public page. "Entrar" stays visible on phones. */
+/**
+ * The public pages are the same system at a lower density (§7): identical ramp, identical rules,
+ * identical numerals, more air and a longer measure. The marketing grid is 12 columns inside a
+ * 1240px shell, and the header is a single 56px rule — no shadow, nothing floating.
+ */
 export function MarketingHeader({ lang, langHrefs, nav }: { lang: Lang; langHrefs: Record<Lang, string>; nav?: ReactNode }) {
   const c = COPY[lang];
   const q = lang === "en" ? "?lang=en" : "";
+  const link = "text-sm text-fg-muted transition-colors duration-(--dur-1) hover:text-fg";
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-surface-0">
-      <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3.5 sm:gap-6 sm:px-5">
+      <div className="mx-auto flex h-14 max-w-shell items-center gap-4 px-4 sm:gap-8 sm:px-6">
         <Link href={`/${q}`} aria-label="Betmatic" className="shrink-0">
-          <span className="sm:hidden"><Logo size={24} showWord={false} /></span>
-          <span className="hidden sm:inline"><Logo size={26} /></span>
+          <span className="sm:hidden"><Logo size={22} showWord={false} /></span>
+          <span className="hidden sm:inline"><Logo size={22} /></span>
         </Link>
         {nav ?? (
-          <nav className="ml-2 hidden items-center gap-5 text-sm text-fg-muted md:flex">
-            <Link href={`/prova${q}`} className="transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg">{c.proof}</Link>
-            <Link href={`/planos${q}`} className="transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg">{c.plans}</Link>
-            <Link href={`/ferramentas${q}`} className="transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg">{c.tools}</Link>
+          <nav className="hidden items-center gap-6 md:flex">
+            <Link href={`/prova${q}`} className={link}>{c.proof}</Link>
+            <Link href={`/planos${q}`} className={link}>{c.plans}</Link>
+            <Link href={`/ferramentas${q}`} className={link}>{c.tools}</Link>
           </nav>
         )}
-        <div className="ml-auto flex items-center gap-2 sm:gap-3">
+        <div className="ml-auto flex items-center gap-2 sm:gap-4">
           <LangSwitch lang={lang} hrefs={langHrefs} />
-          <Link href={`/login?lang=${lang}`} className="whitespace-nowrap text-sm text-fg-muted transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg" data-testid="landing-login">
+          <Link href={`/login?lang=${lang}`} className={`${link} whitespace-nowrap`} data-testid="landing-login">
             {c.login}
           </Link>
-          <Link href={`/signup?lang=${lang}`} className="whitespace-nowrap rounded-control bg-action px-3 py-1.5 text-sm font-semibold text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover sm:px-3.5">
+          <LinkButton variant="primary" href={`/signup?lang=${lang}`} className="whitespace-nowrap">
             {c.start}
-          </Link>
+          </LinkButton>
         </div>
       </div>
     </header>
   );
 }
 
-/** Footer of every public page: disclaimers, legal pages, contact and (when configured) support channels. */
+/** Footer of every public page: disclaimers, legal pages, contact and (when configured) support. */
 export function MarketingFooter({ lang }: { lang: Lang }) {
   const c = COPY[lang];
   const support = supportChannels();
   return (
-    <footer className="border-t border-line px-4 py-8 sm:px-5">
-      <div className="mx-auto flex max-w-6xl flex-col gap-3 text-tiny leading-relaxed text-fg-dim">
-        <Logo size={20} />
-        <LegalLinks lang={lang} className="mt-1" />
-        {(support.email || support.whatsapp) && (
-          <p className="flex flex-wrap gap-x-4 gap-y-1" data-testid="support-channels">
-            <span className="text-fg-muted">{c.support}:</span>
-            {support.email && <a href={`mailto:${support.email}`} className="text-fg-muted hover:underline">{support.email}</a>}
-            {support.whatsapp && <a href={`https://wa.me/${support.whatsapp}`} rel="noopener" className="text-fg-muted hover:underline">WhatsApp</a>}
-          </p>
-        )}
-        <p className="max-w-3xl">{c.note}</p>
-        <p className="max-w-3xl">{c.responsible}</p>
+    <footer className="border-t border-line">
+      <div className="mx-auto grid max-w-shell gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1fr_2fr]">
+        <div>
+          <Logo size={20} />
+          {(support.email || support.whatsapp) && (
+            <p className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-tiny" data-testid="support-channels">
+              <span className="text-fg-muted">{c.support}:</span>
+              {support.email && <a href={`mailto:${support.email}`} className="text-fg-muted underline-offset-2 hover:underline">{support.email}</a>}
+              {support.whatsapp && <a href={`https://wa.me/${support.whatsapp}`} rel="noopener" className="text-fg-muted underline-offset-2 hover:underline">WhatsApp</a>}
+            </p>
+          )}
+        </div>
+        <div className="flex flex-col gap-3 text-tiny leading-relaxed text-fg-dim">
+          <LegalLinks lang={lang} />
+          <p className="max-w-measure-legal">{c.note}</p>
+          {/* Caution, not error: an 18+ notice is a standing condition of the product (§13). */}
+          <p className="max-w-measure-legal border-l-2 border-warn pl-3 text-warn">{c.responsible}</p>
+        </div>
       </div>
     </footer>
   );
@@ -75,9 +86,9 @@ export function MarketingFooter({ lang }: { lang: Lang }) {
 /** A simple public page: header, a readable column, footer. */
 export function MarketingPage({ lang, langHrefs, children, wide = false }: { lang: Lang; langHrefs: Record<Lang, string>; children: ReactNode; wide?: boolean }) {
   return (
-    <div className="flex min-h-full flex-col bg-surface-0">
+    <div className="flex min-h-full flex-col bg-surface-0" data-density="comfortable">
       <MarketingHeader lang={lang} langHrefs={langHrefs} />
-      <main className={`mx-auto w-full flex-1 px-4 py-10 sm:px-5 sm:py-14 ${wide ? "max-w-6xl" : "max-w-3xl"}`}>{children}</main>
+      <main className={`mx-auto w-full flex-1 px-4 py-12 sm:px-6 sm:py-16 ${wide ? "max-w-shell" : "max-w-measure-legal"}`}>{children}</main>
       <MarketingFooter lang={lang} />
     </div>
   );
