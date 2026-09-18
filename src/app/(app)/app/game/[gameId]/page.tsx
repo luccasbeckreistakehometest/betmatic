@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { IntelBoard } from "@/components/IntelBoard";
 import { LivePanel } from "@/components/LivePanel";
 import { espnDateKey } from "@/lib/sources/espn";
-import { Empty, KeyValue, Panel } from "@/components/ui";
+import { Empty, KeyValue, NumCell, Panel, Table, Td, Th, Tr } from "@/components/ui";
 import { kickoff } from "@/components/SlateTable";
 import { localizeStatLabel, localizeStatus } from "@/lib/format";
 import { scrubGameDetail } from "@/lib/server/whitelabel";
@@ -135,7 +135,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
         {t("backToSlate")}
       </Link>
 
-      <section className="rounded-panel border border-line bg-surface-1 p-5">
+      <section className="border-y border-line bg-surface-1 px-4 py-4">
         <div className="flex flex-wrap items-center gap-4">
           <TeamHeading team={game.away} align="left" showScore={game.status !== "scheduled"} follow={followOf(game.away.id)} />
           <div className="flex shrink-0 flex-col items-center gap-1 px-2">
@@ -209,7 +209,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
                       <h3 className="mb-1 text-micro font-semibold uppercase tracking-wider text-fg-dim">{team.displayName}</h3>
                       <div className="flex flex-wrap gap-1">
                         {roster.slice(0, 14).map((a) => (
-                          <Link key={a.id} href={{ pathname: `/app/player/${a.id}`, query: { sport: sport.key, lang, game: game.id } }} className="rounded-control border border-line-strong px-1.5 py-0.5 text-label text-fg-muted hover:border-pos hover:text-fg">
+                          <Link key={a.id} href={{ pathname: `/app/player/${a.id}`, query: { sport: sport.key, lang, game: game.id } }} className="rounded-control border border-line px-1.5 py-0.5 text-label text-fg-muted transition-colors duration-(--dur-1) hover:bg-surface-2 hover:text-fg">
                             {a.name}
                           </Link>
                         ))}
@@ -223,30 +223,26 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
 
           <Panel title={t("market")} meta={books.length ? `${books.length} ${books.length === 1 ? t("bookOne") : t("bookMany")}` : undefined}>
             {books.length ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-tiny">
-                  <thead>
-                    <tr className="border-b border-line text-micro uppercase tracking-wider text-fg-dim">
-                      <th className="pb-1.5 font-medium">{t("book")}</th>
-                      <th className="pb-1.5 font-medium">{t("spread")}</th>
-                      <th className="pb-1.5 text-right font-medium">{t("total")}</th>
-                      <th className="pb-1.5 text-right font-medium">{t("moneyline")}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-line/70">
-                    {books.map((book, i) => (
-                      <tr key={`${book.provider}-${i}`}>
-                        <td className="py-1.5 text-fg-muted">{book.provider ?? "—"}</td>
-                        <td className="nums py-1.5 text-fg">{book.details ?? "—"}</td>
-                        <td className="nums py-1.5 text-right text-fg">{book.overUnder ?? "—"}</td>
-                        <td className="nums py-1.5 text-right text-fg">
-                          {money(book.awayMoneyline)} / {money(book.homeMoneyline)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <Table caption={t("market")} collapse={false}>
+                <thead>
+                  <tr>
+                    <Th>{t("book")}</Th>
+                    <Th numeric>{t("spread")}</Th>
+                    <Th numeric>{t("total")}</Th>
+                    <Th numeric>{t("moneyline")}</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {books.map((book, i) => (
+                    <Tr key={`${book.provider}-${i}`}>
+                      <Td label={t("book")} className="text-fg-muted">{book.provider ?? "—"}</Td>
+                      <NumCell label={t("spread")}>{book.details ?? "—"}</NumCell>
+                      <NumCell label={t("total")}>{book.overUnder ?? "—"}</NumCell>
+                      <NumCell label={t("moneyline")}>{money(book.awayMoneyline)} / {money(book.homeMoneyline)}</NumCell>
+                    </Tr>
+                  ))}
+                </tbody>
+              </Table>
             ) : (
               <Empty>{t("noLines")}</Empty>
             )}

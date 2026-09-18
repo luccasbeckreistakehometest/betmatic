@@ -113,9 +113,10 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
                     <Tr key={rung.legs}>
                       <Td label={c.ladderStake} className="nums text-fg-dim">{rung.label[lang]}</Td>
                       <Td label={c.ladderReturns} className="relative">
-                        {/* The bar is a measurement, so it is ink at one value, never a gradient. */}
-                        <span aria-hidden="true" className="absolute inset-y-1 left-(--cell-px) bg-surface-3" style={{ width: `calc(${width}% - var(--cell-px))` }} />
-                        <span className="nums relative pl-2 text-fg">{money(payout, lang)}</span>
+                        {/* A measurement, so it is a rule under the figure at one ink value — not a
+                            filled box, which would read as a field, and never a gradient. */}
+                        <span className="nums text-fg">{money(payout, lang)}</span>
+                        <span aria-hidden="true" className="absolute bottom-1 left-(--cell-px) h-px bg-fg-dim" style={{ width: `calc(${width}% - var(--cell-px))` }} />
                       </Td>
                       {/* The chance is always printed beside the multiplier: the product's point,
                           and the Brazilian advertising rule. The ramp paints the rule, not the text. */}

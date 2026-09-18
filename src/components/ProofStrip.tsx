@@ -5,6 +5,8 @@ import { latestPredictionDateKey, servePredictions } from "@/lib/server/predicti
 import { getPlan } from "@/lib/plans";
 import { SOLD_SPORTS } from "@/lib/sports";
 import { todayKey } from "@/lib/sources/espn";
+import { formatPercent } from "@/lib/format";
+import { Odds } from "@/components/ui";
 import { formatDecimal } from "@/lib/odds";
 import type { Lang } from "@/lib/i18n";
 import type { BetSuggestion } from "@/lib/types";
@@ -50,35 +52,35 @@ export function ProofStrip({ lang, sportKeys }: { lang: Lang; sportKeys?: string
   const c = C[lang];
   const s = proofStats(mainTickets(readLedger()).filter((e) => !sportKeys || sportKeys.includes(e.sportKey)));
   const { pick: top, isToday } = bestToday(lang, sportKeys);
-  const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
+  const pct = (n: number, signed = false) => formatPercent(n, lang, { signed });
   const publish = proofPublishable(s);
   return (
     <section className="border-b border-line bg-surface-1" data-testid="proof-strip">
-      <div className="mx-auto grid max-w-6xl gap-6 px-5 py-8 md:grid-cols-[1fr_1.2fr] md:items-center">
+      <div className="mx-auto grid max-w-shell gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1fr_1.2fr] md:items-center">
         <div>
-          <p className="text-label uppercase tracking-[0.18em] text-pos">{publish ? c.eyebrow : c.methodTitle}</p>
+          <p className="text-label u-label text-fg-dim">{publish ? c.eyebrow : c.methodTitle}</p>
           {publish ? (
             <div className="mt-3 flex flex-wrap gap-8" data-testid="proof-numbers">
-              {[[c.generated, String(s.generated)], [c.hit, pct(s.hitRate)], [c.roi, `${s.roi >= 0 ? "+" : ""}${pct(s.roi)}`]].map(([k, v]) => (
-                <div key={k}><div className="nums text-h2 font-semibold text-fg">{v}</div><div className="text-tiny text-fg-dim">{k}</div></div>
+              {[[c.generated, String(s.generated)], [c.hit, pct(s.hitRate)], [c.roi, pct(s.roi, true)]].map(([k, v]) => (
+                <div key={k} className="flex flex-col gap-1.5"><span className="nums text-h2 leading-none text-fg">{v}</span><span className="text-label u-label text-fg-dim">{k}</span></div>
               ))}
             </div>
           ) : (
             <p className="mt-3 max-w-md text-sm leading-relaxed text-fg-muted" data-testid="proof-method">{c.method.replace("{n}", String(proofMinDecided()))}</p>
           )}
-          <Link href={{ pathname: "/prova", query: { lang } }} className="mt-3 inline-block text-sm text-pos hover:underline">{c.all}</Link>
+          <Link href={{ pathname: "/prova", query: { lang } }} className="mt-4 inline-block text-sm text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{c.all}</Link>
         </div>
-        <div className="rounded-panel border border-line bg-surface-0 p-5">
-          <p className="text-label uppercase tracking-[0.18em] text-fg-dim">{isToday ? c.today : c.latest}</p>
+        <div className="border border-line bg-surface-0 p-5">
+          <p className="text-label u-label text-fg-dim">{isToday ? c.today : c.latest}</p>
           {top ? (
             <div className="mt-2" data-testid="ticket-of-day">
-              <div className="flex flex-wrap items-center gap-3"><span className="text-base font-semibold text-fg">{teaserHeadline(top.bet, lang)}</span><span className="nums rounded-control bg-action px-2 py-0.5 text-sm font-bold text-focus">{formatDecimal(top.bet.combinedDecimal)}</span></div>
+              <div className="flex flex-wrap items-center gap-3"><span className="text-base font-semibold text-fg">{teaserHeadline(top.bet, lang)}</span><Odds decimal={top.bet.combinedDecimal} lang={lang} className="text-sm" /></div>
               <p className="mt-1 text-sm text-fg-muted">{top.matchup} · {legsLabel(top.bet.legs.length, lang)} · <span className="nums">{c.confidence} {top.bet.evidenceScore}</span></p>
               <p className="mt-2 text-sm text-fg-muted">{c.blurb}</p>
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 {top.free
-                  ? <Link href={{ pathname: "/signup", query: { lang, next: top.gameId ? `/app/game/${top.gameId}?sport=${top.sportKey}&lang=${lang}` : `/app?lang=${lang}` } }} className="inline-block rounded-control bg-action px-4 py-2 text-sm font-semibold text-action-fg hover:bg-action-hover">{c.cta}</Link>
-                  : <Link href={{ pathname: "/planos", query: { lang } }} className="inline-block rounded-control bg-action px-4 py-2 text-sm font-semibold text-action-fg hover:bg-action-hover">{c.ctaPaid}</Link>}
+                  ? <Link href={{ pathname: "/signup", query: { lang, next: top.gameId ? `/app/game/${top.gameId}?sport=${top.sportKey}&lang=${lang}` : `/app?lang=${lang}` } }} className="inline-flex h-(--row-h) items-center rounded-control bg-action px-4 text-sm font-medium text-action-fg transition-colors duration-(--dur-1) hover:bg-action-hover">{c.cta}</Link>
+                  : <Link href={{ pathname: "/planos", query: { lang } }} className="inline-flex h-(--row-h) items-center rounded-control bg-action px-4 text-sm font-medium text-action-fg transition-colors duration-(--dur-1) hover:bg-action-hover">{c.ctaPaid}</Link>}
                 {top.gameId && <Link href={{ pathname: `/jogo/${top.gameId}`, query: { sport: top.sportKey, lang } }} className="text-sm text-fg-muted hover:text-fg" data-testid="ticket-game-link">{c.gamePage}</Link>}
               </div>
             </div>

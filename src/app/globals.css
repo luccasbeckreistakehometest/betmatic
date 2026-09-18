@@ -520,21 +520,22 @@ tr[data-selected="true"] {
 tr[data-selected="true"] > *:first-child {
   box-shadow: inset 2px 0 0 var(--focus);
 }
-/* The one sequential ramp in the system: it paints the cell's leading edge, never the number. */
+/* The one sequential ramp in the system: it paints a numeric cell's TRAILING edge, so it lands
+   where the right-aligned number ends instead of against the column before it — never the text. */
 [data-chance="1"] {
-  box-shadow: inset 2px 0 0 var(--chance-1);
+  box-shadow: inset -2px 0 0 var(--chance-1);
 }
 [data-chance="2"] {
-  box-shadow: inset 2px 0 0 var(--chance-2);
+  box-shadow: inset -2px 0 0 var(--chance-2);
 }
 [data-chance="3"] {
-  box-shadow: inset 2px 0 0 var(--chance-3);
+  box-shadow: inset -2px 0 0 var(--chance-3);
 }
 [data-chance="4"] {
-  box-shadow: inset 2px 0 0 var(--chance-4);
+  box-shadow: inset -2px 0 0 var(--chance-4);
 }
 [data-chance="5"] {
-  box-shadow: inset 2px 0 0 var(--chance-5);
+  box-shadow: inset -2px 0 0 var(--chance-5);
 }
 
 /*

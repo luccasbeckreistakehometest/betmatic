@@ -2,7 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { MarketingPage } from "@/components/MarketingShell";
 import { langFrom, langPaths, pageMetadata, type SearchProps } from "@/lib/seo";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatPercent } from "@/lib/format";
+import { KPI, LinkButton, Notice, Panel, Table, Td, Th, Tr } from "@/components/ui";
 import { readLedger } from "@/lib/ledger/store";
 import { mainTickets, proofMinDecided, proofPublishable, proofStats, publicTickets, recentTickets, ticketSlug } from "@/lib/ledger/proof";
 import { scrubText } from "@/lib/server/whitelabel";
@@ -44,45 +45,47 @@ export default async function ProofPage({ searchParams }: SearchProps) {
   // Counts cover everything; a ticket's content appears only once its game has started.
   const visible = publicTickets(entries);
   const recent = recentTickets(visible, 40);
-  const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
-  const roiTone = (r: number) => (r > 0 ? "text-focus" : r < 0 ? "text-warn" : "text-fg-muted");
+  const pct = (n: number, signed = false) => formatPercent(n, lang, { signed });
+  const roiTone = (r: number) => (r > 0 ? "text-pos" : r < 0 ? "text-neg" : "text-fg-muted");
   const outcomeLabel: Record<string, string> = { won: c.won, lost: c.lost, push: c.push, void: c.void, pending: c.pend };
   const publish = proofPublishable(s);
-  const outcomeTone: Record<string, string> = { won: "text-focus", lost: "text-warn", push: "text-fg-muted", void: "text-fg-dim", pending: "text-fg-dim" };
+  const outcomeTone: Record<string, string> = { won: "text-pos", lost: "text-neg", push: "text-fg-muted", void: "text-fg-dim", pending: "text-fg-dim" };
+  const rowTone = (o: string): "pos" | "neg" | undefined => (o === "won" ? "pos" : o === "lost" ? "neg" : undefined);
 
   return (
     <MarketingPage lang={lang} langHrefs={langPaths("/prova")} wide>
       <section className="text-fg">
-        <p className="text-label uppercase tracking-[0.18em] text-pos">{c.eyebrow}</p>
-        <h1 className="mt-2 text-h1 font-semibold tracking-tight sm:text-h1">{c.title}</h1>
-        <p className="mt-4 max-w-2xl text-base leading-relaxed text-fg-muted">{c.sub}</p>
+        <p className="text-label u-label text-fg-dim">{c.eyebrow}</p>
+        <h1 className="u-display mt-3 text-display">{c.title}</h1>
+        <p className="mt-5 max-w-measure text-body text-fg-muted">{c.sub}</p>
 
-        <div className="mt-8 rounded-panel border border-line bg-surface-1 p-5">
-          <h2 className="text-base font-semibold text-fg">{c.methodTitle}</h2>
-          <p className="mt-2 text-sm leading-relaxed text-fg-muted">{c.methodBody}</p>
-          {!publish && <p className="mt-2 text-sm leading-relaxed text-fg-muted" data-testid="proof-method">{c.method.replace("{n}", String(proofMinDecided()))}</p>}
-        </div>
+        <Panel title={c.methodTitle} className="mt-10">
+          <p className="max-w-measure text-sm leading-relaxed text-fg-muted">{c.methodBody}</p>
+          {!publish && <p className="mt-2 max-w-measure text-sm leading-relaxed text-fg-muted" data-testid="proof-method">{c.method.replace("{n}", String(proofMinDecided()))}</p>}
+        </Panel>
 
         <ClvBlock lang={lang} />
 
-        {publish && <><div className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-panel border border-line bg-surface-3 sm:grid-cols-5" data-testid="proof-stats">
-          {[[c.generated, s.generated], [c.settled, s.settled], [c.hit, s.settled ? pct(s.hitRate) : "—"], [c.roi, s.settled ? `${s.roi >= 0 ? "+" : ""}${pct(s.roi)}` : "—"], [c.pending, s.pending]].map(([k, v], i) => (
-            <div key={i} className="bg-surface-1 px-4 py-4"><div className="text-micro uppercase tracking-wider text-fg-dim">{k}</div><div className={"nums mt-1 text-h3 font-semibold " + (i === 3 ? roiTone(s.roi) : "")}>{v}</div></div>
-          ))}
+        {publish && <><div className="mt-10 grid grid-cols-2 gap-x-8 gap-y-5 border-y border-line py-5 sm:grid-cols-5" data-testid="proof-stats">
+          <KPI label={c.generated} value={String(s.generated)} />
+          <KPI label={c.settled} value={String(s.settled)} />
+          <KPI label={c.hit} value={s.settled ? pct(s.hitRate) : "—"} />
+          <KPI label={c.roi} value={s.settled ? pct(s.roi, true) : "—"} tone={s.roi > 0 ? "pos" : s.roi < 0 ? "neg" : undefined} />
+          <KPI label={c.pending} value={String(s.pending)} />
         </div>
-        {s.settled > 0 && s.settled < 30 && <p className="mt-3 text-tiny text-fg-dim">{c.small}</p>}
+        {s.settled > 0 && s.settled < 30 && <div className="mt-4"><Notice>{c.small}</Notice></div>}
 
-        <div className="mt-8"><EquityChart rows={toRows(visible, (e) => ticketSlug(e.id))} lang={lang} /></div>
+        <EquityChart className="mt-8" rows={toRows(visible, (e) => ticketSlug(e.id))} lang={lang} />
         </>}
 
         {publish && s.settled > 0 && (
           <div className="mt-10 grid gap-5 md:grid-cols-3">
             {[[c.byMarket, s.byMarket], [c.bySport, s.bySport], [c.byBand, s.byBand]].map(([title, rows]) => (
-              <div key={String(title)} className="rounded-panel border border-line bg-surface-1 p-4">
-                <p className="text-label uppercase tracking-wider text-fg-dim">{String(title)}</p>
-                <ul className="mt-2 space-y-1.5 text-sm">
+              <div key={String(title)} className="border border-line bg-surface-1 p-4">
+                <p className="text-label u-label text-fg-dim">{String(title)}</p>
+                <ul className="mt-3 flex flex-col text-sm">
                   {(rows as { key: string; settled: number; won: number; roi: number }[]).slice(0, 8).map((r) => (
-                    <li key={r.key} className="flex items-center justify-between"><span className="text-fg-muted">{r.key}</span><span className="nums text-fg-muted">{r.won}/{r.settled} · <span className={roiTone(r.roi)}>{r.roi >= 0 ? "+" : ""}{pct(r.roi)}</span></span></li>
+                    <li key={r.key} className="flex items-baseline justify-between gap-3 py-1.5 u-rule last:shadow-none"><span className="truncate text-fg-muted">{r.key}</span><span className="nums shrink-0 text-fg-muted">{r.won}/{r.settled} · <span className={roiTone(r.roi)}>{pct(r.roi, true)}</span></span></li>
                   ))}
                 </ul>
               </div>
@@ -90,22 +93,37 @@ export default async function ProofPage({ searchParams }: SearchProps) {
           </div>
         )}
 
-        <h2 className="mt-12 text-lead font-semibold">{c.recent}</h2>
+        <h2 className="u-title mt-14 text-lead text-fg">{c.recent}</h2>
         {recent.length === 0 ? <p className="mt-3 text-base text-fg-dim">{c.none}</p> : (
-          <ul className="mt-4 divide-y divide-line rounded-panel border border-line" data-testid="proof-list">
-            {recent.map((e) => (
-              <li key={e.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-sm">
-                <span className={"w-16 font-semibold " + outcomeTone[e.outcome]}>{outcomeLabel[e.outcome]}</span>
-                <span className="nums w-16 text-fg-muted">{formatDecimal(e.combinedDecimal)}</span>
-                <Link href={{ pathname: `/p/${ticketSlug(e.id)}`, query: { lang } }} className="min-w-0 flex-1 truncate text-fg hover:underline">{scrubText(e.title, lang)}</Link>
-                <span className="text-fg-dim">{scrubText(e.matchup, lang)} · {e.legs.length} {c.legs}</span>
-                <span className="text-fg-dim">{formatDate(e.settledAt ?? e.createdAt, lang, { year: true })}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-4 border border-line bg-surface-1" data-testid="proof-list" data-density="default">
+            <Table caption={c.recent}>
+              <thead>
+                <tr>
+                  <Th className="w-24">{lang === "pt" ? "Resultado" : "Result"}</Th>
+                  <Th numeric className="w-20">{lang === "pt" ? "Odd" : "Odds"}</Th>
+                  <Th>{lang === "pt" ? "Bilhete" : "Ticket"}</Th>
+                  <Th>{lang === "pt" ? "Jogo" : "Game"}</Th>
+                  <Th numeric className="w-28">{lang === "pt" ? "Data" : "Date"}</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {recent.map((e) => (
+                  <Tr key={e.id} tone={rowTone(e.outcome)}>
+                    <Td label={lang === "pt" ? "Resultado" : "Result"} className={"font-medium " + outcomeTone[e.outcome]}>{outcomeLabel[e.outcome]}</Td>
+                    <Td numeric label={lang === "pt" ? "Odd" : "Odds"} className="text-fg-muted">{formatDecimal(e.combinedDecimal)}</Td>
+                    <Td label={lang === "pt" ? "Bilhete" : "Ticket"} className="min-w-0">
+                      <Link href={{ pathname: `/p/${ticketSlug(e.id)}`, query: { lang } }} className="text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{scrubText(e.title, lang)}</Link>
+                    </Td>
+                    <Td label={lang === "pt" ? "Jogo" : "Game"} className="text-fg-dim">{scrubText(e.matchup, lang)} · {e.legs.length} {c.legs}</Td>
+                    <Td numeric label={lang === "pt" ? "Data" : "Date"} className="text-fg-dim">{formatDate(e.settledAt ?? e.createdAt, lang, { year: true })}</Td>
+                  </Tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
         )}
         <div className="mt-10 flex flex-wrap items-center gap-4">
-          <Link href={`/signup?lang=${lang}`} className="inline-block rounded-control bg-action px-5 py-2.5 text-base font-semibold text-action-fg hover:bg-action-hover">{c.cta}</Link>
+          <LinkButton variant="primary" href={`/signup?lang=${lang}`} className="h-10 px-5 text-base">{c.cta}</LinkButton>
           <Link href={{ pathname: "/prova", query: withAlternatives ? { lang } : { lang, alts: "1" } }} className="text-sm text-fg-muted underline-offset-4 hover:text-fg hover:underline" data-testid="alts-toggle">{withAlternatives ? c.mainOnly : c.withAlts}</Link>
           <a href={`/api/public/ledger?lang=${lang}`} className="text-sm text-fg-muted underline-offset-4 hover:text-fg hover:underline" data-testid="csv-link">{c.csv}</a>
         </div>

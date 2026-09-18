@@ -5,9 +5,9 @@ test("public track record shows every ticket, and each has a shareable permalink
   await page.goto("/prova?lang=pt");
   const stats = page.getByTestId("proof-stats");
   await expect(stats).toContainText("5"); // generated, including the two that are still private
-  await expect(stats).toContainText("50.0%"); // 1 won / 2 decided
+  await expect(stats).toContainText(/50,0\s*%/); // 1 won / 2 decided, in pt-BR numerals
   const list = page.getByTestId("proof-list");
-  await expect(list.locator("li")).toHaveCount(3);
+  await expect(list.locator("tbody tr")).toHaveCount(3); // the record is a table now, one row per ticket
   await expect(list).toContainText(/ganhou/);
   await expect(list).toContainText(/perdeu/);
   await expect(list).toContainText(/pendente/); // the game under way
@@ -53,7 +53,7 @@ test("bankroll: saved tickets inherit the ledger's grading; outside bets are gra
   expect(missing.status()).toBe(404);
   await page.goto("/app/bankroll?lang=pt");
   await expect(page.getByTestId("bankroll-entry")).toHaveCount(1);
-  await expect(page.getByTestId("bankroll-totals")).toContainText("+R$ 100,00"); // won at 2.00 with 100
+  await expect(page.getByTestId("bankroll-totals")).toContainText(/\+R\$\s*100,00/); // won at 2.00 with 100
   // an outside bet, graded by the user
   await page.getByTestId("manual-title").fill("Flamengo vence @ outra casa");
   await page.getByTestId("manual-odds").fill("1.80");
@@ -61,7 +61,7 @@ test("bankroll: saved tickets inherit the ledger's grading; outside bets are gra
   await page.getByTestId("manual-add").click();
   await expect(page.getByTestId("bankroll-entry")).toHaveCount(2);
   await page.getByTestId("bankroll-entry").filter({ hasText: "Flamengo" }).getByRole("button", { name: /perdeu/i }).click();
-  await expect(page.getByTestId("bankroll-totals")).toContainText("+R$ 50,00"); // 100 - 50
+  await expect(page.getByTestId("bankroll-totals")).toContainText(/\+R\$\s*50,00/); // 100 - 50
 });
 
 test("sitemap and robots exist for search engines", async ({ page }) => {
