@@ -1,7 +1,7 @@
 # Betmatic — Design System: *Mesa de Operações*
 
 Status: specification. Written 2026-09-18 on `feat/design-system`, before any product code changed.
-Audience: whoever rebuilds the surfaces listed in §14. Every number here is a decision, not a default.
+Audience: whoever rebuilds the surfaces listed in §15. Every number here is a decision, not a default.
 
 ---
 
