@@ -1,47 +1,404 @@
 @import "tailwindcss";
 
-@theme {
-  --color-ink-950: #08090c;
-  --color-ink-900: #0d0f14;
-  --color-ink-850: #12151c;
-  --color-ink-800: #171b24;
-  --color-ink-700: #212734;
-  --color-ink-600: #2f3646;
-  --color-ink-500: #47506380;
+/*
+ * Mesa de Operações — token layer. Values and rationale: docs/DESIGN.md §5–§9.
+ *
+ * Contract: no component may use a raw hex, a raw px size or an arbitrary Tailwind value.
+ * Everything below is either a named CSS custom property (read it as var(--name) in hand-written
+ * CSS, or as the matching utility: --surface-1 → bg-surface-1, --fg-muted → text-fg-muted) or a
+ * @theme token. The light palette is declared on bare :root; dark is an override in two guarded
+ * blocks, so an explicit data-theme wins in both directions.
+ */
 
-  --color-mist-100: #f2f5fa;
-  --color-mist-300: #b8c2d4;
-  --color-mist-400: #8a94a8;
-  --color-mist-500: #667085;
+:root {
+  color-scheme: light;
 
-  --color-edge-400: #4ade80;
-  --color-edge-500: #22c55e;
-  --color-warn-400: #fbbf24;
-  --color-alert-400: #f87171;
-  --color-signal-400: #38bdf8;
-  --color-signal-500: #0ea5e9;
+  /* Surfaces — light (§6.4) */
+  --surface-0: #ffffff;
+  --surface-1: #fafbfc;
+  --surface-2: #f2f4f7;
+  --surface-3: #e6e9ef;
 
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+  /* Text — light: 18.58 / 7.46 / 5.04 / 3.29 against surface-0 */
+  --fg: #10131a;
+  --fg-muted: #4e5566;
+  --fg-dim: #676f81;
+  --fg-faint: #868ea0;
+  --fg-inverse: #ffffff;
+
+  /* Rules and edges. --line is structure; --line-control is an affordance and stays ≥3:1. */
+  --line: #e6e9ef;
+  --line-strong: #cfd4de;
+  --line-control: #7e8798;
+
+  /* The one action colour is achromatic: 18.58:1, and never competes with data. */
+  --action: #10131a;
+  --action-fg: #ffffff;
+  --action-hover: #2a2f3c;
+  --action-active: #3a4050;
+
+  /* Hue means state, nothing else. */
+  --focus: #1b62d6;
+  --pos: #0e7c52;
+  --pos-tint: #e4f3ea;
+  --neg: #c0303a;
+  --neg-tint: #fbeaec;
+  --warn: #8a5a00;
+  --warn-tint: #fbf1dd;
+
+  /* The only sequential ramp in the system: implied/measured chance (§6.5). Never on text. */
+  --chance-1: #4e5566;
+  --chance-2: #a97f16;
+  --chance-3: #b96a12;
+  --chance-4: #c8492c;
+  --chance-5: #c0303a;
+
+  /* Spacing (§5.1) — 4px rhythm. Tailwind's numeric scale is the same rhythm (p-2 = --s-4). */
+  --s-0: 0px;
+  --s-1: 2px;
+  --s-2: 4px;
+  --s-3: 6px;
+  --s-4: 8px;
+  --s-5: 12px;
+  --s-6: 16px;
+  --s-7: 20px;
+  --s-8: 24px;
+  --s-9: 32px;
+  --s-10: 40px;
+  --s-11: 56px;
+  --s-12: 72px;
+  --s-13: 96px;
+  --s-14: 128px;
+
+  /* Radius (§8.1) — square by default. */
+  --r-0: 0px;
+  --r-1: 2px;
+  --r-2: 4px;
+  --r-3: 8px;
+
+  /* Motion (§9) */
+  --dur-1: 90ms;
+  --dur-2: 140ms;
+  --dur-3: 220ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.3, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-inout: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* The complete shadow list: two, both for things that float and can be dismissed. */
+  --elev-pop: 0 1px 2px rgb(16 19 26 / 0.12), 0 8px 24px rgb(16 19 26 / 0.14);
+  --elev-dialog: 0 2px 4px rgb(16 19 26 / 0.14), 0 24px 64px rgb(16 19 26 / 0.22);
+
+  /* Density (§7) — default mode; [data-density] overrides below. */
+  --row-h: 32px;
+  --cell-px: 12px;
+  --panel-p: 16px;
+  --stack-gap: 12px;
+  --density-text: 0.8125rem;
 }
 
-html {
+/* Dark is the product's working mode. Declared twice so an explicit toggle wins both ways. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --surface-0: #0a0c11;
+    --surface-1: #10131a;
+    --surface-2: #171a22;
+    --surface-3: #20242e;
+    --fg: #edf0f5;
+    --fg-muted: #aeb5c2;
+    --fg-dim: #868ea0;
+    --fg-faint: #676f81;
+    --fg-inverse: #0a0c11;
+    --line: #2a2f3c;
+    --line-strong: #3a4050;
+    --line-control: #676f81;
+    --action: #edf0f5;
+    --action-fg: #0a0c11;
+    --action-hover: #ffffff;
+    --action-active: #cfd4de;
+    --focus: #6aa6ff;
+    --pos: #3ed598;
+    --pos-tint: #162e2c;
+    --neg: #ff6b70;
+    --neg-tint: #311f26;
+    --warn: #f2b441;
+    --warn-tint: #2e2517;
+    --chance-1: #aeb5c2;
+    --chance-2: #e8c36b;
+    --chance-3: #f2a541;
+    --chance-4: #f2785c;
+    --chance-5: #ff6b70;
+    --elev-pop: 0 1px 2px rgb(0 0 0 / 0.32), 0 8px 24px rgb(0 0 0 / 0.36);
+    --elev-dialog: 0 2px 4px rgb(0 0 0 / 0.36), 0 24px 64px rgb(0 0 0 / 0.48);
+  }
+}
+
+/* Same values under an explicit choice. Duplicated on purpose: plain CSS cannot union a media
+   query with an attribute selector, and a colour must never be defined only inside a media query. */
+:root[data-theme="dark"] {
   color-scheme: dark;
+  --surface-0: #0a0c11;
+  --surface-1: #10131a;
+  --surface-2: #171a22;
+  --surface-3: #20242e;
+  --fg: #edf0f5;
+  --fg-muted: #aeb5c2;
+  --fg-dim: #868ea0;
+  --fg-faint: #676f81;
+  --fg-inverse: #0a0c11;
+  --line: #2a2f3c;
+  --line-strong: #3a4050;
+  --line-control: #676f81;
+  --action: #edf0f5;
+  --action-fg: #0a0c11;
+  --action-hover: #ffffff;
+  --action-active: #cfd4de;
+  --focus: #6aa6ff;
+  --pos: #3ed598;
+  --pos-tint: #162e2c;
+  --neg: #ff6b70;
+  --neg-tint: #311f26;
+  --warn: #f2b441;
+  --warn-tint: #2e2517;
+  --chance-1: #aeb5c2;
+  --chance-2: #e8c36b;
+  --chance-3: #f2a541;
+  --chance-4: #f2785c;
+  --chance-5: #ff6b70;
+  --elev-pop: 0 1px 2px rgb(0 0 0 / 0.32), 0 8px 24px rgb(0 0 0 / 0.36);
+  --elev-dialog: 0 2px 4px rgb(0 0 0 / 0.36), 0 24px 64px rgb(0 0 0 / 0.48);
 }
 
-body {
-  background:
-    radial-gradient(1100px 600px at 12% -8%, #16203010, transparent),
-    radial-gradient(900px 500px at 90% 0%, #0ea5e910, transparent),
-    var(--color-ink-950);
-  color: var(--color-mist-100);
+/* A 1px rule is half a device pixel at 2× and goes muddy; the rule colour gains one step so the
+   line reads at the same weight on both displays (§8.2). */
+@media (min-resolution: 2dppx) {
+  :root {
+    --line: #edeff3;
+  }
+  :root[data-theme="dark"] {
+    --line: #2f3542;
+  }
+}
+@media (min-resolution: 2dppx) and (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --line: #2f3542;
+  }
 }
 
-/* Tabular numerals keep lines, odds and totals from jittering as values update. */
-.nums {
+/* Density is a token set, not a vibe (§7). Comfortable is forced below 768px so touch targets
+   grow the row, never the type. */
+[data-density="compact"] {
+  --row-h: 28px;
+  --cell-px: 8px;
+  --panel-p: 12px;
+  --stack-gap: 8px;
+  --density-text: 0.75rem;
+}
+[data-density="comfortable"] {
+  --row-h: 40px;
+  --cell-px: 16px;
+  --panel-p: 24px;
+  --stack-gap: 16px;
+  --density-text: 0.875rem;
+}
+@media (max-width: 767px) {
+  [data-density] {
+    --row-h: 40px;
+    --cell-px: 16px;
+    --panel-p: 24px;
+    --stack-gap: 16px;
+    --density-text: 0.875rem;
+  }
+}
+
+@theme inline {
+  /* Families (§3). Archivo carries a wdth axis, so one voice covers hero and condensed header. */
+  --font-display: var(--font-archivo), "Archivo Fallback", "Helvetica Neue", Arial, sans-serif;
+  --font-sans: var(--font-plex-sans), "IBM Plex Sans Fallback", -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-plex-mono), "IBM Plex Mono Fallback", ui-monospace, SFMono-Regular, "Roboto Mono", monospace;
+
+  /* Colour (§6) */
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-dim: var(--fg-dim);
+  --color-fg-faint: var(--fg-faint);
+  --color-fg-inverse: var(--fg-inverse);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-line-control: var(--line-control);
+  --color-action: var(--action);
+  --color-action-fg: var(--action-fg);
+  --color-focus: var(--focus);
+  --color-pos: var(--pos);
+  --color-pos-tint: var(--pos-tint);
+  --color-neg: var(--neg);
+  --color-neg-tint: var(--neg-tint);
+  --color-warn: var(--warn);
+  --color-warn-tint: var(--warn-tint);
+  --color-chance-1: var(--chance-1);
+  --color-chance-2: var(--chance-2);
+  --color-chance-3: var(--chance-3);
+  --color-chance-4: var(--chance-4);
+  --color-chance-5: var(--chance-5);
+
+  /* Radius (§8.1): square by default, two steps of softening, full for dots and avatars only. */
+  --radius-control: var(--r-1);
+  --radius-panel: var(--r-2);
+  --radius-sheet: var(--r-3);
+
+  --shadow-pop: var(--elev-pop);
+  --shadow-dialog: var(--elev-dialog);
+
+  /* Legacy palette, kept alive while waves 1–4 rewrite the screens that still use it. Every name
+     below is deprecated: it resolves to a token above, so the old markup inherits the new ramp
+     instead of a second palette. Delete a name once no file references it. */
+  --color-ink-950: var(--surface-0);
+  --color-ink-900: var(--surface-1);
+  --color-ink-850: var(--surface-2);
+  --color-ink-800: var(--line);
+  --color-ink-700: var(--line-strong);
+  --color-ink-600: var(--line-control);
+  --color-ink-500: var(--line-control);
+  --color-mist-100: var(--fg);
+  --color-mist-200: var(--fg);
+  --color-mist-300: var(--fg-muted);
+  --color-mist-400: var(--fg-muted);
+  --color-mist-500: var(--fg-dim);
+  --color-mist-600: var(--fg-faint);
+  --color-edge-400: var(--pos);
+  --color-edge-500: var(--pos);
+  --color-warn-400: var(--warn);
+  --color-alert-400: var(--neg);
+  --color-signal-400: var(--focus);
+  --color-signal-500: var(--focus);
+}
+
+@theme {
+  /* Type scale (§4). Hand-set below 16px; ratio 1.25 above it. Only display and mega are fluid —
+     a table cell that resizes with the viewport cannot be compared across screenshots. */
+  --text-micro: 0.625rem;
+  --text-micro--line-height: 0.75rem;
+  --text-micro--letter-spacing: 0.08em;
+  --text-micro--font-weight: 500;
+  --text-label: 0.6875rem;
+  --text-label--line-height: 0.875rem;
+  --text-label--letter-spacing: 0.06em;
+  --text-label--font-weight: 500;
+  --text-tiny: 0.75rem;
+  --text-tiny--line-height: 1rem;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.125rem;
+  --text-base: 0.875rem;
+  --text-base--line-height: 1.3125rem;
+  --text-body: 1rem;
+  --text-body--line-height: 1.625rem;
+  --text-lead: 1.25rem;
+  --text-lead--line-height: 1.8125rem;
+  --text-lead--letter-spacing: -0.005em;
+  --text-h3: 1.5625rem;
+  --text-h3--line-height: 1.875rem;
+  --text-h3--letter-spacing: -0.015em;
+  --text-h3--font-weight: 600;
+  --text-h2: 1.9375rem;
+  --text-h2--line-height: 2.25rem;
+  --text-h2--letter-spacing: -0.02em;
+  --text-h2--font-weight: 600;
+  --text-h1: 2.4375rem;
+  --text-h1--line-height: 2.625rem;
+  --text-h1--letter-spacing: -0.025em;
+  --text-h1--font-weight: 600;
+  --text-display: clamp(1.9375rem, 1.35rem + 2.6vw, 3.0625rem);
+  --text-display--line-height: 1.04;
+  --text-display--letter-spacing: -0.03em;
+  --text-display--font-weight: 700;
+  --text-mega: clamp(2.4375rem, 1.6rem + 3.6vw, 3.8125rem);
+  --text-mega--line-height: 1;
+  --text-mega--letter-spacing: -0.035em;
+  --text-mega--font-weight: 700;
+}
+
+/* Custom utilities. Declared with @utility so variants (hover:, md:, print:) still apply. */
+
+/* Uppercase column headers and KPI labels: Archivo condensed, the one place the wdth axis earns
+   its keep — the same voice as the hero, narrowed to fit a table header. */
+@utility u-label {
+  font-family: var(--font-display);
+  font-variation-settings: "wdth" 82, "wght" 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+@utility u-display {
+  font-family: var(--font-display);
+  font-variation-settings: "wdth" 112, "wght" 700;
+}
+@utility u-title {
+  font-family: var(--font-display);
+  font-variation-settings: "wdth" 104, "wght" 600;
+}
+/* Every number a person compares to another number (§11.2). */
+@utility nums {
   font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums slashed-zero;
   letter-spacing: -0.01em;
+}
+/* Table rules are inset shadows on the row, never a border-bottom on cells, so a sticky header
+   and a scrolled body can never double the line (§8.2). */
+@utility u-rule {
+  box-shadow: inset 0 -1px 0 var(--line);
+}
+@utility u-rule-2 {
+  box-shadow: inset 0 -2px 0 var(--line-strong);
+}
+/* The one gradient permitted in the system: the 24px fade marking a clipped scrollable table. */
+@utility u-edge-fade {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
+  mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--surface-0);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+  }
+
+  /* One focus definition for the whole product (§12.0). :focus is never styled, and the 2px offset
+     keeps the ring off a control's own border so it survives 2×. */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: inherit;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--focus) 30%, transparent);
+    color: var(--fg);
+  }
+
+  ::placeholder {
+    color: var(--fg-dim);
+  }
+
+  /* Anchored sections must clear the sticky header. */
+  section[id] {
+    scroll-margin-top: 64px;
+  }
 }
 
 ::-webkit-scrollbar {
@@ -49,24 +406,89 @@ body {
   height: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--color-ink-900);
+  background: var(--surface-1);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-ink-700);
-  border-radius: 999px;
+  background: var(--line-strong);
+  border-radius: var(--r-1);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-ink-600);
+  background: var(--line-control);
 }
 
-@keyframes pulse-ring {
-  0% { box-shadow: 0 0 0 0 rgb(56 189 248 / 0.35); }
-  70% { box-shadow: 0 0 0 8px rgb(56 189 248 / 0); }
-  100% { box-shadow: 0 0 0 0 rgb(56 189 248 / 0); }
+/* Nothing in the system loops except this: a 2s opacity pulse on the live dot. Not a growing ring,
+   which reflows nothing but reads as an alert (§9). */
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
 }
 .live-dot {
-  animation: pulse-ring 2s infinite;
+  animation: live-pulse 2s var(--ease-inout) infinite;
 }
 
-/* Anchored sections must clear the sticky header. */
-section[id] { scroll-margin-top: 64px; }
+/* A price move flashes its cell and holds a leading rule; the digits never animate. */
+@keyframes cell-flash-pos {
+  from {
+    background-color: var(--pos-tint);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+@keyframes cell-flash-neg {
+  from {
+    background-color: var(--neg-tint);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+  .live-dot {
+    animation: none;
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--pos) 45%, transparent);
+  }
+}
+
+/* A person who prints a track record must be able to hand it to someone (§12.10). */
+@media print {
+  :root {
+    color-scheme: light;
+    --surface-0: #ffffff;
+    --surface-1: #ffffff;
+    --surface-2: #f2f4f7;
+    --surface-3: #ffffff;
+    --fg: #10131a;
+    --fg-muted: #4e5566;
+    --fg-dim: #676f81;
+    --line: #cfd4de;
+    --line-strong: #868ea0;
+  }
+  [data-print="hide"] {
+    display: none !important;
+  }
+  tr,
+  figure,
+  table {
+    break-inside: avoid;
+  }
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.6875rem;
+    color: var(--fg-muted);
+  }
+}
