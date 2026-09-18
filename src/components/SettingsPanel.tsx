@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Empty, Panel } from "@/components/ui";
 import { useNavState } from "@/components/Controls";
 import { makeT } from "@/lib/i18n";
+import { formatMoney } from "@/lib/format";
 
 interface Settings { bankrollAmount: number | null; dailyStakeCap: number | null; weeklyStakeCap: number | null; sessionReminderMinutes: number | null; lossStreakNotice: number; pausedUntil: string | null; leaderboardOptIn: boolean; handle: string | null }
 interface Payload { settings: Settings; pause: { paused: boolean; until: string | null; daysLeft: number }; staked: { today: number; week: number }; streak: { streak: number; notice: boolean }; error?: string }
@@ -26,7 +27,7 @@ export function SettingsPanel() {
   const [bankroll, setBankroll] = useState("");
   const [handle, setHandle] = useState("");
   const [handleError, setHandleError] = useState<string | null>(null);
-  const money = (n: number) => (lang === "pt" ? `R$ ${n.toFixed(2)}` : `$${n.toFixed(2)}`);
+  const money = (n: number) => formatMoney(n, lang);
   const fmtDate = (iso: string) => formatDate(iso, lang, { year: true });
 
   const apply = useCallback((j: Payload) => {
@@ -55,7 +56,7 @@ export function SettingsPanel() {
     if (r.ok) { const j = await r.json(); setData((d) => (d ? { ...d, settings: j.settings, pause: j.pause } : d)); setConfirmPause(false); }
   }
 
-  if (data?.error) return <Panel title={t("settingsTitle")}><Empty>{t("signInForSettings")}</Empty><Link href="/login" className="mt-2 inline-block text-sm text-pos hover:underline">{lang === "pt" ? "Entrar" : "Log in"}</Link></Panel>;
+  if (data?.error) return <Panel className="max-w-[56rem]" title={t("settingsTitle")}><Empty>{t("signInForSettings")}</Empty><Link href="/login" className="mt-2 inline-block text-sm text-fg underline underline-offset-2">{lang === "pt" ? "Entrar" : "Log in"}</Link></Panel>;
   const s = data?.settings;
   const num = (v: string) => (v.trim() === "" ? null : Number(v));
   const input = "nums w-36 rounded-control border border-line-strong bg-surface-1 px-3 py-2 text-sm text-fg";
@@ -69,7 +70,7 @@ export function SettingsPanel() {
         </div>
       )}
 
-      <Panel title={t("limitsTitle")} meta={data ? `${t("stakedSoFar")}: ${money(data.staked.today)} / 24h · ${money(data.staked.week)} / 7d` : undefined}>
+      <Panel className="max-w-[56rem]" title={t("limitsTitle")} meta={data ? `${t("stakedSoFar")}: ${money(data.staked.today)} / 24h · ${money(data.staked.week)} / 7d` : undefined}>
         <p className="text-tiny text-fg-dim">{t("limitsIntro")}</p>
         {/* The inputs appear only once the saved values are in: a late load must never wipe what was typed. */}
         {!data ? <p className="mt-3 text-tiny text-fg-dim">…</p> : (
@@ -82,7 +83,7 @@ export function SettingsPanel() {
         )}
       </Panel>
 
-      <Panel title={lang === "pt" ? "Sua banca (opcional)" : "Your bankroll (optional)"}>
+      <Panel className="max-w-[56rem]" title={lang === "pt" ? "Sua banca (opcional)" : "Your bankroll (optional)"}>
         <p className="text-tiny text-fg-dim">
           {lang === "pt"
             ? "Quanto você separou para apostar, no total. Serve só para o relatório da semana mostrar quando um valor apostado passou muito do tamanho sensato (¼ Kelly). Não é compartilhado."
@@ -96,7 +97,7 @@ export function SettingsPanel() {
         )}
       </Panel>
 
-      <Panel title={t("reminderTitle")}>
+      <Panel className="max-w-[56rem]" title={t("reminderTitle")}>
         <p className="text-tiny text-fg-dim">{t("reminderIntro")}</p>
         <select aria-label={t("reminderTitle")} value={s?.sessionReminderMinutes ?? 0} onChange={(e) => void patch({ sessionReminderMinutes: Number(e.target.value) || null })} className={`mt-3 ${select}`} data-testid="reminder-select">
           <option value={0}>{t("reminderOff")}</option>
@@ -104,7 +105,7 @@ export function SettingsPanel() {
         </select>
       </Panel>
 
-      <Panel title={t("streakTitle")} meta={data ? `${data.streak.streak} ${lang === "pt" ? "seguidas agora" : "in a row now"}` : undefined}>
+      <Panel className="max-w-[56rem]" title={t("streakTitle")} meta={data ? `${data.streak.streak} ${lang === "pt" ? "seguidas agora" : "in a row now"}` : undefined}>
         <p className="text-tiny text-fg-dim">{t("streakIntro")}</p>
         <select aria-label={t("streakTitle")} value={s?.lossStreakNotice ?? 3} onChange={(e) => void patch({ lossStreakNotice: Number(e.target.value) })} className={`mt-3 ${select}`} data-testid="streak-select">
           <option value={0}>{t("streakOff")}</option>
@@ -112,7 +113,7 @@ export function SettingsPanel() {
         </select>
       </Panel>
 
-      <Panel title={t("pauseTitle")}>
+      <Panel className="max-w-[56rem]" title={t("pauseTitle")}>
         <p className="text-tiny text-fg-dim">{t("pauseIntro")}</p>
         <SelfExclusionLinks lang={lang} />
         {data?.pause.paused ? (
@@ -128,7 +129,7 @@ export function SettingsPanel() {
         )}
       </Panel>
 
-      <Panel title={t("rankingTitle")}>
+      <Panel className="max-w-[56rem]" title={t("rankingTitle")}>
         <p className="text-tiny text-fg-dim">{t("rankingOptInIntro")}</p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-2 text-sm text-fg"><input type="checkbox" checked={optIn} onChange={(e) => { setOptIn(e.target.checked); void patch({ leaderboardOptIn: e.target.checked }); }} className="size-4 appearance-none rounded-control border border-line-control bg-surface-3 checked:border-action checked:bg-action" data-testid="ranking-optin" />{t("rankingOptIn")}</label>
@@ -137,7 +138,7 @@ export function SettingsPanel() {
           {handleError && <span className="text-tiny text-warn" data-testid="handle-error">{handleError}</span>}
           {s?.leaderboardOptIn && s.handle && <span className="text-tiny text-fg-dim">{t("shownAs")} <span className="nums text-fg">@{s.handle}</span></span>}
         </div>
-        <Link href={{ pathname: "/app/ranking", query: { lang } }} className="mt-2 inline-block text-tiny text-pos hover:underline">{t("navRanking")} →</Link>
+        <Link href={{ pathname: "/app/ranking", query: { lang } }} className="mt-2 inline-block text-tiny text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{t("navRanking")} →</Link>
       </Panel>
     </div>
   );
@@ -148,7 +149,7 @@ export function SelfExclusionLinks({ lang }: { lang: "pt" | "en" }) {
   return (
     <p className="mt-2 text-tiny leading-relaxed text-fg-muted" data-testid="self-exclusion">
       {lang === "pt" ? "Quer bloquear todas as casas autorizadas de uma vez? Use a " : "Want to block every licensed Brazilian book at once? Use the "}
-      <a href="https://autoexclusaoapostas.fazenda.gov.br" target="_blank" rel="noreferrer" className="text-pos underline underline-offset-2">
+      <a href="https://autoexclusaoapostas.fazenda.gov.br" target="_blank" rel="noreferrer" className="text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">
         {lang === "pt" ? "Plataforma Centralizada de Autoexclusão" : "federal self-exclusion platform (Plataforma Centralizada de Autoexclusão)"}
       </a>
       {lang === "pt" ? " do governo. Se precisar conversar, o CVV atende de graça no 188, 24 horas." : ". If you need to talk, CVV answers for free on 188, 24 hours a day (Brazil)."}
