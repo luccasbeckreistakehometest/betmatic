@@ -1,4 +1,4 @@
-import { buildWorld, COMMON, CORE, etKey, HOUR, SITE, WEB, writeFile, type FakeGame, type Player, type Team } from "./espn-world";
+import { buildWorld, COMMON, CORE, etKey, HOUR, SITE, WEB, writeFile, type FakeGame, type Player, type SlateDay, type Team } from "./espn-world";
 
 const dec = (american: number) => (american > 0 ? 1 + american / 100 : 1 + 100 / Math.abs(american));
 const BB_LABELS = ["MIN", "PTS", "REB", "AST", "STL", "BLK", "TO", "FG", "FG%", "3PT", "3P%", "FT", "FT%", "PF"];
@@ -132,12 +132,16 @@ function summary(g: FakeGame) {
 
 export function writeEspnFixtures(dir: string, now = Date.now()) {
   const { games, teams } = buildWorld(now);
+  // A game is published on the scoreboard of its declared slate day, not of its kickoff timestamp:
+  // see the note in espn-world.ts. The calendar advertises the same days, for the same reason.
+  const dayDate = (d: SlateDay) => new Date(now + d * 24 * HOUR);
   for (const league of ["wnba", "bra.1"] as const) {
     const sport = league === "wnba" ? "basketball" : "soccer";
-    const days = [-1, 0, 1].map((d) => etKey(new Date(now + d * 24 * HOUR)));
-    const calendar = [...new Set(games.filter((g) => g.league === league).map((g) => g.startsAt.toISOString()))];
-    for (const day of days) {
-      const events = games.filter((g) => g.league === league && etKey(g.startsAt) === day).map(scoreboardEvent);
+    const played = games.filter((g) => g.league === league);
+    const calendar = [...new Set(played.map((g) => dayDate(g.day).toISOString()))];
+    for (const d of [-1, 0, 1] as SlateDay[]) {
+      const day = etKey(dayDate(d));
+      const events = played.filter((g) => g.day === d).map(scoreboardEvent);
       const body = { leagues: [{ calendar }], events };
       writeFile(dir, `${SITE}/${sport}/${league}/scoreboard?dates=${day}&limit=100`, body);
       writeFile(dir, `${SITE}/${sport}/${league}/scoreboard?dates=${day}&limit=1`, body);
@@ -178,5 +182,11 @@ export function writeEspnFixtures(dir: string, now = Date.now()) {
       writeFile(dir, `${WEB}/${sport}/${league}/athletes/${p.id}`, { athlete: { displayName: p.name, position: { abbreviation: p.pos }, team: { id: t.id, abbreviation: t.abbr }, statsSummary: { displayName: "2026", statistics: [{ name: "starts-subIns", displayValue: starts }] } } });
     }
   }
+
+  // The custom parlay solves over today's upcoming games and the cross-game slate needs at least
+  // two of them, so the world has to hold that at any hour. Said here, where it is one line to fix,
+  // rather than left to surface as two specs failing on whoever runs them after dinner.
+  const open = games.filter((g) => g.league === "wnba" && g.day === 0 && g.state === "pre" && g.startsAt.getTime() > now && g.props?.length);
+  if (open.length < 3) throw new Error(`fake ESPN: today's WNBA slate has ${open.length} upcoming games with props, the specs need 3`);
   return { games };
 }
