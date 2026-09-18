@@ -94,7 +94,7 @@ export function PlayerDeepDive({ athleteId, gameId }: { athleteId: string; gameI
         <div className="flex flex-wrap gap-1.5" role="tablist">
           {profile.markets.map((m) => (
             <button key={m.key} type="button" onClick={() => setMarketKey(m.key)} data-testid={`market-${m.key}`} aria-pressed={m.key === market.key}
-              className={`rounded-full border px-2.5 py-1 text-tiny ${m.key === market.key ? "border-pos bg-action text-fg" : "border-line-strong text-fg-muted hover:text-fg"}`}>
+              className={`rounded-control border px-2.5 py-1 text-tiny transition-colors duration-(--dur-1) ${m.key === market.key ? "border-action bg-action text-action-fg" : "border-line-control text-fg-muted hover:bg-surface-2 hover:text-fg"}`}>
               {m.label[lang]}{m.posted.length ? " •" : ""}
             </button>
           ))}

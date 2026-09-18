@@ -40,7 +40,7 @@ export function LossReview({ slug, lang, compact = false }: { slug: string; lang
       {data?.review ? (
         <>
           <div className="flex flex-wrap items-center gap-2">
-            <span className={`rounded-full border px-2.5 py-0.5 text-label u-label ${verdictTone[data.review.verdict]}`} data-testid="review-verdict">{verdictLabel[data.review.verdict]}</span>
+            <span className={`rounded-control border px-2.5 py-0.5 text-label u-label ${verdictTone[data.review.verdict]}`} data-testid="review-verdict">{verdictLabel[data.review.verdict]}</span>
             {data.createdAt && <span className="text-label text-fg-dim">{t("reviewCached")} {formatDate(data.createdAt, lang, { year: true })}</span>}
           </div>
           <div><h4 className="text-micro u-label text-fg-dim">{t("reviewAssumed")}</h4><p className="mt-1 leading-relaxed text-fg-muted">{data.review.assumed}</p></div>

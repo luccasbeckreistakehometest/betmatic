@@ -67,7 +67,7 @@ export default async function TicketPage({ params, searchParams }: { params: Pro
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-12 sm:px-5" data-testid="ticket-page">
         <Link href={{ pathname: "/prova", query: { lang } }} className="mb-6 inline-block text-sm text-fg-muted hover:text-fg">{c.back}</Link>
         <div>
-        <div className={"inline-block rounded-full border px-3 py-1 text-tiny font-semibold tracking-wider " + tone[e.outcome]}>{c.outcome[e.outcome]}</div>
+        <div className={"inline-block rounded-control border px-3 py-1 text-label u-label " + tone[e.outcome]}>{c.outcome[e.outcome]}</div>
         <h1 className="mt-4 text-h2 font-semibold tracking-tight">{scrubText(e.title, lang)}</h1>
         <p className="mt-1 text-base text-fg-muted">{scrubText(e.matchup, lang)}</p>
         <div className="mt-6 flex flex-wrap gap-6 text-sm text-fg-muted">
@@ -106,7 +106,7 @@ function LockedTicket({ lang, slug, matchup, startsAt }: { lang: "pt" | "en"; sl
       <MarketingHeader lang={lang} langHrefs={{ pt: `/p/${slug}`, en: `/p/${slug}?lang=en` }} />
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-12 sm:px-5" data-testid="ticket-locked">
         <Link href={{ pathname: "/prova", query: { lang } }} className="mb-6 inline-block text-sm text-fg-muted hover:text-fg">{c.back}</Link>
-        <div className="inline-block rounded-full border border-line-strong px-3 py-1 text-tiny font-semibold tracking-wider text-fg-muted">{c.outcome.pending}</div>
+        <div className="inline-block rounded-control border border-line-strong px-3 py-1 text-label u-label text-fg-muted">{c.outcome.pending}</div>
         <h1 className="mt-4 text-h2 font-semibold tracking-tight">{c.lockedTitle}</h1>
         <p className="mt-1 text-base text-fg-muted">{matchup}</p>
         {startsAt && <p className="mt-4 text-sm text-fg-muted"><span className="text-fg-dim">{c.kickoff}:</span> {formatDateTime(startsAt, lang)}</p>}
