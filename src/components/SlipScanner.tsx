@@ -94,76 +94,76 @@ export function SlipScanner({ lang, sportKey: initialSport, onSaved }: { lang: L
     router.push(`/app/slip?sport=${sportKey}&lang=${lang}&from=scan`);
   }
 
-  const field = "w-full rounded border border-ink-700 bg-ink-900 px-2 py-1 text-[12.5px] text-mist-100 outline-none focus:border-edge-400";
+  const field = "w-full rounded-control border border-line-strong bg-surface-1 px-2 py-1 text-tiny text-fg outline-none focus:border-pos";
   return (
-    <section className="rounded-xl border border-edge-400/25 bg-edge-400/[0.04] p-4" data-testid="slip-scanner">
+    <section className="rounded-panel border border-pos bg-action] p-4" data-testid="slip-scanner">
       <div className="flex flex-wrap items-center gap-3">
         <button type="button" onClick={() => input.current?.click()} disabled={phase === "reading" || phase === "saving"} data-testid="scan-button"
-          className="rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 hover:bg-edge-500 disabled:opacity-50">
+          className="rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg hover:bg-action disabled:opacity-50">
           {phase === "reading" ? c.reading : c.button}
         </button>
         <input ref={input} type="file" accept="image/*" className="hidden" data-testid="scan-input" onChange={(e) => void onFile(e.target.files?.[0])} />
-        <label className="flex items-center gap-1.5 text-[11.5px] text-mist-400">
+        <label className="flex items-center gap-1.5 text-tiny text-fg-muted">
           {lang === "pt" ? "Campeonato do bilhete" : "League on the slip"}
-          <select value={sportKey} onChange={(e) => setSportKey(e.target.value)} className="rounded border border-ink-700 bg-ink-900 px-1.5 py-1 text-[12px] text-mist-100" data-testid="scan-sport">
+          <select value={sportKey} onChange={(e) => setSportKey(e.target.value)} className="rounded-control border border-line-strong bg-surface-1 px-1.5 py-1 text-tiny text-fg" data-testid="scan-sport">
             {SOLD_SPORTS.map((s) => <option key={s.key} value={s.key}>{s.label[lang]}</option>)}
           </select>
         </label>
-        {uses && <span className="nums text-[11px] text-mist-500">{uses}</span>}
+        {uses && <span className="nums text-label text-fg-dim">{uses}</span>}
       </div>
-      {phase === "idle" && <p className="mt-2 text-[12px] leading-relaxed text-mist-400">{c.hint}</p>}
-      {note && <p className="mt-2 text-[12px] text-warn-400" data-testid="scan-note">{note}</p>}
+      {phase === "idle" && <p className="mt-2 text-tiny leading-relaxed text-fg-muted">{c.hint}</p>}
+      {note && <p className="mt-2 text-tiny text-warn" data-testid="scan-note">{note}</p>}
       {draft && (phase === "review" || phase === "saving") && (
         <div className="mt-3 flex flex-col gap-3" data-testid="scan-review">
           <div>
-            <h3 className="text-[13px] font-semibold text-mist-100">{c.review}</h3>
-            <p className="text-[11.5px] text-mist-500">{c.reviewHint}</p>
+            <h3 className="text-sm font-semibold text-fg">{c.review}</h3>
+            <p className="text-tiny text-fg-dim">{c.reviewHint}</p>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-            <label className="text-[10px] uppercase tracking-wider text-mist-500">{c.book}<input className={field} value={draft.book} onChange={(e) => setDraft({ ...draft, book: e.target.value })} /></label>
-            <label className="text-[10px] uppercase tracking-wider text-mist-500">{c.type}
+            <label className="text-micro uppercase tracking-wider text-fg-dim">{c.book}<input className={field} value={draft.book} onChange={(e) => setDraft({ ...draft, book: e.target.value })} /></label>
+            <label className="text-micro uppercase tracking-wider text-fg-dim">{c.type}
               <select className={field} value={draft.betType ?? ""} onChange={(e) => setDraft({ ...draft, betType: (e.target.value || null) as Draft["betType"] })}>
                 <option value="">—</option>{Object.entries(c.types).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </select>
             </label>
-            <label className="text-[10px] uppercase tracking-wider text-mist-500">{c.stake}<input className={`${field} nums`} inputMode="decimal" value={draft.stake} onChange={(e) => setDraft({ ...draft, stake: e.target.value })} data-testid="scan-stake" /></label>
-            <label className="text-[10px] uppercase tracking-wider text-mist-500">{c.total}<input className={`${field} nums`} inputMode="decimal" value={draft.totalOdds} onChange={(e) => setDraft({ ...draft, totalOdds: e.target.value })} data-testid="scan-total" /></label>
-            <label className="text-[10px] uppercase tracking-wider text-mist-500">{c.ret}<input className={`${field} nums`} inputMode="decimal" value={draft.potentialReturn} onChange={(e) => setDraft({ ...draft, potentialReturn: e.target.value })} /></label>
+            <label className="text-micro uppercase tracking-wider text-fg-dim">{c.stake}<input className={`${field} nums`} inputMode="decimal" value={draft.stake} onChange={(e) => setDraft({ ...draft, stake: e.target.value })} data-testid="scan-stake" /></label>
+            <label className="text-micro uppercase tracking-wider text-fg-dim">{c.total}<input className={`${field} nums`} inputMode="decimal" value={draft.totalOdds} onChange={(e) => setDraft({ ...draft, totalOdds: e.target.value })} data-testid="scan-total" /></label>
+            <label className="text-micro uppercase tracking-wider text-fg-dim">{c.ret}<input className={`${field} nums`} inputMode="decimal" value={draft.potentialReturn} onChange={(e) => setDraft({ ...draft, potentialReturn: e.target.value })} /></label>
           </div>
           <ul className="flex flex-col gap-2">
             {draft.legs.map((l, i) => (
-              <li key={i} className="rounded-lg border border-ink-800 bg-ink-900/60 p-2.5" data-testid="scan-leg">
+              <li key={i} className="rounded-control border border-line bg-surface-1 p-2.5" data-testid="scan-leg">
                 <div className="grid gap-2 sm:grid-cols-[1.2fr_1.4fr_1fr_80px]">
                   <input className={field} aria-label={`${c.event} ${i + 1}`} value={l.event} onChange={(e) => setLeg(i, { event: e.target.value })} />
                   <input className={field} aria-label={`${c.selection} ${i + 1}`} value={l.selection} onChange={(e) => setLeg(i, { selection: e.target.value })} />
                   <input className={field} aria-label={`${c.market} ${i + 1}`} value={l.market} onChange={(e) => setLeg(i, { market: e.target.value })} />
                   <input className={`${field} nums`} aria-label={`${c.odds} ${i + 1}`} inputMode="decimal" value={l.odds} onChange={(e) => setLeg(i, { odds: e.target.value })} data-testid="scan-leg-odds" />
                 </div>
-                <p className="mt-1 text-[11px]">
-                  {l.auto ? <span className="text-edge-400">{c.found}: {l.matchup} · {c.auto}</span> : <span className="text-mist-500">{c.notFound}</span>}
+                <p className="mt-1 text-label">
+                  {l.auto ? <span className="text-pos">{c.found}: {l.matchup} · {c.auto}</span> : <span className="text-fg-dim">{c.notFound}</span>}
                 </p>
               </li>
             ))}
           </ul>
-          {draft.unreadable.length > 0 && <p className="text-[11.5px] text-warn-400">{c.unreadable}: {draft.unreadable.join(", ")}</p>}
+          {draft.unreadable.length > 0 && <p className="text-tiny text-warn">{c.unreadable}: {draft.unreadable.join(", ")}</p>}
           {checks.length > 0 && (
             <ul className="flex flex-col gap-0.5" data-testid="scan-checks">
-              {checks.map((k, i) => <li key={i} className={`text-[12px] ${k.ok ? "text-mist-400" : "text-warn-400"}`} data-ok={k.ok}>{k.ok ? "✓" : "!"} {checkText(k, lang)}</li>)}
+              {checks.map((k, i) => <li key={i} className={`text-tiny ${k.ok ? "text-fg-muted" : "text-warn"}`} data-ok={k.ok}>{k.ok ? "✓" : "!"} {checkText(k, lang)}</li>)}
             </ul>
           )}
-          <p className="text-[11px] text-mist-500">{c.privacy}</p>
+          <p className="text-label text-fg-dim">{c.privacy}</p>
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={save} disabled={!ready || phase === "saving"} data-testid="scan-save" className="rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 hover:bg-edge-500 disabled:opacity-40">{phase === "saving" ? c.saving : c.save}</button>
-            <button type="button" onClick={analyse} className="rounded-lg border border-ink-700 px-3 py-1.5 text-[12.5px] text-mist-200 hover:border-ink-600" data-testid="scan-analyse">{c.analyse}</button>
-            <button type="button" onClick={() => { setDraft(null); setPhase("idle"); }} className="px-2 text-[12px] text-mist-500 hover:text-mist-300">{c.cancel}</button>
+            <button type="button" onClick={save} disabled={!ready || phase === "saving"} data-testid="scan-save" className="rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg hover:bg-action disabled:opacity-40">{phase === "saving" ? c.saving : c.save}</button>
+            <button type="button" onClick={analyse} className="rounded-control border border-line-strong px-3 py-1.5 text-tiny text-fg hover:border-line-control" data-testid="scan-analyse">{c.analyse}</button>
+            <button type="button" onClick={() => { setDraft(null); setPhase("idle"); }} className="px-2 text-tiny text-fg-dim hover:text-fg-muted">{c.cancel}</button>
           </div>
         </div>
       )}
       {phase === "saved" && (
-        <div className="mt-2 flex flex-wrap items-center gap-3 text-[12.5px]" data-testid="scan-saved">
-          <span className="text-edge-400">✓ {c.saved}</span>
-          <Link href={{ pathname: "/app/bankroll", query: { lang } }} className="text-mist-300 underline underline-offset-2">{c.seeBankroll}</Link>
-          <button type="button" onClick={analyse} className="text-mist-300 underline underline-offset-2">{c.analyse}</button>
+        <div className="mt-2 flex flex-wrap items-center gap-3 text-tiny" data-testid="scan-saved">
+          <span className="text-pos">✓ {c.saved}</span>
+          <Link href={{ pathname: "/app/bankroll", query: { lang } }} className="text-fg-muted underline underline-offset-2">{c.seeBankroll}</Link>
+          <button type="button" onClick={analyse} className="text-fg-muted underline underline-offset-2">{c.analyse}</button>
         </div>
       )}
     </section>

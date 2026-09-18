@@ -54,27 +54,27 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
   };
 
   return (
-    <div className="flex min-h-full flex-col bg-ink-950">
+    <div className="flex min-h-full flex-col bg-surface-0">
       <MarketingHeader
         lang={lang}
         langHrefs={{ pt: `/${s.slug.pt}`, en: `/${s.slug.en}` }}
         nav={
-          <nav className="ml-2 hidden items-center gap-4 text-[13px] text-mist-400 md:flex">
+          <nav className="ml-2 hidden items-center gap-4 text-sm text-fg-muted md:flex">
             {SPORT_LANDINGS.map((other) => (
               <Link
                 key={other.slug[lang]}
                 href={`/${other.slug[lang]}`}
-                className={other.slug[lang] === sport ? "text-edge-400" : "transition hover:text-mist-100"}
+                className={other.slug[lang] === sport ? "text-pos" : "transition hover:text-fg"}
               >
                 {other.name[lang]}
               </Link>
             ))}
-            <Link href={`/planos${lang === "en" ? "?lang=en" : ""}`} className="transition hover:text-mist-100">{c.navPricing}</Link>
+            <Link href={`/planos${lang === "en" ? "?lang=en" : ""}`} className="transition hover:text-fg">{c.navPricing}</Link>
           </nav>
         }
       />
 
-      <section className="relative overflow-hidden border-b border-ink-800/80">
+      <section className="relative overflow-hidden border-b border-line">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-[0.055]"
@@ -89,55 +89,55 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
             {s.leagues.map((league) => (
               <span
                 key={league}
-                className="rounded border border-ink-700 bg-ink-900 px-2 py-0.5 text-[11px] text-mist-400"
+                className="rounded-control border border-line-strong bg-surface-1 px-2 py-0.5 text-label text-fg-muted"
               >
                 {league}
               </span>
             ))}
           </div>
-          <h1 className="mt-5 max-w-3xl text-[clamp(2.2rem,5.4vw,3.8rem)] font-semibold leading-[1.02] tracking-[-0.035em] text-white">
+          <h1 className="mt-5 max-w-3xl text-[clamp(2.2rem,5.4vw,3.8rem)] font-semibold leading-[1.02] tracking-[-0.035em] text-fg">
             {s.title[lang]}
           </h1>
-          <p className="mt-6 max-w-2xl text-[15.5px] leading-relaxed text-mist-300">{s.sub[lang]}</p>
+          <p className="mt-6 max-w-2xl text-base leading-relaxed text-fg-muted">{s.sub[lang]}</p>
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <Link
               href={appPath}
               data-testid="sport-cta"
-              className="rounded-xl bg-edge-400 px-6 py-3 text-[15px] font-semibold text-ink-950 transition hover:bg-edge-500"
+              className="rounded-panel bg-action px-6 py-3 text-base font-semibold text-action-fg transition hover:bg-action"
             >
               {s.cta[lang]}
             </Link>
-            <span className="text-[12px] text-mist-500">{c.heroCtaSub}</span>
+            <span className="text-tiny text-fg-dim">{c.heroCtaSub}</span>
           </div>
         </div>
       </section>
 
       <ProofStrip lang={lang} sportKeys={s.sportKeys} />
 
-      <section className="border-b border-ink-800/80">
+      <section className="border-b border-line">
         <div className="mx-auto max-w-6xl px-5 py-16">
-          <div className={`grid gap-px overflow-hidden rounded-2xl border border-ink-800 bg-ink-800 ${s.angle[lang].length > 3 ? "md:grid-cols-2 lg:grid-cols-4" : "md:grid-cols-3"}`}>
+          <div className={`grid gap-px overflow-hidden rounded-panel border border-line bg-surface-3 ${s.angle[lang].length > 3 ? "md:grid-cols-2 lg:grid-cols-4" : "md:grid-cols-3"}`}>
             {s.angle[lang].map((item, i) => (
-              <div key={item.title} className="flex flex-col bg-ink-900/80 p-6">
-                <span className="nums text-[11px] text-edge-400">{String(i + 1).padStart(2, "0")}</span>
-                <h2 className="mt-3 text-[15px] font-semibold text-white">{item.title}</h2>
-                <p className="mt-2 text-[13px] leading-relaxed text-mist-400">{item.body}</p>
+              <div key={item.title} className="flex flex-col bg-surface-1 p-6">
+                <span className="nums text-label text-pos">{String(i + 1).padStart(2, "0")}</span>
+                <h2 className="mt-3 text-base font-semibold text-fg">{item.title}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-fg-muted">{item.body}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="border-b border-ink-800/80">
+      <section className="border-b border-line">
         <div className="mx-auto max-w-6xl px-5 py-16">
-          <h2 className="text-[clamp(1.5rem,3vw,2.1rem)] font-semibold tracking-[-0.02em] text-white">
+          <h2 className="text-[clamp(1.5rem,3vw,2.1rem)] font-semibold tracking-[-0.02em] text-fg">
             {s.marketsTitle[lang]}
           </h2>
           <div className="mt-6 flex flex-wrap gap-2">
             {s.markets[lang].map((market) => (
               <span
                 key={market}
-                className="rounded-lg border border-ink-800 bg-ink-900/70 px-3 py-1.5 text-[12.5px] text-mist-200"
+                className="rounded-control border border-line bg-surface-1 px-3 py-1.5 text-tiny text-fg"
               >
                 {market}
               </span>
@@ -147,22 +147,22 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
       </section>
 
       {/* Everything round 3 added, told in this sport's own terms. */}
-      <section className="border-b border-ink-800/80" data-testid="sport-stack">
+      <section className="border-b border-line" data-testid="sport-stack">
         <div className="mx-auto max-w-6xl px-5 py-16">
-          <h2 className="text-[clamp(1.5rem,3vw,2.1rem)] font-semibold tracking-[-0.02em] text-white">
+          <h2 className="text-[clamp(1.5rem,3vw,2.1rem)] font-semibold tracking-[-0.02em] text-fg">
             {s.stackTitle[lang]}
           </h2>
-          <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-mist-400">{s.stackSub[lang]}</p>
+          <p className="mt-2 max-w-2xl text-base leading-relaxed text-fg-muted">{s.stackSub[lang]}</p>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {s.stack[lang].map((item) => (
               <Link
                 key={item.title}
                 href={destination(item.href)}
-                className="group flex flex-col rounded-xl border border-ink-800 bg-ink-900/50 p-5 transition hover:border-edge-400/50"
+                className="group flex flex-col rounded-panel border border-line bg-surface-1 p-5 transition hover:border-pos"
               >
-                <h3 className="text-[15px] font-semibold text-white group-hover:text-edge-400">{item.title}</h3>
-                <p className="mt-2 flex-1 text-[13px] leading-relaxed text-mist-400">{item.body}</p>
-                <span className="mt-4 text-[12.5px] text-edge-400">{item.cta} →</span>
+                <h3 className="text-base font-semibold text-fg group-hover:text-pos">{item.title}</h3>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-fg-muted">{item.body}</p>
+                <span className="mt-4 text-tiny text-pos">{item.cta} →</span>
               </Link>
             ))}
           </div>
@@ -170,14 +170,14 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
       </section>
 
       {/* The ladder repeats here: it is the single clearest statement of the offer. */}
-      <section className="border-b border-ink-800/80">
+      <section className="border-b border-line">
         <div className="mx-auto grid max-w-6xl gap-10 px-5 py-16 lg:grid-cols-[1fr_1fr]">
           <div>
-            <h2 className="text-[clamp(1.5rem,3vw,2.1rem)] font-semibold tracking-[-0.02em] text-white">
+            <h2 className="text-[clamp(1.5rem,3vw,2.1rem)] font-semibold tracking-[-0.02em] text-fg">
               {c.ladderTitle}
             </h2>
-            <p className="mt-3 max-w-md text-[14px] leading-relaxed text-mist-400">{c.ladderSub}</p>
-            <p className="mt-5 max-w-md border-l-2 border-ink-700 pl-4 text-[12px] leading-relaxed text-mist-500">
+            <p className="mt-3 max-w-md text-base leading-relaxed text-fg-muted">{c.ladderSub}</p>
+            <p className="mt-5 max-w-md border-l-2 border-line-strong pl-4 text-tiny leading-relaxed text-fg-dim">
               {c.ladderFootnote}
             </p>
           </div>
@@ -188,19 +188,19 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
               const width = Math.max(8, (Math.log10(payout) / Math.log10(5400)) * 100);
               return (
                 <li key={rung.legs} className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3">
-                  <span className="nums w-14 text-[11px] text-mist-500">{rung.label[lang]}</span>
+                  <span className="nums w-14 text-label text-fg-dim">{rung.label[lang]}</span>
                   <span className="relative flex h-8 items-center">
                     <span
-                      className="absolute inset-y-0 left-0 rounded bg-gradient-to-r from-edge-500/70 to-edge-400"
+                      className="absolute inset-y-0 left-0 rounded-control bg-gradient-to-r from-edge-500/70 to-edge-400"
                       style={{ width: `${width}%` }}
                     />
-                    <span className="nums relative pl-2.5 text-[13px] font-semibold text-ink-950 mix-blend-luminosity">
+                    <span className="nums relative pl-2.5 text-sm font-semibold text-action-fg mix-blend-luminosity">
                       {money(payout, lang)}
                     </span>
                   </span>
                   <span
-                    className={`nums w-14 text-right text-[11.5px] ${
-                      chance > 0.2 ? "text-mist-300" : chance > 0.02 ? "text-warn-400" : "text-alert-400"
+                    className={`nums w-14 text-right text-tiny ${
+                      chance > 0.2 ? "text-fg-muted" : chance > 0.02 ? "text-warn" : "text-neg"
                     }`}
                   >
                     {chance >= 0.01 ? `${(chance * 100).toFixed(1)}%` : `${(chance * 100).toFixed(2)}%`}
@@ -214,11 +214,11 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
 
       <section>
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-5 px-5 py-20">
-          <LogoMark size={44} className="text-edge-400" />
-          <h2 className="max-w-2xl text-[clamp(1.7rem,3.6vw,2.6rem)] font-semibold leading-tight tracking-[-0.025em] text-white">
+          <LogoMark size={44} className="text-pos" />
+          <h2 className="max-w-2xl text-[clamp(1.7rem,3.6vw,2.6rem)] font-semibold leading-tight tracking-[-0.025em] text-fg">
             {c.finalTitle}
           </h2>
-          <p className="max-w-xl text-[15px] text-mist-400">
+          <p className="max-w-xl text-base text-fg-muted">
             {lang === "pt"
               ? `${s.name.pt} está no plano ${pro.name}${s.sportKeys.includes("nba") ? " (e no Starter)" : ""} — ou comece pelo grátis: um jogo por dia, você escolhe.`
               : `${s.name.en} is in the ${pro.name} plan${s.sportKeys.includes("nba") ? " (and Starter)" : ""} — or start free: one game a day, your pick.`}
@@ -226,13 +226,13 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
           <div className="flex flex-wrap gap-3">
             <Link
               href={signupHref}
-              className="rounded-xl bg-edge-400 px-6 py-3 text-[15px] font-semibold text-ink-950 transition hover:bg-edge-500"
+              className="rounded-panel bg-action px-6 py-3 text-base font-semibold text-action-fg transition hover:bg-action"
             >
               {c.finalCta}
             </Link>
             <Link
               href={`/planos?lang=${lang}`}
-              className="rounded-xl border border-ink-700 px-6 py-3 text-[15px] font-semibold text-mist-200 transition hover:border-ink-600 hover:text-white"
+              className="rounded-panel border border-line-strong px-6 py-3 text-base font-semibold text-fg transition hover:border-line-control hover:text-fg"
             >
               {c.navPricing}
             </Link>

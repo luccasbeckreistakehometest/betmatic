@@ -55,16 +55,16 @@ export function ResponsibleGuard() {
   return (
     <>
       {state.paused && state.until && (
-        <div className="mx-auto mb-4 w-full max-w-7xl rounded-xl border border-warn-400/30 bg-warn-400/5 px-4 py-2.5 text-[13px] text-warn-400" data-testid="pause-banner">
+        <div className="mx-auto mb-4 w-full max-w-7xl rounded-panel border border-warn bg-warn-tint px-4 py-2.5 text-sm text-warn" data-testid="pause-banner">
           {t("pausedBlock").replace("{date}", formatDate(state.until, lang, { year: true }))}{" "}
           <Link href={{ pathname: "/app/settings", query: { lang } }} className="underline underline-offset-2">{t("navSettings")}</Link>
         </div>
       )}
       {reminder !== null && (
-        <div className="fixed bottom-5 right-5 z-[80] w-[min(92vw,340px)] rounded-xl border border-ink-700 bg-ink-900 p-4 shadow-2xl" data-testid="session-reminder">
-          <p className="text-[14px] font-semibold text-mist-100">{t("sessionReminder").replace("{n}", String(reminder))}</p>
-          <p className="mt-1 text-[12px] text-mist-500">{t("notInvestment")}</p>
-          <button onClick={() => { try { sessionStorage.setItem(SHOWN_KEY, String(due.current)); } catch { /* private mode */ } setReminder(null); }} className="mt-3 rounded-lg border border-ink-700 px-3 py-1.5 text-[12px] text-mist-300 hover:text-mist-100" data-testid="reminder-dismiss">{t("dismiss")}</button>
+        <div className="fixed bottom-5 right-5 z-[80] w-[min(92vw,340px)] rounded-panel border border-line-strong bg-surface-1 p-4 shadow-pop" data-testid="session-reminder">
+          <p className="text-base font-semibold text-fg">{t("sessionReminder").replace("{n}", String(reminder))}</p>
+          <p className="mt-1 text-tiny text-fg-dim">{t("notInvestment")}</p>
+          <button onClick={() => { try { sessionStorage.setItem(SHOWN_KEY, String(due.current)); } catch { /* private mode */ } setReminder(null); }} className="mt-3 rounded-control border border-line-strong px-3 py-1.5 text-tiny text-fg-muted hover:text-fg" data-testid="reminder-dismiss">{t("dismiss")}</button>
         </div>
       )}
     </>

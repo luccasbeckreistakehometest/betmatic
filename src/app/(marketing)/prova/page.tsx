@@ -45,32 +45,32 @@ export default async function ProofPage({ searchParams }: SearchProps) {
   const visible = publicTickets(entries);
   const recent = recentTickets(visible, 40);
   const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
-  const roiTone = (r: number) => (r > 0 ? "text-signal-400" : r < 0 ? "text-warn-400" : "text-mist-300");
+  const roiTone = (r: number) => (r > 0 ? "text-focus" : r < 0 ? "text-warn" : "text-fg-muted");
   const outcomeLabel: Record<string, string> = { won: c.won, lost: c.lost, push: c.push, void: c.void, pending: c.pend };
   const publish = proofPublishable(s);
-  const outcomeTone: Record<string, string> = { won: "text-signal-400", lost: "text-warn-400", push: "text-mist-400", void: "text-mist-500", pending: "text-mist-500" };
+  const outcomeTone: Record<string, string> = { won: "text-focus", lost: "text-warn", push: "text-fg-muted", void: "text-fg-dim", pending: "text-fg-dim" };
 
   return (
     <MarketingPage lang={lang} langHrefs={langPaths("/prova")} wide>
-      <section className="text-mist-100">
-        <p className="text-[11px] uppercase tracking-[0.18em] text-edge-400">{c.eyebrow}</p>
-        <h1 className="mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">{c.title}</h1>
-        <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-mist-400">{c.sub}</p>
+      <section className="text-fg">
+        <p className="text-label uppercase tracking-[0.18em] text-pos">{c.eyebrow}</p>
+        <h1 className="mt-2 text-h1 font-semibold tracking-tight sm:text-h1">{c.title}</h1>
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-fg-muted">{c.sub}</p>
 
-        <div className="mt-8 rounded-xl border border-ink-800 bg-ink-900/50 p-5">
-          <h2 className="text-[14px] font-semibold text-white">{c.methodTitle}</h2>
-          <p className="mt-2 text-[13.5px] leading-relaxed text-mist-400">{c.methodBody}</p>
-          {!publish && <p className="mt-2 text-[13.5px] leading-relaxed text-mist-300" data-testid="proof-method">{c.method.replace("{n}", String(proofMinDecided()))}</p>}
+        <div className="mt-8 rounded-panel border border-line bg-surface-1 p-5">
+          <h2 className="text-base font-semibold text-fg">{c.methodTitle}</h2>
+          <p className="mt-2 text-sm leading-relaxed text-fg-muted">{c.methodBody}</p>
+          {!publish && <p className="mt-2 text-sm leading-relaxed text-fg-muted" data-testid="proof-method">{c.method.replace("{n}", String(proofMinDecided()))}</p>}
         </div>
 
         <ClvBlock lang={lang} />
 
-        {publish && <><div className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-ink-800 bg-ink-800 sm:grid-cols-5" data-testid="proof-stats">
+        {publish && <><div className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-panel border border-line bg-surface-3 sm:grid-cols-5" data-testid="proof-stats">
           {[[c.generated, s.generated], [c.settled, s.settled], [c.hit, s.settled ? pct(s.hitRate) : "—"], [c.roi, s.settled ? `${s.roi >= 0 ? "+" : ""}${pct(s.roi)}` : "—"], [c.pending, s.pending]].map(([k, v], i) => (
-            <div key={i} className="bg-ink-900 px-4 py-4"><div className="text-[10px] uppercase tracking-wider text-mist-500">{k}</div><div className={"nums mt-1 text-2xl font-semibold " + (i === 3 ? roiTone(s.roi) : "")}>{v}</div></div>
+            <div key={i} className="bg-surface-1 px-4 py-4"><div className="text-micro uppercase tracking-wider text-fg-dim">{k}</div><div className={"nums mt-1 text-h3 font-semibold " + (i === 3 ? roiTone(s.roi) : "")}>{v}</div></div>
           ))}
         </div>
-        {s.settled > 0 && s.settled < 30 && <p className="mt-3 text-[12px] text-mist-500">{c.small}</p>}
+        {s.settled > 0 && s.settled < 30 && <p className="mt-3 text-tiny text-fg-dim">{c.small}</p>}
 
         <div className="mt-8"><EquityChart rows={toRows(visible, (e) => ticketSlug(e.id))} lang={lang} /></div>
         </>}
@@ -78,11 +78,11 @@ export default async function ProofPage({ searchParams }: SearchProps) {
         {publish && s.settled > 0 && (
           <div className="mt-10 grid gap-5 md:grid-cols-3">
             {[[c.byMarket, s.byMarket], [c.bySport, s.bySport], [c.byBand, s.byBand]].map(([title, rows]) => (
-              <div key={String(title)} className="rounded-xl border border-ink-800 bg-ink-900/60 p-4">
-                <p className="text-[11px] uppercase tracking-wider text-mist-500">{String(title)}</p>
-                <ul className="mt-2 space-y-1.5 text-[13px]">
+              <div key={String(title)} className="rounded-panel border border-line bg-surface-1 p-4">
+                <p className="text-label uppercase tracking-wider text-fg-dim">{String(title)}</p>
+                <ul className="mt-2 space-y-1.5 text-sm">
                   {(rows as { key: string; settled: number; won: number; roi: number }[]).slice(0, 8).map((r) => (
-                    <li key={r.key} className="flex items-center justify-between"><span className="text-mist-300">{r.key}</span><span className="nums text-mist-400">{r.won}/{r.settled} · <span className={roiTone(r.roi)}>{r.roi >= 0 ? "+" : ""}{pct(r.roi)}</span></span></li>
+                    <li key={r.key} className="flex items-center justify-between"><span className="text-fg-muted">{r.key}</span><span className="nums text-fg-muted">{r.won}/{r.settled} · <span className={roiTone(r.roi)}>{r.roi >= 0 ? "+" : ""}{pct(r.roi)}</span></span></li>
                   ))}
                 </ul>
               </div>
@@ -90,24 +90,24 @@ export default async function ProofPage({ searchParams }: SearchProps) {
           </div>
         )}
 
-        <h2 className="mt-12 text-xl font-semibold">{c.recent}</h2>
-        {recent.length === 0 ? <p className="mt-3 text-[14px] text-mist-500">{c.none}</p> : (
-          <ul className="mt-4 divide-y divide-ink-800 rounded-xl border border-ink-800" data-testid="proof-list">
+        <h2 className="mt-12 text-lead font-semibold">{c.recent}</h2>
+        {recent.length === 0 ? <p className="mt-3 text-base text-fg-dim">{c.none}</p> : (
+          <ul className="mt-4 divide-y divide-line rounded-panel border border-line" data-testid="proof-list">
             {recent.map((e) => (
-              <li key={e.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-[13px]">
+              <li key={e.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-sm">
                 <span className={"w-16 font-semibold " + outcomeTone[e.outcome]}>{outcomeLabel[e.outcome]}</span>
-                <span className="nums w-16 text-mist-300">{formatDecimal(e.combinedDecimal)}</span>
-                <Link href={{ pathname: `/p/${ticketSlug(e.id)}`, query: { lang } }} className="min-w-0 flex-1 truncate text-mist-100 hover:underline">{scrubText(e.title, lang)}</Link>
-                <span className="text-mist-500">{scrubText(e.matchup, lang)} · {e.legs.length} {c.legs}</span>
-                <span className="text-mist-500">{formatDate(e.settledAt ?? e.createdAt, lang, { year: true })}</span>
+                <span className="nums w-16 text-fg-muted">{formatDecimal(e.combinedDecimal)}</span>
+                <Link href={{ pathname: `/p/${ticketSlug(e.id)}`, query: { lang } }} className="min-w-0 flex-1 truncate text-fg hover:underline">{scrubText(e.title, lang)}</Link>
+                <span className="text-fg-dim">{scrubText(e.matchup, lang)} · {e.legs.length} {c.legs}</span>
+                <span className="text-fg-dim">{formatDate(e.settledAt ?? e.createdAt, lang, { year: true })}</span>
               </li>
             ))}
           </ul>
         )}
         <div className="mt-10 flex flex-wrap items-center gap-4">
-          <Link href={`/signup?lang=${lang}`} className="inline-block rounded-lg bg-edge-400 px-5 py-2.5 text-[14px] font-semibold text-ink-950 hover:bg-edge-500">{c.cta}</Link>
-          <Link href={{ pathname: "/prova", query: withAlternatives ? { lang } : { lang, alts: "1" } }} className="text-[13px] text-mist-400 underline-offset-4 hover:text-mist-100 hover:underline" data-testid="alts-toggle">{withAlternatives ? c.mainOnly : c.withAlts}</Link>
-          <a href={`/api/public/ledger?lang=${lang}`} className="text-[13px] text-mist-400 underline-offset-4 hover:text-mist-100 hover:underline" data-testid="csv-link">{c.csv}</a>
+          <Link href={`/signup?lang=${lang}`} className="inline-block rounded-control bg-action px-5 py-2.5 text-base font-semibold text-action-fg hover:bg-action">{c.cta}</Link>
+          <Link href={{ pathname: "/prova", query: withAlternatives ? { lang } : { lang, alts: "1" } }} className="text-sm text-fg-muted underline-offset-4 hover:text-fg hover:underline" data-testid="alts-toggle">{withAlternatives ? c.mainOnly : c.withAlts}</Link>
+          <a href={`/api/public/ledger?lang=${lang}`} className="text-sm text-fg-muted underline-offset-4 hover:text-fg hover:underline" data-testid="csv-link">{c.csv}</a>
         </div>
       </section>
     </MarketingPage>

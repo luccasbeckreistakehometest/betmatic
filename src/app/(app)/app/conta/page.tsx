@@ -11,7 +11,7 @@ export async function generateMetadata({ searchParams }: SearchProps): Promise<M
 
 export default function AccountPage() {
   return (
-    <Suspense fallback={<div className="h-40 animate-pulse rounded-xl bg-ink-900" />}>
+    <Suspense fallback={<div className="h-40 animate-pulse rounded-panel bg-surface-1" />}>
       <AccountPanel />
     </Suspense>
   );

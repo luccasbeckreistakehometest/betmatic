@@ -43,24 +43,24 @@ export function PlayerReadCard({ profile, gameId, lang, c, initial }: { profile:
     <Panel title={c.read} lang={lang}>
       {state.read ? (
         <div data-testid="player-read">
-          <p className="text-[13px] leading-relaxed text-mist-200">{state.read.text}</p>
-          {state.read.watch && <p className="mt-2 border-l-2 border-signal-500/30 pl-2 text-[12px] text-mist-400"><span className="font-medium text-mist-300">{c.watch}: </span>{state.read.watch}</p>}
+          <p className="text-sm leading-relaxed text-fg">{state.read.text}</p>
+          {state.read.watch && <p className="mt-2 border-l-2 border-focus pl-2 text-tiny text-fg-muted"><span className="font-medium text-fg-muted">{c.watch}: </span>{state.read.watch}</p>}
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          <p className="text-[12px] text-mist-400">{c.readBody}</p>
+          <p className="text-tiny text-fg-muted">{c.readBody}</p>
           {state.aiReady ? (
             <button type="button" onClick={request} disabled={busy} data-testid="player-read-btn"
-              className="w-fit rounded-lg border border-edge-400/60 px-3 py-1.5 text-[12px] font-semibold text-edge-400 hover:bg-edge-400/10 disabled:opacity-50">
+              className="w-fit rounded-control border border-pos px-3 py-1.5 text-tiny font-semibold text-pos hover:bg-action disabled:opacity-50">
               {busy ? c.readBusy : state.price ? c.readBtn.replace("{n}", String(state.price)) : c.readFree}
             </button>
           ) : (
-            <p className="text-[12px] text-mist-500" data-testid="player-read-off">{c.aiOff}</p>
+            <p className="text-tiny text-fg-dim" data-testid="player-read-off">{c.aiOff}</p>
           )}
         </div>
       )}
       {note && (
-        <p className={`mt-2 text-[12px] ${note.tone === "ok" ? "text-mist-400" : "text-warn-400"}`} data-testid="player-read-note">
+        <p className={`mt-2 text-tiny ${note.tone === "ok" ? "text-fg-muted" : "text-warn"}`} data-testid="player-read-note">
           {note.text}
           {note.buy && <> · <Link href={{ pathname: "/planos", query: { lang } }} className="underline">{c.buy}</Link></>}
         </p>

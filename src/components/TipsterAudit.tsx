@@ -73,38 +73,38 @@ export function TipsterAudit() {
   }
 
   const a = state?.allowance;
-  const field = "w-full rounded-lg border border-ink-700 bg-ink-900 px-2.5 py-1.5 text-[13px] text-mist-100 outline-none focus:border-edge-400";
+  const field = "w-full rounded-control border border-line-strong bg-surface-1 px-2.5 py-1.5 text-sm text-fg outline-none focus:border-pos";
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <p className="text-[11px] uppercase tracking-[0.18em] text-edge-400">{lang === "pt" ? "Antes de pagar grupo VIP" : "Before you pay for a VIP group"}</p>
-        <h1 className="mt-1 text-xl font-semibold tracking-tight text-white">{c.title}</h1>
-        <p className="mt-1 max-w-2xl text-sm leading-relaxed text-mist-400">{c.sub}</p>
-        <p className="mt-2 max-w-2xl text-[12.5px] text-mist-500" data-testid="tipster-privacy">{c.privacy}</p>
+        <p className="text-label uppercase tracking-[0.18em] text-pos">{lang === "pt" ? "Antes de pagar grupo VIP" : "Before you pay for a VIP group"}</p>
+        <h1 className="mt-1 text-lead font-semibold tracking-tight text-fg">{c.title}</h1>
+        <p className="mt-1 max-w-2xl text-sm leading-relaxed text-fg-muted">{c.sub}</p>
+        <p className="mt-2 max-w-2xl text-tiny text-fg-dim" data-testid="tipster-privacy">{c.privacy}</p>
       </div>
-      {state?.error ? <p className="text-[13px] text-mist-400">{lang === "pt" ? "Entre na sua conta para usar o raio-x." : "Log in to run an audit."}</p> : (
+      {state?.error ? <p className="text-sm text-fg-muted">{lang === "pt" ? "Entre na sua conta para usar o raio-x." : "Log in to run an audit."}</p> : (
         <Panel title={c.title} lang={lang} meta={a ? c.allowance.replace("{used}", String(a.used)).replace("{limit}", String(a.limit)).replace("{window}", a.window === "week" ? c.week : c.month) : undefined}>
           <div className="flex flex-col gap-3">
-            <label className="text-[12px] text-mist-400">{c.label}<input className={field} value={label} maxLength={60} onChange={(e) => setLabel(e.target.value)} data-testid="tipster-label" /></label>
-            <label className="text-[12px] text-mist-400">{c.text}
+            <label className="text-tiny text-fg-muted">{c.label}<input className={field} value={label} maxLength={60} onChange={(e) => setLabel(e.target.value)} data-testid="tipster-label" /></label>
+            <label className="text-tiny text-fg-muted">{c.text}
               <textarea className={`${field} min-h-40`} value={text} maxLength={30_000} onChange={(e) => setText(e.target.value)} placeholder={c.textHint} data-testid="tipster-text" />
             </label>
-            <div className="flex flex-wrap items-center gap-3 text-[12px] text-mist-400">
-              <label className="flex items-center gap-2">{c.images}<input type="file" accept="image/*" multiple onChange={(e) => setFiles(Array.from(e.target.files ?? []).slice(0, 5))} className="text-[11px]" /></label>
+            <div className="flex flex-wrap items-center gap-3 text-tiny text-fg-muted">
+              <label className="flex items-center gap-2">{c.images}<input type="file" accept="image/*" multiple onChange={(e) => setFiles(Array.from(e.target.files ?? []).slice(0, 5))} className="text-label" /></label>
               <label className="flex items-center gap-2">{c.sport}
-                <select value={sportKey} onChange={(e) => setSportKey(e.target.value)} className="rounded border border-ink-700 bg-ink-900 px-1.5 py-1 text-mist-100" data-testid="tipster-sport">
+                <select value={sportKey} onChange={(e) => setSportKey(e.target.value)} className="rounded-control border border-line-strong bg-surface-1 px-1.5 py-1 text-fg" data-testid="tipster-sport">
                   {SOLD_SPORTS.map((s) => <option key={s.key} value={s.key}>{s.label[lang]}</option>)}
                 </select>
               </label>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <button type="button" onClick={() => void run(false)} disabled={busy || (!text.trim() && !files.length) || state?.aiReady === false} data-testid="tipster-run" className="rounded-lg bg-edge-400 px-4 py-1.5 text-[13px] font-semibold text-ink-950 hover:bg-edge-500 disabled:opacity-40">
+              <button type="button" onClick={() => void run(false)} disabled={busy || (!text.trim() && !files.length) || state?.aiReady === false} data-testid="tipster-run" className="rounded-control bg-action px-4 py-1.5 text-sm font-semibold text-action-fg hover:bg-action disabled:opacity-40">
                 {busy ? c.running : c.run}
               </button>
-              {state?.aiReady === false && <span className="text-[12px] text-mist-500">{c.aiOff}</span>}
+              {state?.aiReady === false && <span className="text-tiny text-fg-dim">{c.aiOff}</span>}
             </div>
             {note && (
-              <div className="text-[12.5px] text-warn-400" data-testid="tipster-note">
+              <div className="text-tiny text-warn" data-testid="tipster-note">
                 {note.text}
                 {note.pay && state && <button type="button" onClick={() => void run(true)} className="ml-2 underline" data-testid="tipster-pay">{c.capPay.replace("{n}", String(state.extraPrice))}</button>}
                 {note.buy && <Link href={{ pathname: "/planos", query: { lang } }} className="ml-2 underline">{c.buy}</Link>}
@@ -117,13 +117,13 @@ export function TipsterAudit() {
         {state?.audits.length ? (
           <ul className="flex flex-col gap-4">
             {state.audits.map((x) => (
-              <li key={x.id} className={`rounded-lg border p-3 ${x.id === latest ? "border-edge-400/50" : "border-ink-800"}`} data-testid="tipster-audit">
-                <p className="mb-2 text-[12px] text-mist-400"><span className="font-semibold text-mist-100">{x.label}</span> · {formatDate(x.createdAt, lang, { year: true })}</p>
+              <li key={x.id} className={`rounded-control border p-3 ${x.id === latest ? "border-pos" : "border-line"}`} data-testid="tipster-audit">
+                <p className="mb-2 text-tiny text-fg-muted"><span className="font-semibold text-fg">{x.label}</span> · {formatDate(x.createdAt, lang, { year: true })}</p>
                 <TipsterReport report={x.report} picks={x.picks} lang={lang} onDelete={() => void remove(x.id)} />
               </li>
             ))}
           </ul>
-        ) : <p className="text-[13px] text-mist-500">{c.empty}</p>}
+        ) : <p className="text-sm text-fg-dim">{c.empty}</p>}
       </Panel>
     </div>
   );

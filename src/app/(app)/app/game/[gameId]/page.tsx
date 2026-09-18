@@ -30,10 +30,10 @@ const hasStarted = (game: { status: string; startsAt: string }) => game.status !
 
 function injuryTone(status: string): string {
   const s = status.toLowerCase();
-  if (OUT_STATUSES.some((x) => s.includes(x))) return "text-alert-400";
-  if (s.includes("doubtful")) return "text-alert-400/80";
-  if (s.includes("questionable") || s.includes("day-to-day")) return "text-warn-400";
-  return "text-mist-400";
+  if (OUT_STATUSES.some((x) => s.includes(x))) return "text-neg";
+  if (s.includes("doubtful")) return "text-neg/80";
+  if (s.includes("questionable") || s.includes("day-to-day")) return "text-warn";
+  return "text-fg-muted";
 }
 
 function TeamHeading({ team, align, showScore, follow }: { team: TeamRef; align: "left" | "right"; showScore: boolean; follow: { sportKey: string; initial: boolean; signedIn: boolean } }) {
@@ -44,12 +44,12 @@ function TeamHeading({ team, align, showScore, follow }: { team: TeamRef; align:
         <img src={team.logo} alt="" width={44} height={44} className="size-11 object-contain" />
       )}
       <div>
-        <div className="text-[15px] font-semibold tracking-tight text-white">{team.displayName}</div>
-        <div className="nums text-[12px] text-mist-500">{team.record ?? ""}</div>
+        <div className="text-base font-semibold tracking-tight text-fg">{team.displayName}</div>
+        <div className="nums text-tiny text-fg-dim">{team.record ?? ""}</div>
         <div className="mt-1"><FollowButton sportKey={follow.sportKey} teamId={team.id} label={team.displayName} initial={follow.initial} signedIn={follow.signedIn} /></div>
       </div>
       {showScore && team.score !== undefined && (
-        <div className="nums text-2xl font-semibold text-white">{team.score}</div>
+        <div className="nums text-h3 font-semibold text-fg">{team.score}</div>
       )}
     </div>
   );
@@ -57,17 +57,17 @@ function TeamHeading({ team, align, showScore, follow }: { team: TeamRef; align:
 
 function InjuryList({ injuries, abbreviation }: { injuries: InjuryEntry[]; abbreviation: string }) {
   const rows = injuries.filter((i) => i.teamAbbreviation === abbreviation);
-  if (!rows.length) return <p className="text-[12px] text-mist-500">—</p>;
+  if (!rows.length) return <p className="text-tiny text-fg-dim">—</p>;
   return (
     <ul className="flex flex-col gap-1.5">
       {rows.map((injury, i) => (
         <li key={`${injury.player}-${i}`}>
           <div className="flex items-baseline gap-2">
-            <span className="text-[12px] text-mist-100">{injury.player}</span>
-            <span className="text-[10px] text-mist-500">{injury.position ?? ""}</span>
-            <span className={`ml-auto text-[11px] font-medium ${injuryTone(injury.status)}`}>{injury.status}</span>
+            <span className="text-tiny text-fg">{injury.player}</span>
+            <span className="text-micro text-fg-dim">{injury.position ?? ""}</span>
+            <span className={`ml-auto text-label font-medium ${injuryTone(injury.status)}`}>{injury.status}</span>
           </div>
-          {injury.detail && <p className="text-[11px] leading-snug text-mist-500">{injury.detail}</p>}
+          {injury.detail && <p className="text-label leading-snug text-fg-dim">{injury.detail}</p>}
         </li>
       ))}
     </ul>
@@ -89,16 +89,16 @@ function LineMovement({ lines, home, away, lang }: { lines: ProviderLines[]; hom
   add(lang === "pt" ? "mais de" : "over", book.open.over, book.current.over);
   if (!rows.length) return null;
   return (
-    <div className="mt-3 border-t border-ink-800 pt-2.5" data-testid="line-movement">
-      <h3 className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-mist-500">{lang === "pt" ? "Movimento desde a abertura" : "Movement since the open"}</h3>
+    <div className="mt-3 border-t border-line pt-2.5" data-testid="line-movement">
+      <h3 className="mb-1 text-micro font-semibold uppercase tracking-wider text-fg-dim">{lang === "pt" ? "Movimento desde a abertura" : "Movement since the open"}</h3>
       <ul className="flex flex-col gap-0.5">
         {rows.map((r) => {
           // A shorter price means money came in on that side; a higher total line means the market expects more.
           const up = r.to > r.from;
           return (
-            <li key={r.label} className="nums flex items-center justify-between gap-2 text-[12px] text-mist-300">
+            <li key={r.label} className="nums flex items-center justify-between gap-2 text-tiny text-fg-muted">
               <span className="truncate">{r.label}</span>
-              <span>{r.isLine ? r.from : fmt(r.from)} → {r.isLine ? r.to : fmt(r.to)} <span className={up ? "text-warn-400" : "text-edge-400"}>{up ? "↗" : "↘"}</span></span>
+              <span>{r.isLine ? r.from : fmt(r.from)} → {r.isLine ? r.to : fmt(r.to)} <span className={up ? "text-warn" : "text-pos"}>{up ? "↗" : "↘"}</span></span>
             </li>
           );
         })}
@@ -130,29 +130,29 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
     <div className="flex flex-col gap-5">
       <Link
         href={{ pathname: "/app", query: { sport: sport.key, lang } }}
-        className="w-fit text-[12px] text-mist-500 transition hover:text-mist-300"
+        className="w-fit text-tiny text-fg-dim transition hover:text-fg-muted"
       >
         {t("backToSlate")}
       </Link>
 
-      <section className="rounded-xl border border-ink-800 bg-ink-900/60 p-5">
+      <section className="rounded-panel border border-line bg-surface-1 p-5">
         <div className="flex flex-wrap items-center gap-4">
           <TeamHeading team={game.away} align="left" showScore={game.status !== "scheduled"} follow={followOf(game.away.id)} />
           <div className="flex shrink-0 flex-col items-center gap-1 px-2">
-            <span className="text-[11px] uppercase tracking-widest text-mist-500">
+            <span className="text-label uppercase tracking-widest text-fg-dim">
               {game.status === "scheduled" ? kickoff(game.startsAt, lang) : localizeStatus(game.statusDetail, lang)}
             </span>
           </div>
           <TeamHeading team={game.home} align="right" showScore={game.status !== "scheduled"} follow={followOf(game.home.id)} />
         </div>
-        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 border-t border-ink-800 pt-3 text-[12px] text-mist-500">
-          {game.tournament && <span className="text-mist-300">{game.tournament}</span>}
+        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 border-t border-line pt-3 text-tiny text-fg-dim">
+          {game.tournament && <span className="text-fg-muted">{game.tournament}</span>}
           {game.round && <span>{game.round}</span>}
           {game.venue && <span>{game.venue}</span>}
           {game.broadcast && <span>{game.broadcast}</span>}
-          {game.odds?.details && <span className="nums text-mist-300">{game.odds.details}</span>}
+          {game.odds?.details && <span className="nums text-fg-muted">{game.odds.details}</span>}
           {game.odds?.overUnder !== undefined && (
-            <span className="nums text-mist-300">O/U {game.odds.overUnder}</span>
+            <span className="nums text-fg-muted">O/U {game.odds.overUnder}</span>
           )}
           {predictor?.homeWinPct !== undefined && (
             <span className="nums">
@@ -181,13 +181,13 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
           <Panel title={t("injuryReport")} meta={admin ? "ESPN" : undefined}>
             <div className="flex flex-col gap-3">
               <div>
-                <h3 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-mist-500">
+                <h3 className="mb-1.5 text-micro font-semibold uppercase tracking-wider text-fg-dim">
                   {game.away.displayName}
                 </h3>
                 <InjuryList injuries={injuries} abbreviation={game.away.abbreviation} />
               </div>
-              <div className="border-t border-ink-800 pt-3">
-                <h3 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-mist-500">
+              <div className="border-t border-line pt-3">
+                <h3 className="mb-1.5 text-micro font-semibold uppercase tracking-wider text-fg-dim">
                   {game.home.displayName}
                 </h3>
                 <InjuryList injuries={injuries} abbreviation={game.home.abbreviation} />
@@ -197,7 +197,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
 
           {sport.hasPlayerGamelog && detail.rosters.some((r) => r.athletes?.length) && (
             <Panel title={lang === "pt" ? "Raio-x do jogador" : "Player deep dive"}>
-              <p className="mb-2 text-[11.5px] leading-relaxed text-mist-500">
+              <p className="mb-2 text-tiny leading-relaxed text-fg-dim">
                 {lang === "pt" ? "Histórico jogo a jogo, linha que você escolhe, minutagem e o \"com e sem\" o companheiro." : "Game-by-game log, any line you pick, minutes and the with/without-teammate split."}
               </p>
               <div className="flex flex-col gap-2.5" data-testid="player-links">
@@ -206,10 +206,10 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
                   if (!roster.length) return null;
                   return (
                     <div key={team.id}>
-                      <h3 className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-mist-500">{team.displayName}</h3>
+                      <h3 className="mb-1 text-micro font-semibold uppercase tracking-wider text-fg-dim">{team.displayName}</h3>
                       <div className="flex flex-wrap gap-1">
                         {roster.slice(0, 14).map((a) => (
-                          <Link key={a.id} href={{ pathname: `/app/player/${a.id}`, query: { sport: sport.key, lang, game: game.id } }} className="rounded border border-ink-700 px-1.5 py-0.5 text-[11px] text-mist-300 hover:border-edge-400 hover:text-mist-100">
+                          <Link key={a.id} href={{ pathname: `/app/player/${a.id}`, query: { sport: sport.key, lang, game: game.id } }} className="rounded-control border border-line-strong px-1.5 py-0.5 text-label text-fg-muted hover:border-pos hover:text-fg">
                             {a.name}
                           </Link>
                         ))}
@@ -224,22 +224,22 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
           <Panel title={t("market")} meta={books.length ? `${books.length} ${books.length === 1 ? t("bookOne") : t("bookMany")}` : undefined}>
             {books.length ? (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-[12px]">
+                <table className="w-full text-left text-tiny">
                   <thead>
-                    <tr className="border-b border-ink-800 text-[10px] uppercase tracking-wider text-mist-500">
+                    <tr className="border-b border-line text-micro uppercase tracking-wider text-fg-dim">
                       <th className="pb-1.5 font-medium">{t("book")}</th>
                       <th className="pb-1.5 font-medium">{t("spread")}</th>
                       <th className="pb-1.5 text-right font-medium">{t("total")}</th>
                       <th className="pb-1.5 text-right font-medium">{t("moneyline")}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-ink-800/70">
+                  <tbody className="divide-y divide-line/70">
                     {books.map((book, i) => (
                       <tr key={`${book.provider}-${i}`}>
-                        <td className="py-1.5 text-mist-300">{book.provider ?? "—"}</td>
-                        <td className="nums py-1.5 text-mist-100">{book.details ?? "—"}</td>
-                        <td className="nums py-1.5 text-right text-mist-100">{book.overUnder ?? "—"}</td>
-                        <td className="nums py-1.5 text-right text-mist-200">
+                        <td className="py-1.5 text-fg-muted">{book.provider ?? "—"}</td>
+                        <td className="nums py-1.5 text-fg">{book.details ?? "—"}</td>
+                        <td className="nums py-1.5 text-right text-fg">{book.overUnder ?? "—"}</td>
+                        <td className="nums py-1.5 text-right text-fg">
                           {money(book.awayMoneyline)} / {money(book.homeMoneyline)}
                         </td>
                       </tr>
@@ -252,12 +252,12 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
             )}
             <LineMovement lines={lines} home={game.home.displayName} away={game.away.displayName} lang={lang} />
             {ats.length > 0 && (
-              <div className="mt-3 border-t border-ink-800 pt-2.5">
-                <h3 className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-mist-500">
+              <div className="mt-3 border-t border-line pt-2.5">
+                <h3 className="mb-1 text-micro font-semibold uppercase tracking-wider text-fg-dim">
                   {t("againstSpread")}
                 </h3>
                 {ats.map((row) => (
-                  <p key={row.teamAbbreviation} className="nums text-[12px] text-mist-300">
+                  <p key={row.teamAbbreviation} className="nums text-tiny text-fg-muted">
                     {row.teamAbbreviation} {row.record}
                   </p>
                 ))}
@@ -284,7 +284,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
                   [game.home.abbreviation, teamStats.home],
                 ] as const).map(([abbr, stats]) => (
                   <div key={abbr}>
-                    <h3 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-mist-500">{abbr}</h3>
+                    <h3 className="mb-1.5 text-micro font-semibold uppercase tracking-wider text-fg-dim">{abbr}</h3>
                     <KeyValue emptyText={t("nothingReported")} rows={stats.slice(0, 10).map((s) => ({ label: localizeStatLabel(s.label, lang), value: s.value, hint: s.rank }))} />
                   </div>
                 ))}
@@ -296,7 +296,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
             <Panel title={t("seasonSeries")}>
               <ul className="flex flex-col gap-1">
                 {lastMeetings.map((m, i) => (
-                  <li key={i} className="nums text-[12px] text-mist-300">
+                  <li key={i} className="nums text-tiny text-fg-muted">
                     {m.summary}
                   </li>
                 ))}

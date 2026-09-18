@@ -22,25 +22,25 @@ export function MarketingHeader({ lang, langHrefs, nav }: { lang: Lang; langHref
   const c = COPY[lang];
   const q = lang === "en" ? "?lang=en" : "";
   return (
-    <header className="sticky top-0 z-40 border-b border-ink-800/80 bg-ink-950/90 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-line bg-surface-0">
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3.5 sm:gap-6 sm:px-5">
         <Link href={`/${q}`} aria-label="Betmatic" className="shrink-0">
           <span className="sm:hidden"><Logo size={24} showWord={false} /></span>
           <span className="hidden sm:inline"><Logo size={26} /></span>
         </Link>
         {nav ?? (
-          <nav className="ml-2 hidden items-center gap-5 text-[13px] text-mist-400 md:flex">
-            <Link href={`/prova${q}`} className="transition hover:text-mist-100">{c.proof}</Link>
-            <Link href={`/planos${q}`} className="transition hover:text-mist-100">{c.plans}</Link>
-            <Link href={`/ferramentas${q}`} className="transition hover:text-mist-100">{c.tools}</Link>
+          <nav className="ml-2 hidden items-center gap-5 text-sm text-fg-muted md:flex">
+            <Link href={`/prova${q}`} className="transition hover:text-fg">{c.proof}</Link>
+            <Link href={`/planos${q}`} className="transition hover:text-fg">{c.plans}</Link>
+            <Link href={`/ferramentas${q}`} className="transition hover:text-fg">{c.tools}</Link>
           </nav>
         )}
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
           <LangSwitch lang={lang} hrefs={langHrefs} />
-          <Link href={`/login?lang=${lang}`} className="whitespace-nowrap text-[13px] text-mist-300 transition hover:text-mist-100" data-testid="landing-login">
+          <Link href={`/login?lang=${lang}`} className="whitespace-nowrap text-sm text-fg-muted transition hover:text-fg" data-testid="landing-login">
             {c.login}
           </Link>
-          <Link href={`/signup?lang=${lang}`} className="whitespace-nowrap rounded-lg bg-edge-400 px-3 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500 sm:px-3.5">
+          <Link href={`/signup?lang=${lang}`} className="whitespace-nowrap rounded-control bg-action px-3 py-1.5 text-sm font-semibold text-action-fg transition hover:bg-action sm:px-3.5">
             {c.start}
           </Link>
         </div>
@@ -54,15 +54,15 @@ export function MarketingFooter({ lang }: { lang: Lang }) {
   const c = COPY[lang];
   const support = supportChannels();
   return (
-    <footer className="border-t border-ink-800/80 px-4 py-8 sm:px-5">
-      <div className="mx-auto flex max-w-6xl flex-col gap-3 text-[11.5px] leading-relaxed text-mist-500">
+    <footer className="border-t border-line px-4 py-8 sm:px-5">
+      <div className="mx-auto flex max-w-6xl flex-col gap-3 text-tiny leading-relaxed text-fg-dim">
         <Logo size={20} />
         <LegalLinks lang={lang} className="mt-1" />
         {(support.email || support.whatsapp) && (
           <p className="flex flex-wrap gap-x-4 gap-y-1" data-testid="support-channels">
-            <span className="text-mist-400">{c.support}:</span>
-            {support.email && <a href={`mailto:${support.email}`} className="text-mist-300 hover:underline">{support.email}</a>}
-            {support.whatsapp && <a href={`https://wa.me/${support.whatsapp}`} rel="noopener" className="text-mist-300 hover:underline">WhatsApp</a>}
+            <span className="text-fg-muted">{c.support}:</span>
+            {support.email && <a href={`mailto:${support.email}`} className="text-fg-muted hover:underline">{support.email}</a>}
+            {support.whatsapp && <a href={`https://wa.me/${support.whatsapp}`} rel="noopener" className="text-fg-muted hover:underline">WhatsApp</a>}
           </p>
         )}
         <p className="max-w-3xl">{c.note}</p>
@@ -75,7 +75,7 @@ export function MarketingFooter({ lang }: { lang: Lang }) {
 /** A simple public page: header, a readable column, footer. */
 export function MarketingPage({ lang, langHrefs, children, wide = false }: { lang: Lang; langHrefs: Record<Lang, string>; children: ReactNode; wide?: boolean }) {
   return (
-    <div className="flex min-h-full flex-col bg-ink-950">
+    <div className="flex min-h-full flex-col bg-surface-0">
       <MarketingHeader lang={lang} langHrefs={langHrefs} />
       <main className={`mx-auto w-full flex-1 px-4 py-10 sm:px-5 sm:py-14 ${wide ? "max-w-6xl" : "max-w-3xl"}`}>{children}</main>
       <MarketingFooter lang={lang} />

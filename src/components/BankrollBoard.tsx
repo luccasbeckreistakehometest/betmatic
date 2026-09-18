@@ -40,62 +40,62 @@ export function BankrollBoard() {
   }
   const grade = async (id: string, outcome: string) => { await fetch("/api/bankroll", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, outcome }) }); await load(); };
   const remove = async (id: string) => { await fetch(`/api/bankroll?id=${id}`, { method: "DELETE" }); await load(); };
-  const tone = (o: string) => (o === "won" ? "text-signal-400" : o === "lost" ? "text-warn-400" : "text-mist-500");
+  const tone = (o: string) => (o === "won" ? "text-focus" : o === "lost" ? "text-warn" : "text-fg-dim");
 
   // The user's own money curve: decided entries in settlement order, cumulative profit in currency.
   const own = (data?.entries ?? []).filter((e) => e.outcome === "won" || e.outcome === "lost").sort((a, b) => (a.settledAt ?? a.createdAt).localeCompare(b.settledAt ?? b.createdAt));
   const ownPoints = own.reduce<{ units: number }[]>((acc, e) => [...acc, { units: (acc.at(-1)?.units ?? 0) + e.pnl }], []);
   const ownPath = curvePath(ownPoints, 640, 120, 8);
 
-  if (data?.error) return <Panel title={t("bankroll")}><Empty>{t("signInForBankroll")}</Empty><Link href="/login" className="mt-2 inline-block text-[13px] text-edge-400 hover:underline">{t("navLogin" as never) || "Login"}</Link></Panel>;
+  if (data?.error) return <Panel title={t("bankroll")}><Empty>{t("signInForBankroll")}</Empty><Link href="/login" className="mt-2 inline-block text-sm text-pos hover:underline">{t("navLogin" as never) || "Login"}</Link></Panel>;
 
   return (
     <div className="flex flex-col gap-4" data-testid="bankroll">
       {data?.streak?.notice && (
-        <div className="rounded-xl border border-warn-400/30 bg-warn-400/5 px-4 py-3 text-[13px] text-warn-400" data-testid="streak-notice">
+        <div className="rounded-panel border border-warn bg-warn-tint px-4 py-3 text-sm text-warn" data-testid="streak-notice">
           {t("streakNoticeText").replace("{n}", String(data.streak.streak))}
         </div>
       )}
       {!data?.pause?.paused && <SlipScanner lang={lang} sportKey={sport.key} onSaved={() => void load()} />}
       <Panel title={t("bankroll")} meta={data ? `${data.totals.won}W ${data.totals.lost}L · ${data.totals.pending} ${lang === "pt" ? "pendentes" : "pending"}` : undefined}>
-        <p className="text-[12px] text-mist-500">{t("bankrollIntro")}</p>
+        <p className="text-tiny text-fg-dim">{t("bankrollIntro")}</p>
         {data && (
-          <div className="mt-3 grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-ink-800 bg-ink-800" data-testid="bankroll-totals">
+          <div className="mt-3 grid grid-cols-3 gap-px overflow-hidden rounded-panel border border-line bg-surface-3" data-testid="bankroll-totals">
             {[[t("staked"), money(data.totals.staked), ""], [t("profit"), `${data.totals.profit >= 0 ? "+" : ""}${money(data.totals.profit)}`, tone(data.totals.profit > 0 ? "won" : data.totals.profit < 0 ? "lost" : "")], [t("roi"), `${(data.totals.roi * 100).toFixed(1)}%`, tone(data.totals.roi > 0 ? "won" : data.totals.roi < 0 ? "lost" : "")]].map(([k, v, cls]) => (
-              <div key={k as string} className="bg-ink-900 px-3 py-2.5"><div className="text-[10px] uppercase tracking-wider text-mist-500">{k}</div><div className={"nums text-lg font-semibold " + cls}>{v}</div></div>
+              <div key={k as string} className="bg-surface-1 px-3 py-2.5"><div className="text-micro uppercase tracking-wider text-fg-dim">{k}</div><div className={"nums text-lead font-semibold " + cls}>{v}</div></div>
             ))}
           </div>
         )}
-        <ul className="mt-4 divide-y divide-ink-800">
+        <ul className="mt-4 divide-y divide-line">
           {data?.entries.length ? data.entries.map((e) => (
-            <li key={e.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5 text-[13px]" data-testid="bankroll-entry">
+            <li key={e.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5 text-sm" data-testid="bankroll-entry">
               <span className={"w-16 font-semibold " + tone(e.outcome)}>{{ won: t("markWon"), lost: t("markLost"), void: t("markVoid"), push: "push", pending: "…" }[e.outcome]}</span>
-              <span className="min-w-0 flex-1 truncate text-mist-100">{e.title}<span className="text-mist-500"> {e.matchup}</span></span>
+              <span className="min-w-0 flex-1 truncate text-fg">{e.title}<span className="text-fg-dim"> {e.matchup}</span></span>
               {e.alerts?.length ? (
-                <span className="rounded bg-alert-400/12 px-1.5 py-0.5 text-[10.5px] font-semibold text-alert-400" data-testid="entry-alert" title={e.alerts.map((a) => a.player).join(", ")}>
+                <span className="rounded-control bg-neg-tint px-1.5 py-0.5 text-micro font-semibold text-neg" data-testid="entry-alert" title={e.alerts.map((a) => a.player).join(", ")}>
                   {lang === "pt" ? `escalação: ${e.alerts.length === 1 ? "1 perna em risco" : `${e.alerts.length} pernas em risco`}` : `lineup: ${e.alerts.length === 1 ? "1 leg at risk" : `${e.alerts.length} legs at risk`}`}
                 </span>
               ) : null}
-              <span className="nums text-mist-400">{formatDecimal(e.combinedDecimal)} · {money(e.stake)}</span>
+              <span className="nums text-fg-muted">{formatDecimal(e.combinedDecimal)} · {money(e.stake)}</span>
               {e.clv && (e.clv.n > 0 || e.clv.moved > 0) && (
-                <span className={`nums text-[11px] ${e.clv.n && e.clv.pct > 0 ? "text-signal-400" : "text-mist-500"}`} data-testid="entry-clv" title={lang === "pt" ? "Preço que você pegou comparado com o fechamento, sem a margem" : "Your price compared with the close, margin removed"}>
+                <span className={`nums text-label ${e.clv.n && e.clv.pct > 0 ? "text-focus" : "text-fg-dim"}`} data-testid="entry-clv" title={lang === "pt" ? "Preço que você pegou comparado com o fechamento, sem a margem" : "Your price compared with the close, margin removed"}>
                   {e.clv.n ? `CLV ${e.clv.pct > 0 ? "+" : ""}${(e.clv.pct * 100).toFixed(1).replace(".", lang === "pt" ? "," : ".")}%` : lang === "pt" ? "linha mudou" : "line moved"}
                 </span>
               )}
               <span className={"nums w-24 text-right " + tone(e.outcome)}>{e.outcome === "won" || e.outcome === "lost" ? `${e.pnl >= 0 ? "+" : ""}${money(e.pnl)}` : ""}</span>
               {e.source !== "ticket" && e.outcome === "pending" && (
-                <span className="flex gap-1 text-[11px]">{(["won", "lost", "void"] as const).map((o) => <button key={o} onClick={() => grade(e.id, o)} className="rounded border border-ink-700 px-1.5 py-0.5 text-mist-400 hover:text-mist-100">{{ won: t("markWon"), lost: t("markLost"), void: t("markVoid") }[o]}</button>)}</span>
+                <span className="flex gap-1 text-label">{(["won", "lost", "void"] as const).map((o) => <button key={o} onClick={() => grade(e.id, o)} className="rounded-control border border-line-strong px-1.5 py-0.5 text-fg-muted hover:text-fg">{{ won: t("markWon"), lost: t("markLost"), void: t("markVoid") }[o]}</button>)}</span>
               )}
-              <button onClick={() => remove(e.id)} className="text-[11px] text-mist-600 hover:text-warn-400">✕</button>
+              <button onClick={() => remove(e.id)} className="text-label text-fg-faint hover:text-warn">✕</button>
               {e.source === "ticket" && e.outcome === "lost" && e.slug && <div className="basis-full pt-1"><LossReview slug={e.slug} lang={lang} compact /></div>}
               {(e.source === "custom" || e.source === "scan") && e.legs?.length ? (
-                <ul className="basis-full pl-16 text-[12px]" data-testid="entry-legs">
+                <ul className="basis-full pl-16 text-tiny" data-testid="entry-legs">
                   {e.legs.map((l, i) => (
                     <li key={i} className="flex flex-wrap items-baseline gap-2 py-0.5">
                       <span className={tone(l.outcome)}>{l.outcome === "won" ? "✓" : l.outcome === "lost" ? "✗" : l.outcome === "void" ? "∅" : "·"}</span>
-                      <span className="text-mist-300">{l.selection}</span>
-                      {l.settlement ? <span className="rounded bg-edge-400/10 px-1 text-[10px] text-edge-400" data-testid="auto-grade">{lang === "pt" ? "liquidação automática" : "graded automatically"}</span> : <span className="text-[10px] text-mist-600">{lang === "pt" ? "você marca" : "you grade it"}</span>}
-                      {l.actual && <span className="text-[10.5px] text-mist-500">{l.actual}</span>}
+                      <span className="text-fg-muted">{l.selection}</span>
+                      {l.settlement ? <span className="rounded-control bg-action px-1 text-micro text-pos" data-testid="auto-grade">{lang === "pt" ? "liquidação automática" : "graded automatically"}</span> : <span className="text-micro text-fg-faint">{lang === "pt" ? "você marca" : "you grade it"}</span>}
+                      {l.actual && <span className="text-micro text-fg-dim">{l.actual}</span>}
                     </li>
                   ))}
                 </ul>
@@ -117,12 +117,12 @@ export function BankrollBoard() {
       <EquityChart lang={lang} />
       <Panel title={t("manualBet")}>
         <div className="grid gap-2 sm:grid-cols-[1fr_120px_120px_auto]">
-          <input aria-label={lang === "pt" ? "Descrição da aposta" : "Bet description"} maxLength={160} value={title} onChange={(e) => setTitle(e.target.value)} placeholder={lang === "pt" ? "ex.: Flamengo vence @ Bet365" : "e.g. Lakers ML @ DraftKings"} className="rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-[13px] text-mist-100 outline-none focus:border-edge-400" data-testid="manual-title" />
-          <input aria-label={lang === "pt" ? "Odd (decimal)" : "Odds (decimal)"} value={odds} onChange={(e) => setOdds(e.target.value)} placeholder="odd 1.85" inputMode="decimal" className="nums rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-[13px] text-mist-100 outline-none focus:border-edge-400" data-testid="manual-odds" />
-          <input aria-label={lang === "pt" ? "Valor apostado (R$)" : "Stake (R$)"} value={stake} onChange={(e) => setStake(e.target.value)} placeholder={t("stake")} inputMode="decimal" className="nums rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-[13px] text-mist-100 outline-none focus:border-edge-400" data-testid="manual-stake" />
-          <button onClick={addManual} disabled={!title.trim() || !(Number(odds) > 1) || !(Number(stake) > 0) || !!data?.pause?.paused} className="rounded-lg bg-edge-400 px-3.5 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500 disabled:opacity-50" data-testid="manual-add">{t("addToBankroll")}</button>
+          <input aria-label={lang === "pt" ? "Descrição da aposta" : "Bet description"} maxLength={160} value={title} onChange={(e) => setTitle(e.target.value)} placeholder={lang === "pt" ? "ex.: Flamengo vence @ Bet365" : "e.g. Lakers ML @ DraftKings"} className="rounded-control border border-line-strong bg-surface-1 px-3 py-2 text-sm text-fg outline-none focus:border-pos" data-testid="manual-title" />
+          <input aria-label={lang === "pt" ? "Odd (decimal)" : "Odds (decimal)"} value={odds} onChange={(e) => setOdds(e.target.value)} placeholder="odd 1.85" inputMode="decimal" className="nums rounded-control border border-line-strong bg-surface-1 px-3 py-2 text-sm text-fg outline-none focus:border-pos" data-testid="manual-odds" />
+          <input aria-label={lang === "pt" ? "Valor apostado (R$)" : "Stake (R$)"} value={stake} onChange={(e) => setStake(e.target.value)} placeholder={t("stake")} inputMode="decimal" className="nums rounded-control border border-line-strong bg-surface-1 px-3 py-2 text-sm text-fg outline-none focus:border-pos" data-testid="manual-stake" />
+          <button onClick={addManual} disabled={!title.trim() || !(Number(odds) > 1) || !(Number(stake) > 0) || !!data?.pause?.paused} className="rounded-control bg-action px-3.5 py-2 text-sm font-semibold text-action-fg hover:bg-action disabled:opacity-50" data-testid="manual-add">{t("addToBankroll")}</button>
         </div>
-        {addError && <p className="mt-2 text-[12px] text-warn-400" data-testid="add-error">{addError}</p>}
+        {addError && <p className="mt-2 text-tiny text-warn" data-testid="add-error">{addError}</p>}
       </Panel>
     </div>
   );

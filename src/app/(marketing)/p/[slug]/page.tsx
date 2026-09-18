@@ -58,38 +58,38 @@ export default async function TicketPage({ params, searchParams }: { params: Pro
   const canReview = e.outcome === "lost" && !!viewer && (viewer.role === "admin" || userHasTicket(viewer.id, e.id));
   const base = publicBaseUrl();
   const url = `${base}/p/${slug}?lang=${lang}`;
-  const tone: Record<string, string> = { won: "text-signal-400 border-signal-400/30", lost: "text-warn-400 border-warn-400/30", push: "text-mist-300 border-ink-700", void: "text-mist-500 border-ink-700", pending: "text-mist-400 border-ink-700" };
+  const tone: Record<string, string> = { won: "text-focus border-focus", lost: "text-warn border-warn", push: "text-fg-muted border-line-strong", void: "text-fg-dim border-line-strong", pending: "text-fg-muted border-line-strong" };
   const fmt = (iso?: string) => (iso ? formatDateTime(iso, lang) : "—");
 
   return (
-    <div className="flex min-h-full flex-col bg-ink-950 text-mist-100">
+    <div className="flex min-h-full flex-col bg-surface-0 text-fg">
       <MarketingHeader lang={lang} langHrefs={{ pt: `/p/${slug}`, en: `/p/${slug}?lang=en` }} />
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-12 sm:px-5" data-testid="ticket-page">
-        <Link href={{ pathname: "/prova", query: { lang } }} className="mb-6 inline-block text-[13px] text-mist-400 hover:text-mist-100">{c.back}</Link>
+        <Link href={{ pathname: "/prova", query: { lang } }} className="mb-6 inline-block text-sm text-fg-muted hover:text-fg">{c.back}</Link>
         <div>
-        <div className={"inline-block rounded-full border px-3 py-1 text-[12px] font-semibold tracking-wider " + tone[e.outcome]}>{c.outcome[e.outcome]}</div>
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight">{scrubText(e.title, lang)}</h1>
-        <p className="mt-1 text-[15px] text-mist-400">{scrubText(e.matchup, lang)}</p>
-        <div className="mt-6 flex flex-wrap gap-6 text-[13px] text-mist-400">
-          <span><span className="text-mist-500">{c.generated}:</span> {fmt(e.createdAt)}</span>
-          <span><span className="text-mist-500">{e.outcome === "pending" ? c.pending : c.settled}:</span> {e.outcome === "pending" ? "—" : fmt(e.settledAt)}</span>
-          <span className="nums"><span className="text-mist-500">odd:</span> {formatDecimal(e.combinedDecimal)}</span>
-          <span className="nums"><span className="text-mist-500">{c.predicted}:</span> {(e.modelledProbability * 100).toFixed(0)}%</span>
+        <div className={"inline-block rounded-full border px-3 py-1 text-tiny font-semibold tracking-wider " + tone[e.outcome]}>{c.outcome[e.outcome]}</div>
+        <h1 className="mt-4 text-h2 font-semibold tracking-tight">{scrubText(e.title, lang)}</h1>
+        <p className="mt-1 text-base text-fg-muted">{scrubText(e.matchup, lang)}</p>
+        <div className="mt-6 flex flex-wrap gap-6 text-sm text-fg-muted">
+          <span><span className="text-fg-dim">{c.generated}:</span> {fmt(e.createdAt)}</span>
+          <span><span className="text-fg-dim">{e.outcome === "pending" ? c.pending : c.settled}:</span> {e.outcome === "pending" ? "—" : fmt(e.settledAt)}</span>
+          <span className="nums"><span className="text-fg-dim">odd:</span> {formatDecimal(e.combinedDecimal)}</span>
+          <span className="nums"><span className="text-fg-dim">{c.predicted}:</span> {(e.modelledProbability * 100).toFixed(0)}%</span>
         </div>
-        <h2 className="mt-8 text-[11px] uppercase tracking-wider text-mist-500">{c.legs}</h2>
-        <ul className="mt-2 divide-y divide-ink-800 rounded-xl border border-ink-800">
+        <h2 className="mt-8 text-label uppercase tracking-wider text-fg-dim">{c.legs}</h2>
+        <ul className="mt-2 divide-y divide-line rounded-panel border border-line">
           {e.legs.map((l, i) => (
-            <li key={i} className="flex items-start gap-3 px-4 py-3 text-[14px]">
+            <li key={i} className="flex items-start gap-3 px-4 py-3 text-base">
               <span className={"w-5 font-bold " + tone[l.outcome].split(" ")[0]}>{c.leg[l.outcome]}</span>
-              <div className="min-w-0 flex-1"><p className="text-mist-100">{scrubText(l.selection, lang)}</p><p className="text-[12px] text-mist-500">{l.market} · <span className="nums">{formatDecimal(l.oddsDecimal)}</span> · {(l.predictedProbability * 100).toFixed(0)}%{l.actual ? ` · ${scrubText(l.actual, lang)}` : ""}</p></div>
+              <div className="min-w-0 flex-1"><p className="text-fg">{scrubText(l.selection, lang)}</p><p className="text-tiny text-fg-dim">{l.market} · <span className="nums">{formatDecimal(l.oddsDecimal)}</span> · {(l.predictedProbability * 100).toFixed(0)}%{l.actual ? ` · ${scrubText(l.actual, lang)}` : ""}</p></div>
             </li>
           ))}
         </ul>
         {canReview && <div className="mt-6" data-testid="ticket-review"><LossReview slug={slug} lang={lang} /></div>}
-        <p className="mt-6 text-[13px] text-mist-500">{c.copy}</p>
+        <p className="mt-6 text-sm text-fg-dim">{c.copy}</p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <a href={`https://wa.me/?text=${encodeURIComponent(c.wa(scrubText(e.title, lang), c.outcome[e.outcome], formatDecimal(e.combinedDecimal), url))}`} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-signal-400/40 px-4 py-2 text-[13px] font-semibold text-signal-400 hover:bg-signal-400/10" data-testid="share-wa">{c.share}</a>
-          <Link href={`/signup?lang=${lang}`} className="rounded-lg bg-edge-400 px-4 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500">{c.cta}</Link>
+          <a href={`https://wa.me/?text=${encodeURIComponent(c.wa(scrubText(e.title, lang), c.outcome[e.outcome], formatDecimal(e.combinedDecimal), url))}`} target="_blank" rel="noopener noreferrer" className="rounded-control border border-focus px-4 py-2 text-sm font-semibold text-focus hover:bg-action" data-testid="share-wa">{c.share}</a>
+          <Link href={`/signup?lang=${lang}`} className="rounded-control bg-action px-4 py-2 text-sm font-semibold text-action-fg hover:bg-action">{c.cta}</Link>
         </div>
         </div>
       </main>
@@ -102,17 +102,17 @@ export default async function TicketPage({ params, searchParams }: { params: Pro
 function LockedTicket({ lang, slug, matchup, startsAt }: { lang: "pt" | "en"; slug: string; matchup: string; startsAt?: string }) {
   const c = C[lang];
   return (
-    <div className="flex min-h-full flex-col bg-ink-950 text-mist-100">
+    <div className="flex min-h-full flex-col bg-surface-0 text-fg">
       <MarketingHeader lang={lang} langHrefs={{ pt: `/p/${slug}`, en: `/p/${slug}?lang=en` }} />
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-12 sm:px-5" data-testid="ticket-locked">
-        <Link href={{ pathname: "/prova", query: { lang } }} className="mb-6 inline-block text-[13px] text-mist-400 hover:text-mist-100">{c.back}</Link>
-        <div className="inline-block rounded-full border border-ink-700 px-3 py-1 text-[12px] font-semibold tracking-wider text-mist-400">{c.outcome.pending}</div>
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight">{c.lockedTitle}</h1>
-        <p className="mt-1 text-[15px] text-mist-400">{matchup}</p>
-        {startsAt && <p className="mt-4 text-[13px] text-mist-400"><span className="text-mist-500">{c.kickoff}:</span> {formatDateTime(startsAt, lang)}</p>}
-        <p className="mt-6 max-w-xl text-[14px] leading-relaxed text-mist-300">{c.lockedBody}</p>
+        <Link href={{ pathname: "/prova", query: { lang } }} className="mb-6 inline-block text-sm text-fg-muted hover:text-fg">{c.back}</Link>
+        <div className="inline-block rounded-full border border-line-strong px-3 py-1 text-tiny font-semibold tracking-wider text-fg-muted">{c.outcome.pending}</div>
+        <h1 className="mt-4 text-h2 font-semibold tracking-tight">{c.lockedTitle}</h1>
+        <p className="mt-1 text-base text-fg-muted">{matchup}</p>
+        {startsAt && <p className="mt-4 text-sm text-fg-muted"><span className="text-fg-dim">{c.kickoff}:</span> {formatDateTime(startsAt, lang)}</p>}
+        <p className="mt-6 max-w-xl text-base leading-relaxed text-fg-muted">{c.lockedBody}</p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Link href={`/planos?lang=${lang}`} className="rounded-lg bg-edge-400 px-4 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500">{c.lockedCta}</Link>
+          <Link href={`/planos?lang=${lang}`} className="rounded-control bg-action px-4 py-2 text-sm font-semibold text-action-fg hover:bg-action">{c.lockedCta}</Link>
         </div>
       </main>
       <MarketingFooter lang={lang} />

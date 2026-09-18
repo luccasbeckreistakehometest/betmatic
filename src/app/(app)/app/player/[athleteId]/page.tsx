@@ -10,7 +10,7 @@ export default async function PlayerPage({ params, searchParams }: PageProps<"/a
   if (!/^\d{1,12}$/.test(athleteId)) notFound();
   const game = typeof query.game === "string" && /^[\w-]{1,40}$/.test(query.game) ? query.game : null;
   return (
-    <Suspense fallback={<div className="h-60 animate-pulse rounded-xl bg-ink-900" />}>
+    <Suspense fallback={<div className="h-60 animate-pulse rounded-panel bg-surface-1" />}>
       <PlayerDeepDive athleteId={athleteId} gameId={game} />
     </Suspense>
   );

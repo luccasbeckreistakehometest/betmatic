@@ -45,38 +45,38 @@ function Report({ p, lang }: { p: WeeklyPayload; lang: Lang }) {
   const c = C[lang];
   return (
     <div className="flex flex-col gap-3" data-testid="weekly-report">
-      <p className="text-[11.5px] text-mist-500">{c.period.replace("{from}", formatDate(p.from, lang)).replace("{to}", formatDate(p.to, lang))} · {p.bets} {c.bets}</p>
-      <div className="grid grid-cols-3 gap-px overflow-hidden rounded-lg border border-ink-800 bg-ink-800">
+      <p className="text-tiny text-fg-dim">{c.period.replace("{from}", formatDate(p.from, lang)).replace("{to}", formatDate(p.to, lang))} · {p.bets} {c.bets}</p>
+      <div className="grid grid-cols-3 gap-px overflow-hidden rounded-control border border-line bg-surface-3">
         {p.windows.map((w) => (
-          <div key={w.days} className="bg-ink-900 px-3 py-2.5">
-            <div className="text-[10px] uppercase tracking-wider text-mist-500">{c.windows} · {c.days.replace("{d}", String(w.days))}</div>
-            <div className={`nums text-[17px] font-semibold ${w.roi === null ? "text-mist-500" : w.roi >= 0 ? "text-signal-400" : "text-warn-400"}`}>{w.bets ? pct(w.roi) : "—"}</div>
-            <div className="nums text-[10.5px] text-mist-500">{w.bets ? `${w.bets} ${c.bets} · ${money(w.staked, lang)} ${c.staked}` : c.noBets}</div>
+          <div key={w.days} className="bg-surface-1 px-3 py-2.5">
+            <div className="text-micro uppercase tracking-wider text-fg-dim">{c.windows} · {c.days.replace("{d}", String(w.days))}</div>
+            <div className={`nums text-lead font-semibold ${w.roi === null ? "text-fg-dim" : w.roi >= 0 ? "text-focus" : "text-warn"}`}>{w.bets ? pct(w.roi) : "—"}</div>
+            <div className="nums text-micro text-fg-dim">{w.bets ? `${w.bets} ${c.bets} · ${money(w.staked, lang)} ${c.staked}` : c.noBets}</div>
           </div>
         ))}
       </div>
-      <dl className="grid gap-2 text-[12.5px] sm:grid-cols-2">
-        <div className={`rounded-lg border p-2.5 ${p.chasing.length ? "border-alert-400/40 bg-alert-400/[0.05]" : "border-ink-800"}`} data-testid="report-chasing">
-          <dt className="text-[10px] font-semibold uppercase tracking-wider text-mist-500">{c.chasing}</dt>
-          <dd className={p.chasing.length ? "text-alert-400" : "text-mist-300"}>{p.chasing.length ? c.chasingLead(p.chasing.length) : c.chasingNone}</dd>
-          {p.chasing.slice(0, 5).map((x, i) => <dd key={i} className="nums text-[11.5px] text-mist-500">{formatDate(x.at, lang)} {formatTime(x.at, lang)} — {c.chasingItem.replace("{stake}", money(x.stake, lang)).replace("{m}", String(x.minutesAfterLoss)).replace("{prev}", money(x.previousStake, lang))}</dd>)}
+      <dl className="grid gap-2 text-tiny sm:grid-cols-2">
+        <div className={`rounded-control border p-2.5 ${p.chasing.length ? "border-neg bg-neg-tint" : "border-line"}`} data-testid="report-chasing">
+          <dt className="text-micro font-semibold uppercase tracking-wider text-fg-dim">{c.chasing}</dt>
+          <dd className={p.chasing.length ? "text-neg" : "text-fg-muted"}>{p.chasing.length ? c.chasingLead(p.chasing.length) : c.chasingNone}</dd>
+          {p.chasing.slice(0, 5).map((x, i) => <dd key={i} className="nums text-tiny text-fg-dim">{formatDate(x.at, lang)} {formatTime(x.at, lang)} — {c.chasingItem.replace("{stake}", money(x.stake, lang)).replace("{m}", String(x.minutesAfterLoss)).replace("{prev}", money(x.previousStake, lang))}</dd>)}
         </div>
-        <div className="rounded-lg border border-ink-800 p-2.5">
-          <dt className="text-[10px] font-semibold uppercase tracking-wider text-mist-500">{c.kelly}</dt>
-          <dd className="text-mist-300">{p.kelly.share === null ? c.kellyNone : c.kellyText(p.kelly.over, p.kelly.sized)}</dd>
+        <div className="rounded-control border border-line p-2.5">
+          <dt className="text-micro font-semibold uppercase tracking-wider text-fg-dim">{c.kelly}</dt>
+          <dd className="text-fg-muted">{p.kelly.share === null ? c.kellyNone : c.kellyText(p.kelly.over, p.kelly.sized)}</dd>
         </div>
-        <div className="rounded-lg border border-ink-800 p-2.5">
-          <dt className="text-[10px] font-semibold uppercase tracking-wider text-mist-500">{c.late}</dt>
-          <dd className="text-mist-300">{p.lateNight.late ? c.lateText(p.lateNight.late, Math.round((p.lateNight.share ?? 0) * 100)) : c.lateNone}</dd>
+        <div className="rounded-control border border-line p-2.5">
+          <dt className="text-micro font-semibold uppercase tracking-wider text-fg-dim">{c.late}</dt>
+          <dd className="text-fg-muted">{p.lateNight.late ? c.lateText(p.lateNight.late, Math.round((p.lateNight.share ?? 0) * 100)) : c.lateNone}</dd>
         </div>
-        <div className="rounded-lg border border-ink-800 p-2.5">
-          <dt className="text-[10px] font-semibold uppercase tracking-wider text-mist-500">{c.long}</dt>
-          <dd className="text-mist-300">{p.longShots.count ? c.longText(p.longShots.count, Math.round((p.longShots.stakeShare ?? 0) * 100)) : c.longNone}</dd>
-          {p.longShots.expectedCost !== null && p.longShots.expectedCost > 0 && <dd className="text-[11.5px] text-mist-500">{c.longCost(money(p.longShots.expectedCost, lang))}</dd>}
+        <div className="rounded-control border border-line p-2.5">
+          <dt className="text-micro font-semibold uppercase tracking-wider text-fg-dim">{c.long}</dt>
+          <dd className="text-fg-muted">{p.longShots.count ? c.longText(p.longShots.count, Math.round((p.longShots.stakeShare ?? 0) * 100)) : c.longNone}</dd>
+          {p.longShots.expectedCost !== null && p.longShots.expectedCost > 0 && <dd className="text-tiny text-fg-dim">{c.longCost(money(p.longShots.expectedCost, lang))}</dd>}
         </div>
-        <div className="rounded-lg border border-ink-800 p-2.5 sm:col-span-2">
-          <dt className="text-[10px] font-semibold uppercase tracking-wider text-mist-500">{c.clv}</dt>
-          <dd className="text-mist-300">{p.clv === null ? c.clvNone : pct(p.clv)}</dd>
+        <div className="rounded-control border border-line p-2.5 sm:col-span-2">
+          <dt className="text-micro font-semibold uppercase tracking-wider text-fg-dim">{c.clv}</dt>
+          <dd className="text-fg-muted">{p.clv === null ? c.clvNone : pct(p.clv)}</dd>
         </div>
       </dl>
     </div>
@@ -97,23 +97,23 @@ export function WeeklyReport() {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-white">{c.title}</h1>
-        <p className="mt-1 max-w-2xl text-sm leading-relaxed text-mist-400">{c.sub}</p>
+        <h1 className="text-lead font-semibold tracking-tight text-fg">{c.title}</h1>
+        <p className="mt-1 max-w-2xl text-sm leading-relaxed text-fg-muted">{c.sub}</p>
       </div>
-      {data?.error ? <p className="text-[13px] text-mist-400">{c.signIn}</p> : !data ? <div className="h-40 animate-pulse rounded-xl bg-ink-900" /> : (
+      {data?.error ? <p className="text-sm text-fg-muted">{c.signIn}</p> : !data ? <div className="h-40 animate-pulse rounded-panel bg-surface-1" /> : (
         <>
           <Panel title={c.title} lang={lang}>
-            {data.current.bets === 0 && data.current.windows.every((w) => w.bets === 0) ? <p className="text-[13px] text-mist-500">{c.empty}</p> : <Report p={data.current} lang={lang} />}
+            {data.current.bets === 0 && data.current.windows.every((w) => w.bets === 0) ? <p className="text-sm text-fg-dim">{c.empty}</p> : <Report p={data.current} lang={lang} />}
           </Panel>
-          <section className="rounded-xl border border-warn-400/25 bg-warn-400/[0.04] p-4" data-testid="report-help">
-            <h2 className="text-[13px] font-semibold text-mist-100">{c.help}</h2>
+          <section className="rounded-panel border border-warn bg-warn-tint p-4" data-testid="report-help">
+            <h2 className="text-sm font-semibold text-fg">{c.help}</h2>
             <SelfExclusionLinks lang={lang} />
-            <Link href={{ pathname: "/app/settings", query: { lang } }} className="mt-2 inline-block rounded-lg border border-warn-400/40 px-3 py-1.5 text-[12.5px] font-semibold text-warn-400 hover:bg-warn-400/10" data-testid="report-pause">{c.pause}</Link>
+            <Link href={{ pathname: "/app/settings", query: { lang } }} className="mt-2 inline-block rounded-control border border-warn px-3 py-1.5 text-tiny font-semibold text-warn hover:bg-warn-tint" data-testid="report-pause">{c.pause}</Link>
           </section>
           <Panel title={c.past} lang={lang}>
             {data.history.length ? (
-              <ul className="flex flex-col gap-4">{data.history.map((p) => <li key={p.weekKey} className="border-b border-ink-800 pb-3 last:border-0"><p className="mb-1 text-[12px] font-semibold text-mist-200">{p.weekKey}</p><Report p={p} lang={lang} /></li>)}</ul>
-            ) : <p className="text-[13px] text-mist-500">{c.pastNone}</p>}
+              <ul className="flex flex-col gap-4">{data.history.map((p) => <li key={p.weekKey} className="border-b border-line pb-3 last:border-0"><p className="mb-1 text-tiny font-semibold text-fg">{p.weekKey}</p><Report p={p} lang={lang} /></li>)}</ul>
+            ) : <p className="text-sm text-fg-dim">{c.pastNone}</p>}
           </Panel>
         </>
       )}

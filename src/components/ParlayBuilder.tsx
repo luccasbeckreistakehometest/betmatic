@@ -85,10 +85,10 @@ export function ParlayBuilder() {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-white">
-          {t("crossGame")} <span className="text-mist-500">· {sport.label[lang]}</span>
+        <h1 className="text-lead font-semibold tracking-tight text-fg">
+          {t("crossGame")} <span className="text-fg-dim">· {sport.label[lang]}</span>
         </h1>
-        <p className="mt-1 max-w-2xl text-sm leading-relaxed text-mist-400">{t("crossGameHint")}</p>
+        <p className="mt-1 max-w-2xl text-sm leading-relaxed text-fg-muted">{t("crossGameHint")}</p>
       </div>
 
       <Panel
@@ -96,7 +96,7 @@ export function ParlayBuilder() {
         lang={lang}
         status={loading ? "pending" : locked ? "disabled" : slate ? "ok" : "empty"}
         meta={slate ? `${slate.matchup}${builtFor ? ` · ${builtFor.slice(6, 8)}/${builtFor.slice(4, 6)}` : ""}` : undefined}
-        action={<Link href={`/app/parlays/custom?sport=${sport.key}&lang=${lang}`} className="rounded-md border border-ink-700 px-2 py-0.5 text-[11px] text-mist-400 transition hover:border-ink-600 hover:text-mist-100" data-testid="custom-parlay-link">{t("customParlay")}</Link>}
+        action={<Link href={`/app/parlays/custom?sport=${sport.key}&lang=${lang}`} className="rounded-control border border-line-strong px-2 py-0.5 text-label text-fg-muted transition hover:border-line-control hover:text-fg" data-testid="custom-parlay-link">{t("customParlay")}</Link>}
       >
         {loading ? (
           <Empty>{t("loadingTickets")}</Empty>
@@ -105,7 +105,7 @@ export function ParlayBuilder() {
             <Empty>{t("crossGameLocked")}</Empty>
             <Link
               href={`/planos?lang=${lang}`}
-              className="w-fit rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500"
+              className="w-fit rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg transition hover:bg-action"
             >
               {t("seePlans")}
             </Link>
@@ -113,8 +113,8 @@ export function ParlayBuilder() {
         ) : slate ? (
           <BetsPanel slate={slate.slate} lang={lang} sportKey={sport.key} />
         ) : build === "running" ? (
-          <div className="flex items-center gap-3 rounded-lg border border-ink-700 bg-ink-850 px-3 py-3 text-[13px] text-mist-300" data-testid="generating-slate">
-            <span className="h-3 w-3 animate-pulse rounded-full bg-edge-400" />{t("generatingSlate")}
+          <div className="flex items-center gap-3 rounded-control border border-line-strong bg-surface-2 px-3 py-3 text-sm text-fg-muted" data-testid="generating-slate">
+            <span className="h-3 w-3 animate-pulse rounded-full bg-action" />{t("generatingSlate")}
           </div>
         ) : (
           <div className="flex flex-col gap-3">
@@ -122,11 +122,11 @@ export function ParlayBuilder() {
               {build === "too_few_games" ? t("slateTooFew") : build === "cap_global" ? t("capGlobal") : build === "cap_user" ? t("slateCapUser") : build === "failed" ? buildMessage ?? t("generateFailed") : data?.authenticated ? t("slateEmpty") : t("signInForTickets")}
             </Empty>
             {canBuild && (build === "idle" || build === "failed") && (
-              <button onClick={() => void generate()} data-testid="build-slate" className="w-fit rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500">
+              <button onClick={() => void generate()} data-testid="build-slate" className="w-fit rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg transition hover:bg-action">
                 {t("buildSlate")}
               </button>
             )}
-            {canBuild && <p className="text-[12px] text-mist-500">{t("slateHonesty")}</p>}
+            {canBuild && <p className="text-tiny text-fg-dim">{t("slateHonesty")}</p>}
           </div>
         )}
       </Panel>

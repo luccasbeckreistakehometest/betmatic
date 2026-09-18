@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Admin", robots: { index: false, foll
 
 export default function AdminPage() {
   return (
-    <Suspense fallback={<div className="h-40 animate-pulse rounded-xl bg-ink-900" />}>
+    <Suspense fallback={<div className="h-40 animate-pulse rounded-panel bg-surface-1" />}>
       <AdminDashboard />
     </Suspense>
   );

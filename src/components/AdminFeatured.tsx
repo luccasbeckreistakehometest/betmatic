@@ -41,22 +41,22 @@ export function AdminFeatured() {
     <Panel
       title="Destaques de hoje"
       meta={data ? `${data.games.length}/${data.config.perDay} · $${data.costUsd.toFixed(2)} hoje` : undefined}
-      action={<button onClick={() => void run()} disabled={running} data-testid="featured-run" className="rounded-md bg-signal-500 px-2.5 py-1 text-[12px] font-medium text-ink-950 disabled:opacity-50">{running ? "Gerando…" : "Gerar agora"}</button>}
+      action={<button onClick={() => void run()} disabled={running} data-testid="featured-run" className="rounded-control bg-action px-2.5 py-1 text-tiny font-medium text-action-fg disabled:opacity-50">{running ? "Gerando…" : "Gerar agora"}</button>}
     >
       <div data-testid="admin-featured">
-        {note && <p className="mb-2 text-[12px] text-signal-400">{note}</p>}
+        {note && <p className="mb-2 text-tiny text-focus">{note}</p>}
         {data?.lastRun && (
-          <p className={`mb-2 text-[12px] ${data.lastRun.status === "error" ? "text-alert-400" : "text-mist-400"}`} data-testid="featured-last-run">
+          <p className={`mb-2 text-tiny ${data.lastRun.status === "error" ? "text-neg" : "text-fg-muted"}`} data-testid="featured-last-run">
             Última execução {dt(data.lastRun.startedAt)}: {data.lastRun.status} · {data.lastRun.predictionsWritten} predições · {data.lastRun.note || "—"}
           </p>
         )}
         {data?.games.length ? (
-          <ul className="flex flex-col divide-y divide-ink-800 text-[13px]">
+          <ul className="flex flex-col divide-y divide-line text-sm">
             {data.games.map((g) => (
               <li key={g.gameId} className="flex flex-wrap items-center gap-3 py-1.5">
-                <span className="nums text-mist-500">#{g.rank + 1}</span>
-                <Link href={`/app/game/${g.gameId}?sport=${g.sportKey}`} className="text-mist-100 hover:underline">{g.matchup || g.gameId}</Link>
-                <span className="text-mist-500">{g.sportKey} · {dt(g.startsAt)}</span>
+                <span className="nums text-fg-dim">#{g.rank + 1}</span>
+                <Link href={`/app/game/${g.gameId}?sport=${g.sportKey}`} className="text-fg hover:underline">{g.matchup || g.gameId}</Link>
+                <span className="text-fg-dim">{g.sportKey} · {dt(g.startsAt)}</span>
               </li>
             ))}
           </ul>

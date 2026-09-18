@@ -29,10 +29,10 @@ interface AdminPayload extends OpsPayload {
 
 function Stat({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
   return (
-    <div className="bg-ink-900 px-3 py-2.5">
-      <div className="text-[10px] uppercase tracking-wider text-mist-500">{label}</div>
-      <div className="nums text-lg font-semibold text-mist-100">{value}</div>
-      {hint && <div className="text-[10px] text-mist-500">{hint}</div>}
+    <div className="bg-surface-1 px-3 py-2.5">
+      <div className="text-micro uppercase tracking-wider text-fg-dim">{label}</div>
+      <div className="nums text-lead font-semibold text-fg">{value}</div>
+      {hint && <div className="text-micro text-fg-dim">{hint}</div>}
     </div>
   );
 }
@@ -75,8 +75,8 @@ export function AdminDashboard() {
     return (
       <div className="mx-auto max-w-lg px-5 py-24 text-center">
         <Logo size={32} />
-        <p className="mt-6 text-[14px] text-mist-300">{data.error}</p>
-        <Link href="/login" className="mt-4 inline-block text-[13px] text-edge-400 hover:underline">
+        <p className="mt-6 text-base text-fg-muted">{data.error}</p>
+        <Link href="/login" className="mt-4 inline-block text-sm text-pos hover:underline">
           Entrar como admin
         </Link>
       </div>
@@ -90,27 +90,27 @@ export function AdminDashboard() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Logo size={26} />
-          <span className="rounded border border-warn-400/30 bg-warn-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-warn-400">
+          <span className="rounded-control border border-warn bg-warn-tint px-2 py-0.5 text-micro font-semibold uppercase tracking-wide text-warn">
             admin
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/app" className="text-[12px] text-mist-400 hover:text-mist-100">
+          <Link href="/app" className="text-tiny text-fg-muted hover:text-fg">
             ver o app
           </Link>
           <button
             onClick={() => void refresh()}
             disabled={running}
-            className="rounded-lg bg-signal-500 px-3.5 py-1.5 text-[13px] font-medium text-ink-950 transition hover:bg-signal-400 disabled:opacity-50"
+            className="rounded-control bg-action px-3.5 py-1.5 text-sm font-medium text-action-fg transition hover:bg-action disabled:opacity-50"
           >
             {running ? "Gerando…" : "Rodar refresh agora"}
           </button>
         </div>
       </div>
 
-      {note && <p className="text-[12px] text-signal-400">{note}</p>}
+      {note && <p className="text-tiny text-focus">{note}</p>}
 
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-ink-800 bg-ink-800 sm:grid-cols-4 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-panel border border-line bg-surface-3 sm:grid-cols-4 lg:grid-cols-6">
         <Stat label="Usuários" value={data?.totals.users ?? 0} />
         <Stat label="Pagantes" value={data?.totals.paying ?? 0} />
         <Stat label="Receita" value={`R$ ${revenueTotal.toFixed(0)}`} />
@@ -150,9 +150,9 @@ export function AdminDashboard() {
       <Panel title="Execuções do job">
         {data?.jobs.length ? (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[620px] text-left text-[12px]">
+            <table className="w-full min-w-[620px] text-left text-tiny">
               <thead>
-                <tr className="border-b border-ink-800 text-[10px] uppercase tracking-wider text-mist-500">
+                <tr className="border-b border-line text-micro uppercase tracking-wider text-fg-dim">
                   <th className="px-2 pb-1.5 font-medium">Início</th>
                   <th className="px-2 pb-1.5 font-medium">Status</th>
                   <th className="px-2 pb-1.5 text-right font-medium">Jogos</th>
@@ -161,17 +161,17 @@ export function AdminDashboard() {
                   <th className="px-2 pb-1.5 font-medium">Nota</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-ink-800/70">
+              <tbody className="divide-y divide-line/70">
                 {data.jobs.map((job) => (
                   <tr key={job.id}>
-                    <td className="nums px-2 py-1.5 text-mist-300">{new Date(job.startedAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</td>
-                    <td className={`px-2 py-1.5 ${job.status === "ok" ? "text-edge-400" : job.status === "error" ? "text-alert-400" : "text-signal-400"}`}>
+                    <td className="nums px-2 py-1.5 text-fg-muted">{new Date(job.startedAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</td>
+                    <td className={`px-2 py-1.5 ${job.status === "ok" ? "text-pos" : job.status === "error" ? "text-neg" : "text-focus"}`}>
                       {job.status}
                     </td>
-                    <td className="nums px-2 py-1.5 text-right text-mist-200">{job.gamesProcessed}</td>
-                    <td className="nums px-2 py-1.5 text-right text-mist-200">{job.predictionsWritten}</td>
-                    <td className="nums px-2 py-1.5 text-right text-mist-200">${job.costUsd.toFixed(3)}</td>
-                    <td className="max-w-[280px] truncate px-2 py-1.5 text-[11px] text-mist-500" title={job.note}>
+                    <td className="nums px-2 py-1.5 text-right text-fg">{job.gamesProcessed}</td>
+                    <td className="nums px-2 py-1.5 text-right text-fg">{job.predictionsWritten}</td>
+                    <td className="nums px-2 py-1.5 text-right text-fg">${job.costUsd.toFixed(3)}</td>
+                    <td className="max-w-[280px] truncate px-2 py-1.5 text-label text-fg-dim" title={job.note}>
                       {job.note || "—"}
                     </td>
                   </tr>

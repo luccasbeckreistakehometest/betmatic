@@ -48,8 +48,8 @@ const C = {
   },
 };
 
-const field = "w-full rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-[14px] text-mist-100 outline-none focus:border-edge-400";
-const button = "rounded-lg border border-ink-700 px-3.5 py-1.5 text-[13px] text-mist-200 transition hover:border-ink-600 hover:text-white disabled:opacity-50";
+const field = "w-full rounded-control border border-line-strong bg-surface-1 px-3 py-2 text-base text-fg outline-none focus:border-pos";
+const button = "rounded-control border border-line-strong px-3.5 py-1.5 text-sm text-fg transition hover:border-line-control hover:text-fg disabled:opacity-50";
 
 export function AccountPanel() {
   const { lang } = useNavState();
@@ -103,13 +103,13 @@ export function AccountPanel() {
     setBusy(null);
   }
 
-  if (state === "loading") return <div className="h-40 animate-pulse rounded-xl bg-ink-900" />;
+  if (state === "loading") return <div className="h-40 animate-pulse rounded-panel bg-surface-1" />;
   if (state === "anon" || !data) {
     return (
       <div className="flex flex-col gap-3">
-        <h1 className="text-xl font-semibold text-white">{c.title}</h1>
+        <h1 className="text-lead font-semibold text-fg">{c.title}</h1>
         <Empty>{c.signIn}</Empty>
-        <Link href={`/login?lang=${lang}&next=${encodeURIComponent(`/app/conta?lang=${lang}`)}`} className="w-fit rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950">{c.login}</Link>
+        <Link href={`/login?lang=${lang}&next=${encodeURIComponent(`/app/conta?lang=${lang}`)}`} className="w-fit rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg">{c.login}</Link>
       </div>
     );
   }
@@ -121,42 +121,42 @@ export function AccountPanel() {
   return (
     <div className="flex flex-col gap-5" data-testid="account-page">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-white">{c.title}</h1>
-        <p className="mt-1 text-sm text-mist-400">{user.name} · {user.email}</p>
-        <p className="mt-0.5 text-[12px] text-mist-500">
+        <h1 className="text-lead font-semibold tracking-tight text-fg">{c.title}</h1>
+        <p className="mt-1 text-sm text-fg-muted">{user.name} · {user.email}</p>
+        <p className="mt-0.5 text-tiny text-fg-dim">
           {c.member.replace("{date}", formatDate(user.createdAt, lang, { year: true }))}
           {user.termsAcceptedAt ? ` · ${c.consent.replace("{date}", formatDate(user.termsAcceptedAt, lang, { year: true }))}` : ""}
         </p>
       </div>
 
-      {mustChange && <p className="rounded-lg border border-warn-400/30 bg-warn-400/5 px-3 py-2 text-[13px] text-warn-400" role="alert">{c.mustChange}</p>}
+      {mustChange && <p className="rounded-control border border-warn bg-warn-tint px-3 py-2 text-sm text-warn" role="alert">{c.mustChange}</p>}
 
       <div className="grid gap-4 md:grid-cols-2">
         <Panel title={c.plan} lang={lang}>
-          <p className="text-[18px] font-semibold text-white" data-testid="account-plan">{plan.name}</p>
+          <p className="text-lead font-semibold text-fg" data-testid="account-plan">{plan.name}</p>
           {plan.storedPlanId !== "free" && plan.expiresAt ? (
-            <p className={`mt-1 text-[13px] ${plan.active ? "text-mist-300" : "text-warn-400"}`} data-testid="account-expiry">
+            <p className={`mt-1 text-sm ${plan.active ? "text-fg-muted" : "text-warn"}`} data-testid="account-expiry">
               {(plan.active ? c.validUntil : c.expiredOn).replace("{date}", formatDate(plan.expiresAt, lang, { year: true }))} · {c.prepaid}
             </p>
           ) : (
-            <p className="mt-1 text-[13px] text-mist-400">{c.freePlan}</p>
+            <p className="mt-1 text-sm text-fg-muted">{c.freePlan}</p>
           )}
-          <Link href={`/planos?lang=${lang}`} className="mt-3 inline-block rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 hover:bg-edge-500">{c.seePlans}</Link>
+          <Link href={`/planos?lang=${lang}`} className="mt-3 inline-block rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg hover:bg-action">{c.seePlans}</Link>
         </Panel>
         <Panel title={c.coins} lang={lang}>
-          <p className="nums text-[18px] font-semibold text-white" data-testid="account-coins">{user.coins}</p>
-          <p className="mt-1 text-[13px] text-mist-400">{lang === "pt" ? "8 coins por análise de bilhete." : "8 coins per slip analysis."}</p>
+          <p className="nums text-lead font-semibold text-fg" data-testid="account-coins">{user.coins}</p>
+          <p className="mt-1 text-sm text-fg-muted">{lang === "pt" ? "8 coins por análise de bilhete." : "8 coins per slip analysis."}</p>
         </Panel>
       </div>
 
       <Panel title={c.history} lang={lang}>
         {data.coinHistory.length ? (
-          <ul className="divide-y divide-ink-800 text-[13px]" data-testid="coin-history">
+          <ul className="divide-y divide-line text-sm" data-testid="coin-history">
             {data.coinHistory.map((row) => (
               <li key={row.id} className="flex flex-wrap items-center gap-x-3 gap-y-0.5 py-1.5">
-                <span className={`nums w-12 font-semibold ${row.delta >= 0 ? "text-edge-400" : "text-alert-400"}`}>{row.delta > 0 ? `+${row.delta}` : row.delta}</span>
-                <span className="text-mist-200">{reason(row.reason)}</span>
-                <span className="ml-auto text-[12px] text-mist-500">{formatDateTime(row.createdAt, lang)} · <span className="nums">{row.balanceAfter}</span></span>
+                <span className={`nums w-12 font-semibold ${row.delta >= 0 ? "text-pos" : "text-neg"}`}>{row.delta > 0 ? `+${row.delta}` : row.delta}</span>
+                <span className="text-fg">{reason(row.reason)}</span>
+                <span className="ml-auto text-tiny text-fg-dim">{formatDateTime(row.createdAt, lang)} · <span className="nums">{row.balanceAfter}</span></span>
               </li>
             ))}
           </ul>
@@ -165,13 +165,13 @@ export function AccountPanel() {
 
       <Panel title={c.payments} lang={lang}>
         {data.payments.length ? (
-          <ul className="divide-y divide-ink-800 text-[13px]" data-testid="payments-list">
+          <ul className="divide-y divide-line text-sm" data-testid="payments-list">
             {data.payments.map((p) => (
               <li key={p.id} className="flex flex-wrap items-center gap-x-3 gap-y-0.5 py-1.5">
-                <span className="text-mist-200">{paymentLabel(p, lang)}</span>
-                <span className="nums text-mist-300">{formatMoneyBRL(p.amount, lang, 2)}</span>
-                <span className="text-mist-400">{c.status[p.status] ?? p.status}</span>
-                <span className="ml-auto text-[12px] text-mist-500">{formatDateTime(p.createdAt, lang)}</span>
+                <span className="text-fg">{paymentLabel(p, lang)}</span>
+                <span className="nums text-fg-muted">{formatMoneyBRL(p.amount, lang, 2)}</span>
+                <span className="text-fg-muted">{c.status[p.status] ?? p.status}</span>
+                <span className="ml-auto text-tiny text-fg-dim">{formatDateTime(p.createdAt, lang)}</span>
               </li>
             ))}
           </ul>
@@ -181,52 +181,52 @@ export function AccountPanel() {
       <div className="grid gap-4 md:grid-cols-2">
         <Panel title={c.password} lang={lang}>
           <form onSubmit={changePassword} className="flex flex-col gap-2.5" data-testid="password-form">
-            <label className="flex flex-col gap-1 text-[12px] text-mist-400">{c.current}
+            <label className="flex flex-col gap-1 text-tiny text-fg-muted">{c.current}
               <input type="password" className={field} value={pw.current} onChange={(e) => setPw({ ...pw, current: e.target.value })} required autoComplete="current-password" data-testid="pw-current" />
             </label>
-            <label className="flex flex-col gap-1 text-[12px] text-mist-400">{c.next}
+            <label className="flex flex-col gap-1 text-tiny text-fg-muted">{c.next}
               <input type="password" className={field} value={pw.next} minLength={8} onChange={(e) => setPw({ ...pw, next: e.target.value })} required autoComplete="new-password" data-testid="pw-next" />
             </label>
             <button type="submit" disabled={busy === "pw"} className={`${button} w-fit`} data-testid="pw-save">{c.savePassword}</button>
-            {pwMsg && <p className={`text-[12.5px] ${pwMsg.ok ? "text-edge-400" : "text-alert-400"}`} role="status" data-testid="pw-msg">{pwMsg.text}</p>}
+            {pwMsg && <p className={`text-tiny ${pwMsg.ok ? "text-pos" : "text-neg"}`} role="status" data-testid="pw-msg">{pwMsg.text}</p>}
           </form>
         </Panel>
         <div className="flex flex-col gap-4">
           <Panel title={c.sessions} lang={lang}>
-            <p className="text-[13px] text-mist-400">{c.sessionsBody}</p>
+            <p className="text-sm text-fg-muted">{c.sessionsBody}</p>
             <button type="button" onClick={() => void logoutAll()} disabled={busy === "all"} className={`${button} mt-3`} data-testid="logout-all">{c.logoutAll}</button>
           </Panel>
           <Panel title={c.responsible} lang={lang}>
-            <p className="text-[13px] text-mist-400">{c.responsibleBody}</p>
-            <div className="mt-3 flex flex-wrap gap-3 text-[13px]">
-              <Link href={`/app/settings?lang=${lang}`} className="text-edge-400 hover:underline">{c.responsibleLink}</Link>
-              <Link href={lang === "pt" ? "/jogo-responsavel" : "/responsible-gambling"} className="text-mist-300 hover:underline">{lang === "pt" ? "Onde buscar ajuda" : "Where to get help"}</Link>
+            <p className="text-sm text-fg-muted">{c.responsibleBody}</p>
+            <div className="mt-3 flex flex-wrap gap-3 text-sm">
+              <Link href={`/app/settings?lang=${lang}`} className="text-pos hover:underline">{c.responsibleLink}</Link>
+              <Link href={lang === "pt" ? "/jogo-responsavel" : "/responsible-gambling"} className="text-fg-muted hover:underline">{lang === "pt" ? "Onde buscar ajuda" : "Where to get help"}</Link>
             </div>
           </Panel>
         </div>
       </div>
 
       <Panel title={c.privacy} lang={lang}>
-        <p className="text-[13px] text-mist-400">{c.exportBody}</p>
+        <p className="text-sm text-fg-muted">{c.exportBody}</p>
         <a href={`/api/account/export?lang=${lang}`} className={`${button} mt-3 inline-block`} data-testid="export-data">{c.export}</a>
         {user.role !== "admin" && (
-          <form onSubmit={deleteAccount} className="mt-6 flex flex-col gap-2.5 border-t border-ink-800 pt-4" data-testid="delete-form">
-            <p className="text-[14px] font-semibold text-alert-400">{c.deleteTitle}</p>
-            <p className="text-[13px] text-mist-400">{c.deleteBody}</p>
-            <label className="flex max-w-sm flex-col gap-1 text-[12px] text-mist-400">{c.deletePassword}
+          <form onSubmit={deleteAccount} className="mt-6 flex flex-col gap-2.5 border-t border-line pt-4" data-testid="delete-form">
+            <p className="text-base font-semibold text-neg">{c.deleteTitle}</p>
+            <p className="text-sm text-fg-muted">{c.deleteBody}</p>
+            <label className="flex max-w-sm flex-col gap-1 text-tiny text-fg-muted">{c.deletePassword}
               <input type="password" className={field} value={del.password} onChange={(e) => setDel({ ...del, password: e.target.value })} required autoComplete="current-password" data-testid="delete-password" />
             </label>
-            <label className="flex items-center gap-2 text-[12.5px] text-mist-300">
-              <input type="checkbox" checked={del.confirm} onChange={(e) => setDel({ ...del, confirm: e.target.checked })} required className="size-4 accent-alert-400" data-testid="delete-confirm" />
+            <label className="flex items-center gap-2 text-tiny text-fg-muted">
+              <input type="checkbox" checked={del.confirm} onChange={(e) => setDel({ ...del, confirm: e.target.checked })} required className="size-4 appearance-none rounded-control border border-line-control bg-surface-3 checked:border-neg checked:bg-neg" data-testid="delete-confirm" />
               {c.deleteConfirm}
             </label>
-            <button type="submit" disabled={busy === "del" || !del.confirm} className="w-fit rounded-lg border border-alert-400/50 px-3.5 py-1.5 text-[13px] text-alert-400 transition hover:bg-alert-400/10 disabled:opacity-50" data-testid="delete-submit">{c.deleteButton}</button>
-            {delMsg && <p className="text-[12.5px] text-alert-400" role="alert">{delMsg}</p>}
+            <button type="submit" disabled={busy === "del" || !del.confirm} className="w-fit rounded-control border border-neg px-3.5 py-1.5 text-sm text-neg transition hover:bg-neg-tint disabled:opacity-50" data-testid="delete-submit">{c.deleteButton}</button>
+            {delMsg && <p className="text-tiny text-neg" role="alert">{delMsg}</p>}
           </form>
         )}
       </Panel>
 
-      <p className="text-[13px] text-mist-400">{c.help} <Link href={`/contato?lang=${lang}`} className="text-edge-400 hover:underline">{c.contact}</Link></p>
+      <p className="text-sm text-fg-muted">{c.help} <Link href={`/contato?lang=${lang}`} className="text-pos hover:underline">{c.contact}</Link></p>
     </div>
   );
 }

@@ -35,20 +35,28 @@ export function WhatsNew({ lang, sportKey }: { lang: Lang; sportKey: string }) {
     setOpen(false);
   };
   return (
-    <section className="rounded-xl border border-edge-400/25 bg-gradient-to-r from-edge-400/[0.06] to-transparent px-4 py-3" data-testid="whats-new">
-      <div className="flex items-center gap-2">
-        <span className="rounded bg-edge-400/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-edge-400">{lang === "pt" ? "Novo" : "New"}</span>
-        <p className="text-[12.5px] text-mist-200">{lang === "pt" ? "O que mudou no Betmatic" : "What's new in Betmatic"}</p>
-        <button type="button" onClick={close} className="ml-auto text-[11px] text-mist-500 hover:text-mist-300" data-testid="whats-new-close">{lang === "pt" ? "Fechar" : "Close"}</button>
+    <section className="border border-line bg-surface-1" data-testid="whats-new">
+      <div className="flex items-center gap-2 border-b border-line px-3 py-1.5">
+        <span className="text-label u-label text-fg-faint">{lang === "pt" ? "Novo" : "New"}</span>
+        <p className="text-tiny text-fg-muted">{lang === "pt" ? "O que mudou no Betmatic" : "What's new in Betmatic"}</p>
+        <button
+          type="button"
+          onClick={close}
+          className="ml-auto text-tiny text-fg-dim transition-colors duration-(--dur-1) hover:text-fg"
+          data-testid="whats-new-close"
+        >
+          {lang === "pt" ? "Fechar" : "Close"}
+        </button>
       </div>
-      <ul className="mt-2 flex gap-2 overflow-x-auto pb-1">
+      {/* A clipped strip says so: the 24px edge fade is the one gradient the system allows (§8.4). */}
+      <ul className="u-edge-fade flex divide-x divide-line overflow-x-auto">
         {ITEMS.map((item) => {
           const [title, body] = item[lang];
           return (
             <li key={title} className="shrink-0">
-              <Link href={item.href(sportKey, lang)} className="block w-44 rounded-lg border border-ink-800 bg-ink-900/70 px-3 py-2 hover:border-edge-400/50">
-                <span className="block text-[12px] font-semibold text-mist-100">{title}</span>
-                <span className="block text-[11px] leading-snug text-mist-500">{body}</span>
+              <Link href={item.href(sportKey, lang)} className="block h-full w-44 px-3 py-2 transition-colors duration-(--dur-1) hover:bg-surface-2">
+                <span className="block text-tiny font-medium text-fg">{title}</span>
+                <span className="mt-0.5 block text-tiny leading-snug text-fg-dim">{body}</span>
               </Link>
             </li>
           );

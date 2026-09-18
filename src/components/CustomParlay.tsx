@@ -88,8 +88,8 @@ export function CustomParlay() {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-white">{c.title} <span className="text-mist-500">· {sport.label[lang]}</span></h1>
-        <p className="mt-1 max-w-2xl text-sm leading-relaxed text-mist-400">{c.sub}</p>
+        <h1 className="text-lead font-semibold tracking-tight text-fg">{c.title} <span className="text-fg-dim">· {sport.label[lang]}</span></h1>
+        <p className="mt-1 max-w-2xl text-sm leading-relaxed text-fg-muted">{c.sub}</p>
       </div>
       <CustomForm
         c={c} lang={lang} meta={meta} games={games} busy={busy} canAfford={canAfford}
@@ -113,49 +113,49 @@ function CustomForm(props: {
 }) {
   const { c, lang, meta, games, state, set } = props;
   if (meta && !meta.signedIn) {
-    return <Panel title={c.title}><div className="flex flex-col gap-2"><Empty>{c.signIn}</Empty><Link href={`/login?lang=${lang}`} className="w-fit rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950">{lang === "pt" ? "Entrar" : "Log in"}</Link></div></Panel>;
+    return <Panel title={c.title}><div className="flex flex-col gap-2"><Empty>{c.signIn}</Empty><Link href={`/login?lang=${lang}`} className="w-fit rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg">{lang === "pt" ? "Entrar" : "Log in"}</Link></div></Panel>;
   }
-  const chip = (on: boolean) => `rounded-full border px-2.5 py-1 text-[12px] transition ${on ? "border-edge-400 bg-edge-400/10 text-edge-400" : "border-ink-700 text-mist-400 hover:border-ink-600"}`;
+  const chip = (on: boolean) => `rounded-full border px-2.5 py-1 text-tiny transition ${on ? "border-pos bg-action text-pos" : "border-line-strong text-fg-muted hover:border-line-control"}`;
   return (
     <Panel title={c.target}>
       <div className="flex flex-col gap-4" data-testid="custom-form">
         <div className="flex flex-wrap items-center gap-2">
           {PRESETS.map((p) => <button key={p} type="button" onClick={() => set.setTarget(p)} className={chip(state.target === p)} data-testid={`preset-${p}`}>{p}x</button>)}
-          <input type="range" min={2} max={500} step={1} value={state.target} onChange={(e) => set.setTarget(Number(e.target.value))} aria-label={c.target} className="min-w-0 flex-1 accent-[var(--color-edge-400)]" />
-          <input type="number" min={2} max={500} value={state.target} onChange={(e) => set.setTarget(Math.min(500, Math.max(2, Number(e.target.value) || 2)))} aria-label={c.target} className="nums w-20 rounded border border-ink-700 bg-ink-900 px-2 py-1 text-[13px] text-mist-100" data-testid="target-input" />
+          <input type="range" min={2} max={500} step={1} value={state.target} onChange={(e) => set.setTarget(Number(e.target.value))} aria-label={c.target} className="range min-w-0 flex-1" />
+          <input type="number" min={2} max={500} value={state.target} onChange={(e) => set.setTarget(Math.min(500, Math.max(2, Number(e.target.value) || 2)))} aria-label={c.target} className="nums w-20 rounded-control border border-line-strong bg-surface-1 px-2 py-1 text-sm text-fg" data-testid="target-input" />
         </div>
-        <label className="flex flex-wrap items-center gap-2 text-[13px] text-mist-300">
+        <label className="flex flex-wrap items-center gap-2 text-sm text-fg-muted">
           {c.legs}
-          <select value={state.maxLegs} onChange={(e) => set.setMaxLegs(Number(e.target.value))} className="rounded border border-ink-700 bg-ink-900 px-2 py-1 text-mist-100">
+          <select value={state.maxLegs} onChange={(e) => set.setMaxLegs(Number(e.target.value))} className="rounded-control border border-line-strong bg-surface-1 px-2 py-1 text-fg">
             {[2, 3, 4, 5, 6, 7, 8].map((n) => <option key={n} value={n}>{n}</option>)}
           </select>
         </label>
         <div>
-          <p className="text-[11px] uppercase tracking-wider text-mist-500">{c.markets} <span className="normal-case tracking-normal">({state.markets.length ? state.markets.length : c.allMarkets})</span></p>
+          <p className="text-label uppercase tracking-wider text-fg-dim">{c.markets} <span className="normal-case tracking-normal">({state.markets.length ? state.markets.length : c.allMarkets})</span></p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {(meta?.markets ?? []).map((m) => <button key={m.key} type="button" onClick={() => set.toggleMarket(m.key)} className={chip(state.markets.includes(m.key))}>{m.label[lang]}</button>)}
           </div>
         </div>
         {games.length > 0 && (
           <div>
-            <p className="text-[11px] uppercase tracking-wider text-mist-500">{c.games} <span className="normal-case tracking-normal">({state.gameIds.length ? state.gameIds.length : c.allGames})</span></p>
+            <p className="text-label uppercase tracking-wider text-fg-dim">{c.games} <span className="normal-case tracking-normal">({state.gameIds.length ? state.gameIds.length : c.allGames})</span></p>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {games.map((g) => <button key={g.id} type="button" onClick={() => set.toggleGame(g.id)} className={chip(state.gameIds.includes(g.id))}>{g.away.displayName} @ {g.home.displayName}</button>)}
             </div>
           </div>
         )}
-        <div className="flex flex-wrap items-center gap-4 text-[13px] text-mist-300">
+        <div className="flex flex-wrap items-center gap-4 text-sm text-fg-muted">
           <label className="flex items-center gap-2"><input type="checkbox" checked={state.measuredOnly} onChange={(e) => set.setMeasuredOnly(e.target.checked)} /> {c.measured}</label>
           <label className="flex items-center gap-2">{c.minRate} <input type="range" min={40} max={80} value={state.minRate} onChange={(e) => set.setMinRate(Number(e.target.value))} aria-label={c.minRate} /><span className="nums w-10">{state.minRate}%</span></label>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <button type="button" onClick={props.onBuild} disabled={props.busy || !props.canAfford} className="rounded-lg bg-edge-400 px-4 py-2 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500 disabled:opacity-40" data-testid="custom-build">
+          <button type="button" onClick={props.onBuild} disabled={props.busy || !props.canAfford} className="rounded-control bg-action px-4 py-2 text-sm font-semibold text-action-fg transition hover:bg-action disabled:opacity-40" data-testid="custom-build">
             {c.build} · {meta?.price ?? "…"} {c.coins}
           </button>
-          {meta && !props.canAfford && <span className="text-[12px] text-warn-400">{c.noCoins} <Link href={`/planos?lang=${lang}`} className="underline">{c.buy}</Link></span>}
-          {meta && <span className="nums text-[12px] text-mist-500">{meta.coins} {c.coins}</span>}
+          {meta && !props.canAfford && <span className="text-tiny text-warn">{c.noCoins} <Link href={`/planos?lang=${lang}`} className="underline">{c.buy}</Link></span>}
+          {meta && <span className="nums text-tiny text-fg-dim">{meta.coins} {c.coins}</span>}
         </div>
-        <p className="text-[12px] text-mist-500">{c.honesty}</p>
+        <p className="text-tiny text-fg-dim">{c.honesty}</p>
       </div>
     </Panel>
   );
@@ -167,11 +167,11 @@ function CustomResults({ c, result, target }: { c: Copy; result: Result; target:
       : result.reason === "too_high" || result.reason === "too_low"
         ? c.unreachable.replace("{target}", `${target}x`).replace("{nearest}", result.nearest ? formatDecimal(result.nearest) : "—")
         : result.message ?? c.failed;
-    return <p className="rounded-lg border border-warn-400/25 bg-warn-400/5 px-3 py-2 text-[13px] text-warn-400" data-testid="custom-unreachable">{text}</p>;
+    return <p className="rounded-control border border-warn bg-warn-tint px-3 py-2 text-sm text-warn" data-testid="custom-unreachable">{text}</p>;
   }
   return (
     <div className="flex flex-col gap-3" data-testid="custom-results">
-      <p className="text-[12px] text-mist-500">
+      <p className="text-tiny text-fg-dim">
         {c.spent} <span className="nums">{result.coinsSpent}</span> {c.coins}{result.cached ? ` · ${c.cached}` : ""}{result.aiWritten === false ? ` · ${c.template}` : ""}
       </p>
       {result.tickets.map((t, i) => <CustomTicket key={i} c={c} ticket={t} index={i} slipId={result.slipId} />)}
@@ -188,41 +188,41 @@ function CustomTicket({ c, ticket, index, slipId }: { c: Copy; ticket: CustomTic
     setState(r.ok ? "saved" : r.status === 422 ? "limit" : r.status === 423 ? "paused" : "error");
   }
   return (
-    <article className="rounded-xl border border-ink-800 bg-ink-850/50" data-testid="custom-ticket">
-      <header className="flex flex-wrap items-center gap-2 border-b border-ink-800 px-3.5 py-2.5">
-        <span className="text-[13px] font-semibold text-mist-100">{ticket.title}</span>
-        <span className="nums ml-auto rounded-lg bg-signal-500/12 px-2 py-0.5 text-[13px] font-bold text-signal-400">{formatDecimal(ticket.decimal)}</span>
+    <article className="rounded-panel border border-line bg-surface-2" data-testid="custom-ticket">
+      <header className="flex flex-wrap items-center gap-2 border-b border-line px-3.5 py-2.5">
+        <span className="text-sm font-semibold text-fg">{ticket.title}</span>
+        <span className="nums ml-auto rounded-control bg-action px-2 py-0.5 text-sm font-bold text-focus">{formatDecimal(ticket.decimal)}</span>
       </header>
       <div className="px-3.5 py-3">
-        <p className="text-[12.5px] leading-relaxed text-mist-300">{ticket.background}</p>
+        <p className="text-tiny leading-relaxed text-fg-muted">{ticket.background}</p>
         <ol className="mt-2.5 flex flex-col gap-1.5">
           {ticket.legs.map((l) => (
-            <li key={l.key} className="rounded-lg border border-ink-800 bg-ink-900/60 p-2">
+            <li key={l.key} className="rounded-control border border-line bg-surface-1 p-2">
               <div className="flex flex-wrap items-baseline gap-2">
-                <span className="text-[12.5px] font-medium text-mist-100">{l.selection}</span>
-                <span className="nums text-[12px] text-mist-300">{l.decimal.toFixed(2)}</span>
-                <span className="text-[11px] text-mist-500">{l.matchup}</span>
-                <span className="nums ml-auto text-[10.5px] text-mist-500">{formatPercent(l.fairProbability, 0)}</span>
+                <span className="text-tiny font-medium text-fg">{l.selection}</span>
+                <span className="nums text-tiny text-fg-muted">{l.decimal.toFixed(2)}</span>
+                <span className="text-label text-fg-dim">{l.matchup}</span>
+                <span className="nums ml-auto text-micro text-fg-dim">{formatPercent(l.fairProbability, 0)}</span>
               </div>
-              {l.note && <p className="mt-0.5 text-[11.5px] text-mist-500">{l.note}</p>}
+              {l.note && <p className="mt-0.5 text-tiny text-fg-dim">{l.note}</p>}
             </li>
           ))}
         </ol>
-        <div className="mt-2.5 grid grid-cols-3 gap-px overflow-hidden rounded-lg border border-ink-800 bg-ink-800 text-center">
+        <div className="mt-2.5 grid grid-cols-3 gap-px overflow-hidden rounded-control border border-line bg-surface-3 text-center">
           {[[c.chance, formatPercent(ticket.fairProbability, 2)], [c.implied, formatPercent(ticket.impliedProbability, 2)], [c.ev, `${ticket.ev > 0 ? "+" : ""}${(ticket.ev * 100).toFixed(1)}%`]].map(([k, v]) => (
-            <div key={k} className="bg-ink-900 px-2 py-1.5"><div className="text-[9px] uppercase tracking-wider text-mist-500">{k}</div><div className="nums text-[12px] text-mist-200">{v}</div></div>
+            <div key={k} className="bg-surface-1 px-2 py-1.5"><div className="text-micro uppercase tracking-wider text-fg-dim">{k}</div><div className="nums text-tiny text-fg">{v}</div></div>
           ))}
         </div>
-        <p className="mt-2 text-[11.5px] text-warn-400/90">{ticket.riskNote}</p>
+        <p className="mt-2 text-tiny text-warn/90">{ticket.riskNote}</p>
       </div>
-      <footer className="flex flex-wrap items-center gap-2 border-t border-ink-800 px-3.5 py-2.5 text-[12px]">
-        {state === "saved" ? <span className="text-signal-400" data-testid="custom-saved">{c.saved}</span> : (
+      <footer className="flex flex-wrap items-center gap-2 border-t border-line px-3.5 py-2.5 text-tiny">
+        {state === "saved" ? <span className="text-focus" data-testid="custom-saved">{c.saved}</span> : (
           <>
-            <input value={stake} onChange={(e) => setStake(e.target.value)} placeholder={c.stake} inputMode="decimal" aria-label={c.stake} className="nums w-20 rounded border border-ink-700 bg-ink-900 px-2 py-1 text-mist-100" data-testid="custom-stake" />
-            <button type="button" onClick={() => void save()} disabled={!(Number(stake) > 0) || state === "saving" || !slipId} className="rounded border border-ink-700 px-2 py-1 text-mist-300 hover:text-mist-100 disabled:opacity-40" data-testid="custom-save">{c.save}</button>
-            {state === "limit" && <span className="text-warn-400">{c.limit}</span>}
-            {state === "paused" && <span className="text-warn-400">{c.paused}</span>}
-            {state === "error" && <span className="text-warn-400">{c.failed}</span>}
+            <input value={stake} onChange={(e) => setStake(e.target.value)} placeholder={c.stake} inputMode="decimal" aria-label={c.stake} className="nums w-20 rounded-control border border-line-strong bg-surface-1 px-2 py-1 text-fg" data-testid="custom-stake" />
+            <button type="button" onClick={() => void save()} disabled={!(Number(stake) > 0) || state === "saving" || !slipId} className="rounded-control border border-line-strong px-2 py-1 text-fg-muted hover:text-fg disabled:opacity-40" data-testid="custom-save">{c.save}</button>
+            {state === "limit" && <span className="text-warn">{c.limit}</span>}
+            {state === "paused" && <span className="text-warn">{c.paused}</span>}
+            {state === "error" && <span className="text-warn">{c.failed}</span>}
           </>
         )}
       </footer>

@@ -122,74 +122,74 @@ export default async function GamePublicPage({ params, searchParams }: { params:
   const odds = data.detail?.game.odds;
 
   return (
-    <main className="min-h-screen bg-ink-950 text-mist-100">
+    <main className="min-h-screen bg-surface-0 text-fg">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqJsonLd(faq) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: eventJsonLd({ teams, league, startsAt: data.startsAt, url, venue: data.detail?.game.venue ? sc(data.detail.game.venue) : null }) }} />
       <MarketingHeader lang={lang} langHrefs={{ pt: `/jogo/${gameId}?sport=${data.sportKey}`, en: `/jogo/${gameId}?sport=${data.sportKey}&lang=en` }} />
 
       <article className="mx-auto max-w-3xl px-5 py-10" data-testid="game-page">
-        <p className="text-[11px] uppercase tracking-[0.18em] text-edge-400">{c.eyebrow} · {league}</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">{gamePageTitle(teams, kickoff.date, lang)}</h1>
-        <p className="mt-3 text-[14px] text-mist-400">
+        <p className="text-label uppercase tracking-[0.18em] text-pos">{c.eyebrow} · {league}</p>
+        <h1 className="mt-2 text-h2 font-semibold tracking-tight sm:text-h1">{gamePageTitle(teams, kickoff.date, lang)}</h1>
+        <p className="mt-3 text-base text-fg-muted">
           {kickoff.full ? <span>{c.kickoff}: {kickoff.full}</span> : null}
           {data.detail?.game.venue ? <span> · {sc(data.detail.game.venue)}</span> : null}
         </p>
         {odds && (odds.details || odds.overUnder !== undefined) && (
-          <p className="nums mt-1 text-[13px] text-mist-500">
+          <p className="nums mt-1 text-sm text-fg-dim">
             {odds.details ? `${c.line} ${sc(odds.details)}` : ""}{odds.details && odds.overUnder !== undefined ? " · " : ""}{odds.overUnder !== undefined ? `${c.total} ${odds.overUnder}` : ""}
           </p>
         )}
 
-        <section className="mt-8 rounded-2xl border border-edge-400/25 bg-ink-900/70 p-5" data-testid="game-teaser">
-          <p className="text-[11px] uppercase tracking-[0.18em] text-mist-500">{c.teaser}</p>
+        <section className="mt-8 rounded-panel border border-pos bg-surface-1 p-5" data-testid="game-teaser">
+          <p className="text-label uppercase tracking-[0.18em] text-fg-dim">{c.teaser}</p>
           {best && teaser ? (
             <>
               <div className="mt-2 flex flex-wrap items-center gap-3">
-                <h2 className="text-xl font-semibold text-white">{teaser.title}</h2>
-                <span className="nums rounded-lg bg-signal-500/12 px-2 py-0.5 text-[14px] font-bold text-signal-400">{teaser.odds}</span>
-                <span className="rounded border border-ink-700 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-mist-400">{getBand(best.bandKey).label[lang]}</span>
-                <span className="nums text-[11px] text-mist-500">{c.confidence} {best.evidenceScore}</span>
+                <h2 className="text-lead font-semibold text-fg">{teaser.title}</h2>
+                <span className="nums rounded-control bg-action px-2 py-0.5 text-base font-bold text-focus">{teaser.odds}</span>
+                <span className="rounded-control border border-line-strong px-1.5 py-0.5 text-micro uppercase tracking-wide text-fg-muted">{getBand(best.bandKey).label[lang]}</span>
+                <span className="nums text-label text-fg-dim">{c.confidence} {best.evidenceScore}</span>
               </div>
-              <p className="mt-3 text-[14px] leading-relaxed text-mist-300">{c.teaserBody}</p>
-              <p className="mt-3 text-[13px] text-mist-500">🔒 {data.bestFree ? c.legsLocked(best.legs.length) : c.legsPaid(best.legs.length)}</p>
+              <p className="mt-3 text-base leading-relaxed text-fg-muted">{c.teaserBody}</p>
+              <p className="mt-3 text-sm text-fg-dim">🔒 {data.bestFree ? c.legsLocked(best.legs.length) : c.legsPaid(best.legs.length)}</p>
               <div className="mt-4 flex flex-wrap gap-3">
                 {data.bestFree
-                  ? <Link href={signup} className="rounded-lg bg-edge-400 px-4 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500">{c.cta}</Link>
-                  : <Link href={{ pathname: "/planos", query: { lang } }} className="rounded-lg bg-edge-400 px-4 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500">{c.ctaPaid}</Link>}
-                <Link href={{ pathname: `/app/game/${gameId}`, query: { sport: data.sportKey, lang } }} className="rounded-lg border border-ink-700 px-4 py-2 text-[13px] text-mist-300 hover:text-mist-100">{c.open}</Link>
+                  ? <Link href={signup} className="rounded-control bg-action px-4 py-2 text-sm font-semibold text-action-fg hover:bg-action">{c.cta}</Link>
+                  : <Link href={{ pathname: "/planos", query: { lang } }} className="rounded-control bg-action px-4 py-2 text-sm font-semibold text-action-fg hover:bg-action">{c.ctaPaid}</Link>}
+                <Link href={{ pathname: `/app/game/${gameId}`, query: { sport: data.sportKey, lang } }} className="rounded-control border border-line-strong px-4 py-2 text-sm text-fg-muted hover:text-fg">{c.open}</Link>
               </div>
             </>
           ) : (
             <>
-              <p className="mt-2 text-[14px] text-mist-400">{c.noTeaser}</p>
-              <Link href={signup} className="mt-4 inline-block rounded-lg bg-edge-400 px-4 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500">{c.cta}</Link>
+              <p className="mt-2 text-base text-fg-muted">{c.noTeaser}</p>
+              <Link href={signup} className="mt-4 inline-block rounded-control bg-action px-4 py-2 text-sm font-semibold text-action-fg hover:bg-action">{c.cta}</Link>
             </>
           )}
         </section>
 
-        <section className="mt-8 rounded-xl border border-ink-800 bg-ink-900/60 p-5" data-testid="game-proof">
-          <p className="text-[11px] uppercase tracking-[0.18em] text-mist-500">{c.proof}</p>
+        <section className="mt-8 rounded-panel border border-line bg-surface-1 p-5" data-testid="game-proof">
+          <p className="text-label uppercase tracking-[0.18em] text-fg-dim">{c.proof}</p>
           {showProof ? (
             <div className="mt-3 flex flex-wrap gap-8">
               {[[c.generated, String(proof.generated)], [c.hit, pct(proof.hitRate)], [c.roi, `${proof.roi >= 0 ? "+" : ""}${pct(proof.roi)}`]].map(([k, v]) => (
-                <div key={k}><div className="nums text-2xl font-semibold text-white">{v}</div><div className="text-[12px] text-mist-500">{k}</div></div>
+                <div key={k}><div className="nums text-h3 font-semibold text-fg">{v}</div><div className="text-tiny text-fg-dim">{k}</div></div>
               ))}
             </div>
           ) : (
-            <p className="mt-2 text-[13.5px] leading-relaxed text-mist-400">{c.method}</p>
+            <p className="mt-2 text-sm leading-relaxed text-fg-muted">{c.method}</p>
           )}
-          <Link href={{ pathname: "/prova", query: { lang } }} className="mt-3 inline-block text-[13px] text-edge-400 hover:underline">{c.all}</Link>
+          <Link href={{ pathname: "/prova", query: { lang } }} className="mt-3 inline-block text-sm text-pos hover:underline">{c.all}</Link>
         </section>
 
         {injuries.length > 0 && (
           <section className="mt-8">
-            <h2 className="text-[11px] uppercase tracking-[0.18em] text-mist-500">{c.injuries}</h2>
-            <ul className="mt-2 divide-y divide-ink-800 rounded-xl border border-ink-800">
+            <h2 className="text-label uppercase tracking-[0.18em] text-fg-dim">{c.injuries}</h2>
+            <ul className="mt-2 divide-y divide-line rounded-panel border border-line">
               {injuries.map((i, k) => (
-                <li key={k} className="flex flex-wrap items-baseline gap-2 px-4 py-2 text-[13px]">
-                  <span className="text-mist-100">{sc(i.player)}</span>
-                  <span className="text-[11px] text-mist-500">{i.teamAbbreviation}</span>
-                  <span className="ml-auto text-[12px] text-warn-400">{sc(i.status)}</span>
+                <li key={k} className="flex flex-wrap items-baseline gap-2 px-4 py-2 text-sm">
+                  <span className="text-fg">{sc(i.player)}</span>
+                  <span className="text-label text-fg-dim">{i.teamAbbreviation}</span>
+                  <span className="ml-auto text-tiny text-warn">{sc(i.status)}</span>
                 </li>
               ))}
             </ul>
@@ -197,17 +197,17 @@ export default async function GamePublicPage({ params, searchParams }: { params:
         )}
 
         <section className="mt-10">
-          <h2 className="text-xl font-semibold">{c.faq}</h2>
-          <dl className="mt-3 divide-y divide-ink-800 rounded-xl border border-ink-800">
+          <h2 className="text-lead font-semibold">{c.faq}</h2>
+          <dl className="mt-3 divide-y divide-line rounded-panel border border-line">
             {faq.map((f) => (
-              <div key={f.q} className="px-4 py-3"><dt className="text-[14px] font-semibold text-white">{f.q}</dt><dd className="mt-1 text-[13px] leading-relaxed text-mist-400">{f.a}</dd></div>
+              <div key={f.q} className="px-4 py-3"><dt className="text-base font-semibold text-fg">{f.q}</dt><dd className="mt-1 text-sm leading-relaxed text-fg-muted">{f.a}</dd></div>
             ))}
           </dl>
         </section>
 
         {funnel && (
-          <p className="mt-8 text-[13px] text-mist-500">
-            {c.funnel} <Link href={`/${funnel.slug[lang]}`} className="text-edge-400 hover:underline">{funnel.name[lang]}</Link>
+          <p className="mt-8 text-sm text-fg-dim">
+            {c.funnel} <Link href={`/${funnel.slug[lang]}`} className="text-pos hover:underline">{funnel.name[lang]}</Link>
           </p>
         )}
       </article>

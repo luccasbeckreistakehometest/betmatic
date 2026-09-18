@@ -38,7 +38,7 @@ const C = {
 };
 
 const CHIP: Record<Leg["state"], string> = {
-  won: "bg-edge-400/15 text-edge-400", lost: "bg-alert-400/15 text-alert-400", alive: "bg-signal-500/15 text-signal-400", unknown: "bg-ink-800 text-mist-500",
+  won: "bg-action text-pos", lost: "bg-neg-tint text-neg", alive: "bg-action text-focus", unknown: "bg-surface-3 text-fg-dim",
 };
 
 /**
@@ -92,38 +92,38 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
   // Compared with the time of the last fetch, not the clock, so rendering stays pure.
   const cooling = !!data.nextReadAt && !!updatedAt && Date.parse(data.nextReadAt) > Date.parse(updatedAt);
   return (
-    <section className="rounded-xl border border-signal-500/30 bg-ink-900/70" data-testid="live-panel" data-live-url={`/api/game/${gameId}/live?sport=${sportKey}&lang=${lang}&date=${dateKey}`}>
-      <header className="flex flex-wrap items-center gap-2 border-b border-ink-800 px-4 py-2.5">
-        <span className={`size-2 rounded-full ${s.state === "in" ? "animate-pulse bg-alert-400" : "bg-mist-500"}`} aria-hidden />
-        <h2 className="text-[13px] font-semibold text-mist-100">{c.title}</h2>
-        <span className="nums text-[13px] text-mist-200" data-testid="live-score">{s.away.abbr} {s.away.score} × {s.home.score} {s.home.abbr}</span>
-        <span className="nums text-[11px] text-mist-500">{s.clock}</span>
-        {updatedAt && <span className="ml-auto text-[10.5px] text-mist-600">{c.updated.replace("{t}", formatTime(updatedAt, lang))}</span>}
+    <section className="rounded-panel border border-focus bg-surface-1" data-testid="live-panel" data-live-url={`/api/game/${gameId}/live?sport=${sportKey}&lang=${lang}&date=${dateKey}`}>
+      <header className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-2.5">
+        <span className={`size-2 rounded-full ${s.state === "in" ? "animate-pulse bg-neg" : "bg-fg-dim"}`} aria-hidden />
+        <h2 className="text-sm font-semibold text-fg">{c.title}</h2>
+        <span className="nums text-sm text-fg" data-testid="live-score">{s.away.abbr} {s.away.score} × {s.home.score} {s.home.abbr}</span>
+        <span className="nums text-label text-fg-dim">{s.clock}</span>
+        {updatedAt && <span className="ml-auto text-micro text-fg-faint">{c.updated.replace("{t}", formatTime(updatedAt, lang))}</span>}
       </header>
       <div className="flex flex-col gap-3 px-4 py-3">
-        <p className="rounded-lg border border-warn-400/25 bg-warn-400/5 px-3 py-2 text-[12px] text-warn-400" data-testid="live-caution">{c.caution}</p>
-        {s.state === "post" && <p className="text-[12px] text-mist-400">{c.final}</p>}
-        {data.tickets.length === 0 ? <p className="text-[12.5px] text-mist-500">{c.empty}</p> : (
+        <p className="rounded-control border border-warn bg-warn-tint px-3 py-2 text-tiny text-warn" data-testid="live-caution">{c.caution}</p>
+        {s.state === "post" && <p className="text-tiny text-fg-muted">{c.final}</p>}
+        {data.tickets.length === 0 ? <p className="text-tiny text-fg-dim">{c.empty}</p> : (
           <ul className="flex flex-col gap-2.5">
             {data.tickets.map((t) => (
-              <li key={t.id} className="rounded-lg border border-ink-800 bg-ink-850/50 p-3" data-testid="live-ticket">
+              <li key={t.id} className="rounded-control border border-line bg-surface-2 p-3" data-testid="live-ticket">
                 <div className="flex flex-wrap items-baseline gap-2">
-                  <span className="text-[12.5px] font-semibold text-mist-100">{t.title}</span>
-                  <span className="text-[10px] uppercase tracking-wide text-mist-500">{t.source === "saved" ? c.saved : c.served}</span>
-                  <span className="nums ml-auto text-[11.5px] text-mist-400" data-testid="live-chance">
-                    {t.preChance !== null && <>{c.before} {formatPercent(t.preChance, 0)} · </>}{c.now} <span className="text-mist-100">{t.chanceNow === null ? "—" : formatPercent(t.chanceNow, 0)}</span>
+                  <span className="text-tiny font-semibold text-fg">{t.title}</span>
+                  <span className="text-micro uppercase tracking-wide text-fg-dim">{t.source === "saved" ? c.saved : c.served}</span>
+                  <span className="nums ml-auto text-tiny text-fg-muted" data-testid="live-chance">
+                    {t.preChance !== null && <>{c.before} {formatPercent(t.preChance, 0)} · </>}{c.now} <span className="text-fg">{t.chanceNow === null ? "—" : formatPercent(t.chanceNow, 0)}</span>
                   </span>
                 </div>
                 <ul className="mt-1.5 flex flex-col gap-1">
                   {t.legs.map((l, i) => (
-                    <li key={i} className="flex flex-wrap items-baseline gap-2 text-[12px]">
-                      <span className={`nums rounded px-1.5 py-0.5 text-[10.5px] font-semibold ${CHIP[l.state]}`} data-testid="live-chip">
+                    <li key={i} className="flex flex-wrap items-baseline gap-2 text-tiny">
+                      <span className={`nums rounded-control px-1.5 py-0.5 text-micro font-semibold ${CHIP[l.state]}`} data-testid="live-chip">
                         {l.state === "alive" && l.probability !== null ? `${c.alive} ${formatPercent(l.probability, 0)}` : c[l.state]}
                       </span>
-                      <span className="text-mist-200">{l.selection}</span>
-                      {l.flags.includes("foul_trouble") && <span className="rounded bg-warn-400/15 px-1 text-[10px] text-warn-400" data-testid="live-foul">{c.foul}</span>}
-                      {l.flags.includes("benched") && <span className="rounded bg-warn-400/15 px-1 text-[10px] text-warn-400">{c.benched}</span>}
-                      <span className="basis-full pl-1 text-[11px] text-mist-500">{l.reason}</span>
+                      <span className="text-fg">{l.selection}</span>
+                      {l.flags.includes("foul_trouble") && <span className="rounded-control bg-warn-tint px-1 text-micro text-warn" data-testid="live-foul">{c.foul}</span>}
+                      {l.flags.includes("benched") && <span className="rounded-control bg-warn-tint px-1 text-micro text-warn">{c.benched}</span>}
+                      <span className="basis-full pl-1 text-label text-fg-dim">{l.reason}</span>
                     </li>
                   ))}
                 </ul>
@@ -131,28 +131,28 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
             ))}
           </ul>
         )}
-        <div className="border-t border-ink-800 pt-3" data-testid="live-read">
-          <h3 className="text-[10px] font-semibold uppercase tracking-wider text-mist-500">{c.read}</h3>
+        <div className="border-t border-line pt-3" data-testid="live-read">
+          <h3 className="text-micro font-semibold uppercase tracking-wider text-fg-dim">{c.read}</h3>
           {data.canRead && data.read && (
             <div className="mt-1.5">
-              <p className="text-[11px] text-mist-500">{c.readAt.replace("{m}", String(data.read.minute)).replace("{t}", formatTime(data.read.generatedAt, lang))}</p>
+              <p className="text-label text-fg-dim">{c.readAt.replace("{m}", String(data.read.minute)).replace("{t}", formatTime(data.read.generatedAt, lang))}</p>
               <ul className="mt-1 flex flex-col gap-1.5">
                 {data.read.slate.suggestions.map((sug) => (
-                  <li key={sug.id} className="rounded border border-ink-800 px-2.5 py-1.5 text-[12px]" data-testid="live-read-ticket">
-                    <span className="font-medium text-mist-100">{sug.title}</span> <span className="nums text-signal-400">{formatDecimal(sug.combinedDecimal)}</span>
-                    <span className="nums text-mist-500"> · {formatPercent(sug.modelledProbability, 0)}</span>
-                    <p className="text-[11.5px] text-mist-400">{sug.legs.map((l) => l.selection).join(" · ")}</p>
+                  <li key={sug.id} className="rounded-control border border-line px-2.5 py-1.5 text-tiny" data-testid="live-read-ticket">
+                    <span className="font-medium text-fg">{sug.title}</span> <span className="nums text-focus">{formatDecimal(sug.combinedDecimal)}</span>
+                    <span className="nums text-fg-dim"> · {formatPercent(sug.modelledProbability, 0)}</span>
+                    <p className="text-tiny text-fg-muted">{sug.legs.map((l) => l.selection).join(" · ")}</p>
                   </li>
                 ))}
               </ul>
             </div>
           )}
           {s.state === "in" && (data.canRead ? (
-            cooling ? <p className="mt-1.5 text-[11.5px] text-mist-500">{c.readNext.replace("{t}", formatTime(data.nextReadAt!, lang))}</p> : (
-              <button type="button" onClick={askRead} disabled={busy} data-testid="live-read-btn" className="mt-2 rounded-lg border border-signal-500/50 px-3 py-1.5 text-[12px] text-signal-400 hover:bg-signal-500/10 disabled:opacity-50">{busy ? c.readBusy : c.readBtn}</button>
+            cooling ? <p className="mt-1.5 text-tiny text-fg-dim">{c.readNext.replace("{t}", formatTime(data.nextReadAt!, lang))}</p> : (
+              <button type="button" onClick={askRead} disabled={busy} data-testid="live-read-btn" className="mt-2 rounded-control border border-focus px-3 py-1.5 text-tiny text-focus hover:bg-action disabled:opacity-50">{busy ? c.readBusy : c.readBtn}</button>
             )
-          ) : <p className="mt-1.5 text-[11.5px] text-mist-500" data-testid="live-read-plan">{c.readPlan}</p>)}
-          {note && <p className="mt-1.5 text-[12px] text-warn-400">{note}</p>}
+          ) : <p className="mt-1.5 text-tiny text-fg-dim" data-testid="live-read-plan">{c.readPlan}</p>)}
+          {note && <p className="mt-1.5 text-tiny text-warn">{note}</p>}
         </div>
       </div>
     </section>

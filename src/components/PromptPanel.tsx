@@ -61,62 +61,62 @@ export function PromptPanel() {
     setBusy(null); await load();
   }
 
-  const tab = (on: boolean) => "rounded-md px-2.5 py-1 text-[12px] font-medium transition " + (on ? "bg-ink-700 text-mist-100" : "text-mist-500 hover:text-mist-300");
+  const tab = (on: boolean) => "rounded-control px-2.5 py-1 text-tiny font-medium transition " + (on ? "bg-surface-3 text-fg" : "text-fg-dim hover:text-fg-muted");
 
   return (
     <Panel title="Prompt do agente" meta={active ? `v${active.version} · ${SOURCE_LABEL[active.source] ?? active.source}` : undefined}>
       <div className="flex flex-wrap items-center gap-2" data-testid="prompt-panel">
         {(["game", "slate"] as Kind[]).map((k) => <button key={k} className={tab(kind === k)} onClick={() => { setKind(k); setEditing(false); }}>{KIND_LABEL[k]}</button>)}
-        <span className="mx-1 h-4 w-px bg-ink-700" />
+        <span className="mx-1 h-4 w-px bg-surface-3" />
         {(["pt", "en"] as Lang[]).map((l) => <button key={l} className={tab(lang === l)} onClick={() => { setLang(l); setEditing(false); }}>{l.toUpperCase()}</button>)}
-        <span className="ml-auto text-[11px] text-mist-500">pt é o idioma de geração; en é derivado dele</span>
+        <span className="ml-auto text-label text-fg-dim">pt é o idioma de geração; en é derivado dele</span>
       </div>
 
       {active && !editing && (
-        <pre className="mt-3 max-h-[420px] overflow-auto whitespace-pre-wrap rounded-lg border border-ink-800 bg-ink-950 p-3 font-mono text-[11.5px] leading-relaxed text-mist-300" data-testid="prompt-content">{active.content}</pre>
+        <pre className="mt-3 max-h-[420px] overflow-auto whitespace-pre-wrap rounded-control border border-line bg-surface-0 p-3 font-mono text-tiny leading-relaxed text-fg-muted" data-testid="prompt-content">{active.content}</pre>
       )}
       {editing && (
-        <textarea className="mt-3 h-[420px] w-full rounded-lg border border-ink-700 bg-ink-950 p-3 font-mono text-[11.5px] leading-relaxed text-mist-100 outline-none focus:border-edge-400" value={draft} onChange={(e) => setDraft(e.target.value)} />
+        <textarea className="mt-3 h-[420px] w-full rounded-control border border-line-strong bg-surface-0 p-3 font-mono text-tiny leading-relaxed text-fg outline-none focus:border-pos" value={draft} onChange={(e) => setDraft(e.target.value)} />
       )}
       {active?.rationale && !editing && (
-        <p className="mt-2 whitespace-pre-wrap rounded-lg border border-ink-800 bg-ink-900 px-3 py-2 text-[12px] text-mist-400"><span className="font-semibold text-mist-300">Por que esta versão: </span>{active.rationale}</p>
+        <p className="mt-2 whitespace-pre-wrap rounded-control border border-line bg-surface-1 px-3 py-2 text-tiny text-fg-muted"><span className="font-semibold text-fg-muted">Por que esta versão: </span>{active.rationale}</p>
       )}
 
-      <div className="mt-3 flex flex-wrap gap-2 text-[12px]">
+      <div className="mt-3 flex flex-wrap gap-2 text-tiny">
         {editing ? (
           <>
-            <button onClick={saveManual} disabled={busy !== null} className="rounded-md bg-edge-400 px-3 py-1.5 font-semibold text-ink-950 hover:bg-edge-500 disabled:opacity-50">Salvar edição</button>
-            <button onClick={() => setEditing(false)} className="rounded-md border border-ink-700 px-3 py-1.5 text-mist-300">Cancelar</button>
+            <button onClick={saveManual} disabled={busy !== null} className="rounded-control bg-action px-3 py-1.5 font-semibold text-action-fg hover:bg-action disabled:opacity-50">Salvar edição</button>
+            <button onClick={() => setEditing(false)} className="rounded-control border border-line-strong px-3 py-1.5 text-fg-muted">Cancelar</button>
           </>
         ) : (
           <>
-            <button onClick={() => { setDraft(active?.content ?? ""); setEditing(true); }} className="rounded-md border border-ink-700 px-3 py-1.5 text-mist-300 hover:border-ink-600">Editar à mão</button>
-            <button onClick={() => revert({ kind, reset: true })} disabled={busy !== null || active?.version === 0} className="rounded-md border border-ink-700 px-3 py-1.5 text-mist-300 hover:border-ink-600 disabled:opacity-40">Voltar ao original</button>
+            <button onClick={() => { setDraft(active?.content ?? ""); setEditing(true); }} className="rounded-control border border-line-strong px-3 py-1.5 text-fg-muted hover:border-line-control">Editar à mão</button>
+            <button onClick={() => revert({ kind, reset: true })} disabled={busy !== null || active?.version === 0} className="rounded-control border border-line-strong px-3 py-1.5 text-fg-muted hover:border-line-control disabled:opacity-40">Voltar ao original</button>
           </>
         )}
       </div>
 
-      <div className="mt-5 border-t border-ink-800 pt-4">
-        <p className="text-[12px] font-semibold text-mist-200">Feedback pro agente</p>
-        <p className="mt-0.5 text-[11px] text-mist-500">Diga o que os bilhetes deveriam fazer diferente. O agente reescreve o prompt nos dois idiomas, ativa a versão nova e explica o que mudou. Ex.: “pare de sugerir cartões quando o árbitro não foi confirmado” ou “nas múltiplas, no máximo 4 pernas”.</p>
-        <textarea className="mt-2 h-24 w-full rounded-lg border border-ink-700 bg-ink-950 p-3 text-[13px] text-mist-100 outline-none focus:border-edge-400" value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder="O que deve mudar na forma como o agente monta os bilhetes?" data-testid="prompt-feedback" />
+      <div className="mt-5 border-t border-line pt-4">
+        <p className="text-tiny font-semibold text-fg">Feedback pro agente</p>
+        <p className="mt-0.5 text-label text-fg-dim">Diga o que os bilhetes deveriam fazer diferente. O agente reescreve o prompt nos dois idiomas, ativa a versão nova e explica o que mudou. Ex.: “pare de sugerir cartões quando o árbitro não foi confirmado” ou “nas múltiplas, no máximo 4 pernas”.</p>
+        <textarea className="mt-2 h-24 w-full rounded-control border border-line-strong bg-surface-0 p-3 text-sm text-fg outline-none focus:border-pos" value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder="O que deve mudar na forma como o agente monta os bilhetes?" data-testid="prompt-feedback" />
         <div className="mt-2 flex items-center gap-3">
-          <button onClick={sendFeedback} disabled={busy !== null || feedback.trim().length < 10} className="rounded-md bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 hover:bg-edge-500 disabled:opacity-50" data-testid="prompt-apply">{busy === "feedback" ? "O agente está reescrevendo…" : "Aplicar feedback"}</button>
-          <span className="text-[11px] text-mist-500">aplica em {KIND_LABEL[kind].toLowerCase()} · pt + en</span>
+          <button onClick={sendFeedback} disabled={busy !== null || feedback.trim().length < 10} className="rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg hover:bg-action disabled:opacity-50" data-testid="prompt-apply">{busy === "feedback" ? "O agente está reescrevendo…" : "Aplicar feedback"}</button>
+          <span className="text-label text-fg-dim">aplica em {KIND_LABEL[kind].toLowerCase()} · pt + en</span>
         </div>
-        {note && <p className={"mt-3 whitespace-pre-wrap rounded-lg px-3 py-2 text-[12px] " + (note.tone === "ok" ? "border border-signal-400/25 bg-signal-400/5 text-signal-400" : "border border-warn-400/25 bg-warn-400/5 text-warn-400")} data-testid="prompt-note">{note.text}</p>}
+        {note && <p className={"mt-3 whitespace-pre-wrap rounded-control px-3 py-2 text-tiny " + (note.tone === "ok" ? "border border-focus bg-action text-focus" : "border border-warn bg-warn-tint text-warn")} data-testid="prompt-note">{note.text}</p>}
       </div>
 
       {data && data.history[kind].length > 0 && (
-        <div className="mt-5 border-t border-ink-800 pt-4">
-          <p className="text-[12px] font-semibold text-mist-200">Histórico</p>
-          <ul className="mt-2 divide-y divide-ink-800 text-[12px]">
+        <div className="mt-5 border-t border-line pt-4">
+          <p className="text-tiny font-semibold text-fg">Histórico</p>
+          <ul className="mt-2 divide-y divide-line text-tiny">
             {data.history[kind].map((v) => (
               <li key={v.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
-                <span className="nums w-14 text-mist-300">v{v.version} {v.lang.toUpperCase()}</span>
-                <span className="text-mist-500">{SOURCE_LABEL[v.source] ?? v.source} · {new Date(v.createdAt).toLocaleString("pt-BR")} · {v.createdBy}</span>
-                {v.feedback && <span className="basis-full text-mist-400">“{v.feedback.slice(0, 160)}{v.feedback.length > 160 ? "…" : ""}”</span>}
-                {v.active ? <span className="ml-auto text-signal-400">ativa</span> : <button onClick={() => revert({ id: v.id })} disabled={busy !== null} className="ml-auto text-mist-400 underline-offset-2 hover:text-mist-100 hover:underline">restaurar</button>}
+                <span className="nums w-14 text-fg-muted">v{v.version} {v.lang.toUpperCase()}</span>
+                <span className="text-fg-dim">{SOURCE_LABEL[v.source] ?? v.source} · {new Date(v.createdAt).toLocaleString("pt-BR")} · {v.createdBy}</span>
+                {v.feedback && <span className="basis-full text-fg-muted">“{v.feedback.slice(0, 160)}{v.feedback.length > 160 ? "…" : ""}”</span>}
+                {v.active ? <span className="ml-auto text-focus">ativa</span> : <button onClick={() => revert({ id: v.id })} disabled={busy !== null} className="ml-auto text-fg-muted underline-offset-2 hover:text-fg hover:underline">restaurar</button>}
               </li>
             ))}
           </ul>

@@ -53,36 +53,36 @@ export function ProofStrip({ lang, sportKeys }: { lang: Lang; sportKeys?: string
   const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
   const publish = proofPublishable(s);
   return (
-    <section className="border-b border-ink-800/80 bg-ink-900/40" data-testid="proof-strip">
+    <section className="border-b border-line bg-surface-1" data-testid="proof-strip">
       <div className="mx-auto grid max-w-6xl gap-6 px-5 py-8 md:grid-cols-[1fr_1.2fr] md:items-center">
         <div>
-          <p className="text-[11px] uppercase tracking-[0.18em] text-edge-400">{publish ? c.eyebrow : c.methodTitle}</p>
+          <p className="text-label uppercase tracking-[0.18em] text-pos">{publish ? c.eyebrow : c.methodTitle}</p>
           {publish ? (
             <div className="mt-3 flex flex-wrap gap-8" data-testid="proof-numbers">
               {[[c.generated, String(s.generated)], [c.hit, pct(s.hitRate)], [c.roi, `${s.roi >= 0 ? "+" : ""}${pct(s.roi)}`]].map(([k, v]) => (
-                <div key={k}><div className="nums text-3xl font-semibold text-white">{v}</div><div className="text-[12px] text-mist-500">{k}</div></div>
+                <div key={k}><div className="nums text-h2 font-semibold text-fg">{v}</div><div className="text-tiny text-fg-dim">{k}</div></div>
               ))}
             </div>
           ) : (
-            <p className="mt-3 max-w-md text-[13.5px] leading-relaxed text-mist-300" data-testid="proof-method">{c.method.replace("{n}", String(proofMinDecided()))}</p>
+            <p className="mt-3 max-w-md text-sm leading-relaxed text-fg-muted" data-testid="proof-method">{c.method.replace("{n}", String(proofMinDecided()))}</p>
           )}
-          <Link href={{ pathname: "/prova", query: { lang } }} className="mt-3 inline-block text-[13px] text-edge-400 hover:underline">{c.all}</Link>
+          <Link href={{ pathname: "/prova", query: { lang } }} className="mt-3 inline-block text-sm text-pos hover:underline">{c.all}</Link>
         </div>
-        <div className="rounded-xl border border-ink-800 bg-ink-950/70 p-5">
-          <p className="text-[11px] uppercase tracking-[0.18em] text-mist-500">{isToday ? c.today : c.latest}</p>
+        <div className="rounded-panel border border-line bg-surface-0 p-5">
+          <p className="text-label uppercase tracking-[0.18em] text-fg-dim">{isToday ? c.today : c.latest}</p>
           {top ? (
             <div className="mt-2" data-testid="ticket-of-day">
-              <div className="flex flex-wrap items-center gap-3"><span className="text-[15px] font-semibold text-white">{teaserHeadline(top.bet, lang)}</span><span className="nums rounded-lg bg-signal-500/12 px-2 py-0.5 text-[13px] font-bold text-signal-400">{formatDecimal(top.bet.combinedDecimal)}</span></div>
-              <p className="mt-1 text-[13px] text-mist-400">{top.matchup} · {legsLabel(top.bet.legs.length, lang)} · <span className="nums">{c.confidence} {top.bet.evidenceScore}</span></p>
-              <p className="mt-2 text-[13px] text-mist-300">{c.blurb}</p>
+              <div className="flex flex-wrap items-center gap-3"><span className="text-base font-semibold text-fg">{teaserHeadline(top.bet, lang)}</span><span className="nums rounded-control bg-action px-2 py-0.5 text-sm font-bold text-focus">{formatDecimal(top.bet.combinedDecimal)}</span></div>
+              <p className="mt-1 text-sm text-fg-muted">{top.matchup} · {legsLabel(top.bet.legs.length, lang)} · <span className="nums">{c.confidence} {top.bet.evidenceScore}</span></p>
+              <p className="mt-2 text-sm text-fg-muted">{c.blurb}</p>
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 {top.free
-                  ? <Link href={{ pathname: "/signup", query: { lang, next: top.gameId ? `/app/game/${top.gameId}?sport=${top.sportKey}&lang=${lang}` : `/app?lang=${lang}` } }} className="inline-block rounded-lg bg-edge-400 px-4 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500">{c.cta}</Link>
-                  : <Link href={{ pathname: "/planos", query: { lang } }} className="inline-block rounded-lg bg-edge-400 px-4 py-2 text-[13px] font-semibold text-ink-950 hover:bg-edge-500">{c.ctaPaid}</Link>}
-                {top.gameId && <Link href={{ pathname: `/jogo/${top.gameId}`, query: { sport: top.sportKey, lang } }} className="text-[13px] text-mist-400 hover:text-mist-100" data-testid="ticket-game-link">{c.gamePage}</Link>}
+                  ? <Link href={{ pathname: "/signup", query: { lang, next: top.gameId ? `/app/game/${top.gameId}?sport=${top.sportKey}&lang=${lang}` : `/app?lang=${lang}` } }} className="inline-block rounded-control bg-action px-4 py-2 text-sm font-semibold text-action-fg hover:bg-action">{c.cta}</Link>
+                  : <Link href={{ pathname: "/planos", query: { lang } }} className="inline-block rounded-control bg-action px-4 py-2 text-sm font-semibold text-action-fg hover:bg-action">{c.ctaPaid}</Link>}
+                {top.gameId && <Link href={{ pathname: `/jogo/${top.gameId}`, query: { sport: top.sportKey, lang } }} className="text-sm text-fg-muted hover:text-fg" data-testid="ticket-game-link">{c.gamePage}</Link>}
               </div>
             </div>
-          ) : <p className="mt-2 text-[13px] text-mist-500">{c.none}</p>}
+          ) : <p className="mt-2 text-sm text-fg-dim">{c.none}</p>}
         </div>
       </div>
     </section>

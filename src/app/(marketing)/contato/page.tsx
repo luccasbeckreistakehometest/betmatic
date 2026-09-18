@@ -25,16 +25,16 @@ export default async function ContactPage({ searchParams }: SearchProps) {
   const support = supportChannels();
   return (
     <MarketingPage lang={lang} langHrefs={langPaths("/contato")}>
-      <h1 className="text-[clamp(1.8rem,4vw,2.5rem)] font-semibold tracking-[-0.02em] text-white">{c.title}</h1>
-      <p className="mt-3 text-[15px] leading-relaxed text-mist-400">{c.sub}</p>
+      <h1 className="text-[clamp(1.8rem,4vw,2.5rem)] font-semibold tracking-[-0.02em] text-fg">{c.title}</h1>
+      <p className="mt-3 text-base leading-relaxed text-fg-muted">{c.sub}</p>
       <div className="relative mt-8">
         <ContactForm lang={lang} defaultName={user?.name ?? ""} defaultEmail={user?.email ?? ""} defaultTopic={typeof q.topic === "string" ? q.topic : "other"} />
       </div>
       {(support.email || support.whatsapp) && (
-        <p className="mt-8 flex flex-wrap gap-x-4 gap-y-1 text-[13.5px] text-mist-400">
+        <p className="mt-8 flex flex-wrap gap-x-4 gap-y-1 text-sm text-fg-muted">
           {c.other}
-          {support.email && <a href={`mailto:${support.email}`} className="text-edge-400 hover:underline">{support.email}</a>}
-          {support.whatsapp && <a href={`https://wa.me/${support.whatsapp}`} rel="noopener" className="text-edge-400 hover:underline">WhatsApp</a>}
+          {support.email && <a href={`mailto:${support.email}`} className="text-pos hover:underline">{support.email}</a>}
+          {support.whatsapp && <a href={`https://wa.me/${support.whatsapp}`} rel="noopener" className="text-pos hover:underline">WhatsApp</a>}
         </p>
       )}
     </MarketingPage>
