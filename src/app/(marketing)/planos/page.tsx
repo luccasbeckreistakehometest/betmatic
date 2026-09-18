@@ -34,7 +34,7 @@ export default async function PlansPage({ searchParams }: SearchProps) {
 
   return (
     <MarketingPage lang={lang} langHrefs={langPaths("/planos")} wide>
-      <h1 className="text-[clamp(1.8rem,4vw,2.6rem)] font-semibold tracking-[-0.02em] text-fg">{c.title}</h1>
+      <h1 className="u-display text-display text-fg">{c.title}</h1>
       <p className="mt-3 max-w-2xl text-base leading-relaxed text-fg-muted">{c.sub}</p>
       {q.checkout === "falhou" && <p role="alert" className="mt-4 rounded-control border border-warn bg-warn-tint px-4 py-2.5 text-sm text-warn" data-testid="checkout-failed">{c.checkoutFailed}</p>}
       {status && <p className="mt-4 rounded-control border border-line bg-surface-1 px-4 py-2.5 text-sm text-fg" data-testid="plan-status">{status}</p>}

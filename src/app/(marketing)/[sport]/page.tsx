@@ -4,6 +4,8 @@ import { ProofStrip } from "@/components/ProofStrip";
 import { notFound } from "next/navigation";
 import { LogoMark } from "@/components/Logo";
 import { MarketingFooter, MarketingHeader } from "@/components/MarketingShell";
+import { NumCell, Table, Td, Th, Tr, chanceStep } from "@/components/ui";
+import { formatPercent } from "@/lib/format";
 import { pageMetadata } from "@/lib/seo";
 import { formatMoneyBRL } from "@/lib/format";
 import { SPORT_LANDINGS, findSportLanding } from "@/lib/sport-landing";
@@ -74,17 +76,8 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
         }
       />
 
-      <section className="relative overflow-hidden border-b border-line">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-[0.055]"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, #7d8aa0 1px, transparent 1px), linear-gradient(to bottom, #7d8aa0 1px, transparent 1px)",
-            backgroundSize: "72px 72px",
-          }}
-        />
-        <div className="relative mx-auto max-w-6xl px-5 py-16 lg:py-20">
+      <section className="border-b border-line">
+        <div className="mx-auto max-w-shell px-4 py-16 sm:px-6 lg:py-20">
           <div className="flex flex-wrap items-center gap-2">
             {s.leagues.map((league) => (
               <span
@@ -95,7 +88,7 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
               </span>
             ))}
           </div>
-          <h1 className="mt-5 max-w-3xl text-[clamp(2.2rem,5.4vw,3.8rem)] font-semibold leading-[1.02] tracking-[-0.035em] text-fg">
+          <h1 className="mt-5 max-w-3xl u-display text-mega text-fg">
             {s.title[lang]}
           </h1>
           <p className="mt-6 max-w-2xl text-base leading-relaxed text-fg-muted">{s.sub[lang]}</p>
@@ -115,7 +108,7 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
       <ProofStrip lang={lang} sportKeys={s.sportKeys} />
 
       <section className="border-b border-line">
-        <div className="mx-auto max-w-6xl px-5 py-16">
+        <div className="mx-auto max-w-shell px-4 py-16 sm:px-6">
           <div className={`grid gap-px overflow-hidden rounded-panel border border-line bg-surface-3 ${s.angle[lang].length > 3 ? "md:grid-cols-2 lg:grid-cols-4" : "md:grid-cols-3"}`}>
             {s.angle[lang].map((item, i) => (
               <div key={item.title} className="flex flex-col bg-surface-1 p-6">
@@ -129,8 +122,8 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
       </section>
 
       <section className="border-b border-line">
-        <div className="mx-auto max-w-6xl px-5 py-16">
-          <h2 className="text-[clamp(1.5rem,3vw,2.1rem)] font-semibold tracking-[-0.02em] text-fg">
+        <div className="mx-auto max-w-shell px-4 py-16 sm:px-6">
+          <h2 className="u-title text-h2 text-fg">
             {s.marketsTitle[lang]}
           </h2>
           <div className="mt-6 flex flex-wrap gap-2">
@@ -148,8 +141,8 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
 
       {/* Everything round 3 added, told in this sport's own terms. */}
       <section className="border-b border-line" data-testid="sport-stack">
-        <div className="mx-auto max-w-6xl px-5 py-16">
-          <h2 className="text-[clamp(1.5rem,3vw,2.1rem)] font-semibold tracking-[-0.02em] text-fg">
+        <div className="mx-auto max-w-shell px-4 py-16 sm:px-6">
+          <h2 className="u-title text-h2 text-fg">
             {s.stackTitle[lang]}
           </h2>
           <p className="mt-2 max-w-2xl text-base leading-relaxed text-fg-muted">{s.stackSub[lang]}</p>
@@ -171,9 +164,9 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
 
       {/* The ladder repeats here: it is the single clearest statement of the offer. */}
       <section className="border-b border-line">
-        <div className="mx-auto grid max-w-6xl gap-10 px-5 py-16 lg:grid-cols-[1fr_1fr]">
+        <div className="mx-auto grid max-w-shell gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1fr_1fr]">
           <div>
-            <h2 className="text-[clamp(1.5rem,3vw,2.1rem)] font-semibold tracking-[-0.02em] text-fg">
+            <h2 className="u-title text-h2 text-fg">
               {c.ladderTitle}
             </h2>
             <p className="mt-3 max-w-md text-base leading-relaxed text-fg-muted">{c.ladderSub}</p>
@@ -181,41 +174,38 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
               {c.ladderFootnote}
             </p>
           </div>
-          <ul className="flex flex-col gap-2.5">
-            {LADDER.map((rung) => {
-              const payout = rung.decimal * 10;
-              const chance = impliedProbability(rung.decimal);
-              const width = Math.max(8, (Math.log10(payout) / Math.log10(5400)) * 100);
-              return (
-                <li key={rung.legs} className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3">
-                  <span className="nums w-14 text-label text-fg-dim">{rung.label[lang]}</span>
-                  <span className="relative flex h-8 items-center">
-                    <span
-                      className="absolute inset-y-0 left-0 rounded-control bg-gradient-to-r from-edge-500/70 to-edge-400"
-                      style={{ width: `${width}%` }}
-                    />
-                    <span className="nums relative pl-2.5 text-sm font-semibold text-action-fg mix-blend-luminosity">
-                      {money(payout, lang)}
-                    </span>
-                  </span>
-                  <span
-                    className={`nums w-14 text-right text-tiny ${
-                      chance > 0.2 ? "text-fg-muted" : chance > 0.02 ? "text-warn" : "text-neg"
-                    }`}
-                  >
-                    {chance >= 0.01 ? `${(chance * 100).toFixed(1)}%` : `${(chance * 100).toFixed(2)}%`}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
+          <div className="border border-line bg-surface-1" data-density="compact">
+            <Table caption={c.ladderTitle} collapse={false}>
+              <thead>
+                <tr>
+                  <Th className="w-16">{c.ladderStake}</Th>
+                  <Th numeric>{c.ladderReturns}</Th>
+                  <Th numeric className="w-20">{c.ladderChance}</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {LADDER.map((rung) => {
+                  const chance = impliedProbability(rung.decimal);
+                  return (
+                    <Tr key={rung.legs}>
+                      <Td label={c.ladderStake} className="nums text-fg-dim">{rung.label[lang]}</Td>
+                      <NumCell label={c.ladderReturns} className="text-fg">{money(rung.decimal * 10, lang)}</NumCell>
+                      <NumCell label={c.ladderChance} chance={chanceStep(chance)} className="text-fg-muted">
+                        {formatPercent(chance, lang, { digits: chance >= 0.01 ? 1 : 2 })}
+                      </NumCell>
+                    </Tr>
+                  );
+                })}
+              </tbody>
+            </Table>
+          </div>
         </div>
       </section>
 
       <section>
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-5 px-5 py-20">
           <LogoMark size={44} className="text-pos" />
-          <h2 className="max-w-2xl text-[clamp(1.7rem,3.6vw,2.6rem)] font-semibold leading-tight tracking-[-0.025em] text-fg">
+          <h2 className="max-w-2xl u-display text-display text-fg">
             {c.finalTitle}
           </h2>
           <p className="max-w-xl text-base text-fg-muted">

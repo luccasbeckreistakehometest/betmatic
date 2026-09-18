@@ -25,7 +25,7 @@ export default async function ContactPage({ searchParams }: SearchProps) {
   const support = supportChannels();
   return (
     <MarketingPage lang={lang} langHrefs={langPaths("/contato")}>
-      <h1 className="text-[clamp(1.8rem,4vw,2.5rem)] font-semibold tracking-[-0.02em] text-fg">{c.title}</h1>
+      <h1 className="u-display text-display text-fg">{c.title}</h1>
       <p className="mt-3 text-base leading-relaxed text-fg-muted">{c.sub}</p>
       <div className="relative mt-8">
         <ContactForm lang={lang} defaultName={user?.name ?? ""} defaultEmail={user?.email ?? ""} defaultTopic={typeof q.topic === "string" ? q.topic : "other"} />

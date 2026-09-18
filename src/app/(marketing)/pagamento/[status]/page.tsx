@@ -51,7 +51,7 @@ export default async function PaymentResult({ params, searchParams }: { params: 
   return (
     <MarketingPage lang={lang} langHrefs={{ pt: `/pagamento/${status}`, en: `/pagamento/${status}?lang=en` }}>
       <div data-testid={`payment-${status}`}>
-        <h1 className="text-[clamp(1.7rem,4vw,2.4rem)] font-semibold tracking-[-0.02em] text-fg">{c.title}</h1>
+        <h1 className="u-display text-display text-fg">{c.title}</h1>
         <p className="mt-4 text-base leading-relaxed text-fg-muted">{c.body}</p>
 
         {user && payment && (

@@ -92,15 +92,15 @@ export function PlanPicker({ lang, signedIn, currentPlanId, paymentsReady, initi
           const isCurrent = currentPlanId === plan.id;
           return (
             <div key={plan.id} data-testid={`plan-${plan.id}`} className={`relative flex flex-col rounded-panel border p-6 ${featured ? "border-line-strong bg-surface-2" : "border-line bg-surface-1"}`}>
-              {featured && <span className="absolute inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{c.popular}</span>}
+              {featured && <span className="absolute -top-2.5 left-5 bg-action px-1.5 py-0.5 text-micro u-label text-action-fg">{c.popular}</span>}
               <h3 className="text-base font-semibold text-fg">{plan.name}</h3>
               <p className="mt-1 text-tiny text-fg-dim">{plan.tagline[lang]}</p>
               {plan.monthlyPrice === 0 ? (
-                <p className="mt-4 text-[2rem] font-semibold leading-none text-fg">{c.free}</p>
+                <p className="mt-4 text-h3 leading-none text-fg">{c.free}</p>
               ) : (
                 <div className="mt-4">
                   <p className="flex items-baseline gap-1">
-                    <span className="nums text-[1.9rem] font-semibold leading-none text-fg" data-testid={`price-${plan.id}`}>{formatMoneyBRL(total / months, lang)}</span>
+                    <span className="nums text-h3 leading-none text-fg" data-testid={`price-${plan.id}`}>{formatMoneyBRL(total / months, lang)}</span>
                     <span className="text-tiny text-fg-dim">{c.perMonth}</span>
                   </p>
                   {months > 1 && (
@@ -110,19 +110,19 @@ export function PlanPicker({ lang, signedIn, currentPlanId, paymentsReady, initi
               )}
               <ul className="mt-5 flex flex-1 flex-col gap-2">
                 {plan.highlights[lang].map((item) => (
-                  <li key={item} className="flex gap-2 text-tiny leading-snug text-fg-muted"><span className="mt-[3px] text-pos" aria-hidden>—</span>{item}</li>
+                  <li key={item} className="flex gap-2 text-tiny leading-snug text-fg-muted"><span className="mt-[3px] text-fg-faint" aria-hidden>—</span>{item}</li>
                 ))}
               </ul>
               {isCurrent && <p className="mt-4 text-tiny text-pos">{c.current}</p>}
               {plan.monthlyPrice === 0 ? (
-                !signedIn && <Link href={signupFor({})} className="mt-6 inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint">{c.startFree}</Link>
+                !signedIn && <Link href={signupFor({})} className="mt-6 inline-flex h-10 items-center justify-center rounded-control border border-line-control px-4 text-sm font-medium text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2">{c.startFree}</Link>
               ) : signedIn ? (
                 <button
                   type="button"
                   data-testid={`buy-${plan.id}`}
                   disabled={!!busy || !paymentsReady}
                   onClick={() => void checkout({ kind: "plan", planId: plan.id, period }, plan.id)}
-                  className={`mt-6 rounded-control px-4 py-2.5 text-center text-sm font-semibold transition-colors duration-(--dur-1) ease-(--ease-out) disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed ${featured ? "bg-action text-action-fg hover:bg-action-hover" : "border border-line-strong text-fg hover:border-line-control hover:text-fg"}`}
+                  className={`mt-6 inline-flex h-10 items-center justify-center rounded-control px-4 text-sm font-medium transition-colors duration-(--dur-1) ease-(--ease-out) disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint ${featured ? "bg-action text-action-fg hover:bg-action-hover" : "border border-line-control text-fg hover:bg-surface-2"}`}
                 >
                   {busy === plan.id ? c.working : c.choose}
                 </button>
@@ -130,7 +130,7 @@ export function PlanPicker({ lang, signedIn, currentPlanId, paymentsReady, initi
                 <Link
                   href={signupFor({ plan: plan.id, period })}
                   data-testid={`buy-${plan.id}`}
-                  className={`mt-6 rounded-control px-4 py-2.5 text-center text-sm font-semibold transition-colors duration-(--dur-1) ease-(--ease-out) ${featured ? "bg-action text-action-fg hover:bg-action-hover" : "border border-line-strong text-fg hover:border-line-control hover:text-fg"}`}
+                  className={`mt-6 inline-flex h-10 items-center justify-center rounded-control px-4 text-sm font-medium transition-colors duration-(--dur-1) ease-(--ease-out) ${featured ? "bg-action text-action-fg hover:bg-action-hover" : "border border-line-control text-fg hover:bg-surface-2"}`}
                 >
                   {c.choose}
                 </Link>
