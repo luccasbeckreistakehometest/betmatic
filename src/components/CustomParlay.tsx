@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useNavState } from "@/components/Controls";
-import { Checkbox, Empty, Odds, Panel } from "@/components/ui";
+import { Checkbox, Empty, Odds, Panel, Select } from "@/components/ui";
 import { formatDecimal } from "@/lib/odds";
 import { formatPercent as pctOf } from "@/lib/format";
 import { formatOdds } from "@/lib/format";
@@ -130,9 +130,9 @@ function CustomForm(props: {
         </div>
         <label className="flex flex-wrap items-center gap-2 text-sm text-fg-muted">
           {c.legs}
-          <select value={state.maxLegs} onChange={(e) => set.setMaxLegs(Number(e.target.value))} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint">
+          <Select value={state.maxLegs} onChange={(e) => set.setMaxLegs(Number(e.target.value))} >
             {[2, 3, 4, 5, 6, 7, 8].map((n) => <option key={n} value={n}>{n}</option>)}
-          </select>
+          </Select>
         </label>
         <div>
           <p className="text-label u-label text-fg-dim">{c.markets} <span className="normal-case tracking-normal">({state.markets.length ? state.markets.length : c.allMarkets})</span></p>

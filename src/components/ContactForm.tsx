@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Lang } from "@/lib/i18n";
+import { Select } from "@/components/ui";
 
 const TOPICS = {
   pt: { account: "Minha conta ou senha", payment: "Pagamento", refund: "Reembolso / arrependimento", privacy: "Meus dados (LGPD)", bug: "Algo não funciona", other: "Outro assunto" },
@@ -51,9 +52,9 @@ export function ContactForm({ lang, defaultName = "", defaultEmail = "", default
         </label>
       </div>
       <label className="flex flex-col gap-1.5 text-tiny text-fg-muted">{c.topic}
-        <select className={field} value={form.topic} onChange={(e) => setForm({ ...form, topic: e.target.value as Topic })} data-testid="contact-topic">
+        <Select wrapperClassName="block w-full" className="w-full" value={form.topic} onChange={(e) => setForm({ ...form, topic: e.target.value as Topic })} data-testid="contact-topic">
           {(Object.keys(TOPICS[lang]) as Topic[]).map((k) => <option key={k} value={k}>{TOPICS[lang][k]}</option>)}
-        </select>
+        </Select>
       </label>
       <label className="flex flex-col gap-1.5 text-tiny text-fg-muted">{c.message}
         <textarea className={`${field} min-h-36`} required maxLength={4000} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} data-testid="contact-message" />

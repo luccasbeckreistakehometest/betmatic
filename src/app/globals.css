@@ -301,14 +301,13 @@
 @theme {
   /* Type scale (§4). Hand-set below 16px; ratio 1.25 above it. Only display and mega are fluid —
      a table cell that resizes with the viewport cannot be compared across screenshots. */
+  /* 10px and 11px are sizes, not a voice: the label style (uppercase, tracked, Archivo, 500) is
+     u-label and only u-label, so the same size can also carry a sentence in the body face without
+     three families rendering one apparent style on one screen (§4.3). */
   --text-micro: 0.625rem;
   --text-micro--line-height: 0.75rem;
-  --text-micro--letter-spacing: 0.08em;
-  --text-micro--font-weight: 500;
   --text-label: 0.6875rem;
   --text-label--line-height: 0.875rem;
-  --text-label--letter-spacing: 0.06em;
-  --text-label--font-weight: 500;
   --text-tiny: 0.75rem;
   --text-tiny--line-height: 1rem;
   --text-sm: 0.8125rem;

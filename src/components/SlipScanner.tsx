@@ -7,6 +7,7 @@ import { SCAN_COPY } from "@/components/scan-copy";
 import { checkText, slipChecks } from "@/lib/bets/slip-scan";
 import { SOLD_SPORTS } from "@/lib/sports";
 import type { Lang } from "@/lib/i18n";
+import { Select } from "@/components/ui";
 
 interface DraftLeg { event: string; selection: string; market: string; odds: string; matchup: string | null; auto: boolean }
 interface Draft { scanId: string; book: string; betType: "single" | "multiple" | "bet_builder" | null; stake: string; totalOdds: string; potentialReturn: string; legs: DraftLeg[]; unreadable: string[] }
@@ -105,9 +106,9 @@ export function SlipScanner({ lang, sportKey: initialSport, onSaved }: { lang: L
         <input ref={input} type="file" accept="image/*" className="hidden" data-testid="scan-input" onChange={(e) => void onFile(e.target.files?.[0])} />
         <label className="flex items-center gap-1.5 text-tiny text-fg-muted">
           {lang === "pt" ? "Campeonato do bilhete" : "League on the slip"}
-          <select value={sportKey} onChange={(e) => setSportKey(e.target.value)} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint" data-testid="scan-sport">
+          <Select value={sportKey} onChange={(e) => setSportKey(e.target.value)}  data-testid="scan-sport">
             {SOLD_SPORTS.map((s) => <option key={s.key} value={s.key}>{s.label[lang]}</option>)}
-          </select>
+          </Select>
         </label>
         {uses && <span className="nums text-label text-fg-dim">{uses}</span>}
       </div>
@@ -122,9 +123,9 @@ export function SlipScanner({ lang, sportKey: initialSport, onSaved }: { lang: L
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
             <label className="text-micro u-label text-fg-dim">{c.book}<input className={field} value={draft.book} onChange={(e) => setDraft({ ...draft, book: e.target.value })} /></label>
             <label className="text-micro u-label text-fg-dim">{c.type}
-              <select className={field} value={draft.betType ?? ""} onChange={(e) => setDraft({ ...draft, betType: (e.target.value || null) as Draft["betType"] })}>
+              <Select wrapperClassName="block w-full" className="w-full" value={draft.betType ?? ""} onChange={(e) => setDraft({ ...draft, betType: (e.target.value || null) as Draft["betType"] })}>
                 <option value="">—</option>{Object.entries(c.types).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-              </select>
+              </Select>
             </label>
             <label className="text-micro u-label text-fg-dim">{c.stake}<input className={`${field} nums`} inputMode="decimal" value={draft.stake} onChange={(e) => setDraft({ ...draft, stake: e.target.value })} data-testid="scan-stake" /></label>
             <label className="text-micro u-label text-fg-dim">{c.total}<input className={`${field} nums`} inputMode="decimal" value={draft.totalOdds} onChange={(e) => setDraft({ ...draft, totalOdds: e.target.value })} data-testid="scan-total" /></label>
@@ -154,7 +155,7 @@ export function SlipScanner({ lang, sportKey: initialSport, onSaved }: { lang: L
           <p className="text-label text-fg-dim">{c.privacy}</p>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={save} disabled={!ready || phase === "saving"} data-testid="scan-save" className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{phase === "saving" ? c.saving : c.save}</button>
-            <button type="button" onClick={analyse} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint" data-testid="scan-analyse">{c.analyse}</button>
+            <button type="button" onClick={analyse}  data-testid="scan-analyse">{c.analyse}</button>
             <button type="button" onClick={() => { setDraft(null); setPhase("idle"); }} className="px-2 text-tiny text-fg-dim hover:text-fg-muted">{c.cancel}</button>
           </div>
         </div>

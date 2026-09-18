@@ -248,11 +248,12 @@ export function Textarea({ invalid, className = "", ...rest }: ComponentProps<"t
 export function Select({
   invalid,
   className = "",
+  wrapperClassName = "",
   children,
   ...rest
-}: ComponentProps<"select"> & { invalid?: boolean }) {
+}: ComponentProps<"select"> & { invalid?: boolean; wrapperClassName?: string }) {
   return (
-    <span className="relative block">
+    <span className={cx("relative inline-block", wrapperClassName)}>
       <select
         {...rest}
         aria-invalid={invalid || undefined}

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useNavState } from "@/components/Controls";
-import { Panel } from "@/components/ui";
+import { Panel, Select } from "@/components/ui";
 import { TIPSTER_COPY } from "@/components/tipster-copy";
 import { TipsterReport } from "@/components/TipsterReport";
 import { formatDate } from "@/lib/format";
@@ -92,9 +92,9 @@ export function TipsterAudit() {
             <div className="flex flex-wrap items-center gap-3 text-tiny text-fg-muted">
               <label className="flex items-center gap-2">{c.images}<input type="file" accept="image/*" multiple onChange={(e) => setFiles(Array.from(e.target.files ?? []).slice(0, 5))} className="text-label" /></label>
               <label className="flex items-center gap-2">{c.sport}
-                <select value={sportKey} onChange={(e) => setSportKey(e.target.value)} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint" data-testid="tipster-sport">
+                <Select value={sportKey} onChange={(e) => setSportKey(e.target.value)}  data-testid="tipster-sport">
                   {SOLD_SPORTS.map((s) => <option key={s.key} value={s.key}>{s.label[lang]}</option>)}
-                </select>
+                </Select>
               </label>
             </div>
             <div className="flex flex-wrap items-center gap-3">

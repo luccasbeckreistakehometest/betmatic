@@ -2,7 +2,7 @@
 import { formatMoney, formatUsd } from "@/lib/format";
 
 import { useCallback, useEffect, useState } from "react";
-import { Empty, Panel } from "@/components/ui";
+import { Empty, Panel, Select } from "@/components/ui";
 
 const dt = (iso: string | null) => (iso ? new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "—");
 
@@ -25,9 +25,9 @@ export function AdminInbox() {
 
   return (
     <Panel title="Contato" meta={`${messages.length}`} action={
-      <select value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filtrar mensagens" className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint">
+      <Select value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filtrar mensagens" >
         <option value="open">abertas</option><option value="answered">respondidas</option><option value="closed">fechadas</option><option value="">todas</option>
-      </select>
+      </Select>
     }>
       {messages.length ? (
         <ul className="flex flex-col divide-y divide-line" data-testid="admin-inbox">
@@ -39,9 +39,9 @@ export function AdminInbox() {
                 {m.accountEmail && m.accountEmail !== m.email && <span className="text-fg-dim">conta: {m.accountEmail}</span>}
                 <span className="rounded-control border border-line-strong px-1.5 text-label text-fg-muted">{m.topic}</span>
                 <span className="text-label text-fg-dim">{m.lang} · {dt(m.createdAt)}</span>
-                <select value={m.status} onChange={(e) => void update(m.id, { status: e.target.value })} aria-label="Status" className="ml-auto inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint">
+                <Select value={m.status} onChange={(e) => void update(m.id, { status: e.target.value })} aria-label="Status" wrapperClassName="ml-auto">
                   <option value="open">aberta</option><option value="answered">respondida</option><option value="closed">fechada</option>
-                </select>
+                </Select>
               </div>
               <p className="mt-1.5 whitespace-pre-wrap text-fg-muted">{m.message}</p>
               <input defaultValue={m.adminNote} placeholder="Nota interna" aria-label="Nota interna" onBlur={(e) => { if (e.target.value !== m.adminNote) void update(m.id, { adminNote: e.target.value }); }}
@@ -67,9 +67,9 @@ export function AdminPayments() {
 
   return (
     <Panel title="Pagamentos" meta={`${payments.length}`} action={
-      <select value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filtrar pagamentos" className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint">
+      <Select value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filtrar pagamentos" >
         <option value="">todos</option><option value="approved">aprovados</option><option value="pending">pendentes</option><option value="rejected">recusados</option><option value="refunded">estornados</option><option value="charged_back">contestados</option><option value="failed">falha ao abrir</option>
-      </select>
+      </Select>
     }>
       {payments.length ? (
         <div className="overflow-x-auto">

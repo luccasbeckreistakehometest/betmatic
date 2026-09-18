@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Panel } from "@/components/ui";
+import { Panel, Select } from "@/components/ui";
 import type { PlayerCopy } from "@/components/player-copy";
 import { splitWithWithout, type Rate, type RateTable } from "@/lib/props/rates";
 import type { PlayerMarketView, PlayerProfileView } from "@/lib/props/player-view";
@@ -124,10 +124,10 @@ export function SplitCard({ profile, market, line, side, lang, c }: { profile: P
   return (
     <Panel title={c.split} lang={lang}>
       <p className="text-tiny text-fg-muted">{c.splitHint}</p>
-      <select value={mate} onChange={(e) => void pick(e.target.value)} className="mt-2 w-full inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint" data-testid="split-mate" aria-label={c.split}>
+      <Select value={mate} onChange={(e) => void pick(e.target.value)} wrapperClassName="mt-2 block w-full" className="w-full" data-testid="split-mate" aria-label={c.split}>
         <option value="">{c.pick}</option>
         {profile.teammates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-      </select>
+      </Select>
       {busy && <p className="mt-2 text-tiny text-fg-dim">{c.splitLoading}</p>}
       {split && !busy && (split.enough ? (
         <div className="mt-2" data-testid="split-result">

@@ -2,7 +2,7 @@
 import { formatMoney } from "@/lib/format";
 
 import { useCallback, useEffect, useState } from "react";
-import { Empty, Panel } from "@/components/ui";
+import { Empty, Panel, Select } from "@/components/ui";
 import { PLANS } from "@/lib/plans";
 
 interface AdminUser {
@@ -95,9 +95,9 @@ export function AdminUsers() {
 
             <div className="flex flex-wrap items-end gap-2">
               <label className="text-tiny text-fg-muted">Plano
-                <select className={`${field} mt-1 block`} value={plan.planId} onChange={(e) => setPlan({ ...plan, planId: e.target.value })} data-testid="admin-plan">
+                <Select wrapperClassName="mt-1 block" value={plan.planId} onChange={(e) => setPlan({ ...plan, planId: e.target.value })} data-testid="admin-plan">
                   {PLANS.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
+                </Select>
               </label>
               <label className="text-tiny text-fg-muted">Vence em
                 <input type="date" className={`${field} mt-1 block`} value={plan.expiresAt} onChange={(e) => setPlan({ ...plan, expiresAt: e.target.value })} data-testid="admin-expiry" />

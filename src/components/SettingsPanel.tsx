@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { formatDate } from "@/lib/format";
 import Link from "next/link";
-import { Empty, Panel } from "@/components/ui";
+import { Empty, Panel, Select } from "@/components/ui";
 import { useNavState } from "@/components/Controls";
 import { makeT } from "@/lib/i18n";
 import { formatMoney } from "@/lib/format";
@@ -60,7 +60,6 @@ export function SettingsPanel() {
   const s = data?.settings;
   const num = (v: string) => (v.trim() === "" ? null : Number(v));
   const input = "nums w-36 rounded-control border border-line-control bg-surface-1 px-3 py-2 text-sm text-fg";
-  const select = "rounded-control border border-line-control bg-surface-1 px-2.5 py-1.5 text-sm text-fg";
 
   return (
     <div className="flex flex-col gap-4" data-testid="settings">
@@ -99,18 +98,18 @@ export function SettingsPanel() {
 
       <Panel className="max-w-[56rem]" title={t("reminderTitle")}>
         <p className="text-tiny text-fg-dim">{t("reminderIntro")}</p>
-        <select aria-label={t("reminderTitle")} value={s?.sessionReminderMinutes ?? 0} onChange={(e) => void patch({ sessionReminderMinutes: Number(e.target.value) || null })} className={`mt-3 ${select}`} data-testid="reminder-select">
+        <Select wrapperClassName="mt-3 block" aria-label={t("reminderTitle")} value={s?.sessionReminderMinutes ?? 0} onChange={(e) => void patch({ sessionReminderMinutes: Number(e.target.value) || null })} data-testid="reminder-select">
           <option value={0}>{t("reminderOff")}</option>
           {[1, 15, 30, 45, 60, 90, 120].map((m) => <option key={m} value={m}>{m} {t("minutes")}</option>)}
-        </select>
+        </Select>
       </Panel>
 
       <Panel className="max-w-[56rem]" title={t("streakTitle")} meta={data ? `${data.streak.streak} ${lang === "pt" ? "seguidas agora" : "in a row now"}` : undefined}>
         <p className="text-tiny text-fg-dim">{t("streakIntro")}</p>
-        <select aria-label={t("streakTitle")} value={s?.lossStreakNotice ?? 3} onChange={(e) => void patch({ lossStreakNotice: Number(e.target.value) })} className={`mt-3 ${select}`} data-testid="streak-select">
+        <Select wrapperClassName="mt-3 block" aria-label={t("streakTitle")} value={s?.lossStreakNotice ?? 3} onChange={(e) => void patch({ lossStreakNotice: Number(e.target.value) })} data-testid="streak-select">
           <option value={0}>{t("streakOff")}</option>
           {[2, 3, 4, 5, 7].map((n) => <option key={n} value={n}>{n}</option>)}
-        </select>
+        </Select>
       </Panel>
 
       <Panel className="max-w-[56rem]" title={t("pauseTitle")}>
