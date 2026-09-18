@@ -58,7 +58,7 @@ export function AlertsPanel() {
               <code className="nums w-fit rounded-control border border-pos bg-surface-1 px-4 py-2 text-lead font-semibold tracking-[0.2em] text-pos" data-testid="telegram-code">{tg.code}</code>
               <p className="text-tiny text-fg-muted">{t("telegramCodeHint")}</p>
               <div className="flex flex-wrap gap-2">
-                {tg.deepLink && <a href={tg.deepLink} target="_blank" rel="noopener noreferrer" className="rounded-control bg-action px-3 py-1.5 text-tiny font-semibold text-focus hover:bg-action-hover" data-testid="telegram-open">{t("telegramOpenBot")}{tg.botUsername ? ` (@${tg.botUsername})` : ""}</a>}
+                {tg.deepLink && <a href={tg.deepLink} target="_blank" rel="noopener noreferrer" className="inline-flex h-(--row-h) items-center rounded-control bg-action px-3 text-tiny font-medium text-action-fg transition-colors duration-(--dur-1) hover:bg-action-hover" data-testid="telegram-open">{t("telegramOpenBot")}{tg.botUsername ? ` (@${tg.botUsername})` : ""}</a>}
                 <button onClick={() => void act({ action: "link_code" })} disabled={busy} className="rounded-control border border-line-strong px-3 py-1.5 text-tiny text-fg-muted hover:text-fg">{t("telegramNewCode")}</button>
                 <button onClick={() => void load()} className="rounded-control border border-line-strong px-3 py-1.5 text-tiny text-fg-muted hover:text-fg" data-testid="telegram-refresh">{t("refresh")}</button>
               </div>

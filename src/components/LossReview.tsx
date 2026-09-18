@@ -27,7 +27,7 @@ export function LossReview({ slug, lang, compact = false }: { slug: string; lang
   }
 
   const verdictLabel = { variance: t("reviewVariance"), repeatable_error: t("reviewError"), mixed: t("reviewMixed") };
-  const verdictTone = { variance: "text-focus border-focus", repeatable_error: "text-warn border-warn", mixed: "text-fg-muted border-line-strong" };
+  const verdictTone = { variance: "text-fg-muted border-line-strong", repeatable_error: "text-warn border-warn", mixed: "text-fg-muted border-line-strong" };
 
   if (state === "idle") return <button onClick={() => void ask()} className={`rounded-control border border-line-strong px-3 py-1.5 text-fg-muted hover:border-pos hover:text-pos ${compact ? "text-label" : "text-sm"}`} data-testid="why-lost">{t("whyLost")}</button>;
   if (state === "loading") return <p className="text-tiny text-fg-dim" data-testid="review-loading">{t("reviewLoading")}</p>;

@@ -39,7 +39,7 @@ const C = {
 };
 
 const CHIP: Record<Leg["state"], string> = {
-  won: "bg-action text-pos", lost: "bg-neg-tint text-neg", alive: "bg-action text-focus", unknown: "bg-surface-3 text-fg-dim",
+  won: "bg-pos-tint text-pos", lost: "bg-neg-tint text-neg", alive: "bg-surface-3 text-fg", unknown: "bg-surface-3 text-fg-dim",
 };
 
 /**
@@ -140,7 +140,7 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
               <ul className="mt-1 flex flex-col gap-1.5">
                 {data.read.slate.suggestions.map((sug) => (
                   <li key={sug.id} className="rounded-control border border-line px-2.5 py-1.5 text-tiny" data-testid="live-read-ticket">
-                    <span className="font-medium text-fg">{sug.title}</span> <span className="nums text-focus">{formatDecimal(sug.combinedDecimal)}</span>
+                    <span className="font-medium text-fg">{sug.title}</span> <span className="nums text-fg">{formatDecimal(sug.combinedDecimal)}</span>
                     <span className="nums text-fg-dim"> · {pctOf(sug.modelledProbability, lang, { digits: 0 })}</span>
                     <p className="text-tiny text-fg-muted">{sug.legs.map((l) => l.selection).join(" · ")}</p>
                   </li>
@@ -150,7 +150,7 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
           )}
           {s.state === "in" && (data.canRead ? (
             cooling ? <p className="mt-1.5 text-tiny text-fg-dim">{c.readNext.replace("{t}", formatTime(data.nextReadAt!, lang))}</p> : (
-              <button type="button" onClick={askRead} disabled={busy} data-testid="live-read-btn" className="mt-2 rounded-control border border-focus px-3 py-1.5 text-tiny text-focus hover:bg-action-hover disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed">{busy ? c.readBusy : c.readBtn}</button>
+              <button type="button" onClick={askRead} disabled={busy} data-testid="live-read-btn" className="mt-2 inline-flex h-(--row-h) items-center rounded-control border border-line-control px-3 text-tiny text-fg transition-colors duration-(--dur-1) hover:bg-surface-2 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint">{busy ? c.readBusy : c.readBtn}</button>
             )
           ) : <p className="mt-1.5 text-tiny text-fg-dim" data-testid="live-read-plan">{c.readPlan}</p>)}
           {note && <p className="mt-1.5 text-tiny text-warn">{note}</p>}

@@ -134,7 +134,7 @@ export function AdminUsers() {
                 Senha provisória (mostrada só agora): <code className="nums select-all text-fg">{otp}</code>. O usuário será pedido para trocá-la ao entrar; todas as sessões dele foram encerradas.
               </p>
             )}
-            {msg && <p className="text-focus" role="status">{msg}</p>}
+            {msg && <p className="text-pos" role="status">{msg}</p>}
 
             <div>
               <p className="text-label u-label text-fg-dim">Pagamentos</p>

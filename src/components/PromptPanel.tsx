@@ -104,7 +104,7 @@ export function PromptPanel() {
           <button onClick={sendFeedback} disabled={busy !== null || feedback.trim().length < 10} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint" data-testid="prompt-apply">{busy === "feedback" ? "O agente está reescrevendo…" : "Aplicar feedback"}</button>
           <span className="text-label text-fg-dim">aplica em {KIND_LABEL[kind].toLowerCase()} · pt + en</span>
         </div>
-        {note && <p className={"mt-3 whitespace-pre-wrap rounded-control px-3 py-2 text-tiny " + (note.tone === "ok" ? "border border-focus bg-action text-focus" : "border border-warn bg-warn-tint text-warn")} data-testid="prompt-note">{note.text}</p>}
+        {note && <p className={"mt-3 whitespace-pre-wrap rounded-control px-3 py-2 text-tiny " + (note.tone === "ok" ? "border-l-2 border-pos bg-pos-tint text-pos" : "border border-warn bg-warn-tint text-warn")} data-testid="prompt-note">{note.text}</p>}
       </div>
 
       {data && data.history[kind].length > 0 && (
@@ -116,7 +116,7 @@ export function PromptPanel() {
                 <span className="nums w-14 text-fg-muted">v{v.version} {v.lang.toUpperCase()}</span>
                 <span className="text-fg-dim">{SOURCE_LABEL[v.source] ?? v.source} · {new Date(v.createdAt).toLocaleString("pt-BR")} · {v.createdBy}</span>
                 {v.feedback && <span className="basis-full text-fg-muted">“{v.feedback.slice(0, 160)}{v.feedback.length > 160 ? "…" : ""}”</span>}
-                {v.active ? <span className="ml-auto text-focus">ativa</span> : <button onClick={() => revert({ id: v.id })} disabled={busy !== null} className="ml-auto text-fg-muted underline-offset-2 hover:text-fg hover:underline">restaurar</button>}
+                {v.active ? <span className="ml-auto text-pos">ativa</span> : <button onClick={() => revert({ id: v.id })} disabled={busy !== null} className="ml-auto text-fg-muted underline-offset-2 hover:text-fg hover:underline">restaurar</button>}
               </li>
             ))}
           </ul>

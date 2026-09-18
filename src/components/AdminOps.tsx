@@ -83,7 +83,7 @@ export function AdminPayments() {
                   <td className="text-fg">{p.email ?? "(conta excluída)"}</td>
                   <td className="text-fg-muted">{p.kind}:{p.reference}{p.period ? `/${p.period}` : ""}</td>
                   <td className="nums text-right text-fg">R$ {p.amount.toFixed(2)}</td>
-                  <td className={`${p.status === "approved" ? "text-pos" : p.status === "pending" ? "text-focus" : "text-fg-muted"}`} title={p.statusDetail ?? ""}>{p.status}</td>
+                  <td className={`${p.status === "approved" ? "text-pos" : p.status === "pending" ? "text-fg-muted" : "text-fg-muted"}`} title={p.statusDetail ?? ""}>{p.status}</td>
                   <td className="nums text-fg-dim">{p.providerPaymentId ?? "—"}</td>
                 </tr>
               ))}

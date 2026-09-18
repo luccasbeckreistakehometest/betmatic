@@ -23,7 +23,7 @@ export function LeaderboardPanel() {
   if (data?.error) return <Panel title={t("rankingTitle")}><Empty>{t("signInForRanking")}</Empty><Link href="/login" className="mt-2 inline-block text-sm text-pos hover:underline">{lang === "pt" ? "Entrar" : "Log in"}</Link></Panel>;
   const pct = (n: number) => `${n > 0 ? "+" : ""}${(n * 100).toFixed(1)}%`;
   const units = (n: number) => `${n > 0 ? "+" : ""}${n.toFixed(2)}u`;
-  const tone = (n: number) => (n > 0 ? "text-focus" : n < 0 ? "text-warn" : "text-fg-muted");
+  const tone = (n: number) => (n > 0 ? "text-pos" : n < 0 ? "text-neg" : "text-fg-muted");
 
   return (
     <div className="flex flex-col gap-4" data-testid="ranking">

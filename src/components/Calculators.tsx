@@ -55,7 +55,7 @@ export function Calculators({ lang }: { lang: Lang }) {
           <div className="grid grid-cols-2 gap-3"><Field label={c.odds} value={evOdds} onChange={setEvOdds} testId="ev-odds" /><Field label={c.prob} value={evProb} onChange={setEvProb} testId="ev-prob" /></div>
           <div className="mt-4 rounded-control bg-surface-0 p-4" data-testid="ev-result">
             <div className="text-micro u-label text-fg-dim">{c.evResult}</div>
-            <div className={"nums text-h2 font-semibold " + (ev > 0 ? "text-focus" : ev < 0 ? "text-warn" : "text-fg-muted")}>{Number.isFinite(ev) ? `${ev >= 0 ? "+" : ""}${pct(ev)}` : "—"}</div>
+            <div className={"nums text-h2 font-semibold " + (ev > 0 ? "text-pos" : ev < 0 ? "text-neg" : "text-fg-muted")}>{Number.isFinite(ev) ? `${ev >= 0 ? "+" : ""}${pct(ev)}` : "—"}</div>
             <div className="mt-1 text-tiny text-fg-dim">{c.implied}: <span className="nums">{pct(impliedProbability(o))}</span> · {c.edge}: <span className="nums">{Number.isFinite(o) ? pct(p - impliedProbability(o)) : "—"}</span></div>
           </div>
         </Card>

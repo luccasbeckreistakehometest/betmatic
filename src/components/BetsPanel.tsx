@@ -227,7 +227,7 @@ function Alternatives({ main, alternatives, lang, flagged }: { main: BetSuggesti
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-tiny font-semibold text-fg">{alt.title}</span>
                 {highlight && <span className="rounded-control bg-action px-1.5 py-0.5 text-micro font-semibold text-pos" data-testid="alt-avoids">{lang === "pt" ? "alternativa sem ele" : "backup without him"}</span>}
-                <span className="nums ml-auto rounded-control bg-action px-1.5 py-0.5 text-tiny font-bold text-focus">{formatDecimal(alt.combinedDecimal)}</span>
+                <span className="nums ml-auto text-tiny text-fg">{formatDecimal(alt.combinedDecimal)}</span>
               </div>
               {alt.swapReason && <p className="mt-1 text-tiny text-fg-muted">{lang === "pt" ? "Quando trocar" : "When to switch"}: {alt.swapReason}</p>}
               <ul className="mt-1.5 flex flex-col gap-0.5 text-tiny" data-testid="alt-diff">

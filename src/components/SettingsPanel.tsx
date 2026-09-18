@@ -77,7 +77,7 @@ export function SettingsPanel() {
           <label className="flex flex-col gap-1 text-label text-fg-dim">{t("dailyCap")}<input value={daily} onChange={(e) => setDaily(e.target.value)} placeholder={t("noCap")} inputMode="decimal" className={input} data-testid="cap-daily" /></label>
           <label className="flex flex-col gap-1 text-label text-fg-dim">{t("weeklyCap")}<input value={weekly} onChange={(e) => setWeekly(e.target.value)} placeholder={t("noCap")} inputMode="decimal" className={input} data-testid="cap-weekly" /></label>
           <button onClick={() => void patch({ dailyStakeCap: num(daily), weeklyStakeCap: num(weekly) })} disabled={saved === "saving" || (daily.trim() !== "" && !(Number(daily) > 0)) || (weekly.trim() !== "" && !(Number(weekly) > 0))} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint" data-testid="limits-save">{t("save")}</button>
-          {saved === "saved" && <span className="text-tiny text-focus" data-testid="limits-saved">{t("savedOk")}</span>}
+          {saved === "saved" && <span className="text-tiny text-pos" data-testid="limits-saved">{t("savedOk")}</span>}
         </div>
         )}
       </Panel>

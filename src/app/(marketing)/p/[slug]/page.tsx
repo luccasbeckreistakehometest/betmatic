@@ -58,7 +58,7 @@ export default async function TicketPage({ params, searchParams }: { params: Pro
   const canReview = e.outcome === "lost" && !!viewer && (viewer.role === "admin" || userHasTicket(viewer.id, e.id));
   const base = publicBaseUrl();
   const url = `${base}/p/${slug}?lang=${lang}`;
-  const tone: Record<string, string> = { won: "text-focus border-focus", lost: "text-warn border-warn", push: "text-fg-muted border-line-strong", void: "text-fg-dim border-line-strong", pending: "text-fg-muted border-line-strong" };
+  const tone: Record<string, string> = { won: "text-pos border-pos", lost: "text-neg border-neg", push: "text-fg-muted border-line-strong", void: "text-fg-dim border-line-strong", pending: "text-fg-muted border-line-strong" };
   const fmt = (iso?: string) => (iso ? formatDateTime(iso, lang) : "—");
 
   return (
@@ -88,7 +88,7 @@ export default async function TicketPage({ params, searchParams }: { params: Pro
         {canReview && <div className="mt-6" data-testid="ticket-review"><LossReview slug={slug} lang={lang} /></div>}
         <p className="mt-6 text-sm text-fg-dim">{c.copy}</p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <a href={`https://wa.me/?text=${encodeURIComponent(c.wa(scrubText(e.title, lang), c.outcome[e.outcome], formatDecimal(e.combinedDecimal), url))}`} target="_blank" rel="noopener noreferrer" className="rounded-control border border-focus px-4 py-2 text-sm font-semibold text-focus hover:bg-action-hover" data-testid="share-wa">{c.share}</a>
+          <a href={`https://wa.me/?text=${encodeURIComponent(c.wa(scrubText(e.title, lang), c.outcome[e.outcome], formatDecimal(e.combinedDecimal), url))}`} target="_blank" rel="noopener noreferrer" className="inline-flex h-(--row-h) items-center rounded-control border border-line-control px-4 text-sm font-medium text-fg transition-colors duration-(--dur-1) hover:bg-surface-2" data-testid="share-wa">{c.share}</a>
           <Link href={`/signup?lang=${lang}`} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{c.cta}</Link>
         </div>
         </div>

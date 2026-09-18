@@ -50,7 +50,7 @@ function Report({ p, lang }: { p: WeeklyPayload; lang: Lang }) {
         {p.windows.map((w) => (
           <div key={w.days} className="bg-surface-1 px-3 py-2.5">
             <div className="text-micro u-label text-fg-dim">{c.windows} · {c.days.replace("{d}", String(w.days))}</div>
-            <div className={`nums text-lead font-semibold ${w.roi === null ? "text-fg-dim" : w.roi >= 0 ? "text-focus" : "text-warn"}`}>{w.bets ? pct(w.roi) : "—"}</div>
+            <div className={`nums text-lead font-semibold ${w.roi === null ? "text-fg-dim" : w.roi >= 0 ? "text-pos" : "text-neg"}`}>{w.bets ? pct(w.roi) : "—"}</div>
             <div className="nums text-micro text-fg-dim">{w.bets ? `${w.bets} ${c.bets} · ${money(w.staked, lang)} ${c.staked}` : c.noBets}</div>
           </div>
         ))}

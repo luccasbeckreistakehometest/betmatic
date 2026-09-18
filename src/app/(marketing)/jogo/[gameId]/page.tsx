@@ -146,7 +146,7 @@ export default async function GamePublicPage({ params, searchParams }: { params:
             <>
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <h2 className="text-lead font-semibold text-fg">{teaser.title}</h2>
-                <span className="nums rounded-control bg-action px-2 py-0.5 text-base font-bold text-focus">{teaser.odds}</span>
+                <span className="nums text-base text-fg">{teaser.odds}</span>
                 <span className="rounded-control border border-line-strong px-1.5 py-0.5 text-micro u-label text-fg-muted">{getBand(best.bandKey).label[lang]}</span>
                 <span className="nums text-label text-fg-dim">{c.confidence} {best.evidenceScore}</span>
               </div>

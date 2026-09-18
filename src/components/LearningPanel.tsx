@@ -53,7 +53,7 @@ export function LearningPanel() {
           <li key={r.id} className="py-3 text-tiny" data-testid="learning-run">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <span className="text-fg-dim">{fmt(r.windowStart)} → {fmt(r.windowEnd)}</span>
-              <span className={r.status === "ok" ? "text-focus" : r.status === "error" ? "text-warn" : "text-fg-dim"}>{r.status}</span>
+              <span className={r.status === "ok" ? "text-pos" : r.status === "error" ? "text-neg" : "text-fg-dim"}>{r.status}</span>
               <span className="nums text-fg-muted">{r.tickets} bilhetes · {r.won}W {r.lost}L</span>
               {r.report?.confidence && <span className="text-fg-dim">confiança {r.report.confidence}</span>}
               {r.costUsd > 0 && <span className="nums text-fg-dim">${r.costUsd.toFixed(3)}</span>}
@@ -70,7 +70,7 @@ export function LearningPanel() {
               <div className="mt-2 rounded-control border border-pos bg-action px-3 py-2">
                 <p className="text-micro u-label text-fg-dim">Proposta pro prompt</p>
                 <p className="mt-1 whitespace-pre-wrap text-fg">{r.promptFeedback}</p>
-                <div className="mt-2">{r.applied ? <span className="text-focus">aplicada ✓</span> : <button onClick={() => apply(r.id)} disabled={busy !== null} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint" data-testid="learn-apply">{busy === r.id ? "aplicando…" : "Aplicar no prompt"}</button>}</div>
+                <div className="mt-2">{r.applied ? <span className="text-pos">aplicada ✓</span> : <button onClick={() => apply(r.id)} disabled={busy !== null} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint" data-testid="learn-apply">{busy === r.id ? "aplicando…" : "Aplicar no prompt"}</button>}</div>
               </div>
             )}
           </li>

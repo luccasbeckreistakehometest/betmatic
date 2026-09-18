@@ -44,7 +44,7 @@ export function AdminFeatured() {
       action={<button onClick={() => void run()} disabled={running} data-testid="featured-run" className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{running ? "Gerando…" : "Gerar agora"}</button>}
     >
       <div data-testid="admin-featured">
-        {note && <p className="mb-2 text-tiny text-focus">{note}</p>}
+        {note && <p className="mb-2 text-tiny text-fg-muted">{note}</p>}
         {data?.lastRun && (
           <p className={`mb-2 text-tiny ${data.lastRun.status === "error" ? "text-neg" : "text-fg-muted"}`} data-testid="featured-last-run">
             Última execução {dt(data.lastRun.startedAt)}: {data.lastRun.status} · {data.lastRun.predictionsWritten} predições · {data.lastRun.note || "—"}

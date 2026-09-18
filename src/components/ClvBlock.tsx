@@ -36,7 +36,7 @@ export function ClvBlock({ lang }: { lang: Lang }) {
       {s.publishable ? (
         <>
           <div className="mt-4 grid grid-cols-3 gap-px overflow-hidden rounded-control border border-line bg-surface-3">
-            {[[c.mean, pct(s.mean), s.mean > 0 ? "text-focus" : s.mean < 0 ? "text-warn" : "text-fg"], [c.beat, `${(s.beat * 100).toFixed(0)}%`, "text-fg"], [c.n, String(s.n), "text-fg"]].map(([k, v, tone]) => (
+            {[[c.mean, pct(s.mean), s.mean > 0 ? "text-pos" : s.mean < 0 ? "text-neg" : "text-fg"], [c.beat, `${(s.beat * 100).toFixed(0)}%`, "text-fg"], [c.n, String(s.n), "text-fg"]].map(([k, v, tone]) => (
               <div key={k} className="bg-surface-1 px-3 py-3"><div className="text-micro u-label text-fg-dim">{k}</div><div className={`nums mt-1 text-lead font-semibold ${tone}`}>{v}</div></div>
             ))}
           </div>

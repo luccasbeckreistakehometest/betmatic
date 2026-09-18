@@ -21,7 +21,7 @@ const OUTCOME_TONE: Record<string, string> = {
   lost: "text-neg",
   push: "text-fg-muted",
   void: "text-fg-faint",
-  pending: "text-focus",
+  pending: "text-fg-muted",
 };
 
 const OUTCOME_LABEL: Record<string, { pt: string; en: string }> = {
@@ -139,7 +139,7 @@ export function TrackRecord() {
         )}
       </div>
 
-      {note && <p className="text-tiny text-focus">{note}</p>}
+      {note && <p className="text-tiny text-fg-muted">{note}</p>}
 
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-panel border border-line bg-surface-3 sm:grid-cols-4">
         {[
