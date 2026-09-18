@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useNavState } from "@/components/Controls";
-import { Checkbox, Empty, Odds, Panel, Select, buttonClass } from "@/components/ui";
+import { Checkbox, Empty, Odds, PageHead, Panel, Select, buttonClass } from "@/components/ui";
 import { formatDecimal } from "@/lib/odds";
 import { formatPercent as pctOf } from "@/lib/format";
 import { formatOdds } from "@/lib/format";
@@ -24,7 +24,7 @@ const PRESETS = [5, 20, 100];
 
 const C = {
   pt: {
-    title: "Múltipla sob medida", sub: "Você diz quanto quer que pague; a gente procura, entre as pernas com preço e histórico de hoje, a combinação com mais chance de bater perto desse número — uma perna por jogo. Se não der, a gente fala.",
+    kicker: "Múltiplas", title: "Múltipla sob medida", sub: "Você diz quanto quer que pague; a gente procura, entre as pernas com preço e histórico de hoje, a combinação com mais chance de bater perto desse número — uma perna por jogo. Se não der, a gente fala.",
     target: "Quanto quer que pague", legs: "Máximo de pernas", markets: "Mercados", allMarkets: "todos", games: "Jogos (opcional)", allGames: "todos os jogos de hoje",
     measured: "Só pernas com histórico medido", minRate: "Acerto mínimo de cada perna", build: "Montar", coins: "coins", noCoins: "Coins insuficientes para montar.", buy: "Comprar coins",
     signIn: "Entre na sua conta para montar a sua múltipla.", running: "Procurando a melhor combinação…", unreachable: "Não dá para chegar em {target} com as pernas de hoje. O mais perto: {nearest}. Os coins voltaram para você.",
@@ -34,7 +34,7 @@ const C = {
     template: "Explicação automática (sem IA).", cached: "mesmo cálculo de minutos atrás, sem gastar IA de novo", spent: "gastou", failed: "Não deu para montar agora. Os coins voltaram.",
   },
   en: {
-    title: "Custom parlay", sub: "Tell us the payout you want; we search today's priced, measured legs for the combination most likely to land near it — one leg per game. If it can't be done, we say so.",
+    kicker: "Parlays", title: "Custom parlay", sub: "Tell us the payout you want; we search today's priced, measured legs for the combination most likely to land near it — one leg per game. If it can't be done, we say so.",
     target: "Target payout", legs: "Max legs", markets: "Markets", allMarkets: "all", games: "Games (optional)", allGames: "all of today's games",
     measured: "Only legs with a measured record", minRate: "Minimum hit rate per leg", build: "Build", coins: "coins", noCoins: "Not enough coins to build.", buy: "Buy coins",
     signIn: "Log in to build your parlay.", running: "Searching for the best combination…", unreachable: "{target} can't be reached with today's legs. The closest: {nearest}. Your coins are back.",
@@ -90,10 +90,7 @@ export function CustomParlay() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <p className="text-label u-label text-fg-dim">{sport.label[lang]}</p>
-        <p className="mt-1 max-w-2xl text-sm leading-relaxed text-fg-muted">{c.sub}</p>
-      </div>
+      <PageHead kicker={c.kicker} title={c.title} meta={c.sub} actions={<span className="text-label u-label text-fg-dim">{sport.label[lang]}</span>} />
       <CustomForm
         c={c} lang={lang} meta={meta} games={games} busy={busy} canAfford={canAfford}
         state={{ target, maxLegs, markets, gameIds, measuredOnly, minRate }}

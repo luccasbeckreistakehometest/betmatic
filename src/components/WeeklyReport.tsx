@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useNavState } from "@/components/Controls";
-import { KPI, Panel, PrintButton, PrintHeader } from "@/components/ui";
+import { Empty, KPI, Panel, PrintButton, PrintHeader } from "@/components/ui";
 import { AppPageHead, PanelSkeleton } from "@/components/AppPageHead";
 import { SelfExclusionLinks } from "@/components/SettingsPanel";
 import { formatDate, formatMoney, formatPercent, formatTime } from "@/lib/format";
@@ -104,7 +104,7 @@ export function WeeklyReport() {
       {data?.error ? <p className="text-sm text-fg-muted">{c.signIn}</p> : !data ? <PanelSkeleton rows={4} /> : (
         <>
           <Panel title={c.thisWeek} lang={lang}>
-            {data.current.bets === 0 && data.current.windows.every((w) => w.bets === 0) ? <p className="text-sm text-fg-dim">{c.empty}</p> : <Report p={data.current} lang={lang} />}
+            {data.current.bets === 0 && data.current.windows.every((w) => w.bets === 0) ? <Empty rows={4}>{c.empty}</Empty> : <Report p={data.current} lang={lang} />}
           </Panel>
           <section className="border-l-2 border-warn py-3 pl-4" data-testid="report-help">
             <h2 className="text-sm font-semibold text-warn">{c.help}</h2>
@@ -114,7 +114,7 @@ export function WeeklyReport() {
           <Panel title={c.past} lang={lang}>
             {data.history.length ? (
               <ul className="flex flex-col gap-4">{data.history.map((p) => <li key={p.weekKey} className="border-b border-line pb-3 last:border-0"><p className="mb-1 text-tiny font-semibold text-fg">{p.weekKey}</p><Report p={p} lang={lang} /></li>)}</ul>
-            ) : <p className="text-sm text-fg-dim">{c.pastNone}</p>}
+            ) : <Empty rows={2}>{c.pastNone}</Empty>}
           </Panel>
         </>
       )}
