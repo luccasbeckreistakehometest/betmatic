@@ -186,3 +186,181 @@ runs). Panel prose inside the app is capped at `58ch`. No text block is ever ful
 - Baselines align between a label and its value: a KPI label sits on the 4 px grid and the value's
   cap-height starts exactly 8 px below the label's baseline (`--kpi-gap: 8px`), so a row of KPIs
   scans as a line, not as five separate boxes.
+
+---
+
+## 5. Grid, spacing, rhythm
+
+### 5.1 Spacing scale (4 px base, named, no arbitrary values)
+
+```
+--s-0   0      --s-1   2px    --s-2   4px    --s-3   6px    --s-4   8px
+--s-5   12px   --s-6   16px   --s-7   20px   --s-8   24px   --s-9   32px
+--s-10  40px   --s-11  56px   --s-12  72px   --s-13  96px   --s-14  128px
+```
+
+Rules: inside a control, only `--s-1…--s-5`. Between elements of a group, `--s-4`/`--s-5`. Between
+groups in a panel, `--s-8`. Between panels, `--s-6` (app) or `--s-9` (marketing). Between marketing
+sections, `--s-12` at ≥1024 px, `--s-10` below. **Vertical rhythm is 4 px**; every block's height
+and every margin resolves to a multiple of 4.
+
+### 5.2 The app shell — a real grid, not a stack of cards
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│ topbar 48px  — logo · context (sport/date) · search · account · balance  │
+├────────────┬────────────────────────────────────────┬────────────────────┤
+│ rail 224px │ work column  (min 0, fr)               │ dock 320px         │
+│ collapsed  │ tables, game pages, forms              │ slip / live / meta │
+│ 56px       │                                        │ (hidden < 1280px)  │
+└────────────┴────────────────────────────────────────┴────────────────────┘
+```
+
+- The **rail** replaces today's five visible links + hamburger: all 13 destinations are visible at
+  ≥1024 px, grouped `Mesa · Pesquisa · Banca · Conta`, with the active item marked by a 2 px
+  left bar in `--focus` plus `--text-primary` (two cues, not colour alone). Collapses to 56 px
+  icons at 1024–1279 px; becomes a bottom tab bar (5 items) + sheet on < 768 px.
+- The **work column** is the only scrolling region on desktop; the topbar and rail are fixed. Its
+  content grid is **12 columns, 16 px gutter, no outer max-width** — data fills the monitor. Prose
+  inside it is still capped at 58ch.
+- The **dock** holds what must stay visible while you work the slate: the current slip, the live
+  panel, the day's budget. It is a peer of the work column, not a modal.
+- Page padding: `--s-6` (16) at <768, `--s-7` (20) at ≥768, `--s-8` (24) at ≥1440. Never a
+  `padding` shorthand that zeroes the sides.
+
+### 5.3 The marketing grid — intentional asymmetry
+
+12 columns, 24 px gutter, content max **1240 px**, page gutter `--s-6`/`--s-8`. Sections do **not**
+all use the same split. The allowed splits, and each is used at most twice per page:
+
+| Split | Columns | Use |
+|---|---|---|
+| A | 7 / 5 | hero: argument left, live artefact right |
+| B | 4 / 8 | a claim in the narrow column, its evidence table in the wide one |
+| C | 5 / 7 offset by 1 | the honesty section — text indented, so the page breathes differently once |
+| D | 12 full-bleed | one ruled table (the ladder, the track record) edge to edge |
+| E | 6 / 6 | exactly one comparison; never used for "three feature cards" |
+
+A section title sits in column 1 and never repeats the size of the previous section's title: the
+page steps **display → h1 → h2 → h2 → h3**, top to bottom, so scroll depth is legible from type
+size alone.
+
+---
+
+## 6. Colour
+
+### 6.1 Principles
+
+1. **One achromatic action colour.** The primary button is ink-on-paper (near-white on dark,
+   near-black on light). It is the highest-contrast thing on the screen and it is not a hue, so it
+   never competes with data.
+2. **Hue is reserved for meaning.** Green = settled win / positive delta. Red = settled loss /
+   negative delta. Amber = caution and responsible-gambling notices. Blue = **focus and selection
+   only** — it appears exactly where the keyboard is and on the current nav item, nowhere else.
+3. **The brand carries no hue.** The mark and wordmark are set in `--text-primary`. This is also a
+   compliance decision: a green brand on a betting product implies profit, and Brazilian betting
+   advertising rules forbid promising it.
+4. Colour is never the only carrier: every win/loss is also a word or a sign (`+`/`−`), every
+   selected state also has a border or bar, every focus ring is a ring, not a tint.
+
+### 6.2 Neutral ramp (cool graphite, hue ≈ 222)
+
+```
+n0   #FFFFFF   n25  #FAFBFC   n50  #F2F4F7   n100 #E6E9EF   n200 #CFD4DE
+n300 #AEB5C2   n400 #868EA0   n500 #676F81   n600 #4E5566   n700 #3A4050
+n800 #2A2F3C   n850 #20242E   n900 #171A22   n950 #10131A   n1000 #0A0C11
+```
+
+### 6.3 Dark theme (default) — measured contrast
+
+Backgrounds: `surface-0 #0A0C11` (page) · `surface-1 #10131A` (panel) · `surface-2 #171A22`
+(row hover / raised) · `surface-3 #20242E` (input, pressed).
+
+| Token | Hex | vs surface-0 | vs surface-1 | vs surface-3 | Verdict |
+|---|---|---|---|---|---|
+| `text-primary` | `#EDF0F5` | 17.12 | 16.27 | 13.59 | AAA |
+| `text-secondary` | `#AEB5C2` | 9.49 | 9.02 | 7.53 | AAA |
+| `text-tertiary` | `#868EA0` | 5.95 | 5.65 | 4.72 | AA at every size |
+| `text-disabled` | `#676F81` | 3.88 | 3.69 | 3.08 | exempt (disabled), still ≥3:1 |
+| `pos` (win/up) | `#3ED598` | 10.41 | 9.89 | 8.26 | AAA |
+| `neg` (loss/down) | `#FF6B70` | 7.07 | 6.72 | 5.61 | AAA/AA |
+| `warn` | `#F2B441` | 10.60 | 10.07 | 8.41 | AAA |
+| `focus` | `#6AA6FF` | 7.93 | 7.53 | 6.29 | AAA, ≥3:1 as a ring |
+| `border-control` | `#676F81` | 3.88 | 3.69 | 3.08 | ≥3:1 — input/button edges |
+| `border-strong` | `#3A4050` | 1.89 | — | — | structural only, never sole affordance |
+| `border` | `#2A2F3C` | 1.46 | — | — | table rules, panel edges |
+
+Tints (state backgrounds, 14 % of the hue over `surface-1`): `pos-tint #162E2C` (pos text on it:
+7.65), `neg-tint #311F26` (neg text on it: 5.60).
+
+Action: `action-bg #EDF0F5` / `action-fg #0A0C11` → **17.12**. Solid `pos` chip: `#0A0C11` on
+`#3ED598` → 10.41. Solid `neg` chip: `#0A0C11` on `#FF6B70` → 7.07.
+
+### 6.4 Light theme — first-class, measured
+
+Light is not an afterthought: `/prova`, the legal pages, the weekly report and anything printed
+default to it, and the app honours the OS setting. Backgrounds: `surface-0 #FFFFFF` ·
+`surface-1 #FAFBFC` · `surface-2 #F2F4F7`.
+
+| Token | Hex | vs #FFFFFF | vs #F2F4F7 | Verdict |
+|---|---|---|---|---|
+| `text-primary` | `#10131A` | 18.58 | 16.86 | AAA |
+| `text-secondary` | `#4E5566` | 7.46 | 6.77 | AAA |
+| `text-tertiary` | `#676F81` | 5.04 | 4.57 | AA |
+| `text-disabled` | `#868EA0` | 3.29 | 2.98 | exempt (disabled) |
+| `pos` | `#0E7C52` | 5.22 | 4.74 | AA |
+| `neg` | `#C0303A` | 5.64 | 5.12 | AA |
+| `warn` | `#8A5A00` | 5.93 | 5.38 | AA |
+| `focus` | `#1B62D6` | 5.58 | 5.06 | AA, ≥3:1 as a ring |
+| `border-control` | `#7E8798` | 3.62 | 3.28 | ≥3:1 |
+| `border` | `#E6E9EF` | 1.22 | 1.17 | rules only |
+
+Action: `#FFFFFF` on `#10131A` → **18.58**.
+
+Theme wiring: the full light palette is defined on bare `:root`; dark overrides live in
+`@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { … } }` and again in
+`:root[data-theme="dark"] { … }`, so an explicit toggle wins in both directions. No colour is ever
+defined *only* inside a media query.
+
+### 6.5 The one sequential ramp
+
+Implied/measured chance is the only column that gets a ramp, and it is **not applied to the text**
+— the number stays `text-primary` so it is always readable. The ramp paints a 2 px rule on the
+cell's leading edge, stepped at 50 / 20 / 5 / 1 %:
+
+```
+≥50%  #AEB5C2   20–50%  #E8C36B   5–20%  #F2A541   1–5%  #F2785C   <1%  #FF6B70
+```
+
+The percentage is always printed next to the multiplier — required by Brazilian advertising rules
+and, separately, the whole point of the product.
+
+### 6.6 Team crests
+
+Third-party crests are rendered at 16 px inside a `--s-2` neutral well, desaturated to 55 % with
+`filter: saturate(.55)`, and they sit *after* the team name in the DOM so the name is the anchor.
+On dense tables they are omitted entirely and the three-letter abbreviation in Plex Mono is used.
+
+---
+
+## 7. Density is a decision
+
+Three density modes, one system. Density changes row height, padding and the leading of small text
+— never the type scale or the palette.
+
+| Token | `compact` | `default` | `comfortable` |
+|---|---|---|---|
+| `--row-h` | 28px | 32px | 40px |
+| `--cell-px` | 8px | 12px | 16px |
+| `--panel-p` | 12px | 16px | 24px |
+| `--stack-gap` | 8px | 12px | 16px |
+| body size | `text-tiny` 12 | `text-sm` 13 | `text-base` 14 |
+
+- `compact` — the slate table, the ledger, the admin tables, the CLV list. The default for any
+  screen whose job is comparison.
+- `default` — game pages, forms, the dock, settings.
+- `comfortable` — every marketing page, legal pages, onboarding, empty states.
+
+Density is a `data-density` attribute on the shell, persisted per viewer; `comfortable` is forced
+below 768 px (touch targets stay ≥44 px regardless of mode — on touch the row grows, the type does
+not).
