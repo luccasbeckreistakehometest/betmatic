@@ -926,3 +926,86 @@ Written after building it, so the doc and the code agree. Branch `feat/design-sy
 - The CI grep guardrail of Appendix A (`text-\[`, `bg-\[#`, `rounded-2xl`, `backdrop-blur`, the old
   token names) is not wired yet — it would fail on the 85 screens it is meant to protect. It lands
   when the last screen stops using the legacy names.
+
+---
+
+## Appendix D — what waves 1–5 actually shipped
+
+Written after applying the system to the product, so the doc and the code agree. Branch
+`feat/design-system`, on top of the wave-0 foundations recorded in Appendix C.
+
+### The shell (wave 1)
+
+`src/app/(app)/layout.tsx` is a desk: a 48 px topbar (mark, a hairline, the sport control, the
+account corner), a rail, and a work column with **no max-width** — data fills the monitor it was
+opened on. `src/components/AppRail.tsx` holds all thirteen destinations in four named groups
+(Mesa / Banca / Mercado / Conta); at ≥1024 px they are labelled, between 768 and 1023 the rail
+narrows to 56 px of glyphs in the same order, and below 768 it leaves and the five most-used
+destinations become a bottom bar. The current item is a 2 px ink bar plus a surface step — never a
+hue, because the blue means the keyboard.
+
+`AccountBar` builds its menu from the same `NAV_GROUPS` array, so a phone and a desk read the same
+names in the same order, and renaming a destination cannot leave the menu disagreeing with the rail.
+
+### What the screens became
+
+| Surface | Before | Now |
+|---|---|---|
+| `/app` | three floating cards over 55 % empty viewport | one ruled row per fixture at compact density; the crest is 16 px and drops out below 768 px |
+| `/app/bankroll` | three boxed totals, a 500 px amber zigzag | three figures on one rule, the ledger as a table, the curve under the §11.3 grammar |
+| `/prova` | five stat boxes, a list of `<li>` | five figures on one rule, a table with a result tone per row |
+| `/admin` | eleven boxes with a hole and two currencies in one row | two groups of figures — the business in BRL, the model's bill in USD — each labelled |
+| ticket cards | four coloured pills in the header, legs as cards inside cards | `<Odds>` (price + chance, always together), EV as a signed number in ink, legs as ruled rows |
+| landing | green kicker, gradient ladder bars, four equal plan cards | display type, the ladder as a table, the plans as a comparison built from the plan model |
+
+### The chart grammar, implemented
+
+`src/components/Chart.tsx` is the only thing in the product that draws a series: a fixed 16:6 frame,
+three to five round-number ticks on hairlines, a zero line always drawn one step stronger, a 1.5 px
+line clipped `pos` above zero and `neg` below it at the real crossing (two clips over one path, so
+the crossing is where it actually is), points only while `n ≤ 30`, and an `sr-only` table twin.
+`EquityChart` and the bankroll's own money curve both go through it.
+
+### Sweeps, and why they were sweeps
+
+Three passes touched every screen at once, because a design system that reaches 20 of 86 files is
+two design systems:
+
+1. **Palette.** 66 files off `ink-*/mist-*/edge-*/signal-*/alert-*/warn-*` and off arbitrary pixel
+   type sizes, onto the token contract.
+2. **Controls.** 38 files had their own idea of a button — nine paddings, four weights, three hover
+   colours, `opacity-50` for disabled. They now carry the primitive's own geometry, and no screen
+   turns off its focus outline.
+3. **Labels and tables.** One label style (`u-label`: the condensed display face, uppercase, one
+   tracking) instead of four ad-hoc `uppercase tracking-*` combinations; and a base rule in
+   `globals.css` so a hand-written `<table>` inherits the header, row height and hairline of the
+   `Table` primitive. The primitive's utilities still win, because utilities come after base.
+
+### Deviations from the spec, each with its reason
+
+1. **No dock.** §15 wave 1 called for a 320 px dock holding the slip, the live panel and the budget.
+   Those are three different data sources on three different screens; a global dock would have to
+   fetch all of them on every page. The rail and the work column shipped; the dock did not.
+2. **The date field is still `input[type="date"]`**, not a hand-built calendar popover. The control
+   around it is ours — segmented group, our chevrons, our calendar glyph, our label — and the
+   platform's own picker button is hidden in CSS, so the field reads as one instrument. Replacing
+   the picker itself is a day's work for a control that already behaves correctly on every platform.
+3. **The ladder has no bar.** The spec drew the payout as a bar. Built, it read as a filled field
+   behind a number, and as a hairline it read as an underline of empty space. The argument is
+   already typographic: in tabular mono the payout gains a digit a row while the chance loses one.
+4. **Light is still not the shipped default.** `<html data-theme="dark">` stands. Every screen now
+   renders correctly in light — the shots in the scratchpad are proof for the landing, `/planos`,
+   `/app` and `/app/bankroll` — but flipping the default is a product decision, not a CSS one.
+5. **`formatMoneyBRL` survives** alongside `formatMoney`. The plan prices are asserted character by
+   character in `tests/e2e/payments.spec.ts`; migrating them is a copy change, not a design change.
+
+### Not done
+
+- **No visual-regression harness.** Screenshots are still taken by hand with the scratchpad scripts.
+- **The CI grep guardrail** is still unwired: `text-[`, `bg-[#`, `rounded-2xl`, `backdrop-blur` and
+  the retired token names would pass now, but the legacy *aliases* in `globals.css` still resolve, so
+  nothing yet forces a new screen to use the new names.
+- **Print styles** beyond the palette switch: `/app/report` and `/prova` produce documents and
+  deserve a real print sheet.
+- **`/app/slip`, `/app/player/[id]`, `/app/tipster` and `/ferramentas`** inherited the sweeps and the
+  page head, but their internals were not composed by hand; they are the next screens to open.
