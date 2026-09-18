@@ -140,7 +140,7 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
               <ul className="mt-1 flex flex-col gap-1.5">
                 {data.read.slate.suggestions.map((sug) => (
                   <li key={sug.id} className="rounded-control border border-line px-2.5 py-1.5 text-tiny" data-testid="live-read-ticket">
-                    <span className="font-medium text-fg">{sug.title}</span> <span className="nums text-fg">{formatDecimal(sug.combinedDecimal)}</span>
+                    <span className="font-medium text-fg">{sug.title}</span> <span className="nums text-fg">{formatDecimal(sug.combinedDecimal, lang)}</span>
                     <span className="nums text-fg-dim"> · {pctOf(sug.modelledProbability, lang, { digits: 0 })}</span>
                     <p className="text-tiny text-fg-muted">{sug.legs.map((l) => l.selection).join(" · ")}</p>
                   </li>

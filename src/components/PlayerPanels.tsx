@@ -8,29 +8,30 @@ import { splitWithWithout, type Rate, type RateTable } from "@/lib/props/rates";
 import type { PlayerMarketView, PlayerProfileView } from "@/lib/props/player-view";
 import type { PlayerGame } from "@/lib/types";
 import type { Lang } from "@/lib/i18n";
+import { formatNumber, formatPercent, NOT_PRICED } from "@/lib/format";
 
-export const num = (n: number, lang: Lang, digits = 1) => (lang === "pt" ? n.toFixed(digits).replace(".", ",") : n.toFixed(digits));
-const pctText = (r: Rate) => (r.of ? `${Math.round(r.pct * 100)}%` : "—");
+export const num = (n: number, lang: Lang, digits = 1) => formatNumber(n, lang, { digits });
+const pctText = (r: Rate, lang: Lang) => (r.of ? formatPercent(r.pct, lang, { digits: 0 }) : NOT_PRICED);
 
-export function RateCell({ label, rate, c }: { label: string; rate: Rate; c: PlayerCopy }) {
+export function RateCell({ label, rate, c, lang }: { label: string; rate: Rate; c: PlayerCopy; lang: Lang }) {
   const tone = !rate.of ? "text-fg-dim" : rate.pct >= 0.6 ? "text-pos" : rate.pct >= 0.45 ? "text-warn" : "text-neg";
   return (
     <div className="bg-surface-1 px-2 py-2 text-center">
       <div className="text-micro u-label text-fg-dim">{label}</div>
-      <div className={`nums text-base font-semibold ${tone}`}>{pctText(rate)}</div>
+      <div className={`nums text-base font-semibold ${tone}`}>{pctText(rate, lang)}</div>
       <div className="nums text-micro text-fg-dim">{rate.of ? `${rate.hits}/${rate.of}` : c.noSample}</div>
     </div>
   );
 }
 
-export function RatesGrid({ table, c }: { table: RateTable; c: PlayerCopy }) {
+export function RatesGrid({ table, c, lang }: { table: RateTable; c: PlayerCopy; lang: Lang }) {
   return (
     <div className="grid grid-cols-3 gap-px overflow-hidden rounded-control border border-line bg-surface-3 sm:grid-cols-5" data-testid="player-rates">
-      <RateCell label={c.l5} rate={table.last5} c={c} />
-      <RateCell label={c.l10} rate={table.last10} c={c} />
-      <RateCell label={c.season} rate={table.season} c={c} />
-      <RateCell label={c.home} rate={table.home} c={c} />
-      <RateCell label={c.away} rate={table.away} c={c} />
+      <RateCell label={c.l5} rate={table.last5} c={c} lang={lang} />
+      <RateCell label={c.l10} rate={table.last10} c={c} lang={lang} />
+      <RateCell label={c.season} rate={table.season} c={c} lang={lang} />
+      <RateCell label={c.home} rate={table.home} c={c} lang={lang} />
+      <RateCell label={c.away} rate={table.away} c={c} lang={lang} />
     </div>
   );
 }
@@ -131,8 +132,8 @@ export function SplitCard({ profile, market, line, side, lang, c }: { profile: P
       {split && !busy && (split.enough ? (
         <div className="mt-2" data-testid="split-result">
           <div className="grid grid-cols-2 gap-px overflow-hidden rounded-control border border-line bg-surface-3">
-            <RateCell label={`${c.with} ${mateName.split(" ")[0]} · ${split.withGames} ${c.games}`} rate={split.with} c={c} />
-            <RateCell label={`${c.without} · ${split.withoutGames} ${c.games}`} rate={split.without} c={c} />
+            <RateCell label={`${c.with} ${mateName.split(" ")[0]} · ${split.withGames} ${c.games}`} rate={split.with} c={c} lang={lang} />
+            <RateCell label={`${c.without} · ${split.withoutGames} ${c.games}`} rate={split.without} c={c} lang={lang} />
           </div>
           <p className="mt-1.5 text-label text-warn/90">{c.splitNote}</p>
         </div>

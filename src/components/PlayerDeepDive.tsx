@@ -121,7 +121,7 @@ export function PlayerDeepDive({ athleteId, gameId }: { athleteId: string; gameI
           ))}
         </div>
         <h2 className="mb-1.5 mt-4 text-micro u-label text-fg-dim">{c.rates}</h2>
-        <RatesGrid table={table} c={c} />
+        <RatesGrid table={table} c={c} lang={lang} />
         <p className="mt-1.5 text-label text-fg-dim">{c.push}</p>
       </Panel>
 

@@ -1,4 +1,5 @@
 "use client";
+import { formatUsd } from "@/lib/format";
 
 import { useCallback, useEffect, useState } from "react";
 import { Panel } from "@/components/ui";
@@ -56,7 +57,7 @@ export function LearningPanel() {
               <span className={r.status === "ok" ? "text-pos" : r.status === "error" ? "text-neg" : "text-fg-dim"}>{r.status}</span>
               <span className="nums text-fg-muted">{r.tickets} bilhetes · {r.won}W {r.lost}L</span>
               {r.report?.confidence && <span className="text-fg-dim">confiança {r.report.confidence}</span>}
-              {r.costUsd > 0 && <span className="nums text-fg-dim">${r.costUsd.toFixed(3)}</span>}
+              {r.costUsd > 0 && <span className="nums text-fg-dim">{formatUsd(r.costUsd, "pt", { digits: 3 })}</span>}
               <button onClick={() => setOpen(open === r.id ? null : r.id)} className="ml-auto text-fg-muted hover:text-fg">{open === r.id ? "fechar" : "detalhes"}</button>
             </div>
             <p className="mt-1 text-fg">{r.summary || r.note}</p>

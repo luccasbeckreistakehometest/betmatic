@@ -1,4 +1,5 @@
 "use client";
+import { formatMoney } from "@/lib/format";
 
 import { useCallback, useEffect, useState } from "react";
 import { Empty, Panel } from "@/components/ui";
@@ -143,7 +144,7 @@ export function AdminUsers() {
                   {detail.payments.map((p) => (
                     <li key={p.id} className="flex flex-wrap gap-x-3 py-1 text-tiny">
                       <span className="text-fg">{p.kind}:{p.reference}{p.period ? `/${p.period}` : ""}</span>
-                      <span className="nums">R$ {p.amount.toFixed(2)}</span>
+                      <span className="nums">{formatMoney(p.amount, "pt")}</span>
                       <span className={p.status === "approved" ? "text-pos" : "text-fg-muted"}>{p.status}</span>
                       <span className="text-fg-dim">{dt(p.createdAt)}</span>
                       {p.providerPaymentId && <span className="nums text-fg-dim">MP {p.providerPaymentId}</span>}

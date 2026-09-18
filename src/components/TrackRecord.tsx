@@ -180,7 +180,7 @@ export function TrackRecord() {
                 <span className="text-tiny text-fg">{entry.title}</span>
                 <span className="text-label text-fg-dim">{entry.matchup}</span>
                 <span className="nums ml-auto text-label text-fg-muted">
-                  {formatDecimal(entry.combinedDecimal)} · {entry.legs.length}{" "}
+                  {formatDecimal(entry.combinedDecimal, lang)} · {entry.legs.length}{" "}
                   {lang === "pt"
                     ? entry.legs.length === 1
                       ? "perna"

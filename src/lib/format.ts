@@ -133,6 +133,17 @@ export function formatMoney(value: number, lang: Lang, opts: { digits?: number; 
 }
 
 /**
+ * The model's bill is in dollars and says so. One helper per currency, so the admin never prints
+ * `$0.00` beside `US$ 0,00` for the same quantity (docs/DESIGN.md §11.2).
+ */
+export function formatUsd(value: number, lang: Lang, opts: { digits?: number } = {}): string {
+  if (!Number.isFinite(value)) return NOT_PRICED;
+  const digits = opts.digits ?? 2;
+  const amount = new Intl.NumberFormat(LOCALE[lang], { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(Math.abs(value));
+  return `${value < 0 ? MINUS : ""}US$${NBSP}${amount}`;
+}
+
+/**
  * A chance, from a fraction: 0.417 → "41,7 %". The space before the unit is the Brazilian standard
  * and is non-breaking, so a number never wraps away from its unit at the end of a line.
  */

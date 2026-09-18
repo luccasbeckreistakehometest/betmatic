@@ -110,7 +110,7 @@ export default async function ProofPage({ searchParams }: SearchProps) {
                 {recent.map((e) => (
                   <Tr key={e.id} tone={rowTone(e.outcome)}>
                     <Td label={lang === "pt" ? "Resultado" : "Result"} className={"font-medium " + outcomeTone[e.outcome]}>{outcomeLabel[e.outcome]}</Td>
-                    <Td numeric label={lang === "pt" ? "Odd" : "Odds"} className="text-fg-muted">{formatDecimal(e.combinedDecimal)}</Td>
+                    <Td numeric label={lang === "pt" ? "Odd" : "Odds"} className="text-fg-muted">{formatDecimal(e.combinedDecimal, lang)}</Td>
                     <Td label={lang === "pt" ? "Bilhete" : "Ticket"} className="min-w-0">
                       <Link href={{ pathname: `/p/${ticketSlug(e.id)}`, query: { lang } }} className="text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{scrubText(e.title, lang)}</Link>
                     </Td>

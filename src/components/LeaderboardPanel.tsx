@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Empty, Panel } from "@/components/ui";
 import { useNavState } from "@/components/Controls";
 import { makeT } from "@/lib/i18n";
+import { formatPercent, formatUnits } from "@/lib/format";
 
 interface Row { handle: string; decided: number; won: number; lost: number; roi: number; units: number; you: boolean; position: number }
 interface Payload { rows: Row[]; period: "week" | "all"; minDecided: number; members: number; viewer: { optedIn: boolean; handle: string | null }; error?: string }
@@ -21,8 +22,8 @@ export function LeaderboardPanel() {
   }, [period]);
 
   if (data?.error) return <Panel title={t("rankingTitle")}><Empty>{t("signInForRanking")}</Empty><Link href="/login" className="mt-2 inline-block text-sm text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{lang === "pt" ? "Entrar" : "Log in"}</Link></Panel>;
-  const pct = (n: number) => `${n > 0 ? "+" : ""}${(n * 100).toFixed(1)}%`;
-  const units = (n: number) => `${n > 0 ? "+" : ""}${n.toFixed(2)}u`;
+  const pct = (n: number) => formatPercent(n, lang, { signed: true });
+  const units = (n: number) => formatUnits(n, lang);
   const tone = (n: number) => (n > 0 ? "text-pos" : n < 0 ? "text-neg" : "text-fg-muted");
 
   return (

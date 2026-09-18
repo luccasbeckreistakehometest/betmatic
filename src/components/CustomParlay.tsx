@@ -6,6 +6,7 @@ import { useNavState } from "@/components/Controls";
 import { Checkbox, Empty, Odds, Panel } from "@/components/ui";
 import { formatDecimal } from "@/lib/odds";
 import { formatPercent as pctOf } from "@/lib/format";
+import { formatOdds } from "@/lib/format";
 import type { CustomTicketView } from "@/lib/bets/custom-writeup";
 import type { Lang } from "@/lib/i18n";
 
@@ -168,7 +169,7 @@ function CustomResults({ c, lang, result, target }: { c: Copy; lang: Lang; resul
   if (!result.reachable) {
     const text = result.reason === "empty_pool" ? c.empty
       : result.reason === "too_high" || result.reason === "too_low"
-        ? c.unreachable.replace("{target}", `${target}x`).replace("{nearest}", result.nearest ? formatDecimal(result.nearest) : "—")
+        ? c.unreachable.replace("{target}", `${target}x`).replace("{nearest}", result.nearest ? formatDecimal(result.nearest, lang) : "—")
         : result.message ?? c.failed;
     return <p className="border-l-2 border-warn bg-warn-tint px-3 py-2 text-sm text-warn" data-testid="custom-unreachable">{text}</p>;
   }
@@ -203,7 +204,7 @@ function CustomTicket({ c, lang, ticket, index, slipId }: { c: Copy; lang: Lang;
             <li key={l.key} className="border-b border-line py-2">
               <div className="flex flex-wrap items-baseline gap-2">
                 <span className="text-tiny font-medium text-fg">{l.selection}</span>
-                <span className="nums text-tiny text-fg-muted">{l.decimal.toFixed(2)}</span>
+                <span className="nums text-tiny text-fg-muted">{formatOdds(l.decimal, lang)}</span>
                 <span className="text-label text-fg-dim">{l.matchup}</span>
                 <span className="nums ml-auto text-micro text-fg-dim">{pctOf(l.fairProbability, lang, { digits: 0 })}</span>
               </div>

@@ -148,7 +148,7 @@ export function BankrollBoard() {
                       <div className="mt-1"><LossReview slug={e.slug} lang={lang} compact /></div>
                     )}
                   </Td>
-                  <Td numeric label={lang === "pt" ? "Odd" : "Odds"} className="text-fg-muted">{formatDecimal(e.combinedDecimal)}</Td>
+                  <Td numeric label={lang === "pt" ? "Odd" : "Odds"} className="text-fg-muted">{formatDecimal(e.combinedDecimal, lang)}</Td>
                   <Td numeric label={t("stake")} className="text-fg-muted">{money(e.stake)}</Td>
                   <Td
                     numeric

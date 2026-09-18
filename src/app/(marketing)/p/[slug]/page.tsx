@@ -8,6 +8,7 @@ import { findBySlug, isPublicTicket } from "@/lib/ledger/proof";
 import { scrubText } from "@/lib/server/whitelabel";
 import { normaliseLang } from "@/lib/i18n";
 import { formatDecimal } from "@/lib/odds";
+import { formatPercent } from "@/lib/format";
 import { LossReview } from "@/components/LossReview";
 import { currentUser } from "@/lib/server/session";
 import { userHasTicket } from "@/lib/server/bankroll";
@@ -35,7 +36,7 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
     return { title: C[lang].lockedTitle, description: `${scrubText(e.matchup, lang)}. ${C[lang].lockedBody}`, robots: { index: false } };
   }
   const title = `${scrubText(e.title, lang)} — ${C[lang].outcome[e.outcome]}`;
-  const description = `${scrubText(e.matchup, lang)} · ${formatDecimal(e.combinedDecimal)} · ${e.legs.length} ${lang === "pt" ? "pernas" : "legs"}. ${C[lang].copy}`;
+  const description = `${scrubText(e.matchup, lang)} · ${formatDecimal(e.combinedDecimal, lang)} · ${e.legs.length} ${lang === "pt" ? "pernas" : "legs"}. ${C[lang].copy}`;
   const path = `/p/${slug}`;
   return {
     title,
@@ -73,22 +74,22 @@ export default async function TicketPage({ params, searchParams }: { params: Pro
         <div className="mt-6 flex flex-wrap gap-6 text-sm text-fg-muted">
           <span><span className="text-fg-dim">{c.generated}:</span> {fmt(e.createdAt)}</span>
           <span><span className="text-fg-dim">{e.outcome === "pending" ? c.pending : c.settled}:</span> {e.outcome === "pending" ? "—" : fmt(e.settledAt)}</span>
-          <span className="nums"><span className="text-fg-dim">odd:</span> {formatDecimal(e.combinedDecimal)}</span>
-          <span className="nums"><span className="text-fg-dim">{c.predicted}:</span> {(e.modelledProbability * 100).toFixed(0)}%</span>
+          <span className="nums"><span className="text-fg-dim">odd:</span> {formatDecimal(e.combinedDecimal, lang)}</span>
+          <span className="nums"><span className="text-fg-dim">{c.predicted}:</span> {formatPercent(e.modelledProbability, lang, { digits: 0 })}</span>
         </div>
         <h2 className="mt-8 text-label u-label text-fg-dim">{c.legs}</h2>
         <ul className="mt-2 divide-y divide-line rounded-panel border border-line">
           {e.legs.map((l, i) => (
             <li key={i} className="flex items-start gap-3 px-4 py-3 text-base">
               <span className={"w-5 font-bold " + tone[l.outcome].split(" ")[0]}>{c.leg[l.outcome]}</span>
-              <div className="min-w-0 flex-1"><p className="text-fg">{scrubText(l.selection, lang)}</p><p className="text-tiny text-fg-dim">{l.market} · <span className="nums">{formatDecimal(l.oddsDecimal)}</span> · {(l.predictedProbability * 100).toFixed(0)}%{l.actual ? ` · ${scrubText(l.actual, lang)}` : ""}</p></div>
+              <div className="min-w-0 flex-1"><p className="text-fg">{scrubText(l.selection, lang)}</p><p className="text-tiny text-fg-dim">{l.market} · <span className="nums">{formatDecimal(l.oddsDecimal, lang)}</span> · {formatPercent(l.predictedProbability, lang, { digits: 0 })}{l.actual ? ` · ${scrubText(l.actual, lang)}` : ""}</p></div>
             </li>
           ))}
         </ul>
         {canReview && <div className="mt-6" data-testid="ticket-review"><LossReview slug={slug} lang={lang} /></div>}
         <p className="mt-6 text-sm text-fg-dim">{c.copy}</p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <a href={`https://wa.me/?text=${encodeURIComponent(c.wa(scrubText(e.title, lang), c.outcome[e.outcome], formatDecimal(e.combinedDecimal), url))}`} target="_blank" rel="noopener noreferrer" className="inline-flex h-(--row-h) items-center rounded-control border border-line-control px-4 text-sm font-medium text-fg transition-colors duration-(--dur-1) hover:bg-surface-2" data-testid="share-wa">{c.share}</a>
+          <a href={`https://wa.me/?text=${encodeURIComponent(c.wa(scrubText(e.title, lang), c.outcome[e.outcome], formatDecimal(e.combinedDecimal, lang), url))}`} target="_blank" rel="noopener noreferrer" className="inline-flex h-(--row-h) items-center rounded-control border border-line-control px-4 text-sm font-medium text-fg transition-colors duration-(--dur-1) hover:bg-surface-2" data-testid="share-wa">{c.share}</a>
           <Link href={`/signup?lang=${lang}`} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{c.cta}</Link>
         </div>
         </div>

@@ -1,4 +1,5 @@
 "use client";
+import { formatUsd } from "@/lib/format";
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -40,7 +41,7 @@ export function AdminFeatured() {
   return (
     <Panel
       title="Destaques de hoje"
-      meta={data ? `${data.games.length}/${data.config.perDay} · $${data.costUsd.toFixed(2)} hoje` : undefined}
+      meta={data ? `${data.games.length}/${data.config.perDay} · ${formatUsd(data.costUsd, "pt")} hoje` : undefined}
       action={<button onClick={() => void run()} disabled={running} data-testid="featured-run" className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{running ? "Gerando…" : "Gerar agora"}</button>}
     >
       <div data-testid="admin-featured">

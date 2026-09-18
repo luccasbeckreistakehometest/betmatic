@@ -5,7 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 import { Badge, Chip, Empty, Odds } from "@/components/ui";
-import { formatPercent as pctOf } from "@/lib/format";
+import { formatNumber, formatPercent as pctOf } from "@/lib/format";
 import { groupAlternatives, legDiff } from "@/lib/bets/alternatives-view";
 import { kellyFraction, formatDecimal, getBand } from "@/lib/odds";
 import { makeT, type Lang } from "@/lib/i18n";
@@ -25,7 +25,7 @@ const ALERT_LABEL: Record<LegAlertView["kind"], { pt: string; en: string }> = {
 export function Movement({ leg, lang }: { leg: Pick<BetLeg, "openOdds" | "oddsDecimal">; lang: Lang }) {
   if (!leg.openOdds || !Number.isFinite(leg.oddsDecimal) || Math.abs(leg.openOdds - leg.oddsDecimal) < 0.01) return null;
   const shorter = leg.oddsDecimal < leg.openOdds;
-  const fmt = (n: number) => (lang === "pt" ? n.toFixed(2).replace(".", ",") : n.toFixed(2));
+  const fmt = (n: number) => formatNumber(n, lang, { digits: 2 });
   return (
     <span className="nums text-micro text-fg-dim" data-testid="leg-movement" title={lang === "pt" ? (shorter ? "A odd caiu desde a abertura: o mercado foi nessa direção" : "A odd subiu desde a abertura: o mercado foi contra") : shorter ? "The price shortened since the open: the market moved this way" : "The price drifted since the open: the market moved against it"}>
       {lang === "pt" ? "abriu" : "opened"} @{fmt(leg.openOdds)} <span className={shorter ? "text-pos" : "text-warn"}>{shorter ? "↘" : "↗"}</span> {lang === "pt" ? "agora" : "now"} @{fmt(leg.oddsDecimal)}
@@ -145,7 +145,7 @@ function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [] }:
 
         <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 border-y border-line py-2.5 sm:grid-cols-4">
           {[
-            [t("combined"), formatDecimal(bet.combinedDecimal)],
+            [t("combined"), formatDecimal(bet.combinedDecimal, lang)],
             [t("impliedChance"), pctOf(bet.impliedProbability, lang, { digits: 2 })],
             [t("modelledChance"), pctOf(bet.modelledProbability, lang, { digits: 2 })],
             [t("evLabel"), Number.isFinite(bet.edgePct) ? pctOf(bet.edgePct / 100, lang, { signed: true }) : "—"],
@@ -186,7 +186,7 @@ function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [] }:
       </div>
       {(kelly > 0 || gameId) && (
         <div className="flex flex-wrap items-center gap-3 border-t border-line px-3.5 py-2.5 text-tiny" data-testid="ticket-bankroll">
-          {kelly > 0 && <span className="text-fg-muted">{lang === "pt" ? "stake sugerido" : "suggested stake"}: <span className="nums text-fg">{(kelly * 100).toFixed(1)}%</span> {lang === "pt" ? "da banca" : "of bankroll"} <span className="text-fg-faint">(¼ Kelly)</span></span>}
+          {kelly > 0 && <span className="text-fg-muted">{lang === "pt" ? "stake sugerido" : "suggested stake"}: <span className="nums text-fg">{pctOf(kelly, lang)}</span> {lang === "pt" ? "da banca" : "of bankroll"} <span className="text-fg-faint">(¼ Kelly)</span></span>}
           {gameId && (
             <span className="ml-auto flex items-center gap-2">
               {saved === "saved" ? <span className="text-pos">✓ {t("saved")}</span> : saved === "error" ? <span className="text-warn">{lang === "pt" ? "entre para salvar" : "sign in to save"}</span> : saved === "limit" ? <span className="text-warn" data-testid="ticket-limit">{limitNote}</span> : saved === "paused" ? <span className="text-warn" data-testid="ticket-paused">{t("pausedHint")}</span> : (
@@ -210,7 +210,7 @@ function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [] }:
 function Alternatives({ main, alternatives, lang, flagged }: { main: BetSuggestion; alternatives: BetSuggestion[]; lang: Lang; gameId?: string; sportKey?: string; flagged: LegAlertView[] }) {
   const flaggedPlayers = new Set(flagged.map((f) => f.player.toLowerCase()));
   const avoids = (alt: BetSuggestion) => flaggedPlayers.size > 0 && alt.legs.every((l) => !l.settlement?.player || !flaggedPlayers.has(l.settlement.player.toLowerCase()));
-  const pct = (n: number) => `${n > 0 ? "+" : ""}${(n * 100).toFixed(1)} pp`;
+  const pct = (n: number) => `${formatNumber(n * 100, lang, { digits: 1, signed: true })} pp`;
   return (
     <details className="group mt-3 rounded-control border border-line-strong bg-surface-1" data-testid="alternatives" open={flaggedPlayers.size > 0} onToggle={(e) => { if (e.currentTarget.open) track("alt_expanded", { count: alternatives.length }); }}>
       <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-tiny font-medium text-fg">
@@ -227,7 +227,7 @@ function Alternatives({ main, alternatives, lang, flagged }: { main: BetSuggesti
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-tiny font-semibold text-fg">{alt.title}</span>
                 {highlight && <span className="rounded-control bg-action px-1.5 py-0.5 text-micro font-semibold text-pos" data-testid="alt-avoids">{lang === "pt" ? "alternativa sem ele" : "backup without him"}</span>}
-                <span className="nums ml-auto text-tiny text-fg">{formatDecimal(alt.combinedDecimal)}</span>
+                <span className="nums ml-auto text-tiny text-fg">{formatDecimal(alt.combinedDecimal, lang)}</span>
               </div>
               {alt.swapReason && <p className="mt-1 text-tiny text-fg-muted">{lang === "pt" ? "Quando trocar" : "When to switch"}: {alt.swapReason}</p>}
               <ul className="mt-1.5 flex flex-col gap-0.5 text-tiny" data-testid="alt-diff">
@@ -236,7 +236,7 @@ function Alternatives({ main, alternatives, lang, flagged }: { main: BetSuggesti
                 {diff.kept.map((sel) => <li key={`k-${sel}`} className="text-fg-muted">= {sel}</li>)}
               </ul>
               <p className="nums mt-1.5 text-label text-fg-dim">
-                {lang === "pt" ? "preço" : "price"} {formatDecimal(main.combinedDecimal)} → {formatDecimal(alt.combinedDecimal)} · {lang === "pt" ? "chance estimada" : "modelled chance"} {pct(alt.modelledProbability - main.modelledProbability)}
+                {lang === "pt" ? "preço" : "price"} {formatDecimal(main.combinedDecimal, lang)} → {formatDecimal(alt.combinedDecimal, lang)} · {lang === "pt" ? "chance estimada" : "modelled chance"} {pct(alt.modelledProbability - main.modelledProbability)}
               </p>
             </li>
           );

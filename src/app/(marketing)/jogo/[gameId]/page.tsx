@@ -12,6 +12,9 @@ import { getSport, SPORTS } from "@/lib/sports";
 import { SPORT_LANDINGS } from "@/lib/sport-landing";
 import { espnDateKey, getGameDetail } from "@/lib/sources/espn";
 import { formatDecimal, getBand } from "@/lib/odds";
+import { formatPercent } from "@/lib/format";
+import { Icon } from "@/components/Icon";
+import { buttonClass, Odds } from "@/components/ui";
 import { normaliseLang, type Lang } from "@/lib/i18n";
 import { eventJsonLd, faqJsonLd, formatKickoff, gameFaq, gamePageDescription, gamePageTitle, parseMatchup, type Teams } from "@/lib/seo/game-page";
 import type { BetSuggestion, GameDetail } from "@/lib/types";
@@ -85,7 +88,7 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
   const sc = (s: string) => scrubText(s, lang);
   const teams = { away: sc(data.teams.away), home: sc(data.teams.home) };
   const title = gamePageTitle(teams, formatKickoff(data.startsAt, lang).date, lang);
-  const description = gamePageDescription(teams, getSport(data.sportKey).label[lang], lang, data.best ? { title: teaserHeadline(data.best, lang), odds: formatDecimal(data.best.combinedDecimal) } : null);
+  const description = gamePageDescription(teams, getSport(data.sportKey).label[lang], lang, data.best ? { title: teaserHeadline(data.best, lang), odds: formatDecimal(data.best.combinedDecimal, lang) } : null);
   const en = gamePageUrl(base, gameId, data.sportKey, "en");
   return {
     title: { absolute: `${title} | Betmatic` }, description,
@@ -110,12 +113,12 @@ export default async function GamePublicPage({ params, searchParams }: { params:
   const base = publicBaseUrl();
   const url = gamePageUrl(base, gameId, data.sportKey);
   const proof = proofStats(mainTickets(readLedger()).filter((e) => e.sportKey === data.sportKey));
-  const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
+  const pct = (n: number, signed = false) => formatPercent(n, lang, { signed });
   const best = data.best;
   const appPath = `/app/game/${gameId}?sport=${data.sportKey}&lang=${lang}`;
   const signup = { pathname: "/signup", query: { lang, next: appPath } };
   const showProof = proofPublishable(proof);
-  const teaser = best ? { title: teaserHeadline(best, lang), odds: formatDecimal(best.combinedDecimal), legs: best.legs.length, free: data.bestFree } : null;
+  const teaser = best ? { title: teaserHeadline(best, lang), odds: formatDecimal(best.combinedDecimal, lang), legs: best.legs.length, free: data.bestFree } : null;
   const faq = gameFaq({ teams, league, lang, teaser, proof: { settled: proof.settled, hitRate: proof.hitRate, roi: proof.roi } });
   const funnel = SPORT_LANDINGS.find((l) => l.sportKeys.includes(data.sportKey));
   const injuries = (data.detail?.injuries ?? []).slice(0, 8);
@@ -140,29 +143,29 @@ export default async function GamePublicPage({ params, searchParams }: { params:
           </p>
         )}
 
-        <section className="mt-8 rounded-panel border border-pos bg-surface-1 p-5" data-testid="game-teaser">
+        <section className="mt-8 rounded-panel border border-line-strong bg-surface-1 p-(--panel-p)" data-testid="game-teaser">
           <p className="text-label u-label text-fg-dim">{c.teaser}</p>
           {best && teaser ? (
             <>
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <h2 className="text-lead font-semibold text-fg">{teaser.title}</h2>
-                <span className="nums text-base text-fg">{teaser.odds}</span>
-                <span className="rounded-control border border-line-strong px-1.5 py-0.5 text-micro u-label text-fg-muted">{getBand(best.bandKey).label[lang]}</span>
+                <Odds decimal={best.combinedDecimal} probability={best.modelledProbability} lang={lang} className="text-base" />
+                <span className="rounded-control border border-line px-1.5 py-0.5 text-micro u-label text-fg-muted">{getBand(best.bandKey).label[lang]}</span>
                 <span className="nums text-label text-fg-dim">{c.confidence} {best.evidenceScore}</span>
               </div>
               <p className="mt-3 text-base leading-relaxed text-fg-muted">{c.teaserBody}</p>
-              <p className="mt-3 text-sm text-fg-dim">🔒 {data.bestFree ? c.legsLocked(best.legs.length) : c.legsPaid(best.legs.length)}</p>
+              <p className="mt-3 flex items-center gap-1.5 text-sm text-fg-dim"><Icon name="lock" className="shrink-0" />{data.bestFree ? c.legsLocked(best.legs.length) : c.legsPaid(best.legs.length)}</p>
               <div className="mt-4 flex flex-wrap gap-3">
                 {data.bestFree
-                  ? <Link href={signup} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{c.cta}</Link>
-                  : <Link href={{ pathname: "/planos", query: { lang } }} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{c.ctaPaid}</Link>}
-                <Link href={{ pathname: `/app/game/${gameId}`, query: { sport: data.sportKey, lang } }} className="rounded-control border border-line-strong px-4 py-2 text-sm text-fg-muted hover:text-fg">{c.open}</Link>
+                  ? <Link href={signup} className={buttonClass("primary")}>{c.cta}</Link>
+                  : <Link href={{ pathname: "/planos", query: { lang } }} className={buttonClass("primary")}>{c.ctaPaid}</Link>}
+                <Link href={{ pathname: `/app/game/${gameId}`, query: { sport: data.sportKey, lang } }} className={buttonClass("secondary", "px-4")}>{c.open}</Link>
               </div>
             </>
           ) : (
             <>
               <p className="mt-2 text-base text-fg-muted">{c.noTeaser}</p>
-              <Link href={signup} className="mt-4 inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{c.cta}</Link>
+              <Link href={signup} className={buttonClass("primary", "mt-4")}>{c.cta}</Link>
             </>
           )}
         </section>
@@ -171,7 +174,7 @@ export default async function GamePublicPage({ params, searchParams }: { params:
           <p className="text-label u-label text-fg-dim">{c.proof}</p>
           {showProof ? (
             <div className="mt-3 flex flex-wrap gap-8">
-              {[[c.generated, String(proof.generated)], [c.hit, pct(proof.hitRate)], [c.roi, `${proof.roi >= 0 ? "+" : ""}${pct(proof.roi)}`]].map(([k, v]) => (
+              {[[c.generated, String(proof.generated)], [c.hit, pct(proof.hitRate)], [c.roi, pct(proof.roi, true)]].map(([k, v]) => (
                 <div key={k}><div className="nums text-h3 font-semibold text-fg">{v}</div><div className="text-tiny text-fg-dim">{k}</div></div>
               ))}
             </div>

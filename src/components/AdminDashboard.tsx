@@ -1,4 +1,5 @@
 "use client";
+import { formatUsd } from "@/lib/format";
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -29,7 +30,7 @@ interface AdminPayload extends OpsPayload {
 }
 
 /** USD is the model's bill, BRL is the business. They never share a group (§11.2). */
-const usd = (n: number, digits = 2) => `US$\u00a0${n.toFixed(digits)}`;
+const usd = (n: number, digits = 2) => formatUsd(n, "pt", { digits });
 
 export function AdminDashboard() {
   const [data, setData] = useState<AdminPayload | null>(null);
@@ -57,7 +58,7 @@ export function AdminDashboard() {
       setNote(
         result.error
           ? result.error
-          : `${result.games} jogos, ${result.predictions} predições, $${(result.costUsd ?? 0).toFixed(2)}. ${result.note ?? ""}`,
+          : `${result.games} jogos, ${result.predictions} predições, $${usd(result.costUsd ?? 0)}. ${result.note ?? ""}`,
       );
       await load();
     } finally {

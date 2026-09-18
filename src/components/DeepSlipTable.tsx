@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Panel } from "@/components/ui";
 import type { DeepContext } from "@/lib/server/deep-slip";
 import type { Lang } from "@/lib/i18n";
+import { formatNumber } from "@/lib/format";
 
 const C = {
   pt: {
@@ -24,7 +25,7 @@ const C = {
   },
 };
 
-const n2 = (n: number, lang: Lang) => (lang === "pt" ? n.toFixed(2).replace(".", ",") : n.toFixed(2));
+const n2 = (n: number, lang: Lang) => formatNumber(n, lang, { digits: 2 });
 
 /** The deterministic half of the deep analysis: shown even when the verdict could not be written. */
 export function DeepSlipTable({ ctx, lang, sportKey }: { ctx: DeepContext; lang: Lang; sportKey: string }) {

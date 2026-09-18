@@ -6,6 +6,7 @@ import { espnDateKey } from "@/lib/sources/espn";
 import { Empty, KeyValue, NumCell, Panel, Table, Td, Th, Tr } from "@/components/ui";
 import { kickoff } from "@/components/SlateTable";
 import { localizeStatLabel, localizeStatus } from "@/lib/format";
+import { formatNumber } from "@/lib/format";
 import { scrubGameDetail } from "@/lib/server/whitelabel";
 import { getGameDetail } from "@/lib/sources/espn";
 import { FollowButton } from "@/components/FollowButton";
@@ -78,7 +79,7 @@ function InjuryList({ injuries, abbreviation }: { injuries: InjuryEntry[]; abbre
 function LineMovement({ lines, home, away, lang }: { lines: ProviderLines[]; home: string; away: string; lang: "pt" | "en" }) {
   const book = lines.find((l) => l.open && l.current);
   if (!book?.open || !book.current) return null;
-  const fmt = (n: number) => (lang === "pt" ? n.toFixed(2).replace(".", ",") : n.toFixed(2));
+  const fmt = (n: number) => formatNumber(n, lang, { digits: 2 });
   const rows: { label: string; from: number; to: number; isLine?: boolean }[] = [];
   const add = (label: string, from: number | null, to: number | null, isLine = false) => {
     if (from !== null && to !== null && Math.abs(from - to) >= (isLine ? 0.25 : 0.01)) rows.push({ label, from, to, isLine });

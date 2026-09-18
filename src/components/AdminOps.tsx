@@ -1,4 +1,5 @@
 "use client";
+import { formatMoney, formatUsd } from "@/lib/format";
 
 import { useCallback, useEffect, useState } from "react";
 import { Empty, Panel } from "@/components/ui";
@@ -82,7 +83,7 @@ export function AdminPayments() {
                   <td className="nums text-fg-muted">{dt(p.createdAt)}</td>
                   <td className="text-fg">{p.email ?? "(conta excluída)"}</td>
                   <td className="text-fg-muted">{p.kind}:{p.reference}{p.period ? `/${p.period}` : ""}</td>
-                  <td className="nums text-right text-fg">R$ {p.amount.toFixed(2)}</td>
+                  <td className="nums text-right text-fg">{formatMoney(p.amount, "pt")}</td>
                   <td className={`${p.status === "approved" ? "text-pos" : p.status === "pending" ? "text-fg-muted" : "text-fg-muted"}`} title={p.statusDetail ?? ""}>{p.status}</td>
                   <td className="nums text-fg-dim">{p.providerPaymentId ?? "—"}</td>
                 </tr>
@@ -109,11 +110,11 @@ export function AdminHealth({ data }: { data: OpsPayload | null }) {
       <Panel title="Gasto de IA hoje" meta="dia de Brasília">
         {ai ? (
           <div data-testid="admin-ai-spend">
-            <p className="nums text-h3 font-semibold text-fg">${ai.spent.toFixed(2)} <span className="text-sm font-normal text-fg-muted">de ${ai.budget.toFixed(2)}</span></p>
+            <p className="nums text-h3 font-semibold text-fg">{formatUsd(ai.spent, "pt")} <span className="text-sm font-normal text-fg-muted">de {formatUsd(ai.budget, "pt")}</span></p>
             <div className="mt-2 h-2 overflow-hidden rounded-control bg-surface-3"><div className={`h-full ${ai.exhausted ? "bg-neg" : pct > 80 ? "bg-warn" : "bg-action"}`} style={{ width: `${pct}%` }} /></div>
             <p className="mt-2 text-tiny text-fg-muted">{ai.exhausted ? "Teto atingido: novas gerações estão bloqueadas até a virada do dia (AI_DAILY_BUDGET_USD)." : "Ajuste o teto com AI_DAILY_BUDGET_USD no .env (0 desliga a IA)."}</p>
             <ul className="mt-2 text-tiny text-fg-muted">
-              {ai.byDay.map((d) => <li key={d.day} className="nums">{d.day}: ${d.costUsd.toFixed(2)} · {d.calls} chamadas</li>)}
+              {ai.byDay.map((d) => <li key={d.day} className="nums">{d.day}: {formatUsd(d.costUsd, "pt")} · {d.calls} chamadas</li>)}
             </ul>
           </div>
         ) : <Empty>—</Empty>}

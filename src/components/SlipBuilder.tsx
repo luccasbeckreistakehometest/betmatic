@@ -117,7 +117,7 @@ export function SlipBuilder() {
 
       <SlipScanner lang={lang} sportKey={sport.key} />
 
-      <Panel title={t("slipTitle")} lang={lang} meta={Number.isFinite(combined) ? formatDecimal(combined) : undefined}>
+      <Panel title={t("slipTitle")} lang={lang} meta={Number.isFinite(combined) ? formatDecimal(combined, lang) : undefined}>
         <div className="flex flex-col gap-2.5">
           {legs.map((leg, i) => (
             <div key={i} className="grid gap-2 sm:grid-cols-[1fr_140px_100px_auto]">
@@ -211,10 +211,10 @@ export function SlipBuilder() {
 
             <div className="grid grid-cols-2 gap-px overflow-hidden rounded-control border border-line bg-surface-3 sm:grid-cols-4">
               {[
-                [t("combined"), formatDecimal(analysis.combinedDecimal)],
+                [t("combined"), formatDecimal(analysis.combinedDecimal, lang)],
                 [t("impliedChance"), pctOf(analysis.impliedProbability, lang, { digits: 2 })],
                 [t("modelledChance"), pctOf(analysis.modelledProbability, lang, { digits: 2 })],
-                [t("evLabel"), Number.isFinite(analysis.edgePct) ? `${analysis.edgePct > 0 ? "+" : ""}${analysis.edgePct.toFixed(1)}%` : "—"],
+                [t("evLabel"), pctOf(analysis.edgePct / 100, lang, { signed: true })],
               ].map(([label, value]) => (
                 <div key={label} className="bg-surface-1 px-2 py-1.5 text-center">
                   <div className="text-micro u-label text-fg-dim">{label}</div>

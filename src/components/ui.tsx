@@ -71,6 +71,15 @@ function Spinner({ className = "" }: { className?: string }) {
   );
 }
 
+/**
+ * The button's geometry and variants for the two cases that cannot be a `<Button>`: a `next/link`
+ * (which must stay a `Link` for client navigation) and a `<label>` wrapping a file input. One
+ * source, so a change to the control's height or focus ring reaches every one of them.
+ */
+export function buttonClass(variant: ButtonVariant = "secondary", className = ""): string {
+  return cx(BUTTON_BASE, BUTTON_VARIANT[variant], className);
+}
+
 export function Button({
   variant = "secondary",
   icon,

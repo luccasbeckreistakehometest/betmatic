@@ -5,6 +5,8 @@ import { useState } from "react";
 import { TIPSTER_COPY } from "@/components/tipster-copy";
 import { postedLate, RED_FLAGS, shareText, type AuditReport, type GradedPick } from "@/lib/tipster/audit";
 import { formatDate } from "@/lib/format";
+import { formatOdds } from "@/lib/format";
+import { NOT_PRICED } from "@/lib/format";
 import type { Lang } from "@/lib/i18n";
 
 const pct = (x: number | null, signed = false) => (x === null ? "—" : `${signed && x > 0 ? "+" : ""}${Math.round(x * 100)}%`);
@@ -25,7 +27,7 @@ export function TipsterReport({ report, picks, lang, onDelete }: { report: Audit
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-control border border-line bg-surface-3 sm:grid-cols-6">
         {[
           [c.total, String(report.total)], [c.verifiable, pct(report.verifiableShare)], [c.hit, pct(report.hitRate)],
-          [c.roi, pct(report.roi, true)], [c.run_, String(report.longestLosingRun)], [c.avgOdds, report.averageOdds ? report.averageOdds.toFixed(2).replace(".", lang === "pt" ? "," : ".") : "—"],
+          [c.roi, pct(report.roi, true)], [c.run_, String(report.longestLosingRun)], [c.avgOdds, report.averageOdds ? formatOdds(report.averageOdds, lang) : NOT_PRICED],
         ].map(([k, v]) => (
           <div key={k} className="bg-surface-1 px-3 py-2.5"><div className="text-micro u-label text-fg-dim">{k}</div><div className="nums text-lead font-semibold text-fg">{v}</div></div>
         ))}
@@ -50,7 +52,7 @@ export function TipsterReport({ report, picks, lang, onDelete }: { report: Audit
             <li key={i} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-1.5 text-tiny" data-testid="tipster-pick">
               <span className={`w-24 font-semibold ${TONE[p.outcome]}`}>{c.out[p.outcome]}</span>
               <span className="min-w-0 flex-1 text-fg">{p.selection} <span className="text-fg-dim">· {p.matchup ?? p.event}</span></span>
-              {p.odds && <span className="nums text-fg-muted">{p.odds.toFixed(2)}{p.oddsSource === "estimated" ? "*" : ""}</span>}
+              {p.odds && <span className="nums text-fg-muted">{formatOdds(p.odds, lang)}{p.oddsSource === "estimated" ? "*" : ""}</span>}
               {p.postedAt && <span className="text-label text-fg-dim">{formatDate(p.postedAt, lang)}</span>}
               {postedLate(p) && <span className="rounded-control bg-neg-tint px-1.5 text-micro text-neg">{c.lateTag}</span>}
             </li>

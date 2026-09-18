@@ -72,7 +72,7 @@ export function Calculators({ lang }: { lang: Lang }) {
           <div className="mt-2 flex gap-2 text-tiny"><button onClick={() => setLegs([...legs, "1.90"])} className="text-fg-muted hover:text-fg">+ {c.leg}</button>{legs.length > 2 && <button onClick={() => setLegs(legs.slice(0, -1))} className="text-fg-dim hover:text-fg">−</button>}</div>
           <div className="mt-auto border-t border-line pt-4" data-testid="parlay-result">
             <div className="text-micro u-label text-fg-dim">{c.combined}</div>
-            <div className="nums text-h2 font-semibold">{Number.isFinite(combined) ? formatDecimal(combined) : "—"}</div>
+            <div className="nums text-h2 font-semibold">{Number.isFinite(combined) ? formatDecimal(combined, lang) : "—"}</div>
             <div className="mt-1 text-tiny text-fg-dim">{c.chance}: <span className="nums">{pct(impliedProbability(combined), lang)}</span> · {c.hold}: <span className="nums text-warn">{pct(hold, lang)}</span></div>
             <p className="mt-2 text-label text-fg-faint">{c.holdNote}</p>
           </div>
