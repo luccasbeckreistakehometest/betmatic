@@ -792,3 +792,57 @@ it. Nothing in wave 0 is visible to a user, and nothing after wave 1 changes a t
 - **No visual regression harness exists.** The e2e suite asserts behaviour, not pixels. Waves 1–4
   should add a small Playwright screenshot pass at 1440 and 390 in both themes so a later change
   cannot quietly undo this.
+
+---
+
+## Appendix A — token contract
+
+Names are the contract; §6–§9 hold the values. Everything is a CSS custom property declared in
+`globals.css`, exposed to Tailwind 4 through `@theme`. **No component may use a raw hex, a raw px
+size, or an arbitrary Tailwind value (`text-[13.5px]`, `bg-[#0d0f14]`).**
+
+```
+surface-0 surface-1 surface-2 surface-3
+text-primary text-secondary text-tertiary text-disabled text-inverse
+border border-strong border-control
+action-bg action-fg   focus
+pos pos-tint   neg neg-tint   warn warn-tint
+chance-1 … chance-5                 (the one sequential ramp, §6.5)
+s-0 … s-14                          (spacing, §5.1)
+r-0 r-1 r-2 r-3 r-full              (radius, §8.1)
+row-h cell-px panel-p stack-gap     (density, §7 — set by [data-density])
+dur-1 dur-2 dur-3 ease-out ease-in ease-inout
+elev-pop elev-dialog
+font-display font-sans font-mono
+text-micro text-label text-tiny text-sm text-base text-body text-lead
+text-h3 text-h2 text-h1 text-display text-mega
+```
+
+Guardrails worth adding in wave 0, so the system cannot rot: an ESLint rule (or a `grep` in CI)
+that fails on `text-\[`, `bg-\[#`, `border-\[#`, `rounded-2xl`, `backdrop-blur`, and on the old
+`ink-*` / `mist-*` / `edge-*` token names once they are gone.
+
+## Appendix B — how to look at the work
+
+Do not judge this system in a dev server. The audit in §2 was produced like this, and every wave
+should be checked the same way:
+
+```bash
+# 1. production build (never while a dev server of this repo is running)
+AUTH_SECRET=$(openssl rand -hex 32) NEXT_PUBLIC_BASE_URL=http://localhost:3310 pnpm build
+
+# 2. throwaway data, seeded so no screen is empty
+rm -rf data/design
+DATA_DIR=data/design ADMIN_EMAIL=… ADMIN_PASSWORD=… npx tsx scripts/seed-sev-val.mts
+
+# 3. serve it (test switches like AI_MOCK are refused by the production guard — leave them out)
+DATA_DIR=data/design AUTH_SECRET=… APP_URL=http://localhost:3310 \
+  NEXT_PUBLIC_BASE_URL=http://localhost:3310 CACHE_DIR=data/design/cache \
+  SOFASCORE_DISABLED=1 PROOF_MIN_DECIDED=1 npx next start -p 3310
+
+# 4. shoot 1440×900 and 390×844 at DPR 2, both themes, and *look at the PNGs*
+```
+
+Minimum set per wave: the landing, `/planos`, `/prova`, `/app`, `/app/bankroll`,
+`/app/parlays/custom`, `/admin`, plus 390 px versions of the landing, `/app` and `/app/bankroll`.
+A screen nobody has looked at is not finished.
