@@ -83,13 +83,10 @@ export function ParlayBuilder() {
   const canBuild = !!data && data.authenticated && !locked && !data.paused && !slate;
 
   return (
-    <div className="flex flex-col gap-5">
-      <div>
-        <h1 className="text-lead font-semibold tracking-tight text-fg">
-          {t("crossGame")} <span className="text-fg-dim">· {sport.label[lang]}</span>
-        </h1>
-        <p className="mt-1 max-w-2xl text-sm leading-relaxed text-fg-muted">{t("crossGameHint")}</p>
-      </div>
+    <div className="flex max-w-[64rem] flex-col gap-4">
+      <p className="max-w-measure-app text-sm leading-relaxed text-fg-muted">
+        <span className="text-fg">{sport.label[lang]}</span> — {t("crossGameHint")}
+      </p>
 
       <Panel
         title={t("betBuilder")}

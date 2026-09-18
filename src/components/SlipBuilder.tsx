@@ -6,7 +6,7 @@ import { useNavState } from "@/components/Controls";
 import { DeepSlipTable } from "@/components/DeepSlipTable";
 import { SLIP_PREFILL_KEY, SlipScanner } from "@/components/SlipScanner";
 import type { DeepContext } from "@/lib/server/deep-slip";
-import { Chip, Panel } from "@/components/ui";
+import { Chip, IconButton, Panel } from "@/components/ui";
 import { formatDecimal, parseOdds, parlayDecimal } from "@/lib/odds";
 import { formatPercent as pctOf } from "@/lib/format";
 import { ACTION_COST } from "@/lib/plans";
@@ -108,14 +108,12 @@ export function SlipBuilder() {
   }
 
   const field =
-    "rounded-control border border-line-strong bg-surface-1 px-2.5 py-1.5 text-sm text-fg transition-colors duration-(--dur-1) ease-(--ease-out) placeholder:text-fg-faint";
+    "h-(--row-h) rounded-control border border-line-control bg-surface-1 px-2.5 text-sm text-fg transition-colors duration-(--dur-1) ease-(--ease-out) placeholder:text-fg-faint";
 
   return (
-    <div className="flex flex-col gap-5">
-      <div>
-        <h1 className="text-lead font-semibold tracking-tight text-fg">{t("slipTitle")}</h1>
-        <p className="mt-1 max-w-2xl text-sm leading-relaxed text-fg-muted">{t("slipHint")}</p>
-      </div>
+    <div className="flex max-w-[64rem] flex-col gap-4">
+      {/* The page head above already names the screen; repeating it here was three titles deep. */}
+      <p className="max-w-measure-app text-sm leading-relaxed text-fg-muted">{t("slipHint")}</p>
 
       <SlipScanner lang={lang} sportKey={sport.key} />
 
@@ -147,13 +145,12 @@ export function SlipBuilder() {
                 value={leg.odds}
                 onChange={(e) => update(i, { odds: e.target.value })}
               />
-              <button
+              <IconButton
+                icon="trash"
+                label={`${t("removeLeg")} ${i + 1}`}
                 onClick={() => setLegs((prev) => prev.filter((_, idx) => idx !== i))}
                 disabled={legs.length <= 2}
-                className="rounded-control border border-line-strong px-2 text-label text-fg-dim transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-neg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed"
-              >
-                {t("removeLeg")}
-              </button>
+              />
             </div>
           ))}
 

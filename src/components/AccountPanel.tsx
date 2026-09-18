@@ -108,7 +108,6 @@ export function AccountPanel() {
   if (state === "anon" || !data) {
     return (
       <div className="flex flex-col gap-3">
-        <h1 className="text-lead font-semibold text-fg">{c.title}</h1>
         <Empty>{c.signIn}</Empty>
         <Link href={`/login?lang=${lang}&next=${encodeURIComponent(`/app/conta?lang=${lang}`)}`} className="w-fit inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{c.login}</Link>
       </div>
@@ -122,8 +121,7 @@ export function AccountPanel() {
   return (
     <div className="flex flex-col gap-5" data-testid="account-page">
       <div>
-        <h1 className="text-lead font-semibold tracking-tight text-fg">{c.title}</h1>
-        <p className="mt-1 text-sm text-fg-muted">{user.name} · {user.email}</p>
+        <p className="text-sm text-fg">{user.name} · <span className="text-fg-muted">{user.email}</span></p>
         <p className="mt-0.5 text-tiny text-fg-dim">
           {c.member.replace("{date}", formatDate(user.createdAt, lang, { year: true }))}
           {user.termsAcceptedAt ? ` · ${c.consent.replace("{date}", formatDate(user.termsAcceptedAt, lang, { year: true }))}` : ""}

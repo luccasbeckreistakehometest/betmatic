@@ -90,7 +90,7 @@ export function CustomParlay() {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="text-lead font-semibold tracking-tight text-fg">{c.title} <span className="text-fg-dim">· {sport.label[lang]}</span></h1>
+        <p className="text-label u-label text-fg-dim">{sport.label[lang]}</p>
         <p className="mt-1 max-w-2xl text-sm leading-relaxed text-fg-muted">{c.sub}</p>
       </div>
       <CustomForm
