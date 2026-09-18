@@ -74,7 +74,7 @@ export function AdminPayments() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-tiny" data-testid="admin-payments">
             <thead><tr>
-              <th className="px-2 pb-1.5">Data</th><th className="px-2 pb-1.5">Usuário</th><th className="px-2 pb-1.5">Item</th><th className="text-right">Valor</th><th className="px-2 pb-1.5">Status</th><th className="px-2 pb-1.5">MP</th>
+              <th>Data</th><th>Usuário</th><th>Item</th><th className="text-right">Valor</th><th>Status</th><th>MP</th>
             </tr></thead>
             <tbody>
               {payments.map((p) => (

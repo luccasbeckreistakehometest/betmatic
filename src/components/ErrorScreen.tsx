@@ -5,9 +5,9 @@ import Link from "next/link";
 /** Shown by error.tsx and global-error.tsx. Both languages: an error page cannot trust routing state. */
 export function ErrorScreen({ onRetry, digest }: { onRetry: () => void; digest?: string }) {
   return (
-    <main className="mx-auto flex min-h-[70vh] w-full max-w-2xl flex-col justify-center px-4 py-16 sm:px-5" data-testid="error-screen">
-      <p className="text-tiny uppercase tracking-[0.18em] text-warn">Betmatic</p>
-      <h1 className="mt-2 text-[clamp(1.6rem,4vw,2.3rem)] font-semibold tracking-[-0.02em] text-fg">Algo deu errado do nosso lado.</h1>
+    <main className="mx-auto flex min-h-[70vh] w-full max-w-measure flex-col justify-center px-4 py-16 sm:px-6" data-testid="error-screen">
+      <p className="text-label u-label text-fg-dim">Betmatic</p>
+      <h1 className="mt-2 u-display text-display text-fg">Algo deu errado do nosso lado.</h1>
       <p className="mt-2 text-base leading-relaxed text-fg-muted">Já registramos o problema. Tente de novo; se continuar, fale com a gente.</p>
       <p lang="en" className="mt-4 text-base leading-relaxed text-fg-dim">Something went wrong on our side. We logged it — try again, and contact us if it keeps happening.</p>
       <div className="mt-8 flex flex-wrap gap-3">

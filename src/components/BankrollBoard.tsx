@@ -98,7 +98,7 @@ export function BankrollBoard() {
 
       {!data?.pause?.paused && <SlipScanner lang={lang} sportKey={sport.key} onSaved={() => void load()} />}
 
-      <Panel title={t("bankroll")} flush>
+      <Panel flush>
         {data?.entries.length ? (
           <Table caption={t("bankroll")}>
             <thead>

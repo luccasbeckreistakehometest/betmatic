@@ -15,11 +15,11 @@ export default async function NotFound() {
   const c = C[lang];
   const q = lang === "en" ? "?lang=en" : "";
   return (
-    <div className="flex min-h-full flex-col bg-surface-0">
+    <div className="flex min-h-full flex-col bg-surface-0" data-density="comfortable">
       <MarketingHeader lang={lang} langHrefs={{ pt: "/", en: "/?lang=en" }} />
-      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-start px-4 py-20 sm:px-5" data-testid="not-found">
-        <p className="nums text-sm text-pos">404</p>
-        <h1 className="mt-2 text-[clamp(1.8rem,4vw,2.6rem)] font-semibold tracking-[-0.02em] text-fg">{c.title}</h1>
+      <main className="mx-auto flex w-full max-w-measure flex-1 flex-col items-start px-4 py-20 sm:px-6" data-testid="not-found">
+        <p className="nums text-sm text-fg-dim">404</p>
+        <h1 className="mt-2 u-display text-display text-fg">{c.title}</h1>
         <p className="mt-3 text-base leading-relaxed text-fg-muted">{c.body}</p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link href={`/${q}`} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{c.home}</Link>
