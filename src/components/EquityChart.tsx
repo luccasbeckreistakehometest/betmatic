@@ -120,7 +120,8 @@ export function EquityChart({ rows: initial, lang, compact = false, className = 
             caption={`${c.title} — ${fmtU(summary.units, lang)}`}
             formatValue={(v) => formatUnits(v, lang)}
             firstLabel={`${c.first}: ${day(summary.points[0].at)}`}
-            lastLabel={`${c.last}: ${day(summary.points[summary.points.length - 1].at)}`}
+            // Both ends on the same calendar day is not an axis: the last label is dropped then.
+            lastLabel={day(summary.points[summary.points.length - 1].at) === day(summary.points[0].at) ? undefined : `${c.last}: ${day(summary.points[summary.points.length - 1].at)}`}
             points={summary.points.map((p, i) => ({
               x: i,
               value: p.units,
