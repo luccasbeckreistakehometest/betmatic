@@ -525,3 +525,160 @@ The equity curve, the CLV distribution and the acquisition funnel share one char
 - Times are `HH:mm` in the user's zone with the zone abbreviation in `text-micro` once per group;
   full dates as `18/09/2026` in mono inside tables, `18 de setembro de 2026` in prose.
 - IDs and hashes are truncated at 8 characters with a copy affordance, never wrapped.
+
+---
+
+## 12. Component inventory
+
+### 12.0 The focus ring (one definition, everywhere)
+
+```css
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: inherit;
+}
+```
+
+`--focus` is `#6AA6FF` dark (7.93:1 on `surface-0`, 6.29:1 on `surface-3`) and `#1B62D6` light
+(5.58:1 on white) — both clear 3:1 against every surface they can land on. The 2 px offset means
+the ring never sits *on* a control's own border, so it reads at 2× as well as 1×. `:focus` without
+`-visible` is never styled; `outline: none` appears nowhere in the codebase.
+
+### 12.1 Button
+
+| Variant | Rest | Hover | Active | Focus | Disabled | Loading |
+|---|---|---|---|---|---|---|
+| `primary` | `action-bg` fill, `action-fg` text, `--r-1`, 32/36/40 px by density | fill → `n100` (dark) / `n800` (light) | `translateY(1px)`, fill one step darker | ring §12.0 | `surface-3` fill, `text-disabled`, `cursor:not-allowed`, `aria-disabled` | label stays, 14 px spinner replaces the icon slot, width frozen, `aria-busy` |
+| `secondary` | transparent, 1 px `--border-control`, `text-primary` | `surface-2` fill | `surface-3` fill | ring | border `--border`, `text-disabled` | as above |
+| `ghost` | transparent, `text-secondary` | `surface-2`, `text-primary` | `surface-3` | ring | `text-disabled` | as above |
+| `danger` | transparent, 1 px `neg`, `neg` text | `neg-tint` fill | `neg-tint` darker | ring | `text-disabled` | as above |
+
+A button never changes width between states. Icon-only buttons are square at `--row-h` and carry an
+`aria-label`; on touch they are padded to 44 px with a transparent hit area, not a bigger box.
+
+### 12.2 Input / select / number field
+
+Rest: `surface-3` fill, 1 px `--border-control`, `--r-1`, `text-primary`, 13 px (`default`
+density). Placeholder `text-tertiary` — and placeholders never replace labels. Hover: border →
+`text-tertiary`. Focus: ring §12.0 *and* border → `--focus`. Invalid: border `neg`, a `neg`
+message below in `text-tiny`, `aria-invalid="true"`, `aria-describedby` pointing at the message.
+Disabled: `surface-1` fill, `text-disabled`, no border change. Read-only: no fill, no border, mono.
+
+**Numeric fields** are `inputmode="decimal"`, right-aligned, mono, with the unit as a static suffix
+inside the field (`R$` prefix, `u` / `%` suffix in `text-tertiary`), never as a floating label.
+
+**Native controls are replaced** where the platform paints them: `select` gets an invisible native
+control over a styled trigger with our own `chevron-down`; `input[type=range]` gets a fully styled
+track/thumb in both WebKit and Firefox pseudo-elements (never `accent-color`, which is what
+produced the two-colour slider defect); `input[type=date]` is replaced by a text input plus our own
+calendar popover. `input[type=checkbox]` / `radio` use `appearance: none` plus a drawn mark.
+
+### 12.3 Table (see §11.1) — states
+
+Rest · hover · selected · focus-visible row · expanded · settled-win · settled-loss · pending ·
+void · loading (skeleton) · empty · error · filtered-to-nothing. The **skeleton matches the final
+layout**: the same number of columns at the same widths, rows of `--row-h`, each cell a
+`surface-2` bar at the width of its typical content — not three grey pills.
+
+### 12.4 Empty, loading, error
+
+Every data region ships all three, and they are not prose in a box:
+
+- **Empty** — the region's own frame (table header, chart axes) stays drawn, and one sentence in
+  `text-secondary` sits in the body with a single `secondary` action. Example (keep the pt-BR):
+  `Nada na banca ainda.` + `Abrir um jogo`.
+- **Loading** — skeleton in the final layout, `surface-2` bars, no spinner above 200 ms of content;
+  a spinner only inside a button.
+- **Error** — `neg` leading rule, what failed in one sentence, what the reader can do, and a
+  `Tentar de novo` action. The error code in mono `text-micro` at the end, selectable.
+- **Filtered to nothing** is its own state and offers `Limpar filtros`, because it is not empty.
+
+### 12.5 Panel
+
+Header row (`--row-h`, `text-label` title, optional status badge, meta right, actions far right, 1
+px rule below) + body (`--panel-p`). Panels do not nest more than one level; a panel inside a panel
+becomes a ruled group with a `text-label` header instead.
+
+### 12.6 Badge / chip / status
+
+`--r-1`, `text-label`, 1 px border, 2/6 px padding, height 20 px. Tones: `neutral` (default),
+`pos`, `neg`, `warn`, `info` (= `--focus` hue, used only for "selected"/"filter active"). Every
+tone carries a word, never colour alone. Selectable chips (markets, leagues) are checkboxes under
+the hood with `aria-pressed`; selected = `action-bg` fill + `action-fg` text, which is the same
+achromatic logic as the primary button.
+
+### 12.7 Navigation
+
+Rail item: 32 px, icon 16 + label 13, `text-secondary`; hover `surface-2`; **active = 2 px `--focus`
+leading bar + `text-primary` + `surface-2`**, `aria-current="page"`. Group label `text-label`,
+`text-tertiary`, 24 px tall. Collapsed rail shows the icon with a delayed tooltip (600 ms).
+Bottom tab bar (< 768 px): 5 items, 56 px, icon + 10 px label, active = filled icon + `text-primary`.
+
+### 12.8 Dialog / sheet / popover
+
+Dialog: `--r-2`, `--elev-dialog`, max 560 px, scrim `rgb(0 0 0 / .56)`, focus trapped, `Esc`
+closes, focus returns to the trigger. Sheet (mobile): bottom, `--r-3` top corners, drag handle,
+same trap. Popover: `--r-2`, `--elev-pop`, anchored with a 8 px offset and a flip, never a fixed
+corner. **The first-visit tour is anchored popovers** on the element it describes — the current
+floating card that covers the second game card on mobile is replaced.
+
+### 12.9 Form layout
+
+Label above field, 13 px, `text-secondary`, 6 px gap. Help text below field, `text-tiny`,
+`text-tertiary`, `aria-describedby`. Fields group into a two-column grid at ≥768 px with
+`grid-template-columns: repeat(2, minmax(0,1fr))` and a single-column span for anything long.
+Required is marked on the label in words (`obrigatório`), never with a bare asterisk. A form's
+submit row is sticky at the bottom of the work column on long forms.
+
+### 12.10 Print
+
+`/prova`, the weekly report and the ledger export have print styles: light theme forced, rail and
+dock hidden, tables `break-inside: avoid` per row, the URL and generation timestamp in a running
+footer, charts rendered with their `sr-only` table visible instead of the SVG, and the legal
+footer on every page. A person who prints their track record must be able to hand it to someone.
+
+---
+
+## 13. Compliance, which is part of the design
+
+Brazilian betting-advertising rules are constraints on the visual system, not a legal afterthought:
+
+- **No promised profit, anywhere, in any state.** No green "up" arrow as decoration, no confetti,
+  no streak badges, no "+R$" in a hero. ROI is shown with its sample size attached and in the same
+  neutral voice as every other number.
+- **Every multiplier prints its real chance next to it** (§11.2). This is enforced by the component:
+  the `<Odds>` primitive takes `decimal` and `probability` and refuses to render without both.
+- **No urgency.** No countdowns, no "últimas vagas", no scarcity badge, no pulsing CTA.
+- **18+ and the responsible-gambling line stay in the footer of every public page**, in
+  `text-tiny` / `text-secondary` — legible, not hidden at 3:1.
+- The responsible-gambling notice uses `warn`, never `neg`: it is a caution, not an error.
+
+---
+
+## 14. Do / Don't
+
+**Do**
+- Let type and alignment carry hierarchy; reach for colour last.
+- Set every number in tabular mono, right-aligned, pt-BR formatted.
+- Draw the frame of an empty region so the reader can see what will arrive.
+- Design hover, focus-visible, active, disabled, loading, empty, error and long-content overflow
+  before shipping a component.
+- Keep one primary action per view, and make it the only achromatic high-contrast fill on screen.
+
+**Don't** — this list is the brief, quoted, because these are the tells:
+- purple-to-blue (or any) decorative gradient
+- glassmorphism / backdrop blur over content
+- blurred colour blobs
+- emoji used as icons or bullets
+- a hero that is centred text + two buttons + three equal feature cards
+- uniform `rounded-2xl` on everything
+- drop shadows as the only depth cue
+- stock "AI sparkle" iconography
+- copy like "✨ Powered by AI"
+- fake dashboards in screenshots
+- lorem-style filler
+
+Add to it, from this audit: two different primary colours in one product; native range/date/select
+shipped unstyled; a column header row with no table under it; a chart with no axes; half-pixel font
+sizes; and `- / -` where an em dash belongs.
