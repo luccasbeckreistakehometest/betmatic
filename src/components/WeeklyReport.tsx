@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useNavState } from "@/components/Controls";
 import { KPI, Panel, PrintButton } from "@/components/ui";
-import { PanelSkeleton } from "@/components/AppPageHead";
+import { AppPageHead, PanelSkeleton } from "@/components/AppPageHead";
 import { SelfExclusionLinks } from "@/components/SettingsPanel";
 import { formatDate, formatMoney, formatPercent, formatTime } from "@/lib/format";
 import type { WeeklyPayload } from "@/lib/discipline";
@@ -22,7 +22,7 @@ const C = {
     kelly: "Tamanho das apostas", kellyNone: "Informe sua banca em Configurações para ver se os valores estão dentro de um tamanho sensato.", kellyText: (o: number, s: number) => `${o} de ${s} apostas passaram do dobro do tamanho sensato (¼ Kelly) para a sua banca.`,
     late: "Madrugada", lateText: (n: number, p: number) => `${n === 1 ? "1 aposta" : `${n} apostas`} entre meia-noite e 5h (${p}% da semana).`, lateNone: "Nenhuma aposta de madrugada.",
     long: "Bilhetes longos (20x ou mais)", longText: (n: number, p: number) => `${n === 1 ? "1 bilhete" : `${n} bilhetes`}, ${p}% do valor apostado.`, longCost: (u: string) => `Pelo modelo, o custo esperado desses bilhetes é de ${u}.`, longNone: "Nenhum bilhete longo.",
-    help: "Se precisar de uma pausa", pause: "Pausar agora", past: "Semanas anteriores", pastNone: "Os relatórios salvos aparecem aqui toda segunda-feira.", empty: "Ainda não há apostas na sua banca. Salve um bilhete ou mande o print de um para o relatório começar.",
+    thisWeek: "Esta semana", help: "Se precisar de uma pausa", pause: "Pausar agora", past: "Semanas anteriores", pastNone: "Os relatórios salvos aparecem aqui toda segunda-feira.", empty: "Ainda não há apostas na sua banca. Salve um bilhete ou mande o print de um para o relatório começar.",
     signIn: "Entre na sua conta para ver o relatório.", period: "de {from} a {to}",
   },
   en: {
@@ -34,7 +34,7 @@ const C = {
     kelly: "Stake size", kellyNone: "Set your bankroll in Settings to see whether stakes stay within a sensible size.", kellyText: (o: number, s: number) => `${o} of ${s} bets went past twice the sensible size (¼ Kelly) for your bankroll.`,
     late: "Late night", lateText: (n: number, p: number) => `${n === 1 ? "1 bet" : `${n} bets`} between midnight and 5am (${p}% of the week).`, lateNone: "No late-night bets.",
     long: "Long shots (20x or more)", longText: (n: number, p: number) => `${n === 1 ? "1 ticket" : `${n} tickets`}, ${p}% of the money staked.`, longCost: (u: string) => `By the model, those tickets are expected to cost ${u}.`, longNone: "No long shots.",
-    help: "If you need a break", pause: "Pause now", past: "Earlier weeks", pastNone: "Saved reports show up here every Monday.", empty: "No bets in your bankroll yet. Save a ticket or send a slip screenshot and the report starts.",
+    thisWeek: "This week", help: "If you need a break", pause: "Pause now", past: "Earlier weeks", pastNone: "Saved reports show up here every Monday.", empty: "No bets in your bankroll yet. Save a ticket or send a slip screenshot and the report starts.",
     signIn: "Log in to see the report.", period: "{from} to {to}",
   },
 };
@@ -99,20 +99,14 @@ export function WeeklyReport() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h2 className="u-title text-lead text-fg">{c.title}</h2>
-          <p className="mt-1 max-w-measure-app text-sm leading-relaxed text-fg-muted">{c.sub}</p>
-        </div>
-        <PrintButton label={lang === "pt" ? "Imprimir" : "Print"} />
-      </div>
+      <AppPageHead href="/app/report" meta={c.sub} actions={<PrintButton label={lang === "pt" ? "Imprimir" : "Print"} />} />
       {data?.error ? <p className="text-sm text-fg-muted">{c.signIn}</p> : !data ? <PanelSkeleton rows={4} /> : (
         <>
-          <Panel title={c.title} lang={lang}>
+          <Panel title={c.thisWeek} lang={lang}>
             {data.current.bets === 0 && data.current.windows.every((w) => w.bets === 0) ? <p className="text-sm text-fg-dim">{c.empty}</p> : <Report p={data.current} lang={lang} />}
           </Panel>
-          <section className="border-l-2 border-warn bg-warn-tint p-4" data-testid="report-help">
-            <h2 className="text-sm font-semibold text-fg">{c.help}</h2>
+          <section className="border-l-2 border-warn py-3 pl-4" data-testid="report-help">
+            <h2 className="text-sm font-semibold text-warn">{c.help}</h2>
             <SelfExclusionLinks lang={lang} />
             <Link href={{ pathname: "/app/settings", query: { lang } }} className="mt-3 inline-flex h-(--row-h) items-center rounded-control border border-warn px-3 text-sm font-medium text-warn transition-colors duration-(--dur-1) hover:bg-warn/10" data-testid="report-pause">{c.pause}</Link>
           </section>

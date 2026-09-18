@@ -418,7 +418,7 @@ export function PageHead({
     <header className={cx("flex flex-wrap items-end justify-between gap-x-6 gap-y-3 border-b border-line-strong pb-3", className)}>
       <div className="min-w-0">
         {kicker && <p className="mb-1 text-label u-label text-fg-dim">{kicker}</p>}
-        <h1 className="u-title text-lead text-fg">{title}</h1>
+        <h1 className="u-title text-h3 text-fg">{title}</h1>
         {meta && <p className="mt-1 max-w-measure-app text-tiny text-fg-dim">{meta}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -441,11 +441,23 @@ export function Notice({ tone = "warn", children }: { tone?: "warn" | "info" | "
  * what will arrive; "filtered to nothing" is its own state, because it is not empty.
  */
 
-export function Empty({ action, children }: { action?: ReactNode; children: ReactNode }) {
+/**
+ * Nothing here yet — drawn as the shape of what is missing, not as a sentence floating in a wide
+ * column: the sentence, one action, and the region's own rules at the row height the rows will
+ * have. `rows={0}` for a region that is not a list (a chart, a form, a paragraph of prose).
+ */
+export function Empty({ action, rows = 3, children }: { action?: ReactNode; rows?: number; children: ReactNode }) {
   return (
     <div className="flex flex-col items-start gap-3 py-2">
-      <p className="max-w-measure-app text-sm text-fg-muted">{children}</p>
+      <p className="max-w-measure-app text-sm leading-relaxed text-fg-muted">{children}</p>
       {action}
+      {rows > 0 && (
+        <div aria-hidden="true" className="mt-1 w-full border-t border-line">
+          {Array.from({ length: rows }, (_, i) => (
+            <div key={i} className="h-(--row-h) border-b border-line" />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

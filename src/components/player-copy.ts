@@ -1,7 +1,7 @@
 /** Copy for the player deep dive ("Raio-x do jogador"), written separately in each language. */
 export const PLAYER_COPY = {
   pt: {
-    back: "Voltar ao jogo", title: "Raio-x do jogador", loading: "Puxando o histórico do jogador…",
+    back: "Voltar ao jogo", title: "Raio-x do jogador", notFoundTitle: "Sem histórico", signInCta: "Entrar", loading: "Puxando o histórico do jogador…",
     signIn: "Entre na sua conta para abrir o raio-x.", notFound: "Não achamos histórico para esse jogador.", failed: "Não deu para carregar agora. Tente de novo em instantes.",
     capTitle: "Seu raio-x de hoje já foi usado", capBody: "No Free dá para abrir 1 jogador por dia (reabrir o mesmo é livre). Amanhã libera outro. Nos planos pagos, o raio-x é ilimitado.", seePlans: "Ver planos",
     market: "Mercado", line: "Linha", over: "Mais de", under: "Menos de", drag: "Arraste a linha no gráfico ou use os botões",
@@ -19,7 +19,7 @@ export const PLAYER_COPY = {
     honesty: "Histórico não garante o próximo jogo. Aposte só o que não faz falta.", freeLeft: "Seu jogador de hoje no plano Free.",
   },
   en: {
-    back: "Back to the game", title: "Player deep dive", loading: "Pulling the player's game log…",
+    back: "Back to the game", title: "Player deep dive", notFoundTitle: "No game log", signInCta: "Log in", loading: "Pulling the player's game log…",
     signIn: "Log in to open the deep dive.", notFound: "No game log found for this player.", failed: "Couldn't load it right now. Try again shortly.",
     capTitle: "You've used today's deep dive", capBody: "The Free plan opens 1 player a day (reopening the same one is free). Another one unlocks tomorrow. Paid plans get unlimited deep dives.", seePlans: "See plans",
     market: "Market", line: "Line", over: "Over", under: "Under", drag: "Drag the line on the chart or use the buttons",

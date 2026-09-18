@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { IntelBoard } from "@/components/IntelBoard";
 import { LivePanel } from "@/components/LivePanel";
 import { espnDateKey } from "@/lib/sources/espn";
-import { Empty, KeyValue, NumCell, Panel, Table, Td, Th, Tr } from "@/components/ui";
+import { Empty, KeyValue, NumCell, PageHead, Panel, Table, Td, Th, Tr } from "@/components/ui";
 import { kickoff } from "@/components/SlateTable";
 import { localizeStatLabel, localizeStatus } from "@/lib/format";
 import { formatNumber } from "@/lib/format";
@@ -136,6 +136,12 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
         {t("backToSlate")}
       </Link>
 
+      <PageHead
+        kicker={game.tournament ? `${sport.label[lang]} · ${game.tournament}` : sport.label[lang]}
+        title={`${game.away.displayName} × ${game.home.displayName}`}
+        meta={[game.status === "scheduled" ? kickoff(game.startsAt, lang) : localizeStatus(game.statusDetail, lang), game.venue, game.broadcast].filter(Boolean).join(" · ")}
+      />
+
       <section className="border-y border-line bg-surface-1 px-4 py-4">
         <div className="flex flex-wrap items-center gap-4">
           <TeamHeading team={game.away} align="left" showScore={game.status !== "scheduled"} follow={followOf(game.away.id)} />
@@ -147,10 +153,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
           <TeamHeading team={game.home} align="right" showScore={game.status !== "scheduled"} follow={followOf(game.home.id)} />
         </div>
         <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 border-t border-line pt-3 text-tiny text-fg-dim">
-          {game.tournament && <span className="text-fg-muted">{game.tournament}</span>}
           {game.round && <span>{game.round}</span>}
-          {game.venue && <span>{game.venue}</span>}
-          {game.broadcast && <span>{game.broadcast}</span>}
           {game.odds?.details && <span className="nums text-fg-muted">{game.odds.details}</span>}
           {game.odds?.overUnder !== undefined && (
             <span className="nums text-fg-muted">O/U {game.odds.overUnder}</span>
@@ -178,7 +181,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
           )}
         </div>
 
-        <aside className="flex flex-col gap-4">
+        <aside className="flex flex-col gap-4 lg:sticky lg:top-(--sticky-top) lg:max-h-[calc(100dvh-var(--sticky-top)-var(--s-6))] lg:self-start lg:overflow-y-auto lg:overscroll-contain">
           <Panel title={t("injuryReport")} meta={admin ? "ESPN" : undefined}>
             <div className="flex flex-col gap-3">
               <div>

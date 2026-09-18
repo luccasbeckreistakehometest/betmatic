@@ -93,6 +93,10 @@
   --elev-pop: 0 1px 2px rgb(16 19 26 / 0.12), 0 8px 24px rgb(16 19 26 / 0.14);
   --elev-dialog: 0 2px 4px rgb(16 19 26 / 0.14), 0 24px 64px rgb(16 19 26 / 0.22);
 
+  /* The desk's chrome: the topbar is 48px, so anything that sticks under it starts here. */
+  --topbar-h: 48px;
+  --sticky-top: calc(var(--topbar-h) + var(--s-5));
+
   /* Density (§7) — default mode; [data-density] overrides below. */
   --row-h: 32px;
   --cell-px: 12px;

@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useNavState } from "@/components/Controls";
-import { Empty, KPI, Panel } from "@/components/ui";
+import { AppPageHead } from "@/components/AppPageHead";
+import { Button, Empty, KPI, Panel } from "@/components/ui";
 import { formatNumber } from "@/lib/format";
 import { formatDecimal } from "@/lib/odds";
 import { formatPercent as pctOf } from "@/lib/format";
@@ -34,9 +35,9 @@ const OUTCOME_LABEL: Record<string, { pt: string; en: string }> = {
 };
 const outcomeLabel = (outcome: string, lang: "pt" | "en") => OUTCOME_LABEL[outcome]?.[lang] ?? outcome;
 
-function CalibrationTable({ rows, lang }: { rows: CalibrationRow[]; lang: "pt" | "en" }) {
+function CalibrationTable({ rows, lang, emptyKey }: { rows: CalibrationRow[]; lang: "pt" | "en"; emptyKey: "noneBySource" | "noneByMarket" | "noneSpecialisation" }) {
   const t = makeT(lang);
-  if (!rows.length) return <Empty>{t("notEnoughData")}</Empty>;
+  if (!rows.length) return <Empty rows={2}>{t(emptyKey)}</Empty>;
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[520px] text-left text-tiny">
@@ -124,21 +125,15 @@ export function TrackRecord() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h2 className="u-title text-lead text-fg">{t("trackRecord")}</h2>
-          <p className="mt-1 max-w-measure-app text-sm leading-relaxed text-fg-muted">{t("trackHint")}</p>
-        </div>
-        {data?.admin && (
-          <button
-            onClick={() => void settle()}
-            disabled={settling}
-            className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint"
-          >
+      <AppPageHead
+        href="/app/track"
+        meta={t("trackHint")}
+        actions={data?.admin ? (
+          <Button variant="primary" onClick={() => void settle()} loading={settling}>
             {settling ? t("settling") : t("settleNow")}
-          </button>
-        )}
-      </div>
+          </Button>
+        ) : undefined}
+      />
 
       {note && <p className="text-tiny text-fg-muted">{note}</p>}
 
@@ -155,17 +150,17 @@ export function TrackRecord() {
 
       {data?.admin && (
         <Panel title={t("bySource")} lang={lang}>
-          <CalibrationTable rows={data?.calibration.bySource ?? []} lang={lang} />
+          <CalibrationTable rows={data?.calibration.bySource ?? []} lang={lang} emptyKey="noneBySource" />
         </Panel>
       )}
 
       <Panel title={t("byMarket")} lang={lang}>
-        <CalibrationTable rows={data?.calibration.byMarket ?? []} lang={lang} />
+        <CalibrationTable rows={data?.calibration.byMarket ?? []} lang={lang} emptyKey="noneByMarket" />
       </Panel>
 
       {data?.admin && (
         <Panel title={t("specialisation")} lang={lang}>
-          <CalibrationTable rows={data?.specialisation ?? []} lang={lang} />
+          <CalibrationTable rows={data?.specialisation ?? []} lang={lang} emptyKey="noneSpecialisation" />
         </Panel>
       )}
 
@@ -193,7 +188,7 @@ export function TrackRecord() {
             ))}
           </ul>
         ) : (
-          <Empty>{t("notEnoughData")}</Empty>
+          <Empty>{t("noneRecentTickets")}</Empty>
         )}
       </Panel>
     </div>

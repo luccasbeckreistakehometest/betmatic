@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useNavState } from "@/components/Controls";
-import { Panel } from "@/components/ui";
+import { Empty, LinkButton, PageHead, Panel } from "@/components/ui";
 import { PlayerChart } from "@/components/PlayerChart";
 import { PLAYER_COPY } from "@/components/player-copy";
 import { DvpCard, num, PlansLink, PostedLines, RatesGrid, RoleCard, SplitCard } from "@/components/PlayerPanels";
@@ -72,7 +72,13 @@ export function PlayerDeepDive({ athleteId, gameId }: { athleteId: string; gameI
       );
     }
     const msg = load.code === "signin" ? c.signIn : load.code === "notfound" ? c.notFound : c.failed;
-    return <div className="flex flex-col gap-3">{back}<p className="text-sm text-fg-muted" data-testid="player-error">{msg}</p></div>;
+    return (
+      <div className="flex flex-col gap-4">
+        {back}
+        <PageHead kicker={c.title} title={c.notFoundTitle} actions={load.code === "signin" ? <LinkButton href={`/login?lang=${lang}`} variant="primary">{c.signInCta}</LinkButton> : undefined} />
+        <Empty>{msg}</Empty>
+      </div>
+    );
   }
   if (!profile || !market || !table) return null;
   const setLine = (n: number) => setLines((prev) => ({ ...prev, [market.key]: Math.round(n * 2) / 2 }));
@@ -83,12 +89,12 @@ export function PlayerDeepDive({ athleteId, gameId }: { athleteId: string; gameI
       {profile.game && (
         <Link href={{ pathname: `/app/game/${profile.game.id}`, query: { sport: profile.sportKey, lang } }} className="w-fit text-tiny text-fg-dim hover:text-fg-muted">← {c.back}</Link>
       )}
-      <header className="rounded-panel border border-line bg-surface-1 p-(--panel-p)">
-        <p className="text-micro u-label text-pos">{c.title}</p>
-        <h1 className="mt-1 text-lead font-semibold tracking-tight text-fg" data-testid="player-name">{profile.name}</h1>
-        <p className="text-tiny text-fg-dim">{[profile.teamAbbr, profile.position, profile.game ? `${profile.game.matchup} · ${formatDateTime(profile.game.startsAt, lang)}` : null].filter(Boolean).join(" · ")}</p>
-        {load.data.access.limit !== null && <p className="mt-1.5 text-label text-warn/90">{c.freeLeft}</p>}
-      </header>
+      <PageHead
+        kicker={c.title}
+        title={<span data-testid="player-name">{profile.name}</span>}
+        meta={[profile.teamAbbr, profile.position, profile.game ? `${profile.game.matchup} · ${formatDateTime(profile.game.startsAt, lang)}` : null].filter(Boolean).join(" · ")}
+        actions={load.data.access.limit !== null ? <p className="text-label text-warn">{c.freeLeft}</p> : undefined}
+      />
 
       <Panel title={c.market} lang={lang}>
         <div className="flex flex-wrap gap-1.5" role="tablist">
