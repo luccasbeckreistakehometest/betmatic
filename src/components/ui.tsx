@@ -148,7 +148,9 @@ const CONTROL_BASE =
 
 /* A read-only value is text, not a field: no fill, no edge, mono. Only inputs and textareas take
    this — :read-only also matches <select>, which is what blanked every select's border once. */
-const CONTROL_READONLY = "read-only:border-transparent read-only:bg-transparent read-only:px-0 read-only:nums";
+const CONTROL_READONLY =
+  "read-only:border-transparent read-only:bg-transparent read-only:px-0 read-only:nums " +
+  "read-only:hover:border-transparent read-only:focus:border-transparent";
 
 export function Field({
   label,
@@ -451,7 +453,9 @@ export function Th({
       scope="col"
       {...rest}
       className={cx(
-        "h-(--row-h) bg-surface-1 px-(--cell-px) text-label u-label text-fg-dim u-rule-2",
+        // A column header never wraps: a two-line header drops its baseline away from its column
+        // and the header row stops scanning as one line.
+        "h-(--row-h) bg-surface-1 px-(--cell-px) text-label u-label whitespace-nowrap text-fg-dim u-rule-2",
         numeric ? "text-right" : "text-left",
         sticky && "sticky top-0 z-10",
         className,
