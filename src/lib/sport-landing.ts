@@ -92,7 +92,7 @@ export const SPORT_LANDINGS: SportLanding[] = [
       pt: [
         {
           title: "Vigia de lesão nas suas pernas",
-          body: "No basquete não sai escalação publicada, então a gente acompanha o boletim de lesões: quem está na sua perna virou dúvida ou foi descartado, a perna ganha selo vermelho e quem salvou o bilhete recebe o aviso — aqui na lista ou no Telegram.",
+          body: "No basquete não sai escalação publicada, então a gente acompanha o boletim de lesões: quem está na sua perna virou dúvida ou foi descartado, a perna ganha selo vermelho e quem salvou o bilhete recebe o aviso na sua lista de avisos.",
           href: "/app/alerts",
           cta: "Como funcionam os avisos",
         },
@@ -142,7 +142,7 @@ export const SPORT_LANDINGS: SportLanding[] = [
       en: [
         {
           title: "An injury watch on your legs",
-          body: "Basketball publishes no starting five, so we follow the injury report instead: when a player on your leg turns doubtful or is ruled out, the leg gets a red badge and whoever saved the ticket hears about it — in the notice list or on Telegram.",
+          body: "Basketball publishes no starting five, so we follow the injury report instead: when a player on your leg turns doubtful or is ruled out, the leg gets a red badge and whoever saved the ticket hears about it in the notice list.",
           href: "/app/alerts",
           cta: "How the notices work",
         },
@@ -261,7 +261,7 @@ export const SPORT_LANDINGS: SportLanding[] = [
       pt: [
         {
           title: "O aviso de escalação chega onde você está",
-          body: "Quando os onze saem, a gente cruza com cada bilhete salvo. Titular no banco ou fora da lista vira selo vermelho na perna e um aviso pra quem salvou — aqui na lista ou no Telegram, se você ligar.",
+          body: "Quando os onze saem, a gente cruza com cada bilhete salvo. Titular no banco ou fora da lista vira selo vermelho na perna e um aviso pra quem salvou, na sua lista de avisos.",
           href: "/app/alerts",
           cta: "Como funcionam os avisos",
         },
@@ -311,7 +311,7 @@ export const SPORT_LANDINGS: SportLanding[] = [
       en: [
         {
           title: "The lineup notice finds you",
-          body: "When the elevens are out, we cross them with every saved ticket. A starter on the bench or missing from the squad turns into a red badge on the leg and a notice to whoever saved it — in the list here, or on Telegram if you switch it on.",
+          body: "When the elevens are out, we cross them with every saved ticket. A starter on the bench or missing from the squad turns into a red badge on the leg and a notice to whoever saved it, in the notice list.",
           href: "/app/alerts",
           cta: "How the notices work",
         },
