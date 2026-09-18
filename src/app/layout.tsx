@@ -53,9 +53,14 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+/** The palette is owned by globals.css, which sets `color-scheme` per theme; this only tells the
+ *  browser both are supported, so a light reader does not get dark scrollbars. */
 export const viewport: Viewport = {
-  themeColor: "#0a0c11",
-  colorScheme: "dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0c11" },
+  ],
+  colorScheme: "dark light",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
