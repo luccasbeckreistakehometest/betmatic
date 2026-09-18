@@ -138,6 +138,30 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
 
       <ProofStrip lang={lang} />
 
+      {/* ---- what runs on its own: the day's featured games, and the closing line ---- */}
+      <section className="border-b border-ink-800/80" data-testid="daily">
+        <div className="mx-auto max-w-6xl px-5 py-16">
+          <h2 className="max-w-2xl text-[clamp(1.6rem,3.2vw,2.3rem)] font-semibold leading-tight tracking-[-0.02em] text-white">
+            {c.dailyTitle}
+          </h2>
+          <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-mist-400">{c.dailySub}</p>
+          <div className="mt-8 grid gap-4 md:grid-cols-2">
+            {c.daily.map((item) => (
+              <div key={item.title} className="flex flex-col rounded-2xl border border-ink-800 bg-ink-900/60 p-6">
+                <h3 className="text-[16px] font-semibold text-white">{item.title}</h3>
+                <p className="mt-2 flex-1 text-[13.5px] leading-relaxed text-mist-400">{item.body}</p>
+                <Link
+                  href={{ pathname: item.href, query: { lang } }}
+                  className="mt-4 self-start text-[13px] text-edge-400 hover:underline"
+                >
+                  {item.cta} →
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ---- honesty ---- */}
       <section className="border-b border-ink-800/80">
         <div className="mx-auto max-w-6xl px-5 py-16">

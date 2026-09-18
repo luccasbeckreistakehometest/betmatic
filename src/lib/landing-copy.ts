@@ -35,6 +35,11 @@ export interface LandingCopy {
   edgeSub: string;
   edges: { title: string; body: string; href: string }[];
 
+  /** The two things that run without anyone asking: the day's featured games and the closing line. */
+  dailyTitle: string;
+  dailySub: string;
+  daily: { title: string; body: string; href: string; cta: string }[];
+
   howTitle: string;
   howSteps: { n: string; title: string; body: string }[];
 
@@ -118,6 +123,27 @@ const PT: LandingCopy = {
     { title: "Prova pública: o mercado concordou com a gente?", body: "Cada perna com odd de fechamento disponível é comparada com ela. Pegar preço melhor que o fechamento com frequência é o sinal mais honesto de que a análise presta, e está na página de prova, pra todo mundo ver.", href: "/prova" },
     { title: "Odd de verdade em cada perna de jogador", body: "Linha e preço publicados e, do lado, quantas vezes o jogador passou dessa linha nos últimos 5, 10 e na temporada. Quem joga pouco nem entra na lista.", href: "/basquete" },
   ],
+
+  dailyTitle: "Duas coisas acontecem sem ninguém pedir",
+  dailySub:
+    "Não dá pra conferir um histórico que só existe quando alguém abre um jogo. Por isso o sistema trabalha sozinho nas duas pontas: antes da bola rolar e depois do apito inicial.",
+  daily: [
+    {
+      title: "Destaques do dia",
+      body:
+        "Algumas vezes por dia o sistema olha a rodada e escolhe alguns jogos — dá preferência aos times e ligas que mais gente segue por aqui, entre 2 e 30 horas do apito — e monta os bilhetes deles antes de qualquer pessoa abrir. São os destaques do dia: entram no histórico público do mesmo jeito que os outros e costumam ser o bilhete do dia aqui em cima.",
+      href: "/prova",
+      cta: "Ver o histórico público",
+    },
+    {
+      title: "Linha de fechamento (CLV)",
+      body:
+        "Quando a bola rola, a gente guarda a odd de fechamento de cada perna, tira a margem da casa e compara com o preço que estava no bilhete. Bater o fechamento com frequência diz mais sobre a análise do que uma sequência curta de greens. O número só aparece a partir de 30 pernas com fechamento — antes disso seria sorte.",
+      href: "/prova",
+      cta: "Ver o CLV medido",
+    },
+  ],
+
   howTitle: "Como funciona",
   howSteps: [
     {
@@ -271,9 +297,30 @@ const EN: LandingCopy = {
     { title: "A plan B under the ticket", body: "When the data supports it, a ticket ships with up to two alternatives that keep the same idea. If a line moves or a starter drops out, you already know where to go.", href: "/signup" },
     { title: "Snap your slip, we grade it", body: "Placed a bet at the book? Send the screenshot. It lands in your bankroll and grades itself when the game ends. The image is never kept.", href: "/signup" },
     { title: "Audit that VIP group before you pay", body: "Paste the tipster's messages and see what they really hit, including the \"wins\" posted after the game had already started. Private: the name never shows anywhere.", href: "/tipster-audit" },
-    { title: "Public record: did the market agree with us?", body: "Every leg with a closing price available is compared with it. Beating the close often is the most honest sign the analysis is any good, and it sits on the public record for anyone to check.", href: "/prova" },
+    { title: "Public record: did the market agree with us?", body: "Every leg with a closing line available is compared with it. Beating the close often is the most honest sign the analysis is any good, and it sits on the public record for anyone to check.", href: "/prova" },
     { title: "Real prices on every player leg", body: "The posted line and price, and next to it how often the player cleared that line over the last 5, the last 10 and the season. Players who barely play never make the list.", href: "/basketball" },
   ],
+
+  dailyTitle: "Two things happen with nobody asking",
+  dailySub:
+    "A record that only exists when somebody opens a game is not a record. So the system works on its own at both ends: before kickoff, and after the opening whistle.",
+  daily: [
+    {
+      title: "Featured games of the day",
+      body:
+        "A few times a day the system reads the slate and picks a few games — favouring the teams and leagues most followed here, kicking off between 2 and 30 hours out — and builds their tickets before anyone opens them. Those are the day's featured games: they enter the public record like any other, and they are usually the ticket of the day above.",
+      href: "/prova",
+      cta: "See the public record",
+    },
+    {
+      title: "Closing line value (CLV)",
+      body:
+        "At kickoff we store each leg's closing line, strip the book's margin and compare it with the price that was on the ticket. Beating the closing line often says more about the analysis than a short run of winners. The number only appears once 30 legs have a close — before that it would be luck.",
+      href: "/prova",
+      cta: "See the measured CLV",
+    },
+  ],
+
   howTitle: "How it works",
   howSteps: [
     {
