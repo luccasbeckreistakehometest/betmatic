@@ -6,6 +6,14 @@ import path from "node:path";
  * dev server (ESPN_FIXTURES). Times are relative to now, so the same specs see an upcoming WNBA
  * slate with posted props, a WNBA game under way, a Brasileirão game about to start with its lineup
  * published, and a finished one from yesterday. Every id is fake (99000xxxx / 7xxx / 88xxx).
+ *
+ * Each game also carries the slate day it is published on (`day`: -1 yesterday, 0 today, 1
+ * tomorrow, in Eastern dates, which is how ESPN indexes a scoreboard). That day is declared, not
+ * derived from the kickoff: a run that starts after 19:00 ET would otherwise push "in five hours"
+ * onto tomorrow's scoreboard and leave today's slate with only the game already under way — no
+ * upcoming game, so no leg pool for the custom parlay and fewer than two games for the cross-game
+ * slate. Real scoreboards do the same thing with late kickoffs, and the app reads a day's games
+ * from that day's scoreboard, never from the timestamp.
  */
 const HOUR = 3_600_000;
 const SITE = "https://site.api.espn.com/apis/site/v2/sports";
@@ -19,8 +27,10 @@ export const etKey = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "
 type Stat = Record<string, number>;
 interface Player { id: string; name: string; pos: string; minutes: number; base: Stat }
 interface Team { id: string; abbr: string; name: string; players: Player[] }
+/** Which scoreboard a game is published on, as an offset in Eastern days from the run's date. */
+export type SlateDay = -1 | 0 | 1;
 interface FakeGame {
-  id: string; league: "wnba" | "bra.1"; sport: "basketball" | "soccer"; startsAt: Date; state: "pre" | "in" | "post";
+  id: string; league: "wnba" | "bra.1"; sport: "basketball" | "soccer"; startsAt: Date; day: SlateDay; state: "pre" | "in" | "post";
   home: Team; away: Team; homeMl: number; awayMl: number; total: number; spread: number;
   score?: [number, number]; period?: number; clock?: string; props?: PropSpec[];
 }
@@ -44,7 +54,7 @@ export function buildWorld(now = Date.now()) {
   const ipe = team("9922", "IPE", "Ipê EC", [fb("88101", "Vini Rocha", "F", 2, 1), fb("88102", "Wil Braga", "M", 1, 2)]);
 
   const games: FakeGame[] = [
-    { id: "990000101", league: "wnba", sport: "basketball", startsAt: new Date(now + 5 * HOUR), state: "pre", home: aces, away: birds, homeMl: -150, awayMl: 130, total: 160.5, spread: -3.5,
+    { id: "990000101", league: "wnba", sport: "basketball", startsAt: new Date(now + 5 * HOUR), day: 0, state: "pre", home: aces, away: birds, homeMl: -150, awayMl: 130, total: 160.5, spread: -3.5,
       props: [
         { athlete: "7101", type: "Total Points", line: 17.5, over: 1.87, under: 1.93, open: 1.95 },
         { athlete: "7102", type: "Total Rebounds", line: 6.5, over: 1.8, under: 2.0 },
@@ -53,17 +63,17 @@ export function buildWorld(now = Date.now()) {
         { athlete: "7103", type: "Total Points", line: 4.5, over: 1.85, under: 1.95 },
         { athlete: "7101", type: "Points Milestones", line: 25, over: 4.7 },
       ] },
-    { id: "990000102", league: "wnba", sport: "basketball", startsAt: new Date(now - 1.5 * HOUR), state: "in", home: comets, away: divers, homeMl: -120, awayMl: 100, total: 155.5, spread: -1.5, score: [58, 61], period: 3, clock: "5:12" },
-    { id: "990000103", league: "wnba", sport: "basketball", startsAt: new Date(now + 6 * HOUR), state: "pre", home: e5, away: f6, homeMl: -110, awayMl: -110, total: 158.5, spread: -1.5,
+    { id: "990000102", league: "wnba", sport: "basketball", startsAt: new Date(now - 1.5 * HOUR), day: 0, state: "in", home: comets, away: divers, homeMl: -120, awayMl: 100, total: 155.5, spread: -1.5, score: [58, 61], period: 3, clock: "5:12" },
+    { id: "990000103", league: "wnba", sport: "basketball", startsAt: new Date(now + 6 * HOUR), day: 0, state: "pre", home: e5, away: f6, homeMl: -110, awayMl: -110, total: 158.5, spread: -1.5,
       props: [{ athlete: "7501", type: "Points Milestones", line: 25, over: 4.6 }, { athlete: "7601", type: "Total Rebounds", line: 7.5, over: 1.9, under: 1.9 }] },
-    { id: "990000104", league: "wnba", sport: "basketball", startsAt: new Date(now + 7 * HOUR), state: "pre", home: g7, away: h8, homeMl: 120, awayMl: -140, total: 162.5, spread: 2.5,
+    { id: "990000104", league: "wnba", sport: "basketball", startsAt: new Date(now + 7 * HOUR), day: 0, state: "pre", home: g7, away: h8, homeMl: 120, awayMl: -140, total: 162.5, spread: 2.5,
       props: [{ athlete: "7701", type: "Points Milestones", line: 26, over: 4.8 }, { athlete: "7801", type: "Total Rebounds", line: 9.5, over: 1.9, under: 1.9 }] },
-    { id: "990000201", league: "bra.1", sport: "soccer", startsAt: new Date(now + 80 * 60_000), state: "pre", home: tupi, away: ipe, homeMl: 120, awayMl: 230, total: 2.5, spread: -0.5,
+    { id: "990000201", league: "bra.1", sport: "soccer", startsAt: new Date(now + 80 * 60_000), day: 0, state: "pre", home: tupi, away: ipe, homeMl: 120, awayMl: 230, total: 2.5, spread: -0.5,
       props: [
         { athlete: "88001", type: "Shots Milestones", line: 2, over: 1.7 }, { athlete: "88002", type: "Shots Milestones", line: 2, over: 2.1 },
         { athlete: "88101", type: "Shots Milestones", line: 2, over: 1.9 }, { athlete: "88102", type: "Fouls Committed Milestones", line: 2, over: 2.0 },
       ] },
-    { id: "990000202", league: "bra.1", sport: "soccer", startsAt: new Date(now - 26 * HOUR), state: "post", home: tupi, away: ipe, homeMl: 110, awayMl: 250, total: 2.5, spread: -0.5, score: [2, 1] },
+    { id: "990000202", league: "bra.1", sport: "soccer", startsAt: new Date(now - 26 * HOUR), day: -1, state: "post", home: tupi, away: ipe, homeMl: 110, awayMl: 250, total: 2.5, spread: -0.5, score: [2, 1] },
   ];
   return { games, teams: [aces, birds, comets, divers, e5, f6, g7, h8, tupi, ipe] };
 }
