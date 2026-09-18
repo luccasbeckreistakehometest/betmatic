@@ -682,3 +682,105 @@ Brazilian betting-advertising rules are constraints on the visual system, not a 
 Add to it, from this audit: two different primary colours in one product; native range/date/select
 shipped unstyled; a column header row with no table under it; a chart with no axes; half-pixel font
 sizes; and `- / -` where an em dash belongs.
+
+---
+
+## 15. Rebuild order
+
+37 route files exist. They are rebuilt in this order, because each wave depends on the one before
+it. Nothing in wave 0 is visible to a user, and nothing after wave 1 changes a token.
+
+**Wave 0 — foundations (no visible change on its own)**
+1. `src/app/globals.css` — replace the `@theme` block: neutral ramp, semantic tokens for both
+   themes, spacing/radius/motion/density tokens, the focus-ring rule, `color-scheme: light dark`.
+2. `src/app/layout.tsx` — swap `Geist`/`Geist_Mono` for `Archivo` (with `axes: ["wdth"]`),
+   `IBM_Plex_Sans`, `IBM_Plex_Mono`; add the `data-theme` / `data-density` attributes and the
+   no-flash inline theme script.
+3. `public/icons.svg` — the 22-glyph sprite, plus `src/components/Icon.tsx`.
+4. `src/components/ui.tsx` — rewrite as the primitive layer: `Button`, `Input`, `Select`, `Field`,
+   `Chip`, `Badge`, `Panel`, `Table` (+`Th`,`Td`,`NumCell`), `KPI`, `Odds`, `Empty`, `Skeleton`,
+   `ErrorState`. Everything below consumes these.
+5. `src/lib/format.ts` — one pt-BR/en formatter set (money, percent, units, odds, signed deltas,
+   dates); delete every local `toFixed`.
+
+**Wave 1 — the shell**
+6. `src/app/(app)/layout.tsx` + `src/components/Controls.tsx` — topbar / rail / work column / dock,
+   the 13 destinations, the collapsed and mobile variants.
+7. `src/components/AccountBar.tsx`, `Logo.tsx` (monochrome mark + wordmark), `LangSwitch.tsx`
+   (`PT`/`EN`, no flags), `Tour.tsx` (anchored popovers).
+
+**Wave 2 — the dense screens, in traffic order**
+8. `(app)/app` — the slate as a ruled table (today's three floating cards become rows), with the
+   date control, filters and the `compact` density.
+9. `(app)/app/game/[gameId]` + `GameCard.tsx`, `BetsPanel.tsx`, `ParlayBuilder.tsx` — the ticket
+   view: legs, odds + chance pairs, evidence, the `Odds` primitive everywhere.
+10. `(app)/app/bankroll` + `BankrollBoard.tsx`, `EquityChart.tsx` — the chart grammar of §11.3, the
+    KPI row, the ledger table.
+11. `(app)/app/track` + `TrackRecord.tsx`, `ClvBlock.tsx` — the settled ledger.
+12. `(app)/app/slip` + `SlipBuilder.tsx`, `DeepSlipTable.tsx`, `SlipScanner.tsx`.
+13. `(app)/app/parlays` and `(app)/app/parlays/custom` + `CustomParlay.tsx` — the form of §12.9,
+    styled range/select/checkbox, the market chips as a grouped set.
+14. `(app)/app/player/[athleteId]` + `PlayerPanels.tsx`, `PlayerChart.tsx`, `PlayerDeepDive.tsx`,
+    `PlayerReadCard.tsx`.
+15. `(app)/app/tipster` + `TipsterAudit.tsx`, `TipsterReport.tsx`, `TipsterFunnel.tsx`.
+16. `(app)/app/report` + `WeeklyReport.tsx`, `LossReview.tsx` (print styles land here).
+17. `(app)/app/alerts` + `AlertsPanel.tsx`, `LivePanel.tsx` (the live-move flash of §9).
+18. `(app)/app/ranking` + `LeaderboardPanel.tsx`, `IntelBoard.tsx`.
+19. `(app)/app/settings`, `(app)/app/conta`, `(app)/app/referral` + `SettingsPanel.tsx`,
+    `AccountPanel.tsx`, `ReferralPanel.tsx` — forms and account states.
+
+**Wave 3 — admin**
+20. `admin` + `AdminDashboard.tsx`, `AdminUsers.tsx`, `AdminOps.tsx`, `AdminAcquisition.tsx`,
+    `AdminFeatured.tsx`, `PromptPanel.tsx`, `LearningPanel.tsx` — the KPI grid with no holes, real
+    tables with empty states, one currency per group, the cyan primary retired.
+
+**Wave 4 — marketing and funnel**
+21. `MarketingShell.tsx` — header, footer, `comfortable` density, the 12-column marketing grid.
+22. `(marketing)` landing — the §5.3 splits; the hero keeps the ladder (it is the product's real
+    output) but rebuilt as a full-bleed ruled table, and the four-equal-plan-cards block is
+    replaced by a comparison table.
+23. `(marketing)/prova` + `ProofStrip.tsx` — the credibility page: measure capped, KPI row aligned,
+    neutral voice for ROI, print styles.
+24. `(marketing)/planos` + `PlanPicker.tsx`, `(marketing)/pagamento/[status]` — pricing as a table,
+    the period picker, the checkout result states.
+25. `(marketing)/[sport]`, `(marketing)/jogo/[gameId]`, `(marketing)/p/[slug]` — the SEO/funnel
+    pages, which must look like the app they preview.
+26. `(marketing)/ferramentas` + `Calculators.tsx`, `(marketing)/raio-x-tipster`,
+    `(marketing)/tipster-audit` — the free tools.
+27. `login`, `signup` + `AuthForm.tsx` — the narrowest surfaces, highest conversion cost.
+28. `(marketing)/contato` + `ContactForm.tsx`.
+29. Legal set — `termos`/`terms`, `privacidade`/`privacy`, `reembolso`/`refunds`, `cookies`,
+    `jogo-responsavel`/`responsible-gambling` + `LegalPage.tsx`, `LegalLinks.tsx`, `Disclaimer.tsx`
+    — `text-body` at 72ch, a running table of contents, print styles.
+
+**Wave 5 — the edges**
+30. `error.tsx`, `global-error.tsx`, `not-found.tsx` + `ErrorScreen.tsx`.
+31. `icon.svg`, `apple-icon.tsx`, `og-default.png` and the per-page OG images — redrawn in the new
+    mark and the new type.
+32. `WhatsNew.tsx` — the clipping strip becomes a dismissible list with a real overflow rule.
+
+---
+
+## 16. Risks and open questions
+
+- **Build-time font fetch.** `next/font/google` downloads at build time. The Docker build on the
+  VPS must reach `fonts.gstatic.com` or the build fails. It already does this for Geist, so the
+  risk is unchanged — but three families instead of two means three fetches. Mitigation if it ever
+  bites: vendor the four `.woff2` files into `public/fonts/` and switch to `next/font/local`.
+- **Payload.** Archivo variable (wght+wdth) + Plex Sans 3 weights + Plex Mono 3 weights, `latin` +
+  `latin-ext`, is roughly 180–240 KB of woff2 across seven files. Measure after wave 0; if it
+  exceeds 250 KB, drop Plex Mono 600 and Plex Sans 600 (Archivo covers emphasis).
+- **The rail costs horizontal space.** 224 px off a 1440 px screen is real. The dock is therefore
+  hidden below 1280 px and the rail collapses below it; this needs a look at 1280 and 1366 before
+  wave 2 ships.
+- **Light theme is new work, not a repaint.** The product has only ever been dark
+  (`color-scheme: dark` is hard-coded). Every component in §12 must be checked in both themes; the
+  budget for that is real and belongs in wave 0, not at the end.
+- **Team crests.** Desaturating third-party marks is a design decision with a licensing shadow; if
+  it is ever contested, the fallback is the mono abbreviation, which the dense tables already use.
+- **The ladder is the strongest thing on the current landing** and it survives — rebuilding it as a
+  table risks losing the one visual that shows the product's argument. Build it first in wave 4 and
+  compare side by side before replacing the current version.
+- **No visual regression harness exists.** The e2e suite asserts behaviour, not pixels. Waves 1–4
+  should add a small Playwright screenshot pass at 1440 and 390 in both themes so a later change
+  cannot quietly undo this.
