@@ -11,7 +11,7 @@ test("the public game page is an indexable, whitelabelled palpite with FAQ schem
   // the teaser shows the free-band ticket's shape, never its title or legs
   await expect(page.getByTestId("game-teaser")).toContainText("Múltipla de 3 pernas · faixa Valor");
   await expect(page.getByTestId("game-teaser")).not.toContainText("Agoumé");
-  await expect(page.getByTestId("game-proof")).toContainText("50.0%"); // this sport's live record
+  await expect(page.getByTestId("game-proof")).toContainText(/50,0\s*%/); // this sport's live record
   const html = await page.content();
   expect(html).not.toMatch(/Betano|ESPN|DraftKings/);
   expect(html).not.toContain("1+ falta cometida"); // legs stay behind the signup

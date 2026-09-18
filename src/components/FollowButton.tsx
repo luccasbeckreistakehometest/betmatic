@@ -11,7 +11,7 @@ export function FollowButton({ sportKey, teamId, label, initial, signedIn }: { s
   const t = makeT(lang);
   const [on, setOn] = useState(initial);
   const [busy, setBusy] = useState(false);
-  if (!signedIn) return <Link href="/login" className="text-[11px] text-mist-500 hover:text-mist-300">{t("follow")}</Link>;
+  if (!signedIn) return <Link href="/login" className="text-label text-fg-dim hover:text-fg-muted">{t("follow")}</Link>;
   async function toggle() {
     setBusy(true);
     try {
@@ -21,7 +21,7 @@ export function FollowButton({ sportKey, teamId, label, initial, signedIn }: { s
   }
   return (
     <button onClick={() => void toggle()} disabled={busy} data-testid={`follow-${teamId}`} data-on={on ? "1" : "0"}
-      className={`rounded border px-2 py-0.5 text-[11px] transition ${on ? "border-edge-400/50 bg-edge-400/10 text-edge-400" : "border-ink-700 text-mist-400 hover:border-ink-600 hover:text-mist-100"}`}>
+      className={`rounded-control border px-2 py-0.5 text-label transition-colors duration-(--dur-1) ease-(--ease-out) ${on ? "border-line-control bg-surface-3 font-medium text-fg" : "border-line-control text-fg-muted hover:bg-surface-2 hover:text-fg"}`}>
       {on ? t("followingLabel") : t("follow")}
     </button>
   );

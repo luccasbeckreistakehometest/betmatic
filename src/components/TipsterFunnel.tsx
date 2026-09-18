@@ -2,6 +2,7 @@ import Link from "next/link";
 import { MarketingPage } from "@/components/MarketingShell";
 import { RED_FLAGS } from "@/lib/tipster/audit";
 import type { Lang } from "@/lib/i18n";
+import { buttonClass } from "@/components/ui";
 
 const C = {
   pt: {
@@ -40,37 +41,37 @@ export function TipsterFunnel({ lang }: { lang: Lang }) {
   const next = `/app/tipster?lang=${lang}`;
   return (
     <MarketingPage lang={lang} langHrefs={{ pt: "/raio-x-tipster", en: "/tipster-audit" }} wide>
-      <section className="text-mist-100" data-testid="tipster-funnel">
-        <p className="text-[11px] uppercase tracking-[0.18em] text-edge-400">{c.eyebrow}</p>
-        <h1 className="mt-2 max-w-3xl text-4xl font-semibold tracking-tight sm:text-5xl">{c.title}</h1>
-        <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-mist-400">{c.sub}</p>
+      <section className="text-fg" data-testid="tipster-funnel">
+        <p className="text-label u-label text-fg-dim">{c.eyebrow}</p>
+        <h1 className="mt-2 max-w-3xl text-h1 font-semibold tracking-tight sm:text-h1">{c.title}</h1>
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-fg-muted">{c.sub}</p>
         <div className="mt-6 flex flex-wrap items-center gap-4">
-          <Link href={`/signup?lang=${lang}&next=${encodeURIComponent(next)}`} className="rounded-xl bg-edge-400 px-6 py-3 text-[15px] font-semibold text-ink-950 hover:bg-edge-500" data-testid="tipster-funnel-cta">{c.cta}</Link>
-          <span className="text-[12px] text-mist-500">{c.ctaSub}</span>
+          <Link href={`/signup?lang=${lang}&next=${encodeURIComponent(next)}`} className={buttonClass("primary")} data-testid="tipster-funnel-cta">{c.cta}</Link>
+          <span className="text-tiny text-fg-dim">{c.ctaSub}</span>
         </div>
-        <ol className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-ink-800 bg-ink-800 md:grid-cols-3">
+        <ol className="mt-10 grid gap-px overflow-hidden rounded-panel border border-line bg-surface-3 md:grid-cols-3">
           {c.steps.map((s) => (
-            <li key={s.n} className="bg-ink-900/80 p-6">
-              <span className="nums text-[2rem] font-semibold leading-none text-ink-700">{s.n}</span>
-              <h2 className="mt-3 text-[15px] font-semibold text-white">{s.t}</h2>
-              <p className="mt-2 text-[13px] leading-relaxed text-mist-400">{s.b}</p>
+            <li key={s.n} className="bg-surface-1 p-6">
+              <span className="nums text-[2rem] font-semibold leading-none text-fg-dim">{s.n}</span>
+              <h2 className="mt-3 text-base font-semibold text-fg">{s.t}</h2>
+              <p className="mt-2 text-sm leading-relaxed text-fg-muted">{s.b}</p>
             </li>
           ))}
         </ol>
         <div className="mt-8 grid gap-4 md:grid-cols-2">
-          <div className="rounded-xl border border-edge-400/30 bg-edge-400/[0.04] p-5">
-            <h2 className="text-[15px] font-semibold text-white">{c.privacyTitle}</h2>
-            <p className="mt-2 text-[13.5px] leading-relaxed text-mist-300">{c.privacy}</p>
-            <p className="mt-3 text-[12.5px] text-mist-500">{c.limits}</p>
+          <div className="rounded-panel border border-line-strong bg-surface-2 p-5">
+            <h2 className="text-base font-semibold text-fg">{c.privacyTitle}</h2>
+            <p className="mt-2 text-sm leading-relaxed text-fg-muted">{c.privacy}</p>
+            <p className="mt-3 text-tiny text-fg-dim">{c.limits}</p>
           </div>
-          <div className="rounded-xl border border-ink-800 bg-ink-900/60 p-5">
-            <h2 className="text-[15px] font-semibold text-white">{c.flagsTitle}</h2>
+          <div className="rounded-panel border border-line bg-surface-1 p-(--panel-p)">
+            <h2 className="text-base font-semibold text-fg">{c.flagsTitle}</h2>
             <ul className="mt-2 flex flex-wrap gap-1.5">
-              {RED_FLAGS.map((f) => <li key={f.key} className="rounded bg-alert-400/12 px-2 py-0.5 text-[12px] text-alert-400">{f.label[lang]}</li>)}
+              {RED_FLAGS.map((f) => <li key={f.key} className="rounded-control bg-neg-tint px-2 py-0.5 text-tiny text-neg">{f.label[lang]}</li>)}
             </ul>
           </div>
         </div>
-        <p className="mt-8 max-w-3xl text-[12px] leading-relaxed text-mist-500">{c.note}</p>
+        <p className="mt-8 max-w-3xl text-tiny leading-relaxed text-fg-dim">{c.note}</p>
       </section>
     </MarketingPage>
   );

@@ -74,7 +74,7 @@ export function ticketAlertText(args: TicketAlertArgs): { text: string; slugs: s
     const slug = ticketSlug(`${args.gameId}:${p.bandKey}:${p.legs.map((l) => l.selection).join("|")}`);
     slugs.push(slug);
     const s = scrubSuggestion(byId.get(p.id) ?? p, lang);
-    return `• ${s.title} — ${formatDecimal(s.combinedDecimal)} (${lang === "pt" ? "confiança" : "confidence"} ${s.evidenceScore})\n  ${s.legs.map((l) => l.selection).join(" + ")}\n  ${base}/p/${slug}?lang=${lang}`;
+    return `• ${s.title} — ${formatDecimal(s.combinedDecimal, lang)} (${lang === "pt" ? "confiança" : "confidence"} ${s.evidenceScore})\n  ${s.legs.map((l) => l.selection).join(" + ")}\n  ${base}/p/${slug}?lang=${lang}`;
   });
   const head = lang === "pt" ? `🎫 Bilhetes novos — ${scrubText(args.matchup, lang)}` : `🎫 New tickets — ${scrubText(args.matchup, lang)}`;
   return { text: [head, ...lines, "", NOT_INVESTMENT[lang]].join("\n"), slugs };
@@ -99,7 +99,7 @@ export function digestText(args: { lang: Lang; dateLabel: string; items: DigestI
   const { lang, base } = args;
   const head = lang === "pt" ? `☀️ Seus bilhetes de hoje — ${args.dateLabel}` : `☀️ Your tickets for today — ${args.dateLabel}`;
   const lines = [...args.items].sort((a, b) => b.evidenceScore - a.evidenceScore).map((i) =>
-    `• ${scrubText(i.matchup, lang)}: ${scrubText(i.title, lang)} — ${formatDecimal(i.odds)}\n  ${base}/p/${i.slug}?lang=${lang}`,
+    `• ${scrubText(i.matchup, lang)}: ${scrubText(i.title, lang)} — ${formatDecimal(i.odds, lang)}\n  ${base}/p/${i.slug}?lang=${lang}`,
   );
   return [head, ...lines, "", NOT_INVESTMENT[lang]].join("\n");
 }

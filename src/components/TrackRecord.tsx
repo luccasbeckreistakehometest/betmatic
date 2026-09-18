@@ -2,8 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useNavState } from "@/components/Controls";
-import { Empty, Panel } from "@/components/ui";
-import { formatDecimal, formatPercent } from "@/lib/odds";
+import { AppPageHead } from "@/components/AppPageHead";
+import { Button, Empty, KPI, Panel } from "@/components/ui";
+import { formatNumber } from "@/lib/format";
+import { formatDecimal } from "@/lib/odds";
+import { formatPercent as pctOf } from "@/lib/format";
 import { makeT } from "@/lib/i18n";
 import type { CalibrationReport, CalibrationRow, LedgerEntry } from "@/lib/types";
 
@@ -16,11 +19,11 @@ interface Payload {
 }
 
 const OUTCOME_TONE: Record<string, string> = {
-  won: "text-edge-400",
-  lost: "text-alert-400",
-  push: "text-mist-400",
-  void: "text-mist-600",
-  pending: "text-signal-400",
+  won: "text-pos",
+  lost: "text-neg",
+  push: "text-fg-muted",
+  void: "text-fg-dim",
+  pending: "text-fg-muted",
 };
 
 const OUTCOME_LABEL: Record<string, { pt: string; en: string }> = {
@@ -32,44 +35,44 @@ const OUTCOME_LABEL: Record<string, { pt: string; en: string }> = {
 };
 const outcomeLabel = (outcome: string, lang: "pt" | "en") => OUTCOME_LABEL[outcome]?.[lang] ?? outcome;
 
-function CalibrationTable({ rows, lang }: { rows: CalibrationRow[]; lang: "pt" | "en" }) {
+function CalibrationTable({ rows, lang, emptyKey }: { rows: CalibrationRow[]; lang: "pt" | "en"; emptyKey: "noneBySource" | "noneByMarket" | "noneSpecialisation" }) {
   const t = makeT(lang);
-  if (!rows.length) return <Empty>{t("notEnoughData")}</Empty>;
+  if (!rows.length) return <Empty rows={2}>{t(emptyKey)}</Empty>;
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[520px] text-left text-[12px]">
+      <table className="w-full min-w-[520px] text-left text-tiny">
         <thead>
-          <tr className="border-b border-ink-800 text-[10px] uppercase tracking-wider text-mist-500">
-            <th className="px-2 pb-1.5 font-medium">—</th>
-            <th className="px-2 pb-1.5 text-right font-medium">{t("sample")}</th>
-            <th className="px-2 pb-1.5 text-right font-medium">{t("hitRate")}</th>
-            <th className="px-2 pb-1.5 text-right font-medium">{t("predicted")}</th>
-            <th className="px-2 pb-1.5 pl-6 font-medium">{t("calibration")}</th>
+          <tr>
+            <th>—</th>
+            <th className="text-right">{t("sample")}</th>
+            <th className="text-right">{t("hitRate")}</th>
+            <th className="text-right">{t("predicted")}</th>
+            <th className="pl-6">{t("calibration")}</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-ink-800/70">
+        <tbody>
           {rows.map((row) => {
             const over = row.calibrationError > 0.05;
             const under = row.calibrationError < -0.05;
             return (
               <tr key={row.key}>
-                <td className="px-2 py-1.5 text-mist-100">{row.label}</td>
-                <td className="nums px-2 py-1.5 text-right text-mist-300">
+                <td className="text-fg">{row.label}</td>
+                <td className="nums text-right text-fg-muted">
                   {row.won}/{row.settled}
                 </td>
                 <td
-                  className={`nums px-2 py-1.5 text-right font-medium ${
-                    row.hitRate >= 0.55 ? "text-edge-400" : row.hitRate <= 0.45 ? "text-alert-400" : "text-mist-200"
+                  className={`nums text-right font-medium ${
+                    row.hitRate >= 0.55 ? "text-pos" : row.hitRate <= 0.45 ? "text-neg" : "text-fg"
                   }`}
                 >
-                  {formatPercent(row.hitRate, 0)}
+                  {pctOf(row.hitRate, lang, { digits: 0 })}
                 </td>
-                <td className="nums px-2 py-1.5 text-right text-mist-400">{formatPercent(row.averagePredicted, 0)}</td>
-                <td className={`px-2 py-1.5 pl-6 text-[11px] ${over ? "text-warn-400" : under ? "text-signal-400" : "text-mist-500"}`}>
+                <td className="nums text-right text-fg-muted">{pctOf(row.averagePredicted, lang, { digits: 0 })}</td>
+                <td className={`pl-6 text-label ${over ? "text-warn" : under ? "text-fg-muted" : "text-fg-dim"}`}>
                   {over
-                    ? `${t("overconfident")} ${(row.calibrationError * 100).toFixed(0)}pts`
+                    ? `${t("overconfident")} ${formatNumber(row.calibrationError * 100, lang, { digits: 0 })} pts`
                     : under
-                      ? `${t("underconfident")} ${(-row.calibrationError * 100).toFixed(0)}pts`
+                      ? `${t("underconfident")} ${formatNumber(-row.calibrationError * 100, lang, { digits: 0 })} pts`
                       : t("wellCalibrated")}
                 </td>
               </tr>
@@ -122,66 +125,57 @@ export function TrackRecord() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-white">{t("trackRecord")}</h1>
-          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-mist-400">{t("trackHint")}</p>
-        </div>
-        {data?.admin && (
-          <button
-            onClick={() => void settle()}
-            disabled={settling}
-            className="rounded-lg bg-signal-500 px-3.5 py-1.5 text-[13px] font-medium text-ink-950 transition hover:bg-signal-400 disabled:opacity-50"
-          >
+      <AppPageHead
+        href="/app/track"
+        meta={t("trackHint")}
+        actions={data?.admin ? (
+          <Button variant="primary" onClick={() => void settle()} loading={settling}>
             {settling ? t("settling") : t("settleNow")}
-          </button>
-        )}
-      </div>
+          </Button>
+        ) : undefined}
+      />
 
-      {note && <p className="text-[12px] text-signal-400">{note}</p>}
+      {note && <p className="text-tiny text-fg-muted">{note}</p>}
 
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-ink-800 bg-ink-800 sm:grid-cols-4">
-        {[
+      <div className="grid grid-cols-2 gap-x-8 gap-y-4 border-y border-line py-4 sm:grid-cols-4">
+        {([
           [t("legs"), summary?.total ?? 0],
           [t("pending"), summary?.pending ?? 0],
           [t("settled"), summary?.settled ?? 0],
           [t("won"), summary?.won ?? 0],
-        ].map(([label, value]) => (
-          <div key={String(label)} className="bg-ink-900 px-3 py-2.5 text-center">
-            <div className="text-[10px] uppercase tracking-wider text-mist-500">{label}</div>
-            <div className="nums text-lg font-semibold text-mist-100">{value}</div>
-          </div>
+        ] as const).map(([label, value]) => (
+          <KPI key={String(label)} label={String(label)} value={formatNumber(Number(value), lang)} />
         ))}
       </div>
 
       {data?.admin && (
         <Panel title={t("bySource")} lang={lang}>
-          <CalibrationTable rows={data?.calibration.bySource ?? []} lang={lang} />
+          <CalibrationTable rows={data?.calibration.bySource ?? []} lang={lang} emptyKey="noneBySource" />
         </Panel>
       )}
 
       <Panel title={t("byMarket")} lang={lang}>
-        <CalibrationTable rows={data?.calibration.byMarket ?? []} lang={lang} />
+        <CalibrationTable rows={data?.calibration.byMarket ?? []} lang={lang} emptyKey="noneByMarket" />
       </Panel>
 
       {data?.admin && (
         <Panel title={t("specialisation")} lang={lang}>
-          <CalibrationTable rows={data?.specialisation ?? []} lang={lang} />
+          <CalibrationTable rows={data?.specialisation ?? []} lang={lang} emptyKey="noneSpecialisation" />
         </Panel>
       )}
 
       <Panel title={t("recentTickets")} lang={lang} meta={data?.entries?.length ? String(data.entries.length) : undefined}>
         {data?.entries?.length ? (
-          <ul className="flex flex-col divide-y divide-ink-800">
+          <ul className="flex flex-col divide-y divide-line">
             {data.entries.slice(0, 25).map((entry) => (
               <li key={entry.id} className="flex flex-wrap items-baseline gap-2 py-1.5">
-                <span className={`text-[11px] font-semibold uppercase ${OUTCOME_TONE[entry.outcome]}`}>
+                <span className={`text-label font-semibold uppercase ${OUTCOME_TONE[entry.outcome]}`}>
                   {outcomeLabel(entry.outcome, lang)}
                 </span>
-                <span className="text-[12px] text-mist-200">{entry.title}</span>
-                <span className="text-[11px] text-mist-500">{entry.matchup}</span>
-                <span className="nums ml-auto text-[11px] text-mist-400">
-                  {formatDecimal(entry.combinedDecimal)} · {entry.legs.length}{" "}
+                <span className="text-tiny text-fg">{entry.title}</span>
+                <span className="text-label text-fg-dim">{entry.matchup}</span>
+                <span className="nums ml-auto text-label text-fg-muted">
+                  {formatDecimal(entry.combinedDecimal, lang)} · {entry.legs.length}{" "}
                   {lang === "pt"
                     ? entry.legs.length === 1
                       ? "perna"
@@ -194,7 +188,7 @@ export function TrackRecord() {
             ))}
           </ul>
         ) : (
-          <Empty>{t("notEnoughData")}</Empty>
+          <Empty>{t("noneRecentTickets")}</Empty>
         )}
       </Panel>
     </div>

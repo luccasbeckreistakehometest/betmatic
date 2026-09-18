@@ -1,11 +1,12 @@
 import { Suspense } from "react";
 import { WeeklyReport } from "@/components/WeeklyReport";
+import { PanelSkeleton } from "@/components/AppPageHead";
 
 export const dynamic = "force-dynamic";
 
 export default function ReportPage() {
   return (
-    <Suspense fallback={<div className="h-40 animate-pulse rounded-xl bg-ink-900" />}>
+    <Suspense fallback={<PanelSkeleton />}>
       <WeeklyReport />
     </Suspense>
   );

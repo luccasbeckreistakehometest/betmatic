@@ -7,6 +7,7 @@ import { Logo } from "@/components/Logo";
 import { normaliseLang } from "@/lib/i18n";
 import { getCoinPack, getPlan, PERIOD, PREPAID_NOTE, periodPrice, type BillingPeriod } from "@/lib/plans";
 import { formatMoneyBRL } from "@/lib/format";
+import { buttonClass } from "@/components/ui";
 
 const COPY = {
   pt: {
@@ -151,7 +152,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   }
 
   const field =
-    "w-full rounded-lg border border-ink-700 bg-ink-900 px-3 py-2.5 text-[14px] text-mist-100 outline-none transition placeholder:text-mist-600 focus:border-edge-400";
+    "w-full rounded-control border border-line-control bg-surface-1 px-3 py-2.5 text-base text-fg transition-colors duration-(--dur-1) ease-(--ease-out) placeholder:text-fg-dim";
 
   const choice = plan
     ? c.chosenPlan.replace("{plan}", plan.name).replace("{period}", PERIOD[period].label[lang]).replace("{price}", formatMoneyBRL(periodPrice(plan.monthlyPrice, period), lang))
@@ -164,29 +165,29 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       <Link href={lang === "en" ? "/?lang=en" : "/"} className="mb-8 w-fit" aria-label="Betmatic">
         <Logo size={28} />
       </Link>
-      <h1 className="text-[1.7rem] font-semibold tracking-[-0.02em] text-white">
+      <h1 className="text-[1.7rem] font-semibold tracking-[-0.02em] text-fg">
         {mode === "login" ? c.loginTitle : c.signupTitle}
       </h1>
-      {mode === "signup" && <p className="mt-2 text-[13.5px] leading-relaxed text-mist-400">{c.signupSub}</p>}
+      {mode === "signup" && <p className="mt-2 text-sm leading-relaxed text-fg-muted">{c.signupSub}</p>}
       {choice && (
-        <p className="mt-4 rounded-lg border border-edge-400/30 bg-edge-400/5 px-3 py-2.5 text-[13px] leading-relaxed text-mist-200" data-testid="auth-choice">
-          {choice} <span className="text-mist-400">{PREPAID_NOTE[lang]}</span>
+        <p className="mt-4 rounded-control border border-pos bg-action px-3 py-2.5 text-sm leading-relaxed text-fg" data-testid="auth-choice">
+          {choice} <span className="text-fg-muted">{PREPAID_NOTE[lang]}</span>
         </p>
       )}
 
       <form onSubmit={submit} className="mt-7 flex flex-col gap-3.5">
         {mode === "signup" && (
           <label className="flex flex-col gap-1.5">
-            <span className="text-[12px] text-mist-400">{c.name}</span>
+            <span className="text-tiny text-fg-muted">{c.name}</span>
             <input className={field} value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} autoComplete="name" data-testid="auth-name" />
           </label>
         )}
         <label className="flex flex-col gap-1.5">
-          <span className="text-[12px] text-mist-400">{c.email}</span>
+          <span className="text-tiny text-fg-muted">{c.email}</span>
           <input className={field} type="email" data-testid="auth-email" value={email} onChange={(e) => setEmail(e.target.value)} required maxLength={254} autoComplete="email" />
         </label>
         <label className="flex flex-col gap-1.5">
-          <span className="text-[12px] text-mist-400">{c.password}</span>
+          <span className="text-tiny text-fg-muted">{c.password}</span>
           <input
             className={field}
             type="password"
@@ -198,7 +199,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
             minLength={mode === "signup" ? 8 : undefined}
             autoComplete={mode === "login" ? "current-password" : "new-password"}
           />
-          {mode === "signup" && <span className="text-[11px] text-mist-500">{c.passwordHint}</span>}
+          {mode === "signup" && <span className="text-label text-fg-dim">{c.passwordHint}</span>}
         </label>
 
         {mode === "signup" && (
@@ -207,26 +208,26 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
             <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
               <label>Deixe em branco<input tabIndex={-1} type="text" autoComplete="new-password" data-lpignore="true" data-1p-ignore value={website} onChange={(e) => setWebsite(e.target.value)} name="bm_hp_field" /></label>
             </div>
-            <label className="mt-1 flex items-start gap-2.5 text-[12.5px] leading-relaxed text-mist-300">
-              <input type="checkbox" required checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-[3px] size-4 accent-edge-400" data-testid="auth-consent" />
+            <label className="mt-1 flex items-start gap-2.5 text-tiny leading-relaxed text-fg-muted">
+              <input type="checkbox" required checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-[3px] size-4 appearance-none rounded-control border border-line-control bg-surface-3 checked:border-action checked:bg-action" data-testid="auth-consent" />
               <span>
                 {c.consentBefore}
-                <Link href={lang === "en" ? "/terms" : "/termos"} target="_blank" className="text-edge-400 underline-offset-2 hover:underline">{c.terms}</Link>
+                <Link href={lang === "en" ? "/terms" : "/termos"} target="_blank" className="text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{c.terms}</Link>
                 {c.and}
-                <Link href={lang === "en" ? "/privacy" : "/privacidade"} target="_blank" className="text-edge-400 underline-offset-2 hover:underline">{c.privacy}</Link>
+                <Link href={lang === "en" ? "/privacy" : "/privacidade"} target="_blank" className="text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{c.privacy}</Link>
                 {c.consentAfter}
               </span>
             </label>
           </>
         )}
 
-        {error && <p className="text-[12.5px] text-alert-400" role="alert" data-testid="auth-error">{error}</p>}
+        {error && <p className="text-tiny text-neg" role="alert" data-testid="auth-error">{error}</p>}
 
         <button
           type="submit"
           data-testid="auth-submit"
           disabled={!!busy || (mode === "signup" && !consent)}
-          className="mt-2 rounded-lg bg-edge-400 px-4 py-2.5 text-[14px] font-semibold text-ink-950 transition hover:bg-edge-500 disabled:opacity-50"
+          className={buttonClass("primary", "mt-2")}
         >
           {busy === "checkout" ? c.toCheckout : busy ? c.working : mode === "login" ? c.submitLogin : c.submitSignup}
         </button>
@@ -234,12 +235,12 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
 
       <Link
         href={`${mode === "login" ? "/signup" : "/login"}?${carry.toString()}`}
-        className="mt-5 text-[13px] text-mist-400 transition hover:text-mist-100"
+        className="mt-5 text-sm text-fg-muted transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg"
       >
         {mode === "login" ? c.toSignup : c.toLogin}
       </Link>
       {mode === "login" && (
-        <Link href={`/contato?lang=${lang}&topic=account`} className="mt-2 text-[12.5px] text-mist-500 transition hover:text-mist-200">
+        <Link href={`/contato?lang=${lang}&topic=account`} className="mt-2 text-tiny text-fg-dim transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg">
           {c.forgot}
         </Link>
       )}

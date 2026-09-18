@@ -30,10 +30,10 @@ test("live panel: legs tracked with the chance now, polling only while visible, 
   await expect(page.getByTestId("live-score")).toContainText("DUN 61 × 58 CED");
   const tickets = panel.getByTestId("live-ticket");
   await expect(tickets).toHaveCount(3);
-  await expect(tickets.filter({ hasText: "Dupla que já bateu" }).getByTestId("live-chance")).toContainText("chance agora 100%");
+  await expect(tickets.filter({ hasText: "Dupla que já bateu" }).getByTestId("live-chance")).toContainText(/chance agora 100\s*%/);
   await expect(tickets.filter({ hasText: "Hana abaixo" }).getByTestId("live-chip")).toHaveText("caiu");
   const gabi = tickets.filter({ hasText: "Gabi decide" });
-  await expect(gabi.getByTestId("live-chip").first()).toContainText(/vivo \d+%/);
+  await expect(gabi.getByTestId("live-chip").first()).toContainText(/vivo \d+\s*%/);
   await expect(gabi.getByTestId("live-foul")).toBeVisible();
 
   // Polls while visible, stops while hidden, resumes on return.

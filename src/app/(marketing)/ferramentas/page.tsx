@@ -24,17 +24,17 @@ export default async function ToolsPage({ searchParams }: SearchProps) {
     <MarketingPage lang={lang} langHrefs={langPaths("/ferramentas")} wide>
       <Calculators lang={lang} />
       <section className="mt-10 grid gap-4 md:grid-cols-2" data-testid="tools-more">
-        <Link href={`/signup?lang=${lang}&next=${encodeURIComponent(`/app/bankroll?lang=${lang}`)}`} className="group rounded-xl border border-ink-800 bg-ink-900/50 p-5 hover:border-edge-400/50">
-          <p className="text-[15px] font-semibold text-white group-hover:text-edge-400">{lang === "pt" ? "Manda o print do seu bilhete" : "Snap your slip"}</p>
-          <p className="mt-2 text-[13px] leading-relaxed text-mist-400">
+        <Link href={`/signup?lang=${lang}&next=${encodeURIComponent(`/app/bankroll?lang=${lang}`)}`} className="group rounded-panel border border-line bg-surface-1 p-(--panel-p) hover:border-pos">
+          <p className="text-base font-semibold text-fg">{lang === "pt" ? "Manda o print do seu bilhete" : "Snap your slip"}</p>
+          <p className="mt-2 text-sm leading-relaxed text-fg-muted">
             {lang === "pt"
               ? "A mesma conta das calculadoras, feita no bilhete que você já apostou: a gente lê o print, confere se as odds batem com o total e liquida sozinho quando o jogo acaba. A imagem não fica guardada."
               : "The same maths as these calculators, run on a slip you already placed: we read the screenshot, check the odds multiply to the total, and grade it when the game ends. The image is never kept."}
           </p>
         </Link>
-        <Link href={lang === "pt" ? "/raio-x-tipster" : "/tipster-audit"} className="group rounded-xl border border-ink-800 bg-ink-900/50 p-5 hover:border-edge-400/50">
-          <p className="text-[15px] font-semibold text-white group-hover:text-edge-400">{lang === "pt" ? "Raio-x do tipster" : "Tipster audit"}</p>
-          <p className="mt-2 text-[13px] leading-relaxed text-mist-400">
+        <Link href={lang === "pt" ? "/raio-x-tipster" : "/tipster-audit"} className="group rounded-panel border border-line bg-surface-1 p-(--panel-p) hover:border-pos">
+          <p className="text-base font-semibold text-fg">{lang === "pt" ? "Raio-x do tipster" : "Tipster audit"}</p>
+          <p className="mt-2 text-sm leading-relaxed text-fg-muted">
             {lang === "pt"
               ? "Antes de pagar grupo VIP, confira o acerto real dos palpites contra o placar oficial, inclusive os greens postados depois do jogo começar."
               : "Before paying for a VIP group, check the picks' real record against the official score, including the wins posted after kickoff."}

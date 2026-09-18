@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { expectedValue, formatDecimal, impliedProbability, parlayDecimal, parlayHold, parseOdds } from "@/lib/odds";
 import type { Lang } from "@/lib/i18n";
+import { formatPercent } from "@/lib/format";
+import { buttonClass } from "@/components/ui";
 
 /**
  * Free, no-signup calculators. They exist because a bettor searching "calculadora de múltipla" is a
@@ -23,12 +25,19 @@ const C = {
 };
 
 const Field = ({ label, value, onChange, testId }: { label: string; value: string; onChange: (v: string) => void; testId?: string }) => (
-  <label className="block text-[12px] text-mist-400">{label}<input value={value} onChange={(e) => onChange(e.target.value)} onBlur={() => { if (testId) track("tool_used", { tool: testId.split("-")[0] }); }} inputMode="decimal" data-testid={testId} className="nums mt-1 w-full rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-[15px] text-mist-100 outline-none focus:border-edge-400" /></label>
+  <label className="block text-tiny text-fg-muted">{label}<input value={value} onChange={(e) => onChange(e.target.value)} onBlur={() => { if (testId) track("tool_used", { tool: testId.split("-")[0] }); }} inputMode="decimal" data-testid={testId} className={buttonClass("secondary", "mt-1 w-full")} /></label>
 );
+/** One column of a single ruled group — not a floating card. The three share a frame, a top rule
+ *  and the same internal order, so the reader compares tools instead of reading three panels. */
 const Card = ({ title, help, children }: { title: string; help: string; children: React.ReactNode }) => (
-  <div className="rounded-2xl border border-ink-800 bg-ink-900/60 p-6"><h2 className="text-lg font-semibold">{title}</h2><p className="mt-1 text-[13px] text-mist-500">{help}</p><div className="mt-5">{children}</div></div>
+  <div className="flex flex-col p-(--panel-p)">
+    <h2 className="u-title text-base text-fg">{title}</h2>
+    <p className="mt-1.5 max-w-measure-app text-tiny leading-relaxed text-fg-dim">{help}</p>
+    <div className="mt-5 flex flex-1 flex-col">{children}</div>
+  </div>
 );
-const pct = (n: number) => (Number.isFinite(n) ? `${(n * 100).toFixed(1)}%` : "—");
+// pt-BR numerals, like every other number in the product (§11.2).
+const pct = (n: number, lang: Lang, signed = false) => formatPercent(n, lang, { signed });
 
 export function Calculators({ lang }: { lang: Lang }) {
   const c = C[lang];
@@ -46,38 +55,38 @@ export function Calculators({ lang }: { lang: Lang }) {
   const american = Number.isFinite(dec) ? (dec >= 2 ? `+${Math.round((dec - 1) * 100)}` : `${Math.round(-100 / (dec - 1))}`) : "—";
 
   return (
-    <section className="mx-auto max-w-5xl px-5 py-12">
-      <p className="text-[11px] uppercase tracking-[0.18em] text-edge-400">{c.eyebrow}</p>
-      <h1 className="mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">{c.title}</h1>
-      <p className="mt-3 text-[15px] text-mist-400">{c.sub}</p>
-      <div className="mt-10 grid gap-5 lg:grid-cols-3">
+    <section className="mx-auto max-w-shell px-4 py-14 sm:px-6" data-density="comfortable">
+      <p className="text-label u-label text-fg-dim">{c.eyebrow}</p>
+      <h1 className="u-display mt-3 text-display text-fg">{c.title}</h1>
+      <p className="mt-3 text-base text-fg-muted">{c.sub}</p>
+      <div className="mt-10 grid divide-y divide-line border border-line bg-surface-1 lg:grid-cols-3 lg:divide-x lg:divide-y-0">
         <Card title={c.ev} help={c.evHelp}>
           <div className="grid grid-cols-2 gap-3"><Field label={c.odds} value={evOdds} onChange={setEvOdds} testId="ev-odds" /><Field label={c.prob} value={evProb} onChange={setEvProb} testId="ev-prob" /></div>
-          <div className="mt-4 rounded-lg bg-ink-950 p-4" data-testid="ev-result">
-            <div className="text-[10px] uppercase tracking-wider text-mist-500">{c.evResult}</div>
-            <div className={"nums text-3xl font-semibold " + (ev > 0 ? "text-signal-400" : ev < 0 ? "text-warn-400" : "text-mist-300")}>{Number.isFinite(ev) ? `${ev >= 0 ? "+" : ""}${pct(ev)}` : "—"}</div>
-            <div className="mt-1 text-[12px] text-mist-500">{c.implied}: <span className="nums">{pct(impliedProbability(o))}</span> · {c.edge}: <span className="nums">{Number.isFinite(o) ? pct(p - impliedProbability(o)) : "—"}</span></div>
+          <div className="mt-auto border-t border-line pt-4" data-testid="ev-result">
+            <div className="text-micro u-label text-fg-dim">{c.evResult}</div>
+            <div className={"nums text-h3 leading-none " + (ev > 0 ? "text-pos" : ev < 0 ? "text-neg" : "text-fg-muted")}>{Number.isFinite(ev) ? pct(ev, lang, true) : "—"}</div>
+            <div className="mt-1 text-tiny text-fg-dim">{c.implied}: <span className="nums">{pct(impliedProbability(o), lang)}</span> · {c.edge}: <span className="nums">{Number.isFinite(o) ? pct(p - impliedProbability(o), lang, true) : "—"}</span></div>
           </div>
         </Card>
         <Card title={c.parlay} help={c.parlayHelp}>
           <div className="space-y-2">{legs.map((v, i) => <Field key={i} label={`${c.leg} ${i + 1}`} value={v} onChange={(x) => setLegs(legs.map((l, j) => (j === i ? x : l)))} testId={`leg-${i}`} />)}</div>
-          <div className="mt-2 flex gap-2 text-[12px]"><button onClick={() => setLegs([...legs, "1.90"])} className="text-mist-400 hover:text-mist-100">+ {c.leg}</button>{legs.length > 2 && <button onClick={() => setLegs(legs.slice(0, -1))} className="text-mist-500 hover:text-mist-100">−</button>}</div>
-          <div className="mt-4 rounded-lg bg-ink-950 p-4" data-testid="parlay-result">
-            <div className="text-[10px] uppercase tracking-wider text-mist-500">{c.combined}</div>
-            <div className="nums text-3xl font-semibold">{Number.isFinite(combined) ? formatDecimal(combined) : "—"}</div>
-            <div className="mt-1 text-[12px] text-mist-500">{c.chance}: <span className="nums">{pct(impliedProbability(combined))}</span> · {c.hold}: <span className="nums text-warn-400">{pct(hold)}</span></div>
-            <p className="mt-2 text-[11px] text-mist-600">{c.holdNote}</p>
+          <div className="mt-2 flex gap-2 text-tiny"><button onClick={() => setLegs([...legs, "1.90"])} className="text-fg-muted hover:text-fg">+ {c.leg}</button>{legs.length > 2 && <button onClick={() => setLegs(legs.slice(0, -1))} className="text-fg-dim hover:text-fg">−</button>}</div>
+          <div className="mt-auto border-t border-line pt-4" data-testid="parlay-result">
+            <div className="text-micro u-label text-fg-dim">{c.combined}</div>
+            <div className="nums text-h2 font-semibold">{Number.isFinite(combined) ? formatDecimal(combined, lang) : "—"}</div>
+            <div className="mt-1 text-tiny text-fg-dim">{c.chance}: <span className="nums">{pct(impliedProbability(combined), lang)}</span> · {c.hold}: <span className="nums text-warn">{pct(hold, lang)}</span></div>
+            <p className="mt-2 text-label text-fg-dim">{c.holdNote}</p>
           </div>
         </Card>
         <Card title={c.conv} help={c.convHelp}>
           <Field label="Decimal" value={convDec} onChange={setConvDec} testId="conv-dec" />
-          <div className="mt-4 rounded-lg bg-ink-950 p-4 text-[14px]" data-testid="conv-result">
-            <div className="flex justify-between"><span className="text-mist-500">{c.american}</span><span className="nums">{american}</span></div>
-            <div className="mt-2 flex justify-between"><span className="text-mist-500">{c.implied}</span><span className="nums">{pct(impliedProbability(dec))}</span></div>
+          <div className="mt-auto border-t border-line pt-4 text-base" data-testid="conv-result">
+            <div className="flex justify-between"><span className="text-fg-dim">{c.american}</span><span className="nums">{american}</span></div>
+            <div className="mt-2 flex justify-between"><span className="text-fg-dim">{c.implied}</span><span className="nums">{pct(impliedProbability(dec), lang)}</span></div>
           </div>
         </Card>
       </div>
-      <Link href="/signup" className="mt-10 inline-block rounded-lg bg-edge-400 px-5 py-2.5 text-[14px] font-semibold text-ink-950 hover:bg-edge-500">{c.cta}</Link>
+      <Link href="/signup" className={buttonClass("primary", "mt-10")}>{c.cta}</Link>
     </section>
   );
 }

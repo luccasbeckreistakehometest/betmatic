@@ -29,7 +29,7 @@ test("the landing shows live proof numbers and today's whitelabelled ticket", as
   await page.goto("/?lang=pt");
   const strip = page.getByTestId("proof-strip");
   await expect(strip).toContainText("bilhetes gerados");
-  await expect(strip).toContainText("50.0%");
+  await expect(strip).toContainText(/50,0\s*%/); // pt-BR numerals: comma decimal, space before the unit
   await expect(page.getByTestId("ticket-of-day")).toBeVisible();
   // the teaser is a ticket a free account can open, described by its shape — never the pick itself
   await expect(page.getByTestId("ticket-of-day")).toContainText("Múltipla de 3 pernas");

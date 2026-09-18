@@ -1,3 +1,6 @@
+import { formatNumber, NOT_PRICED } from "@/lib/format";
+import type { Lang } from "@/lib/i18n";
+
 /**
  * Odds maths. Everything internally is decimal odds — parlays multiply cleanly in decimal and the
  * implied probability is just the reciprocal.
@@ -100,13 +103,14 @@ export function bandFor(decimal: number): OddsBand | null {
   return ODDS_BANDS.find((b) => decimal >= b.min && decimal < b.max) ?? null;
 }
 
-export function formatDecimal(decimal: number): string {
-  if (!Number.isFinite(decimal)) return "—";
-  return decimal >= 100 ? `${decimal.toFixed(0)}x` : `${decimal.toFixed(2)}x`;
-}
-
-export function formatPercent(p: number, digits = 1): string {
-  return Number.isFinite(p) ? `${(p * 100).toFixed(digits)}%` : "—";
+/**
+ * A multiplier with its `x`. The reader's locale decides the decimal mark, so a pt-BR page never
+ * prints `21.00x` above `50,0 %` (docs/DESIGN.md §11.2). Plain-text outputs that are not a page —
+ * webhook lines, share text, the model's own write-up — keep the en form by omitting `lang`.
+ */
+export function formatDecimal(decimal: number, lang: Lang = "en"): string {
+  if (!Number.isFinite(decimal)) return NOT_PRICED;
+  return `${formatNumber(decimal, lang, { digits: decimal >= 100 ? 0 : 2 })}x`;
 }
 
 /**

@@ -51,8 +51,8 @@ test("the leaderboard shows only members who opted in, with ten decided bets, un
   await expect(me).toHaveAttribute("data-you", "1");
   await expect(me).toContainText(`@rankeiro_${stamp}`);
   await expect(me).toContainText("7W 3L");
-  await expect(me).toContainText("+40.0%");
-  await expect(me).toContainText("+4.00u");
+  await expect(me).toContainText(/\+40,0\s*%/);
+  await expect(me).toContainText(/\+4,00\s*u/);
   await expect(page.getByTestId("ranking-not-in")).toBeHidden();
   await page.getByTestId("period-all").click();
   await expect(page.getByTestId("ranking-row")).toHaveCount(1);

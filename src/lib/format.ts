@@ -87,3 +87,94 @@ export function localizeStatLabel(label: string, lang: Lang): string {
   if (lang === "en") return label;
   return STAT_PT[label.trim().toLowerCase()] ?? label;
 }
+
+/* ------------------------------------------------------------------------------------------------
+ * Numbers (docs/DESIGN.md §11.2)
+ *
+ * One formatter set for the whole product. A component never calls toFixed: 159 of those calls are
+ * why `R$ 0,00` ships next to `0.0%` on the same pt-BR page today. Rules encoded here:
+ *   · pt-BR is absolute — comma decimal, dot thousands, a non-breaking space before the unit;
+ *   · the minus sign is U+2212, never a hyphen, so a negative lines up with a positive in a column;
+ *   · deltas always print their sign, and zero prints without one;
+ *   · "not priced" is an em dash, never `0` and never `- / -`;
+ *   · odds always carry two decimals so the decimal points align down a column.
+ * Every string below is meant to be set in Plex Mono with tabular figures (`nums`).
+ * ---------------------------------------------------------------------------------------------- */
+
+/** What a cell shows when there is no number — never `0`, never `- / -`. */
+export const NOT_PRICED = "—";
+const MINUS = "−";
+const NBSP = " ";
+
+function fixSigns(text: string): string {
+  return text.replace(/-/g, MINUS);
+}
+
+/** Decides the sign a delta shows: explicit + above zero, U+2212 below it, nothing at zero. */
+function signOf(value: number, signed: boolean): string {
+  if (!signed || value === 0) return "";
+  return value > 0 ? "+" : "";
+}
+
+export function formatNumber(value: number, lang: Lang, opts: { digits?: number; signed?: boolean } = {}): string {
+  if (!Number.isFinite(value)) return NOT_PRICED;
+  const digits = opts.digits ?? 0;
+  const text = new Intl.NumberFormat(LOCALE[lang], { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value);
+  return `${signOf(value, opts.signed ?? false)}${fixSigns(text)}`;
+}
+
+/** R$ 1.234,56 — one currency per view; the admin's USD costs are labelled in their own group. */
+export function formatMoney(value: number, lang: Lang, opts: { digits?: number; signed?: boolean } = {}): string {
+  if (!Number.isFinite(value)) return NOT_PRICED;
+  const digits = opts.digits ?? 2;
+  const amount = new Intl.NumberFormat(LOCALE[lang], { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(Math.abs(value));
+  const sign = value < 0 ? MINUS : signOf(value, opts.signed ?? false);
+  return `${sign}R$${NBSP}${amount}`;
+}
+
+/**
+ * The model's bill is in dollars and says so. One helper per currency, so the admin never prints
+ * `$0.00` beside `US$ 0,00` for the same quantity (docs/DESIGN.md §11.2).
+ */
+export function formatUsd(value: number, lang: Lang, opts: { digits?: number } = {}): string {
+  if (!Number.isFinite(value)) return NOT_PRICED;
+  const digits = opts.digits ?? 2;
+  const amount = new Intl.NumberFormat(LOCALE[lang], { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(Math.abs(value));
+  return `${value < 0 ? MINUS : ""}US$${NBSP}${amount}`;
+}
+
+/**
+ * A chance, from a fraction: 0.417 → "41,7 %". The space before the unit is the Brazilian standard
+ * and is non-breaking, so a number never wraps away from its unit at the end of a line.
+ */
+export function formatPercent(fraction: number, lang: Lang, opts: { digits?: number; signed?: boolean } = {}): string {
+  if (!Number.isFinite(fraction)) return NOT_PRICED;
+  const digits = opts.digits ?? 1;
+  const text = new Intl.NumberFormat(LOCALE[lang], { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(fraction * 100);
+  return `${signOf(fraction, opts.signed ?? false)}${fixSigns(text)}${NBSP}%`;
+}
+
+/** Units of bankroll: "+2,40 u" / "−1,74 u". Always signed — a unit result is a delta. */
+export function formatUnits(value: number, lang: Lang, digits = 2): string {
+  if (!Number.isFinite(value)) return NOT_PRICED;
+  return `${formatNumber(value, lang, { digits, signed: true })}${NBSP}u`;
+}
+
+/** A decimal multiplier, always two decimals so the points align down a column. */
+export function formatOdds(decimal: number, lang: Lang): string {
+  if (!Number.isFinite(decimal) || decimal <= 0) return NOT_PRICED;
+  return formatNumber(decimal, lang, { digits: 2 });
+}
+
+/** The chance a price implies, before any margin is removed. Feeds the <Odds> primitive. */
+export function impliedFromDecimal(decimal: number): number {
+  if (!Number.isFinite(decimal) || decimal <= 0) return NaN;
+  return 1 / decimal;
+}
+
+/** American odds for the English side of the product: +145 / −180, with a real minus. */
+export function formatAmerican(decimal: number, lang: Lang): string {
+  if (!Number.isFinite(decimal) || decimal <= 1) return NOT_PRICED;
+  const american = decimal >= 2 ? Math.round((decimal - 1) * 100) : Math.round(-100 / (decimal - 1));
+  return formatNumber(american, lang, { signed: true });
+}

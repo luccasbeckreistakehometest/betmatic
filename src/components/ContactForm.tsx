@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Lang } from "@/lib/i18n";
+import { Select, buttonClass } from "@/components/ui";
 
 const TOPICS = {
   pt: { account: "Minha conta ou senha", payment: "Pagamento", refund: "Reembolso / arrependimento", privacy: "Meus dados (LGPD)", bug: "Algo não funciona", other: "Outro assunto" },
@@ -37,33 +38,33 @@ export function ContactForm({ lang, defaultName = "", defaultEmail = "", default
     setState("idle");
   }
 
-  if (state === "sent") return <p className="rounded-xl border border-edge-400/30 bg-edge-400/5 px-4 py-3 text-[14px] text-mist-100" role="status" data-testid="contact-sent">{c.sent}</p>;
+  if (state === "sent") return <p className="rounded-panel border border-pos bg-action px-4 py-3 text-base text-fg" role="status" data-testid="contact-sent">{c.sent}</p>;
 
-  const field = "w-full rounded-lg border border-ink-700 bg-ink-900 px-3 py-2.5 text-[14px] text-mist-100 outline-none focus:border-edge-400";
+  const field = "w-full rounded-control border border-line-control bg-surface-1 px-3 py-2.5 text-base text-fg";
   return (
     <form onSubmit={submit} className="flex flex-col gap-3.5" data-testid="contact-form">
       <div className="grid gap-3.5 sm:grid-cols-2">
-        <label className="flex flex-col gap-1.5 text-[12px] text-mist-400">{c.name}
+        <label className="flex flex-col gap-1.5 text-tiny text-fg-muted">{c.name}
           <input className={field} value={form.name} maxLength={80} autoComplete="name" onChange={(e) => setForm({ ...form, name: e.target.value })} data-testid="contact-name" />
         </label>
-        <label className="flex flex-col gap-1.5 text-[12px] text-mist-400">{c.email}
+        <label className="flex flex-col gap-1.5 text-tiny text-fg-muted">{c.email}
           <input className={field} type="email" required maxLength={254} autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} data-testid="contact-email" />
         </label>
       </div>
-      <label className="flex flex-col gap-1.5 text-[12px] text-mist-400">{c.topic}
-        <select className={field} value={form.topic} onChange={(e) => setForm({ ...form, topic: e.target.value as Topic })} data-testid="contact-topic">
+      <label className="flex flex-col gap-1.5 text-tiny text-fg-muted">{c.topic}
+        <Select wrapperClassName="block w-full" className="w-full" value={form.topic} onChange={(e) => setForm({ ...form, topic: e.target.value as Topic })} data-testid="contact-topic">
           {(Object.keys(TOPICS[lang]) as Topic[]).map((k) => <option key={k} value={k}>{TOPICS[lang][k]}</option>)}
-        </select>
+        </Select>
       </label>
-      <label className="flex flex-col gap-1.5 text-[12px] text-mist-400">{c.message}
+      <label className="flex flex-col gap-1.5 text-tiny text-fg-muted">{c.message}
         <textarea className={`${field} min-h-36`} required maxLength={4000} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} data-testid="contact-message" />
       </label>
       <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
         <label>Deixe em branco<input tabIndex={-1} type="text" autoComplete="new-password" data-lpignore="true" data-1p-ignore name="bm_hp_field" value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} /></label>
       </div>
-      <p className="text-[12px] text-mist-500">{c.hint}</p>
-      {error && <p className="text-[13px] text-alert-400" role="alert" data-testid="contact-error">{error}</p>}
-      <button type="submit" disabled={state === "sending"} className="w-fit rounded-lg bg-edge-400 px-5 py-2.5 text-[14px] font-semibold text-ink-950 hover:bg-edge-500 disabled:opacity-50" data-testid="contact-submit">
+      <p className="text-tiny text-fg-dim">{c.hint}</p>
+      {error && <p className="text-sm text-neg" role="alert" data-testid="contact-error">{error}</p>}
+      <button type="submit" disabled={state === "sending"} className={buttonClass("primary", "w-fit")} data-testid="contact-submit">
         {state === "sending" ? c.sending : c.send}
       </button>
     </form>

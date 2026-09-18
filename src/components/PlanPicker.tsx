@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { COIN_PACKS, PERIOD, PLANS, PREPAID_NOTE, periodPrice, type BillingPeriod } from "@/lib/plans";
 import { formatMoneyBRL } from "@/lib/format";
+import { planRows } from "@/lib/plan-rows";
+import { Button, LinkButton, NumCell, Table, Td, Th, Tr } from "@/components/ui";
 import type { Lang } from "@/lib/i18n";
 
 const COPY = {
@@ -65,8 +66,8 @@ export function PlanPicker({ lang, signedIn, currentPlanId, paymentsReady, initi
   return (
     <div className="flex flex-col gap-10" data-testid="plan-picker">
       <div className="flex flex-wrap items-center gap-3">
-        <span className="text-[12px] uppercase tracking-wider text-mist-500" id="period-label">{c.period}</span>
-        <div role="radiogroup" aria-labelledby="period-label" className="flex flex-wrap overflow-hidden rounded-lg border border-ink-700">
+        <span className="text-tiny u-label text-fg-dim" id="period-label">{c.period}</span>
+        <div role="radiogroup" aria-labelledby="period-label" className="flex flex-wrap overflow-hidden rounded-control border border-line-control">
           {PERIODS.map((p) => (
             <button
               key={p}
@@ -75,93 +76,140 @@ export function PlanPicker({ lang, signedIn, currentPlanId, paymentsReady, initi
               aria-checked={period === p}
               data-testid={`period-${p}`}
               onClick={() => setPeriod(p)}
-              className={`px-3 py-1.5 text-[12.5px] transition ${period === p ? "bg-edge-400 font-semibold text-ink-950" : "bg-ink-900 text-mist-300 hover:text-white"}`}
+              className={`px-3 py-1.5 text-tiny transition-colors duration-(--dur-1) ease-(--ease-out) ${period === p ? "bg-action font-semibold text-action-fg" : "bg-surface-1 text-fg-muted hover:text-fg"}`}
             >
               {PERIOD[p].label[lang]}
-              {PERIOD[p].discount > 0 && <span className="ml-1 text-[10.5px] opacity-80">−{Math.round(PERIOD[p].discount * 100)}%</span>}
+              {PERIOD[p].discount > 0 && <span className="ml-1 text-micro opacity-80">−{Math.round(PERIOD[p].discount * 100)}%</span>}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {PLANS.map((plan) => {
-          const featured = plan.id === "pro";
-          const total = periodPrice(plan.monthlyPrice, period);
-          const months = PERIOD[period].months;
-          const isCurrent = currentPlanId === plan.id;
-          return (
-            <div key={plan.id} data-testid={`plan-${plan.id}`} className={`relative flex flex-col rounded-2xl border p-6 ${featured ? "border-edge-400/50 bg-edge-400/[0.04]" : "border-ink-800 bg-ink-900/60"}`}>
-              {featured && <span className="absolute -top-2.5 left-6 rounded bg-edge-400 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-950">{c.popular}</span>}
-              <h3 className="text-[15px] font-semibold text-white">{plan.name}</h3>
-              <p className="mt-1 text-[12px] text-mist-500">{plan.tagline[lang]}</p>
-              {plan.monthlyPrice === 0 ? (
-                <p className="mt-4 text-[2rem] font-semibold leading-none text-white">{c.free}</p>
-              ) : (
-                <div className="mt-4">
-                  <p className="flex items-baseline gap-1">
-                    <span className="nums text-[1.9rem] font-semibold leading-none text-white" data-testid={`price-${plan.id}`}>{formatMoneyBRL(total / months, lang)}</span>
-                    <span className="text-[12px] text-mist-500">{c.perMonth}</span>
-                  </p>
-                  {months > 1 && (
-                    <p className="nums mt-1 text-[12px] text-mist-400">{formatMoneyBRL(total, lang)} {c.total} · {months} {lang === "pt" ? "meses" : "months"}</p>
-                  )}
-                </div>
-              )}
-              <ul className="mt-5 flex flex-1 flex-col gap-2">
-                {plan.highlights[lang].map((item) => (
-                  <li key={item} className="flex gap-2 text-[12.5px] leading-snug text-mist-300"><span className="mt-[3px] text-edge-400" aria-hidden>—</span>{item}</li>
+      {/* The landing compares the tiers in a table; the page where money changes hands must not
+          go back to four cards of unequal height, where a Free column ends in 180px of nothing. */}
+      <div className="border border-line bg-surface-1" data-density="default">
+        <Table caption={c.coinsTitle} collapse={false}>
+          <thead>
+            <tr>
+              <Th className="min-w-36">{lang === "pt" ? "O que muda" : "What differs"}</Th>
+              {PLANS.map((plan) => (
+                <Th key={plan.id} numeric className="min-w-28">
+                  {plan.name}
+                  {plan.id === "pro" && <span className="ml-1.5 text-micro u-label text-fg-dim">{c.popular}</span>}
+                </Th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <Tr>
+              <Td label={lang === "pt" ? "O que muda" : "What differs"} className="text-fg-muted">{c.perMonth.replace("/", "")}</Td>
+              {PLANS.map((plan) => {
+                const total = periodPrice(plan.monthlyPrice, period);
+                const months = PERIOD[period].months;
+                return (
+                  <NumCell key={plan.id} label={plan.name} className="text-fg" data-testid={`plan-${plan.id}`}>
+                    <span data-testid={`price-${plan.id}`}>{plan.monthlyPrice === 0 ? c.free : formatMoneyBRL(total / months, lang)}</span>
+                    {plan.monthlyPrice > 0 && months > 1 && (
+                      <span className="mt-0.5 block text-micro font-normal text-fg-dim">{formatMoneyBRL(total, lang)} {c.total}</span>
+                    )}
+                  </NumCell>
+                );
+              })}
+            </Tr>
+            {planRows(lang).map((row) => (
+              <Tr key={row.label}>
+                <Td label={lang === "pt" ? "O que muda" : "What differs"} className="text-fg-muted">{row.label}</Td>
+                {PLANS.map((plan) => (
+                  <NumCell key={plan.id} label={plan.name} className="text-fg">{row.value(plan)}</NumCell>
                 ))}
-              </ul>
-              {isCurrent && <p className="mt-4 text-[11.5px] text-edge-400">{c.current}</p>}
-              {plan.monthlyPrice === 0 ? (
-                !signedIn && <Link href={signupFor({})} className="mt-6 rounded-lg border border-ink-700 px-4 py-2.5 text-center text-[13px] font-semibold text-mist-200 hover:border-ink-600">{c.startFree}</Link>
-              ) : signedIn ? (
-                <button
-                  type="button"
-                  data-testid={`buy-${plan.id}`}
-                  disabled={!!busy || !paymentsReady}
-                  onClick={() => void checkout({ kind: "plan", planId: plan.id, period }, plan.id)}
-                  className={`mt-6 rounded-lg px-4 py-2.5 text-center text-[13px] font-semibold transition disabled:opacity-50 ${featured ? "bg-edge-400 text-ink-950 hover:bg-edge-500" : "border border-ink-700 text-mist-200 hover:border-ink-600 hover:text-white"}`}
-                >
-                  {busy === plan.id ? c.working : c.choose}
-                </button>
-              ) : (
-                <Link
-                  href={signupFor({ plan: plan.id, period })}
-                  data-testid={`buy-${plan.id}`}
-                  className={`mt-6 rounded-lg px-4 py-2.5 text-center text-[13px] font-semibold transition ${featured ? "bg-edge-400 text-ink-950 hover:bg-edge-500" : "border border-ink-700 text-mist-200 hover:border-ink-600 hover:text-white"}`}
-                >
-                  {c.choose}
-                </Link>
-              )}
-            </div>
-          );
-        })}
+              </Tr>
+            ))}
+            <Tr>
+              <Td label={lang === "pt" ? "O que muda" : "What differs"} className="align-top text-fg-muted">{lang === "pt" ? "Inclui" : "Includes"}</Td>
+              {PLANS.map((plan) => (
+                <Td key={plan.id} label={plan.name} className="align-top">
+                  <ul className="flex flex-col gap-1 py-2 text-tiny leading-snug text-fg-muted">
+                    {plan.highlights[lang].map((item) => (
+                      <li key={item} className="flex gap-1.5"><span aria-hidden="true" className="text-fg-dim">—</span>{item}</li>
+                    ))}
+                  </ul>
+                </Td>
+              ))}
+            </Tr>
+            <Tr>
+              <Td label="" />
+              {PLANS.map((plan) => (
+                <Td key={plan.id} numeric label={plan.name} className="align-top">
+                  {currentPlanId === plan.id ? (
+                    <span className="text-tiny text-fg-muted">{c.current}</span>
+                  ) : plan.monthlyPrice === 0 ? (
+                    signedIn ? <span className="text-tiny text-fg-dim">—</span> : <LinkButton href={signupFor({})}>{c.startFree}</LinkButton>
+                  ) : signedIn ? (
+                    <Button
+                      variant={plan.id === "pro" ? "primary" : "secondary"}
+                      data-testid={`buy-${plan.id}`}
+                      disabled={!!busy || !paymentsReady}
+                      loading={busy === plan.id}
+                      onClick={() => void checkout({ kind: "plan", planId: plan.id, period }, plan.id)}
+                    >
+                      {busy === plan.id ? c.working : c.choose}
+                    </Button>
+                  ) : (
+                    <LinkButton
+                      variant={plan.id === "pro" ? "primary" : "secondary"}
+                      href={signupFor({ plan: plan.id, period })}
+                      data-testid={`buy-${plan.id}`}
+                    >
+                      {c.choose}
+                    </LinkButton>
+                  )}
+                </Td>
+              ))}
+            </Tr>
+          </tbody>
+        </Table>
       </div>
 
-      <p className="text-[12.5px] text-mist-400" data-testid="prepaid-note">{PREPAID_NOTE[lang]} {c.extends}</p>
-      {!paymentsReady && <p className="text-[12.5px] text-warn-400">{c.paymentsOff}</p>}
-      {error && <p className="text-[13px] text-alert-400" role="alert" data-testid="checkout-error">{error}</p>}
+      <p className="text-tiny text-fg-muted" data-testid="prepaid-note">{PREPAID_NOTE[lang]} {c.extends}</p>
+      {!paymentsReady && <p className="text-tiny text-warn">{c.paymentsOff}</p>}
+      {error && <p className="text-sm text-neg" role="alert" data-testid="checkout-error">{error}</p>}
 
-      <section className="rounded-2xl border border-ink-800 bg-ink-900/60 p-6">
-        <h2 className="text-[15px] font-semibold text-white">{c.coinsTitle}</h2>
-        <p className="mt-2 max-w-3xl text-[13px] leading-relaxed text-mist-400">{c.coinsSub}</p>
-        <div className="mt-5 flex flex-wrap gap-3">
-          {COIN_PACKS.map((pack) => (
-            <div key={pack.id} className="flex min-w-[10rem] flex-col rounded-xl border border-ink-800 bg-ink-850/60 px-5 py-3">
-              <p className="nums text-[15px] font-semibold text-white">{pack.coins + pack.bonus}<span className="ml-1 text-[11px] font-normal text-mist-500">coins</span></p>
-              {pack.bonus > 0 && <p className="nums text-[10px] text-edge-400">+{pack.bonus} {c.bonus}</p>}
-              <p className="nums mt-1 text-[12px] text-mist-300">{formatMoneyBRL(pack.price, lang)}</p>
-              {signedIn ? (
-                <button type="button" data-testid={`buy-${pack.id}`} disabled={!!busy || !paymentsReady} onClick={() => void checkout({ kind: "coins", packId: pack.id }, pack.id)} className="mt-3 rounded-lg border border-ink-700 px-3 py-1.5 text-[12.5px] text-mist-200 transition hover:border-edge-400/50 disabled:opacity-50">
-                  {busy === pack.id ? c.working : c.buy}
-                </button>
-              ) : (
-                <Link href={signupFor({ pack: pack.id })} data-testid={`buy-${pack.id}`} className="mt-3 rounded-lg border border-ink-700 px-3 py-1.5 text-center text-[12.5px] text-mist-200 hover:border-edge-400/50">{c.buy}</Link>
-              )}
-            </div>
-          ))}
+      <section className="rounded-panel border border-line bg-surface-1 p-(--panel-p)">
+        <h2 className="text-base font-semibold text-fg">{c.coinsTitle}</h2>
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-fg-muted">{c.coinsSub}</p>
+        {/* Three prices a buyer compares must sit on one baseline: as cards, "R$ 19" floated 18px
+            above "R$ 59" because the first pack has no bonus line. A table cannot do that. */}
+        <div className="mt-5 border border-line" data-density="default">
+          <Table caption={c.coinsTitle} collapse={false}>
+            <thead>
+              <tr>
+                <Th>Coins</Th>
+                <Th numeric>{c.bonus}</Th>
+                <Th numeric>{lang === "pt" ? "Preço" : "Price"}</Th>
+                <Th numeric className="w-px" />
+              </tr>
+            </thead>
+            <tbody>
+              {COIN_PACKS.map((pack) => (
+                <Tr key={pack.id}>
+                  <Td label="Coins" className="font-medium text-fg"><span className="nums">{pack.coins + pack.bonus}</span></Td>
+                  <NumCell label={c.bonus} className={pack.bonus > 0 ? "text-pos" : "text-fg-dim"}>
+                    {pack.bonus > 0 ? `+${pack.bonus}` : "—"}
+                  </NumCell>
+                  <NumCell label={lang === "pt" ? "Preço" : "Price"} className="text-fg">{formatMoneyBRL(pack.price, lang)}</NumCell>
+                  <Td numeric label="">
+                    {signedIn ? (
+                      <Button data-testid={`buy-${pack.id}`} disabled={!!busy || !paymentsReady} loading={busy === pack.id} onClick={() => void checkout({ kind: "coins", packId: pack.id }, pack.id)}>
+                        {busy === pack.id ? c.working : c.buy}
+                      </Button>
+                    ) : (
+                      <LinkButton href={signupFor({ pack: pack.id })} data-testid={`buy-${pack.id}`}>{c.buy}</LinkButton>
+                    )}
+                  </Td>
+                </Tr>
+              ))}
+            </tbody>
+          </Table>
         </div>
       </section>
     </div>

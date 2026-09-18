@@ -1,10 +1,14 @@
 import Link from "next/link";
 import { LANGS, type Lang } from "@/lib/i18n";
 
-/** Language toggle for server-rendered pages: each option is a real link to that page's other language. */
+/**
+ * Language toggle for server-rendered pages: each option is a real link to that page's other
+ * language. A flag is not a language — Portuguese is not Brazil and English is not the United
+ * States — so the control says PT and EN, which also survives a monochrome palette (§10.2).
+ */
 export function LangSwitch({ lang, hrefs }: { lang: Lang; hrefs: Record<Lang, string> }) {
   return (
-    <div className="flex overflow-hidden rounded-lg border border-ink-700" role="group" aria-label={lang === "pt" ? "Idioma" : "Language"}>
+    <div className="flex overflow-hidden rounded-control border border-line-control" role="group" aria-label={lang === "pt" ? "Idioma" : "Language"}>
       {LANGS.map((l) => (
         <Link
           key={l.key}
@@ -12,11 +16,11 @@ export function LangSwitch({ lang, hrefs }: { lang: Lang; hrefs: Record<Lang, st
           hrefLang={l.key === "pt" ? "pt-BR" : "en"}
           aria-current={lang === l.key ? "true" : undefined}
           aria-label={l.label}
-          className={`px-2 py-1 text-[11px] font-medium transition ${
-            lang === l.key ? "bg-ink-700 text-mist-100" : "bg-ink-900 text-mist-500 hover:text-mist-200"
+          className={`px-1.5 py-1 text-micro u-label transition-colors duration-(--dur-1) ${
+            lang === l.key ? "bg-action text-action-fg" : "bg-surface-1 text-fg-dim hover:text-fg"
           }`}
         >
-          {l.flag}
+          {l.key.toUpperCase()}
         </Link>
       ))}
     </div>

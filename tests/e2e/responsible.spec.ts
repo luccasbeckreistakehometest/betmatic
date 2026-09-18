@@ -29,7 +29,7 @@ test("stake ceilings cap the bankroll; the losing-streak notice and the session 
   await page.getByTestId("manual-odds").fill("1.90");
   await page.getByTestId("manual-stake").fill("50");
   await page.getByTestId("manual-add").click();
-  await expect(page.getByTestId("add-error")).toContainText("restam R$ 10,00");
+  await expect(page.getByTestId("add-error")).toContainText(/restam R\$\s*10,00/);
 
   // three losses in a row → the notice (default threshold 3)
   const { entries } = await page.request.get("/api/bankroll").then((r) => r.json());

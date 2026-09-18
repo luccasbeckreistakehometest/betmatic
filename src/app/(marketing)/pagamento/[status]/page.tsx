@@ -8,6 +8,7 @@ import { formatDate, formatMoneyBRL } from "@/lib/format";
 import type { Lang } from "@/lib/i18n";
 import type { SearchParams } from "@/lib/seo";
 import { paymentLabel } from "@/lib/plans";
+import { buttonClass } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Pagamento", robots: { index: false, follow: false } };
@@ -51,20 +52,20 @@ export default async function PaymentResult({ params, searchParams }: { params: 
   return (
     <MarketingPage lang={lang} langHrefs={{ pt: `/pagamento/${status}`, en: `/pagamento/${status}?lang=en` }}>
       <div data-testid={`payment-${status}`}>
-        <h1 className="text-[clamp(1.7rem,4vw,2.4rem)] font-semibold tracking-[-0.02em] text-white">{c.title}</h1>
-        <p className="mt-4 text-[15px] leading-relaxed text-mist-300">{c.body}</p>
+        <h1 className="u-display text-display text-fg">{c.title}</h1>
+        <p className="mt-4 text-base leading-relaxed text-fg-muted">{c.body}</p>
 
         {user && payment && (
-          <div className="mt-8 rounded-xl border border-ink-800 bg-ink-900/60 p-5 text-[13.5px] text-mist-300">
+          <div className="mt-8 rounded-panel border border-line bg-surface-1 p-(--panel-p) text-sm text-fg-muted">
             <p>
               {paymentLabel(payment, lang)}
               {" · "}<span className="nums">{formatMoneyBRL(payment.amount, lang, 2)}</span>
               {" · "}{formatDate(payment.createdAt, lang, { year: true })}
             </p>
             <p className="mt-1">
-              Status: <strong className="text-mist-100" data-testid="payment-row-status">{STATUS_LABEL[payment.status]?.[lang] ?? payment.status}</strong>
+              Status: <strong className="text-fg" data-testid="payment-row-status">{STATUS_LABEL[payment.status]?.[lang] ?? payment.status}</strong>
             </p>
-            <p className="mt-3 text-[12.5px] text-mist-400">
+            <p className="mt-3 text-tiny text-fg-muted">
               {lang === "pt" ? "Plano atual" : "Current plan"}: {user.plan.name}
               {user.planId !== "free" && user.planExpiresAt ? ` · ${lang === "pt" ? "até" : "until"} ${formatDate(user.planExpiresAt, lang, { year: true })}` : ""}
               {" · "}{user.coins} coins
@@ -74,12 +75,12 @@ export default async function PaymentResult({ params, searchParams }: { params: 
 
         <div className="mt-8 flex flex-wrap gap-3">
           {status === "sucesso" ? (
-            <Link href={`/app?lang=${lang}`} className="rounded-lg bg-edge-400 px-5 py-2.5 text-[14px] font-semibold text-ink-950 hover:bg-edge-500">{lang === "pt" ? "Ir para os jogos" : "Go to the games"}</Link>
+            <Link href={`/app?lang=${lang}`} className={buttonClass("primary")}>{lang === "pt" ? "Ir para os jogos" : "Go to the games"}</Link>
           ) : (
-            <Link href={`/planos?lang=${lang}`} className="rounded-lg bg-edge-400 px-5 py-2.5 text-[14px] font-semibold text-ink-950 hover:bg-edge-500">{lang === "pt" ? "Voltar aos planos" : "Back to plans"}</Link>
+            <Link href={`/planos?lang=${lang}`} className={buttonClass("primary")}>{lang === "pt" ? "Voltar aos planos" : "Back to plans"}</Link>
           )}
-          <Link href={`/app/conta?lang=${lang}`} className="rounded-lg border border-ink-700 px-5 py-2.5 text-[14px] text-mist-200 hover:border-ink-600">{lang === "pt" ? "Minha conta" : "My account"}</Link>
-          <Link href={`/contato?lang=${lang}&topic=payment`} className="rounded-lg border border-ink-700 px-5 py-2.5 text-[14px] text-mist-200 hover:border-ink-600">{lang === "pt" ? "Algo errado? Fale com a gente" : "Something wrong? Contact us"}</Link>
+          <Link href={`/app/conta?lang=${lang}`} className={buttonClass()}>{lang === "pt" ? "Minha conta" : "My account"}</Link>
+          <Link href={`/contato?lang=${lang}&topic=payment`} className={buttonClass()}>{lang === "pt" ? "Algo errado? Fale com a gente" : "Something wrong? Contact us"}</Link>
         </div>
       </div>
     </MarketingPage>

@@ -57,8 +57,8 @@ export function PlayerChart({ bars, line, min, max, onLine, side, ariaLabel }: {
     >
       {ticks.map((v) => (
         <g key={v}>
-          <line x1={PAD.left} x2={W - PAD.right} y1={y(v)} y2={y(v)} stroke="var(--color-ink-700)" strokeWidth={1} />
-          <text x={PAD.left - 6} y={y(v) + 3} textAnchor="end" fontSize={10} fill="var(--color-mist-500)">{v}</text>
+          <line x1={PAD.left} x2={W - PAD.right} y1={y(v)} y2={y(v)} stroke="var(--line-strong)" strokeWidth={1} />
+          <text x={PAD.left - 6} y={y(v) + 3} textAnchor="end" fontSize={10} fill="var(--fg-dim)">{v}</text>
         </g>
       ))}
       {bars.map((b, i) => {
@@ -69,16 +69,16 @@ export function PlayerChart({ bars, line, min, max, onLine, side, ariaLabel }: {
           <g key={i}>
             <title>{b.title}</title>
             <rect x={x} y={y(b.value)} width={barW} height={Math.max(1, y(0) - y(b.value))} rx={2}
-              fill={push ? "var(--color-mist-500)" : hit ? "var(--color-edge-400)" : "var(--color-ink-600)"} opacity={push ? 0.6 : 0.9} />
+              fill={push ? "var(--fg-dim)" : hit ? "var(--pos)" : "var(--line-control)"} opacity={push ? 0.6 : 0.9} />
             {bars.length <= 20 && (
-              <text x={x + barW / 2} y={H - 8} textAnchor="middle" fontSize={9} fill="var(--color-mist-500)">{b.label}</text>
+              <text x={x + barW / 2} y={H - 8} textAnchor="middle" fontSize={9} fill="var(--fg-dim)">{b.label}</text>
             )}
           </g>
         );
       })}
-      <line x1={PAD.left} x2={W - PAD.right} y1={y(line)} y2={y(line)} stroke="var(--color-warn-400)" strokeWidth={2} strokeDasharray="6 4" />
-      <rect x={W - PAD.right - 44} y={y(line) - 9} width={44} height={16} rx={4} fill="var(--color-warn-400)" />
-      <text x={W - PAD.right - 22} y={y(line) + 3} textAnchor="middle" fontSize={10} fontWeight={700} fill="var(--color-ink-950)">{line}</text>
+      <line x1={PAD.left} x2={W - PAD.right} y1={y(line)} y2={y(line)} stroke="var(--warn)" strokeWidth={2} strokeDasharray="6 4" />
+      <rect x={W - PAD.right - 44} y={y(line) - 9} width={44} height={16} rx={4} fill="var(--warn)" />
+      <text x={W - PAD.right - 22} y={y(line) + 3} textAnchor="middle" fontSize={10} fontWeight={700} fill="var(--surface-0)">{line}</text>
     </svg>
   );
 }

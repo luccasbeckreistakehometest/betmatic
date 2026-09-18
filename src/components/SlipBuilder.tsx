@@ -6,8 +6,9 @@ import { useNavState } from "@/components/Controls";
 import { DeepSlipTable } from "@/components/DeepSlipTable";
 import { SLIP_PREFILL_KEY, SlipScanner } from "@/components/SlipScanner";
 import type { DeepContext } from "@/lib/server/deep-slip";
-import { Chip, Panel } from "@/components/ui";
-import { formatDecimal, formatPercent, parseOdds, parlayDecimal } from "@/lib/odds";
+import { Chip, IconButton, Panel, buttonClass } from "@/components/ui";
+import { formatDecimal, parseOdds, parlayDecimal } from "@/lib/odds";
+import { formatPercent as pctOf } from "@/lib/format";
 import { ACTION_COST } from "@/lib/plans";
 import { makeT } from "@/lib/i18n";
 
@@ -31,9 +32,9 @@ interface Analysis {
 }
 
 const CONCERN_TONE: Record<string, string> = {
-  none: "text-edge-400",
-  minor: "text-warn-400",
-  serious: "text-alert-400",
+  none: "text-pos",
+  minor: "text-warn",
+  serious: "text-neg",
 };
 
 const emptyLeg: Leg = { selection: "", market: "", odds: "" };
@@ -107,18 +108,16 @@ export function SlipBuilder() {
   }
 
   const field =
-    "rounded-lg border border-ink-700 bg-ink-900 px-2.5 py-1.5 text-[13px] text-mist-100 outline-none transition placeholder:text-mist-600 focus:border-edge-400";
+    "h-(--row-h) rounded-control border border-line-control bg-surface-1 px-2.5 text-sm text-fg transition-colors duration-(--dur-1) ease-(--ease-out) placeholder:text-fg-dim";
 
   return (
-    <div className="flex flex-col gap-5">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight text-white">{t("slipTitle")}</h1>
-        <p className="mt-1 max-w-2xl text-sm leading-relaxed text-mist-400">{t("slipHint")}</p>
-      </div>
+    <div className="flex max-w-[64rem] flex-col gap-4">
+      {/* The page head above already names the screen; repeating it here was three titles deep. */}
+      <p className="max-w-measure-app text-sm leading-relaxed text-fg-muted">{t("slipHint")}</p>
 
       <SlipScanner lang={lang} sportKey={sport.key} />
 
-      <Panel title={t("slipTitle")} lang={lang} meta={Number.isFinite(combined) ? formatDecimal(combined) : undefined}>
+      <Panel title={t("slipTitle")} lang={lang} meta={Number.isFinite(combined) ? formatDecimal(combined, lang) : undefined}>
         <div className="flex flex-col gap-2.5">
           {legs.map((leg, i) => (
             <div key={i} className="grid gap-2 sm:grid-cols-[1fr_140px_100px_auto]">
@@ -146,47 +145,46 @@ export function SlipBuilder() {
                 value={leg.odds}
                 onChange={(e) => update(i, { odds: e.target.value })}
               />
-              <button
+              <IconButton
+                icon="trash"
+                label={`${t("removeLeg")} ${i + 1}`}
                 onClick={() => setLegs((prev) => prev.filter((_, idx) => idx !== i))}
                 disabled={legs.length <= 2}
-                className="rounded-lg border border-ink-700 px-2 text-[11px] text-mist-500 transition hover:text-alert-400 disabled:opacity-30"
-              >
-                {t("removeLeg")}
-              </button>
+              />
             </div>
           ))}
 
           <div className="flex flex-wrap items-center gap-3 pt-1">
             <button
               onClick={() => setLegs((prev) => [...prev, { ...emptyLeg }])}
-              className="rounded-lg border border-ink-700 px-3 py-1.5 text-[12px] text-mist-300 transition hover:border-ink-600 hover:text-white"
+              className="rounded-control border border-line-control px-3 py-1.5 text-tiny text-fg-muted transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:text-fg"
             >
               + {t("addLeg")}
             </button>
             <button
               onClick={() => void analyse()}
               disabled={!ready || busy}
-              className="rounded-lg bg-edge-400 px-4 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500 disabled:opacity-40"
+              className={buttonClass("primary")}
             >
               {busy ? t("analysing") : t("analyseSlip")}
             </button>
-            <span className="nums text-[11px] text-mist-500" data-testid="slip-price">
+            <span className="nums text-label text-fg-dim" data-testid="slip-price">
               {t("costsCoins")} {price} coins
             </span>
-            <label className="flex items-center gap-1.5 text-[12px] text-mist-300" data-testid="deep-toggle">
-              <input type="checkbox" checked={deep} onChange={(e) => setDeep(e.target.checked)} className="accent-emerald-400" />
+            <label className="flex items-center gap-1.5 text-tiny text-fg-muted" data-testid="deep-toggle">
+              <input type="checkbox" checked={deep} onChange={(e) => setDeep(e.target.checked)} className="size-4 appearance-none rounded-control border border-line-control bg-surface-3 checked:border-action checked:bg-action" />
               {lang === "pt" ? "Análise profunda" : "Deep analysis"}
-              <span className="text-[11px] text-mist-500">
+              <span className="text-label text-fg-dim">
                 {pricing.deepIncluded
                   ? (lang === "pt" ? `(incluída no Max: ${pricing.deep} coins)` : `(included in Max: ${pricing.deep} coins)`)
                   : `(${pricing.deep} coins)`}
               </span>
             </label>
-            {!ready && <span className="text-[11px] text-mist-600">{t("slipEmpty")}</span>}
+            {!ready && <span className="text-label text-fg-dim">{t("slipEmpty")}</span>}
           </div>
 
           {deep && (
-            <p className="text-[11.5px] leading-relaxed text-mist-500">
+            <p className="text-tiny leading-relaxed text-fg-dim">
               {lang === "pt"
                 ? "Na análise profunda cada perna é conferida antes do veredito: jogo e jogador encontrados, quantas vezes passou da linha, odd publicada sem a margem, papel no time, lesão e pernas que andam juntas."
                 : "In the deep analysis each leg is checked before the verdict: game and player found, how often the line was cleared, the posted price without the margin, role, injuries and legs that move together."}
@@ -194,7 +192,7 @@ export function SlipBuilder() {
           )}
 
           {error && (
-            <p className="text-[12.5px] text-alert-400">
+            <p className="text-tiny text-neg">
               {error}{" "}
               <Link href={`/planos?lang=${lang}`} className="underline">
                 {t("seePlans")}
@@ -209,18 +207,18 @@ export function SlipBuilder() {
       {analysis && (
         <Panel title={t("slipVerdict")} lang={lang} status="ok">
           <div className="flex flex-col gap-4">
-            <p className="text-[14px] leading-relaxed text-mist-100">{analysis.verdict}</p>
+            <p className="text-base leading-relaxed text-fg">{analysis.verdict}</p>
 
-            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-ink-800 bg-ink-800 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-control border border-line bg-surface-3 sm:grid-cols-4">
               {[
-                [t("combined"), formatDecimal(analysis.combinedDecimal)],
-                [t("impliedChance"), formatPercent(analysis.impliedProbability, 2)],
-                [t("modelledChance"), formatPercent(analysis.modelledProbability, 2)],
-                [t("evLabel"), Number.isFinite(analysis.edgePct) ? `${analysis.edgePct > 0 ? "+" : ""}${analysis.edgePct.toFixed(1)}%` : "—"],
+                [t("combined"), formatDecimal(analysis.combinedDecimal, lang)],
+                [t("impliedChance"), pctOf(analysis.impliedProbability, lang, { digits: 2 })],
+                [t("modelledChance"), pctOf(analysis.modelledProbability, lang, { digits: 2 })],
+                [t("evLabel"), pctOf(analysis.edgePct / 100, lang, { signed: true })],
               ].map(([label, value]) => (
-                <div key={label} className="bg-ink-900 px-2 py-1.5 text-center">
-                  <div className="text-[9px] uppercase tracking-wider text-mist-500">{label}</div>
-                  <div className="nums text-[12px] text-mist-200">{value}</div>
+                <div key={label} className="bg-surface-1 px-2 py-1.5 text-center">
+                  <div className="text-micro u-label text-fg-dim">{label}</div>
+                  <div className="nums text-tiny text-fg">{value}</div>
                 </div>
               ))}
             </div>
@@ -229,43 +227,43 @@ export function SlipBuilder() {
               {analysis.legs.map((leg) => (
                 <li
                   key={leg.index}
-                  className={`rounded-lg border p-3 ${
-                    leg.index === analysis.weakestIndex ? "border-alert-400/40 bg-alert-400/5" : "border-ink-800 bg-ink-850/60"
+                  className={`rounded-control border p-3 ${
+                    leg.index === analysis.weakestIndex ? "border-neg bg-neg-tint" : "border-line bg-surface-2"
                   }`}
                 >
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="nums text-[10px] text-mist-600">{leg.index + 1}</span>
-                    <span className="text-[12.5px] font-medium text-mist-100">
+                    <span className="nums text-micro text-fg-dim">{leg.index + 1}</span>
+                    <span className="text-tiny font-medium text-fg">
                       {legs[leg.index]?.selection ?? "—"}
                     </span>
-                    <span className={`text-[10px] uppercase ${CONCERN_TONE[leg.concern] ?? "text-mist-500"}`}>
+                    <span className={`text-micro uppercase ${CONCERN_TONE[leg.concern] ?? "text-fg-dim"}`}>
                       {leg.concern}
                     </span>
                     {leg.index === analysis.weakestIndex && <Chip tone="low">{t("slipWeakest")}</Chip>}
-                    <span className="nums ml-auto text-[11px] text-mist-400">
-                      {formatPercent(leg.fairProbability, 0)}
+                    <span className="nums ml-auto text-label text-fg-muted">
+                      {pctOf(leg.fairProbability, lang, { digits: 0 })}
                     </span>
                   </div>
-                  <p className="mt-1.5 text-[12px] leading-relaxed text-mist-400">{leg.assessment}</p>
+                  <p className="mt-1.5 text-tiny leading-relaxed text-fg-muted">{leg.assessment}</p>
                 </li>
               ))}
             </ul>
 
             {analysis.swaps.length > 0 && (
               <div>
-                <h3 className="text-[10px] font-semibold uppercase tracking-wider text-mist-500">{t("slipSwaps")}</h3>
+                <h3 className="text-micro u-label text-fg-dim">{t("slipSwaps")}</h3>
                 <ul className="mt-2 flex flex-col gap-2">
                   {analysis.swaps.map((swap, i) => (
-                    <li key={i} className="rounded-lg border border-ink-800 bg-ink-850/60 p-3">
-                      <p className="text-[12.5px] leading-relaxed text-mist-200">{swap.suggestion}</p>
-                      <p className="mt-1 text-[11.5px] leading-relaxed text-mist-500">{swap.effect}</p>
+                    <li key={i} className="rounded-control border border-line bg-surface-2 p-3">
+                      <p className="text-tiny leading-relaxed text-fg">{swap.suggestion}</p>
+                      <p className="mt-1 text-tiny leading-relaxed text-fg-dim">{swap.effect}</p>
                     </li>
                   ))}
                 </ul>
               </div>
             )}
 
-            <p className="border-t border-ink-800 pt-2.5 text-[11.5px] leading-relaxed text-mist-500">
+            <p className="border-t border-line pt-2.5 text-tiny leading-relaxed text-fg-dim">
               {analysis.correlationNote}
             </p>
           </div>

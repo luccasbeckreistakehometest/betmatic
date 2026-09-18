@@ -32,7 +32,8 @@ describe("game page text", () => {
     expect(faq[0].a).toContain("conta grátis");
     const paid = gameFaq({ teams: { away: "A", home: "B" }, league: "NBA", lang: "pt", teaser: { title: "x", odds: "8.00x", legs: 3, free: false }, proof: { settled: 0, hitRate: 0, roi: 0 } });
     expect(paid[0].a).toContain("planos pagos");
-    expect(faq[1].a).toContain("2 bilhetes de La Liga já liquidados, 50.0% de acerto e ROI de +0.0%");
+    // pt-BR numerals: comma decimal and a non-breaking space before the unit; zero carries no sign.
+    expect(faq[1].a).toContain(`2 bilhetes de La Liga já liquidados, 50,0\u00a0% de acerto e ROI de 0,0\u00a0%`);
     expect(faq[2].a).toContain("Aposta não é investimento");
     const empty = gameFaq({ teams: { away: "A", home: "B" }, league: "NBA", lang: "en", teaser: null, proof: { settled: 0, hitRate: 0, roi: 0 } });
     expect(empty[0].a).toContain("has not been built yet");

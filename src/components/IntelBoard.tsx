@@ -6,7 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { BetsPanel, type LegAlertView } from "@/components/BetsPanel";
 import { RefreshBar } from "@/components/RefreshBar";
 import { useNavState } from "@/components/Controls";
-import { Empty, Panel } from "@/components/ui";
+import { Empty, Panel, buttonClass } from "@/components/ui";
 import { makeT, type DictKey } from "@/lib/i18n";
 import { formatDate, formatTime } from "@/lib/format";
 import type { BetSlate } from "@/lib/types";
@@ -149,7 +149,7 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
     body = <Empty>{t("loadingTickets")}</Empty>;
   } else if (data?.paused) {
     body = (
-      <p className="rounded-lg border border-warn-400/25 bg-warn-400/5 px-3 py-2 text-[13px] text-warn-400" data-testid="tickets-paused">
+      <p className="rounded-control border border-warn bg-warn-tint px-3 py-2 text-sm text-warn" data-testid="tickets-paused">
         {t("pausedTickets").replace("{date}", data.paused.until ? formatDate(data.paused.until, lang, { year: true }) : "—")}
       </p>
     );
@@ -157,7 +157,7 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
     body = (
       <>
         {mine.delayed && (
-          <p className="mb-3 rounded-lg border border-warn-400/25 bg-warn-400/5 px-3 py-2 text-[12px] text-warn-400">{t("delayedNotice")}</p>
+          <p className="mb-3 rounded-control border border-warn bg-warn-tint px-3 py-2 text-tiny text-warn">{t("delayedNotice")}</p>
         )}
         {data?.plan.id === "max" && !started && <RefreshBar gameId={gameId} sportKey={sport.key} lang={lang} onRefreshed={() => void load()} />}
         {alerts.length > 0 && <LineupBanner alerts={alerts} lang={lang} />}
@@ -167,17 +167,17 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
   } else if (delayed) {
     body = (
       <div className="flex flex-col gap-2" data-testid="tickets-delayed">
-        <p className="rounded-lg border border-warn-400/25 bg-warn-400/5 px-3 py-2 text-[13px] text-warn-400">
+        <p className="rounded-control border border-warn bg-warn-tint px-3 py-2 text-sm text-warn">
           {t("delayedUntil").replace("{time}", formatTime(delayed.availableAt, lang))}
         </p>
-        <Link href={plansHref} className="w-fit rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500">{t("seePlans")}</Link>
+        <Link href={plansHref} className={buttonClass("primary", "w-fit")}>{t("seePlans")}</Link>
       </div>
     );
   } else if (!authenticated) {
     body = (
       <div className="flex flex-col gap-2">
         <Empty>{t("signInForTickets")}</Empty>
-        <Link href={signupHref} data-testid="signup-for-tickets" className="w-fit rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500">
+        <Link href={signupHref} data-testid="signup-for-tickets" className={buttonClass("primary", "w-fit")}>
           {t("startFreeCta")}
         </Link>
       </div>
@@ -191,11 +191,11 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
         <Empty>{t("freeGameChosen")}</Empty>
         <div className="flex flex-wrap gap-2">
           {other && (
-            <Link href={`/app/game/${other.gameId}?sport=${other.sportKey}&lang=${lang}`} className="w-fit rounded-lg border border-ink-700 px-3.5 py-1.5 text-[13px] text-mist-200 transition hover:border-ink-600">
+            <Link href={`/app/game/${other.gameId}?sport=${other.sportKey}&lang=${lang}`} className={buttonClass("secondary", "w-fit")}>
               {t("openChosenGame")}
             </Link>
           )}
-          <Link href={plansHref} className="w-fit rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500">{t("seePlans")}</Link>
+          <Link href={plansHref} className={buttonClass("primary", "w-fit")}>{t("seePlans")}</Link>
         </div>
       </div>
     );
@@ -204,16 +204,16 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
       <div className="flex flex-col gap-2" data-testid="daily-pick">
         <Empty>{t("dailyPickPrompt")}</Empty>
         <div className="flex flex-wrap items-center gap-3">
-          <button onClick={() => void generate()} data-testid="use-daily-pick" className="w-fit rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500">{t("useDailyPick")}</button>
-          <Link href={plansHref} className="text-[13px] text-mist-400 underline-offset-4 hover:text-mist-100 hover:underline">{t("seePlans")}</Link>
+          <button onClick={() => void generate()} data-testid="use-daily-pick" className={buttonClass("primary", "w-fit")}>{t("useDailyPick")}</button>
+          <Link href={plansHref} className="text-sm text-fg-muted underline-offset-4 hover:text-fg hover:underline">{t("seePlans")}</Link>
         </div>
-        <p className="text-[12px] text-mist-500">{t("dailyPickNote")}</p>
+        <p className="text-tiny text-fg-dim">{t("dailyPickNote")}</p>
       </div>
     );
   } else if (gen === "running") {
     body = (
-      <div className="flex items-center gap-3 rounded-lg border border-ink-700 bg-ink-850 px-3 py-3 text-[13px] text-mist-300" data-testid="generating">
-        <span className="h-3 w-3 animate-pulse rounded-full bg-edge-400" />{t("generatingTickets")}
+      <div className="flex items-center gap-3 rounded-control border border-line-strong bg-surface-2 px-3 py-3 text-sm text-fg-muted" data-testid="generating">
+        <span aria-hidden="true" className="live-dot size-1.5 rounded-full bg-fg-dim" />{t("generatingTickets")}
       </div>
     );
   } else if (gen === "capUser") {
@@ -223,11 +223,11 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
         <Empty>{data?.plan.gamesPerDay ? t("freeGameChosen") : t("capUser")}</Empty>
         <div className="flex flex-wrap gap-2">
           {other && (
-            <Link href={`/app/game/${other.gameId}?sport=${other.sportKey}&lang=${lang}`} className="w-fit rounded-lg border border-ink-700 px-3.5 py-1.5 text-[13px] text-mist-200 transition hover:border-ink-600">
+            <Link href={`/app/game/${other.gameId}?sport=${other.sportKey}&lang=${lang}`} className={buttonClass("secondary", "w-fit")}>
               {t("openChosenGame")}
             </Link>
           )}
-          <Link href={plansHref} className="w-fit rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500">{t("seePlans")}</Link>
+          <Link href={plansHref} className={buttonClass("primary", "w-fit")}>{t("seePlans")}</Link>
         </div>
       </div>
     );
@@ -237,10 +237,10 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
       <div className="flex flex-col gap-2">
         <Empty>{message}</Empty>
         {(gen === "generateFailed" || gen === "done") && (
-          <button onClick={() => void generate()} className="w-fit rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500">{t("generateNow")}</button>
+          <button onClick={() => void generate()} className={buttonClass("primary", "w-fit")}>{t("generateNow")}</button>
         )}
         {gen === "planSport" && (
-          <Link href={plansHref} className="w-fit rounded-lg bg-edge-400 px-3.5 py-1.5 text-[13px] font-semibold text-ink-950 transition hover:bg-edge-500">{t("seePlans")}</Link>
+          <Link href={plansHref} className={buttonClass("primary", "w-fit")}>{t("seePlans")}</Link>
         )}
       </div>
     );
@@ -254,7 +254,7 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
         status={loading ? "pending" : mine ? "ok" : "empty"}
         meta={mine ? relTime(mine.generatedAt, lang) : undefined}
         action={
-          <Link href={`/app/slip?sport=${sport.key}&lang=${lang}`} className="rounded-md border border-ink-700 px-2 py-0.5 text-[11px] text-mist-400 transition hover:border-ink-600 hover:text-mist-100">
+          <Link href={`/app/slip?sport=${sport.key}&lang=${lang}`} className="rounded-control border border-line-control px-2 py-0.5 text-label text-fg-muted transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:text-fg">
             {t("mySlip")}
           </Link>
         }
@@ -280,16 +280,16 @@ function LineupBanner({ alerts, lang }: { alerts: LegAlertView[]; lang: "pt" | "
     byPlayer.set(a.player, { kind: cur?.kind ?? a.kind, legs: (cur?.legs ?? 0) + 1 });
   }
   return (
-    <div className="mb-3 rounded-lg border border-alert-400/30 bg-alert-400/[0.06] px-3 py-2.5" data-testid="lineup-banner">
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-alert-400">{lang === "pt" ? "Escalação" : "Lineup"}</p>
-      <ul className="mt-1 flex flex-col gap-0.5 text-[12.5px] text-mist-200">
+    <div className="mb-3 rounded-control border border-neg bg-neg-tint px-3 py-2.5" data-testid="lineup-banner">
+      <p className="text-micro u-label text-neg">{lang === "pt" ? "Escalação" : "Lineup"}</p>
+      <ul className="mt-1 flex flex-col gap-0.5 text-tiny text-fg">
         {[...byPlayer].map(([player, v]) => (
           <li key={player}>
             {player} {KIND_TEXT[v.kind][lang]} — {lang === "pt" ? (v.legs === 1 ? "1 perna destes bilhetes perdeu a base" : `${v.legs} pernas destes bilhetes perderam a base`) : v.legs === 1 ? "1 leg on these tickets lost its footing" : `${v.legs} legs on these tickets lost their footing`}.
           </li>
         ))}
       </ul>
-      <p className="mt-1 text-[11.5px] text-mist-500">{lang === "pt" ? "As alternativas sem ele aparecem destacadas embaixo de cada bilhete." : "Backups without him are highlighted under each ticket."}</p>
+      <p className="mt-1 text-tiny text-fg-dim">{lang === "pt" ? "As alternativas sem ele aparecem destacadas embaixo de cada bilhete." : "Backups without him are highlighted under each ticket."}</p>
     </div>
   );
 }

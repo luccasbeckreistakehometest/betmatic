@@ -23,10 +23,10 @@ test("player deep dive: line drag, with/without split, a read paid once and shar
   await expect(page.getByTestId("line-value")).toHaveText("17,5");
   await expect(page.getByTestId("posted-lines")).toContainText("chance sem a margem 51%");
   const rates = page.getByTestId("player-rates");
-  await expect(rates).toContainText("60%");
+  await expect(rates).toContainText(/60\s*%/);
   for (let i = 0; i < 4; i++) await page.getByTestId("line-up").click();
   await expect(page.getByTestId("line-value")).toHaveText("19,5");
-  await expect(rates).toContainText("40%");
+  await expect(rates).toContainText(/40\s*%/);
   await expect(page.getByTestId("player-role")).toContainText("titular");
 
   // The bench guard missed five games: enough on both sides. Bia never missed one: not enough.

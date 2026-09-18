@@ -13,7 +13,7 @@ export function ticketAnnouncement(args: { gameId: string; matchup: string; spor
   const top = [...args.suggestions].sort((a, b) => b.evidenceScore - a.evidenceScore).slice(0, 3).map((s) => scrubSuggestion(s, args.lang));
   const lines = top.map((s) => {
     const slug = ticketSlug(`${args.gameId}:${s.bandKey}:${s.legs.map((l) => l.selection).join("|")}`);
-    return `• ${s.title} — ${formatDecimal(s.combinedDecimal)} (${args.lang === "pt" ? "confiança" : "confidence"} ${s.evidenceScore})\n  ${s.legs.map((l) => l.selection).join(" + ")}\n  ${args.base}/p/${slug}`;
+    return `• ${s.title} — ${formatDecimal(s.combinedDecimal, args.lang)} (${args.lang === "pt" ? "confiança" : "confidence"} ${s.evidenceScore})\n  ${s.legs.map((l) => l.selection).join(" + ")}\n  ${args.base}/p/${slug}`;
   });
   const content = `${args.lang === "pt" ? "🎫 Bilhetes novos" : "🎫 New tickets"} — ${args.matchup}\n${lines.join("\n")}`;
   return { content, matchup: args.matchup, sportKey: args.sportKey, lang: args.lang, tickets: top.map((s) => ({ title: s.title, odds: s.combinedDecimal, evidenceScore: s.evidenceScore, legs: s.legs.map((l) => ({ selection: l.selection, odds: l.oddsDecimal })) })) };

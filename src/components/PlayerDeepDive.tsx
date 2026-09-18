@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useNavState } from "@/components/Controls";
-import { Panel } from "@/components/ui";
+import { Empty, LinkButton, PageHead, Panel } from "@/components/ui";
 import { PlayerChart } from "@/components/PlayerChart";
 import { PLAYER_COPY } from "@/components/player-copy";
 import { DvpCard, num, PlansLink, PostedLines, RatesGrid, RoleCard, SplitCard } from "@/components/PlayerPanels";
@@ -11,6 +11,7 @@ import { PlayerReadCard, type ReadState } from "@/components/PlayerReadCard";
 import { gameTotal, rateAt, rateTable } from "@/lib/props/rates";
 import { lineRange, type PlayerProfileView } from "@/lib/props/player-view";
 import { formatDate, formatDateTime } from "@/lib/format";
+import { PanelSkeleton } from "@/components/AppPageHead";
 
 interface Payload { profile: PlayerProfileView; read: ReadState["read"]; access: { unlimited: boolean; used: number; limit: number | null }; readPrice: number; coins: number; aiReady: boolean }
 type Load = { state: "loading" } | { state: "ok"; data: Payload } | { state: "error"; code: "signin" | "cap" | "notfound" | "failed" };
@@ -55,23 +56,29 @@ export function PlayerDeepDive({ athleteId, gameId }: { athleteId: string; gameI
     }).reverse();
   }, [profile, market, windowSize, lang]);
 
-  if (load.state === "loading") return <div className="h-60 animate-pulse rounded-xl bg-ink-900" aria-label={c.loading} />;
+  if (load.state === "loading") return <PanelSkeleton rows={8} />;
   if (load.state === "error") {
-    const back = gameId ? <Link href={{ pathname: `/app/game/${gameId}`, query: { sport: sport.key, lang } }} className="text-[12px] text-mist-500 hover:text-mist-300">{c.back}</Link> : null;
+    const back = gameId ? <Link href={{ pathname: `/app/game/${gameId}`, query: { sport: sport.key, lang } }} className="text-tiny text-fg-dim hover:text-fg-muted">{c.back}</Link> : null;
     if (load.code === "cap") {
       return (
         <div className="flex flex-col gap-3">
           {back}
-          <section className="rounded-xl border border-warn-400/30 bg-warn-400/[0.06] p-5" data-testid="player-cap">
-            <h1 className="text-[15px] font-semibold text-mist-100">{c.capTitle}</h1>
-            <p className="mt-1.5 text-[13px] leading-relaxed text-mist-300">{c.capBody}</p>
+          <section className="rounded-panel border border-warn bg-warn-tint p-5" data-testid="player-cap">
+            <h1 className="text-base font-semibold text-fg">{c.capTitle}</h1>
+            <p className="mt-1.5 text-sm leading-relaxed text-fg-muted">{c.capBody}</p>
             <div className="mt-3"><PlansLink lang={lang} label={c.seePlans} /></div>
           </section>
         </div>
       );
     }
     const msg = load.code === "signin" ? c.signIn : load.code === "notfound" ? c.notFound : c.failed;
-    return <div className="flex flex-col gap-3">{back}<p className="text-[13px] text-mist-400" data-testid="player-error">{msg}</p></div>;
+    return (
+      <div className="flex flex-col gap-4">
+        {back}
+        <PageHead kicker={c.title} title={c.notFoundTitle} actions={load.code === "signin" ? <LinkButton href={`/login?lang=${lang}`} variant="primary">{c.signInCta}</LinkButton> : undefined} />
+        <Empty>{msg}</Empty>
+      </div>
+    );
   }
   if (!profile || !market || !table) return null;
   const setLine = (n: number) => setLines((prev) => ({ ...prev, [market.key]: Math.round(n * 2) / 2 }));
@@ -80,48 +87,48 @@ export function PlayerDeepDive({ athleteId, gameId }: { athleteId: string; gameI
   return (
     <div className="flex flex-col gap-4">
       {profile.game && (
-        <Link href={{ pathname: `/app/game/${profile.game.id}`, query: { sport: profile.sportKey, lang } }} className="w-fit text-[12px] text-mist-500 hover:text-mist-300">← {c.back}</Link>
+        <Link href={{ pathname: `/app/game/${profile.game.id}`, query: { sport: profile.sportKey, lang } }} className="w-fit text-tiny text-fg-dim hover:text-fg-muted">← {c.back}</Link>
       )}
-      <header className="rounded-xl border border-ink-800 bg-ink-900/60 p-4">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-edge-400">{c.title}</p>
-        <h1 className="mt-1 text-xl font-semibold tracking-tight text-white" data-testid="player-name">{profile.name}</h1>
-        <p className="text-[12px] text-mist-500">{[profile.teamAbbr, profile.position, profile.game ? `${profile.game.matchup} · ${formatDateTime(profile.game.startsAt, lang)}` : null].filter(Boolean).join(" · ")}</p>
-        {load.data.access.limit !== null && <p className="mt-1.5 text-[11px] text-warn-400/90">{c.freeLeft}</p>}
-      </header>
+      <PageHead
+        kicker={c.title}
+        title={<span data-testid="player-name">{profile.name}</span>}
+        meta={[profile.teamAbbr, profile.position, profile.game ? `${profile.game.matchup} · ${formatDateTime(profile.game.startsAt, lang)}` : null].filter(Boolean).join(" · ")}
+        actions={load.data.access.limit !== null ? <p className="text-label text-warn">{c.freeLeft}</p> : undefined}
+      />
 
       <Panel title={c.market} lang={lang}>
         <div className="flex flex-wrap gap-1.5" role="tablist">
           {profile.markets.map((m) => (
             <button key={m.key} type="button" onClick={() => setMarketKey(m.key)} data-testid={`market-${m.key}`} aria-pressed={m.key === market.key}
-              className={`rounded-full border px-2.5 py-1 text-[11.5px] ${m.key === market.key ? "border-edge-400 bg-edge-400/10 text-mist-100" : "border-ink-700 text-mist-400 hover:text-mist-100"}`}>
+              className={`rounded-control border px-2.5 py-1 text-tiny transition-colors duration-(--dur-1) ${m.key === market.key ? "border-action bg-action text-action-fg" : "border-line-control text-fg-muted hover:bg-surface-2 hover:text-fg"}`}>
               {m.label[lang]}{m.posted.length ? " •" : ""}
             </button>
           ))}
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <div className="flex overflow-hidden rounded-lg border border-ink-700 text-[12px]">
+          <div className="flex overflow-hidden rounded-control border border-line-control text-tiny">
             {(["over", "under"] as const).map((s) => (
-              <button key={s} type="button" onClick={() => setSide(s)} aria-pressed={side === s} data-testid={`side-${s}`} className={`px-2.5 py-1 ${side === s ? "bg-ink-700 text-mist-100" : "text-mist-400"}`}>{s === "over" ? c.over : c.under}</button>
+              <button key={s} type="button" onClick={() => setSide(s)} aria-pressed={side === s} data-testid={`side-${s}`} className={`px-2.5 py-1 ${side === s ? "bg-surface-3 text-fg" : "text-fg-muted"}`}>{s === "over" ? c.over : c.under}</button>
             ))}
           </div>
-          <button type="button" onClick={() => step(-0.5)} className="size-7 rounded-lg border border-ink-700 text-mist-200" aria-label="-0.5" data-testid="line-down">−</button>
-          <span className="nums min-w-12 text-center text-[15px] font-semibold text-warn-400" data-testid="line-value">{num(line, lang)}</span>
-          <button type="button" onClick={() => step(0.5)} className="size-7 rounded-lg border border-ink-700 text-mist-200" aria-label="+0.5" data-testid="line-up">+</button>
-          <input type="range" min={range.min} max={range.max} step={0.5} value={line} onChange={(e) => setLine(Number(e.target.value))} aria-label={c.line} className="min-w-0 flex-1 accent-amber-400" />
+          <button type="button" onClick={() => step(-0.5)} className="size-7 rounded-control border border-line-control text-fg" aria-label="-0.5" data-testid="line-down">−</button>
+          <span className="nums min-w-12 text-center text-base font-semibold text-warn" data-testid="line-value">{num(line, lang)}</span>
+          <button type="button" onClick={() => step(0.5)} className="size-7 rounded-control border border-line-control text-fg" aria-label="+0.5" data-testid="line-up">+</button>
+          <input type="range" min={range.min} max={range.max} step={0.5} value={line} onChange={(e) => setLine(Number(e.target.value))} aria-label={c.line} className="range min-w-0 flex-1" />
         </div>
-        <p className="mt-1 text-[11px] text-mist-500">{c.drag}</p>
+        <p className="mt-1 text-label text-fg-dim">{c.drag}</p>
         <div className="mt-3">
           <PlayerChart bars={bars} line={line} min={range.min} max={range.max} onLine={setLine} side={side} ariaLabel={c.line} />
         </div>
-        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-mist-500">
+        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-label text-fg-dim">
           <span>{c.window}:</span>
           {WINDOWS.map((w) => (
-            <button key={w} type="button" onClick={() => setWindowSize(w)} aria-pressed={windowSize === w} className={`rounded px-1.5 py-0.5 ${windowSize === w ? "bg-ink-700 text-mist-100" : "hover:text-mist-300"}`}>{w === 10 ? c.last10 : w === 20 ? c.last20 : c.all}</button>
+            <button key={w} type="button" onClick={() => setWindowSize(w)} aria-pressed={windowSize === w} className={`rounded-control px-1.5 py-0.5 ${windowSize === w ? "bg-surface-3 text-fg" : "hover:text-fg-muted"}`}>{w === 10 ? c.last10 : w === 20 ? c.last20 : c.all}</button>
           ))}
         </div>
-        <h2 className="mb-1.5 mt-4 text-[10px] font-semibold uppercase tracking-wider text-mist-500">{c.rates}</h2>
-        <RatesGrid table={table} c={c} />
-        <p className="mt-1.5 text-[11px] text-mist-500">{c.push}</p>
+        <h2 className="mb-1.5 mt-4 text-micro u-label text-fg-dim">{c.rates}</h2>
+        <RatesGrid table={table} c={c} lang={lang} />
+        <p className="mt-1.5 text-label text-fg-dim">{c.push}</p>
       </Panel>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -134,7 +141,7 @@ export function PlayerDeepDive({ athleteId, gameId }: { athleteId: string; gameI
       </div>
 
       <PlayerReadCard profile={profile} gameId={gameId} lang={lang} c={c} initial={{ read: load.data.read, price: load.data.readPrice, coins: load.data.coins, aiReady: load.data.aiReady }} />
-      <p className="text-[11px] text-mist-500">{c.honesty}</p>
+      <p className="text-label text-fg-dim">{c.honesty}</p>
     </div>
   );
 }

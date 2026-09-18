@@ -7,7 +7,7 @@ import { ErrorScreen } from "@/components/ErrorScreen";
 export default function GlobalError({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
   return (
     <html lang="pt-BR">
-      <body className="min-h-full bg-ink-950 text-mist-100 antialiased">
+      <body className="min-h-full bg-surface-0 text-fg antialiased">
         <title>Betmatic — erro</title>
         <ErrorScreen onRetry={retry} digest={error.digest} />
       </body>

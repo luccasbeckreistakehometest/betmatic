@@ -131,6 +131,22 @@ const DICT = {
     pt: "Ainda não há liquidações suficientes para calibrar. Monte bilhetes e liquide depois dos jogos.",
     en: "Not enough settled legs to calibrate yet. Build tickets and settle them after the games.",
   },
+  noneBySource: {
+    pt: "Nenhuma perna liquidada ainda por fonte de evidência: forma, lesões e confrontos só aparecem aqui depois que os jogos fecham.",
+    en: "No settled legs by evidence source yet: form, injuries and head-to-head show up here once the games close.",
+  },
+  noneByMarket: {
+    pt: "Nenhum mercado tem liquidações suficientes: são precisos alguns bilhetes fechados em cada mercado para comparar.",
+    en: "No market has enough settled legs yet: it takes a few closed tickets in each market to compare.",
+  },
+  noneSpecialisation: {
+    pt: "Sem cruzamento entre fonte e mercado ainda — ele precisa de liquidações nos dois eixos ao mesmo tempo.",
+    en: "No source-by-market crossing yet — it needs settled legs on both axes at once.",
+  },
+  noneRecentTickets: {
+    pt: "Nenhum bilhete na sua banca ainda. Salve um da mesa ou mande o print de uma aposta.",
+    en: "No tickets in your bankroll yet. Save one from the slate or send a screenshot of a bet.",
+  },
   recentTickets: { pt: "Bilhetes recentes", en: "Recent tickets" },
   coins: { pt: "Coins", en: "Coins" },
   crossGameLocked: { pt: "Múltiplas entre jogos fazem parte do plano Pro. É o que permite chegar em 100x ou mais.", en: "Cross-game parlays are part of the Pro plan. That is what makes 100x and beyond reachable." },

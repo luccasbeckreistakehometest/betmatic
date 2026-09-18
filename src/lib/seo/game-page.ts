@@ -1,4 +1,5 @@
 import type { Lang } from "@/lib/i18n";
+import { formatPercent } from "@/lib/format";
 
 /**
  * The public per-game page ("palpite Sevilla x Valencia") as pure text builders: title, kickoff,
@@ -46,15 +47,15 @@ export interface FaqInput {
   proof: { settled: number; hitRate: number; roi: number };
 }
 
-const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
+const pct = (n: number, lang: "pt" | "en") => formatPercent(n, lang);
 
 /** Three questions a searcher actually types, answered with the page's own numbers. */
 export function gameFaq(i: FaqInput): { q: string; a: string }[] {
   const { teams, league, lang, teaser, proof } = i;
   const record = proof.settled
     ? lang === "pt"
-      ? `${proof.settled} bilhetes de ${league} já liquidados, ${pct(proof.hitRate)} de acerto e ROI de ${proof.roi >= 0 ? "+" : ""}${pct(proof.roi)} a 1 unidade fixa.`
-      : `${proof.settled} ${league} tickets settled so far, a ${pct(proof.hitRate)} hit rate and ${proof.roi >= 0 ? "+" : ""}${pct(proof.roi)} ROI at a flat unit.`
+      ? `${proof.settled} bilhetes de ${league} já liquidados, ${pct(proof.hitRate, lang)} de acerto e ROI de ${formatPercent(proof.roi, lang, { signed: true })} a 1 unidade fixa.`
+      : `${proof.settled} ${league} tickets settled so far, a ${pct(proof.hitRate, lang)} hit rate and ${formatPercent(proof.roi, lang, { signed: true })} ROI at a flat unit.`
     : lang === "pt"
       ? `Ainda não há bilhete de ${league} liquidado; o histórico público começa no primeiro jogo que terminar.`
       : `No ${league} ticket has settled yet; the public record starts with the first finished game.`;

@@ -6,19 +6,19 @@ test("the public proof page draws the equity curve and answers 'only band X'", a
   const chart = page.getByTestId("equity-curve");
   await expect(chart).toBeVisible();
   // seeded: value won at 2.00 (+1.00u) then mid lost (−1.00u)
-  await expect(chart.getByTestId("curve-stats")).toContainText("0.00u");
-  await expect(chart.getByTestId("curve-stats")).toContainText("−1.00u"); // max drawdown
+  await expect(chart.getByTestId("curve-stats")).toContainText(/0,00\s*u/);
+  await expect(chart.getByTestId("curve-stats")).toContainText(/−1,00\s*u/); // max drawdown
   await expect(chart.getByTestId("curve-path")).toHaveAttribute("d", /^M/);
-  await expect(chart.getByTestId("band-row-value")).toContainText("+1.00u");
-  await expect(chart.getByTestId("band-row-mid")).toContainText("-1.00u");
+  await expect(chart.getByTestId("band-row-value")).toContainText(/\+1,00\s*u/);
+  await expect(chart.getByTestId("band-row-mid")).toContainText(/−1,00\s*u/);
   await chart.getByTestId("filter-band").selectOption("value");
-  await expect(chart.getByTestId("curve-stats")).toContainText("+1.00u");
-  await expect(chart.getByTestId("curve-stats")).toContainText("+100.0%");
+  await expect(chart.getByTestId("curve-stats")).toContainText(/\+1,00\s*u/);
+  await expect(chart.getByTestId("curve-stats")).toContainText(/\+100,0\s*%/);
   await chart.getByTestId("filter-band").selectOption("mid");
-  await expect(chart.getByTestId("curve-stats")).toContainText("-1.00u");
+  await expect(chart.getByTestId("curve-stats")).toContainText(/−1,00\s*u/);
   await chart.getByTestId("filter-band").selectOption("");
   await chart.getByTestId("filter-evidence").selectOption("70");
-  await expect(chart.getByTestId("curve-stats")).toContainText("+1.00u"); // only the 78-evidence ticket qualifies
+  await expect(chart.getByTestId("curve-stats")).toContainText(/\+1,00\s*u/); // only the 78-evidence ticket qualifies
   await chart.getByTestId("filter-kind").selectOption("parlay");
   await expect(chart.getByTestId("curve-empty")).toBeVisible();
   // a point links to the ticket's permalink

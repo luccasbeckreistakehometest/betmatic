@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Empty, Panel } from "@/components/ui";
+import { Empty, Panel, buttonClass } from "@/components/ui";
 import { useNavState } from "@/components/Controls";
 
 interface Payload { code: string; invited: number; coinsEarned: number; coinsPerInvite: number; link: string; error?: string }
@@ -22,13 +22,13 @@ export function ReferralPanel() {
   if (data?.error) return <Panel title={c.title}><Empty>{c.signIn}</Empty></Panel>;
   return (
     <Panel title={c.title} meta={data ? `${data.invited} ${c.invited} · ${data.coinsEarned} ${c.earned}` : undefined}>
-      <p className="text-[13px] text-mist-400">{c.intro(data?.coinsPerInvite ?? 5)}</p>
+      <p className="text-sm text-fg-muted">{c.intro(data?.coinsPerInvite ?? 5)}</p>
       {data && (
         <div className="mt-4 flex flex-wrap items-center gap-2" data-testid="referral">
-          <span className="text-[12px] text-mist-500">{c.link}</span>
-          <code className="nums rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-[13px] text-mist-100" data-testid="referral-link">{data.link}</code>
-          <button onClick={() => { navigator.clipboard?.writeText(data.link).catch(() => {}); setCopied(true); setTimeout(() => setCopied(false), 1500); }} className="rounded-lg border border-ink-700 px-3 py-2 text-[12px] text-mist-300 hover:border-ink-600 hover:text-mist-100">{copied ? c.copied : c.copy}</button>
-          <a href={`https://wa.me/?text=${encodeURIComponent(c.waText(data.link))}`} target="_blank" rel="noopener noreferrer" className="rounded-lg bg-signal-400/15 px-3 py-2 text-[12px] font-semibold text-signal-400 hover:bg-signal-400/25">{c.wa}</a>
+          <span className="text-tiny text-fg-dim">{c.link}</span>
+          <code className={buttonClass()} data-testid="referral-link">{data.link}</code>
+          <button onClick={() => { navigator.clipboard?.writeText(data.link).catch(() => {}); setCopied(true); setTimeout(() => setCopied(false), 1500); }} className="rounded-control border border-line-control px-3 py-2 text-tiny text-fg-muted hover:border-line-control hover:text-fg">{copied ? c.copied : c.copy}</button>
+          <a href={`https://wa.me/?text=${encodeURIComponent(c.waText(data.link))}`} target="_blank" rel="noopener noreferrer" className="inline-flex h-(--row-h) items-center rounded-control bg-action px-3 text-tiny font-medium text-action-fg transition-colors duration-(--dur-1) hover:bg-action-hover">{c.wa}</a>
         </div>
       )}
     </Panel>

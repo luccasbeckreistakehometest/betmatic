@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useNavState } from "@/components/Controls";
+import { buttonClass } from "@/components/ui";
 
 /**
  * First-visit tour over the real interface. Progress and completion are saved on the server (per
@@ -71,12 +72,12 @@ export function Tour({ telegram = false, ai = false }: { telegram?: boolean; ai?
 
   if (state === "welcome") {
     return (
-      <div className="fixed bottom-5 left-5 z-[85] w-[min(92vw,340px)] rounded-xl border border-ink-700 bg-ink-900 p-4 shadow-2xl" data-testid="tour-welcome">
-        <p className="text-[10px] uppercase tracking-widest text-mist-500">Betmatic</p>
-        <p className="mt-1 text-[15px] font-semibold text-mist-100">{t("Primeira vez aqui? Um tour de 30 segundos.", "First time here? A 30-second tour.")}</p>
+      <div className="fixed bottom-5 left-5 z-[85] w-[min(92vw,340px)] rounded-panel border border-line-strong bg-surface-1 p-4 shadow-dialog" data-testid="tour-welcome">
+        <p className="text-label u-label text-fg-dim">Betmatic</p>
+        <p className="u-title mt-1.5 text-base text-fg">{t("Primeira vez aqui? Um tour de 30 segundos.", "First time here? A 30-second tour.")}</p>
         <div className="mt-3 flex gap-2">
-          <button className="rounded-lg bg-signal-500 px-3 py-1.5 text-[12px] font-semibold text-ink-950" data-testid="tour-start" onClick={() => { setState("running"); setStep(0); save(0, false, "tour_start"); }}>{t("Bora", "Show me")}</button>
-          <button className="rounded-lg border border-ink-700 px-3 py-1.5 text-[12px] text-mist-300" data-testid="tour-later" onClick={() => { setState("done"); save(0, true, "tour_skip"); }}>{t("Depois", "Later")}</button>
+          <button className={buttonClass("primary")} data-testid="tour-start" onClick={() => { setState("running"); setStep(0); save(0, false, "tour_start"); }}>{t("Bora", "Show me")}</button>
+          <button className="inline-flex h-(--row-h) items-center rounded-control border border-line-control px-3 text-sm font-medium text-fg transition-colors duration-(--dur-1) hover:bg-surface-2" data-testid="tour-later" onClick={() => { setState("done"); save(0, true, "tour_skip"); }}>{t("Depois", "Later")}</button>
         </div>
       </div>
     );
@@ -89,17 +90,17 @@ export function Tour({ telegram = false, ai = false }: { telegram?: boolean; ai?
   return (
     <>
       <div className="pointer-events-none fixed inset-0 z-[90]">
-        <div className="absolute rounded-xl shadow-[0_0_0_9999px_rgba(8,9,12,.72)] transition-all duration-200" style={rect ?? { top: -9999, left: -9999, width: 0, height: 0 }} />
+        <div className="absolute rounded-panel shadow-[0_0_0_9999px_var(--scrim)] outline-2 outline-(--fg) transition-all duration-(--dur-3) ease-(--ease-out) motion-reduce:transition-none" style={rect ?? { top: -9999, left: -9999, width: 0, height: 0 }} />
       </div>
-      <div className="fixed z-[91] w-[min(92vw,340px)] rounded-xl border border-ink-700 bg-ink-900 p-4 shadow-2xl" style={style} data-testid="tour-step" data-step={step}>
-        <p className="text-[10px] uppercase tracking-widest text-mist-500">{step + 1} / {STEPS.length}</p>
-        <p className="mt-1 text-[15px] font-semibold text-mist-100">{title}</p>
-        <p className="mt-1 text-[13px] text-mist-400">{body}</p>
+      <div className="fixed z-[91] w-[min(92vw,340px)] rounded-panel border border-line-strong bg-surface-1 p-4 shadow-dialog" style={style} data-testid="tour-step" data-step={step}>
+        <p className="text-micro u-label text-fg-dim">{step + 1} / {STEPS.length}</p>
+        <p className="u-title mt-1.5 text-base text-fg">{title}</p>
+        <p className="mt-1.5 text-sm leading-relaxed text-fg-muted">{body}</p>
         <div className="mt-3 flex items-center justify-between">
-          <button className="text-[12px] text-mist-500 hover:text-mist-300" onClick={() => { setState("done"); save(step, true, "tour_skip"); }}>{t("Pular", "Skip")}</button>
+          <button className="text-tiny text-fg-dim hover:text-fg-muted" onClick={() => { setState("done"); save(step, true, "tour_skip"); }}>{t("Pular", "Skip")}</button>
           <div className="flex gap-2">
-            {step > 0 && <button className="rounded-lg border border-ink-700 px-3 py-1.5 text-[12px] text-mist-300" onClick={() => { setStep(step - 1); save(step - 1); }}>{t("Voltar", "Back")}</button>}
-            <button className="rounded-lg bg-signal-500 px-3 py-1.5 text-[12px] font-semibold text-ink-950" data-testid="tour-next" onClick={() => { if (last) { setState("done"); save(step, true, "tour_done"); } else { setStep(step + 1); save(step + 1); } }}>{last ? t("Entendi", "Got it") : t("Próximo", "Next")}</button>
+            {step > 0 && <button className="inline-flex h-(--row-h) items-center rounded-control border border-line-control px-3 text-sm font-medium text-fg transition-colors duration-(--dur-1) hover:bg-surface-2" onClick={() => { setStep(step - 1); save(step - 1); }}>{t("Voltar", "Back")}</button>}
+            <button className={buttonClass("primary")} data-testid="tour-next" onClick={() => { if (last) { setState("done"); save(step, true, "tour_done"); } else { setStep(step + 1); save(step + 1); } }}>{last ? t("Entendi", "Got it") : t("Próximo", "Next")}</button>
           </div>
         </div>
       </div>
