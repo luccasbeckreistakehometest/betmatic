@@ -29,7 +29,7 @@ export function ClvBlock({ lang }: { lang: Lang }) {
   let s;
   try { s = publicClv(); } catch { return null; }
   return (
-    <div className="mt-8 rounded-panel border border-line bg-surface-1 p-5" data-testid="clv-block">
+    <div className="mt-8 rounded-panel border border-line bg-surface-1 p-(--panel-p)" data-testid="clv-block">
       <p className="text-label uppercase tracking-[0.18em] text-focus">CLV</p>
       <h2 className="mt-1 text-body font-semibold text-fg">{c.title}</h2>
       <p className="mt-2 max-w-3xl text-sm leading-relaxed text-fg-muted">{c.body}</p>

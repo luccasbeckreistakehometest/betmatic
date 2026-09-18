@@ -170,14 +170,14 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
         <p className="rounded-control border border-warn bg-warn-tint px-3 py-2 text-sm text-warn">
           {t("delayedUntil").replace("{time}", formatTime(delayed.availableAt, lang))}
         </p>
-        <Link href={plansHref} className="w-fit rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover">{t("seePlans")}</Link>
+        <Link href={plansHref} className="w-fit inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{t("seePlans")}</Link>
       </div>
     );
   } else if (!authenticated) {
     body = (
       <div className="flex flex-col gap-2">
         <Empty>{t("signInForTickets")}</Empty>
-        <Link href={signupHref} data-testid="signup-for-tickets" className="w-fit rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover">
+        <Link href={signupHref} data-testid="signup-for-tickets" className="w-fit inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">
           {t("startFreeCta")}
         </Link>
       </div>
@@ -191,11 +191,11 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
         <Empty>{t("freeGameChosen")}</Empty>
         <div className="flex flex-wrap gap-2">
           {other && (
-            <Link href={`/app/game/${other.gameId}?sport=${other.sportKey}&lang=${lang}`} className="w-fit rounded-control border border-line-strong px-3.5 py-1.5 text-sm text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control">
+            <Link href={`/app/game/${other.gameId}?sport=${other.sportKey}&lang=${lang}`} className="w-fit inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint">
               {t("openChosenGame")}
             </Link>
           )}
-          <Link href={plansHref} className="w-fit rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover">{t("seePlans")}</Link>
+          <Link href={plansHref} className="w-fit inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{t("seePlans")}</Link>
         </div>
       </div>
     );
@@ -204,7 +204,7 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
       <div className="flex flex-col gap-2" data-testid="daily-pick">
         <Empty>{t("dailyPickPrompt")}</Empty>
         <div className="flex flex-wrap items-center gap-3">
-          <button onClick={() => void generate()} data-testid="use-daily-pick" className="w-fit rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover">{t("useDailyPick")}</button>
+          <button onClick={() => void generate()} data-testid="use-daily-pick" className="w-fit inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{t("useDailyPick")}</button>
           <Link href={plansHref} className="text-sm text-fg-muted underline-offset-4 hover:text-fg hover:underline">{t("seePlans")}</Link>
         </div>
         <p className="text-tiny text-fg-dim">{t("dailyPickNote")}</p>
@@ -223,11 +223,11 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
         <Empty>{data?.plan.gamesPerDay ? t("freeGameChosen") : t("capUser")}</Empty>
         <div className="flex flex-wrap gap-2">
           {other && (
-            <Link href={`/app/game/${other.gameId}?sport=${other.sportKey}&lang=${lang}`} className="w-fit rounded-control border border-line-strong px-3.5 py-1.5 text-sm text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control">
+            <Link href={`/app/game/${other.gameId}?sport=${other.sportKey}&lang=${lang}`} className="w-fit inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint">
               {t("openChosenGame")}
             </Link>
           )}
-          <Link href={plansHref} className="w-fit rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover">{t("seePlans")}</Link>
+          <Link href={plansHref} className="w-fit inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{t("seePlans")}</Link>
         </div>
       </div>
     );
@@ -237,10 +237,10 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
       <div className="flex flex-col gap-2">
         <Empty>{message}</Empty>
         {(gen === "generateFailed" || gen === "done") && (
-          <button onClick={() => void generate()} className="w-fit rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover">{t("generateNow")}</button>
+          <button onClick={() => void generate()} className="w-fit inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{t("generateNow")}</button>
         )}
         {gen === "planSport" && (
-          <Link href={plansHref} className="w-fit rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover">{t("seePlans")}</Link>
+          <Link href={plansHref} className="w-fit inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{t("seePlans")}</Link>
         )}
       </div>
     );

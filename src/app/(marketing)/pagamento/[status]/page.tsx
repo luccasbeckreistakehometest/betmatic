@@ -55,7 +55,7 @@ export default async function PaymentResult({ params, searchParams }: { params: 
         <p className="mt-4 text-base leading-relaxed text-fg-muted">{c.body}</p>
 
         {user && payment && (
-          <div className="mt-8 rounded-panel border border-line bg-surface-1 p-5 text-sm text-fg-muted">
+          <div className="mt-8 rounded-panel border border-line bg-surface-1 p-(--panel-p) text-sm text-fg-muted">
             <p>
               {paymentLabel(payment, lang)}
               {" · "}<span className="nums">{formatMoneyBRL(payment.amount, lang, 2)}</span>
@@ -74,12 +74,12 @@ export default async function PaymentResult({ params, searchParams }: { params: 
 
         <div className="mt-8 flex flex-wrap gap-3">
           {status === "sucesso" ? (
-            <Link href={`/app?lang=${lang}`} className="rounded-control bg-action px-5 py-2.5 text-base font-semibold text-action-fg hover:bg-action-hover">{lang === "pt" ? "Ir para os jogos" : "Go to the games"}</Link>
+            <Link href={`/app?lang=${lang}`} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{lang === "pt" ? "Ir para os jogos" : "Go to the games"}</Link>
           ) : (
-            <Link href={`/planos?lang=${lang}`} className="rounded-control bg-action px-5 py-2.5 text-base font-semibold text-action-fg hover:bg-action-hover">{lang === "pt" ? "Voltar aos planos" : "Back to plans"}</Link>
+            <Link href={`/planos?lang=${lang}`} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{lang === "pt" ? "Voltar aos planos" : "Back to plans"}</Link>
           )}
-          <Link href={`/app/conta?lang=${lang}`} className="rounded-control border border-line-strong px-5 py-2.5 text-base text-fg hover:border-line-control">{lang === "pt" ? "Minha conta" : "My account"}</Link>
-          <Link href={`/contato?lang=${lang}&topic=payment`} className="rounded-control border border-line-strong px-5 py-2.5 text-base text-fg hover:border-line-control">{lang === "pt" ? "Algo errado? Fale com a gente" : "Something wrong? Contact us"}</Link>
+          <Link href={`/app/conta?lang=${lang}`} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint">{lang === "pt" ? "Minha conta" : "My account"}</Link>
+          <Link href={`/contato?lang=${lang}&topic=payment`} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint">{lang === "pt" ? "Algo errado? Fale com a gente" : "Something wrong? Contact us"}</Link>
         </div>
       </div>
     </MarketingPage>

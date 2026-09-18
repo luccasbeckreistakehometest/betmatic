@@ -34,7 +34,7 @@ export function LossReview({ slug, lang, compact = false }: { slug: string; lang
 
   const legs = data?.legs ?? [];
   return (
-    <div className="flex flex-col gap-3 rounded-panel border border-line bg-surface-1 p-3.5 text-sm" data-testid="loss-review">
+    <div className="flex flex-col gap-3 rounded-panel border border-line bg-surface-1 p-(--panel-p) text-sm" data-testid="loss-review">
       {state === "error" && <p className="text-warn">{data?.message ?? t("reviewFailed")}</p>}
       {state === "done" && data && !data.available && <p className="text-tiny text-fg-dim" data-testid="review-fallback">{t("reviewUnavailable")}</p>}
       {data?.review ? (

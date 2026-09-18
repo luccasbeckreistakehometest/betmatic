@@ -123,7 +123,7 @@ export function SplitCard({ profile, market, line, side, lang, c }: { profile: P
   return (
     <Panel title={c.split} lang={lang}>
       <p className="text-tiny text-fg-muted">{c.splitHint}</p>
-      <select value={mate} onChange={(e) => void pick(e.target.value)} className="mt-2 w-full rounded-control border border-line-strong bg-surface-1 px-2 py-1.5 text-tiny text-fg" data-testid="split-mate" aria-label={c.split}>
+      <select value={mate} onChange={(e) => void pick(e.target.value)} className="mt-2 w-full inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint" data-testid="split-mate" aria-label={c.split}>
         <option value="">{c.pick}</option>
         {profile.teammates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
       </select>
@@ -144,5 +144,5 @@ export function SplitCard({ profile, market, line, side, lang, c }: { profile: P
 }
 
 export function PlansLink({ lang, label }: { lang: Lang; label: string }) {
-  return <Link href={{ pathname: "/planos", query: { lang } }} className="rounded-control bg-action px-3 py-1.5 text-tiny font-semibold text-action-fg hover:bg-action-hover">{label}</Link>;
+  return <Link href={{ pathname: "/planos", query: { lang } }} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{label}</Link>;
 }

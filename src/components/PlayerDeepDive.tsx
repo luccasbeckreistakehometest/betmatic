@@ -82,7 +82,7 @@ export function PlayerDeepDive({ athleteId, gameId }: { athleteId: string; gameI
       {profile.game && (
         <Link href={{ pathname: `/app/game/${profile.game.id}`, query: { sport: profile.sportKey, lang } }} className="w-fit text-tiny text-fg-dim hover:text-fg-muted">← {c.back}</Link>
       )}
-      <header className="rounded-panel border border-line bg-surface-1 p-4">
+      <header className="rounded-panel border border-line bg-surface-1 p-(--panel-p)">
         <p className="text-micro font-semibold uppercase tracking-widest text-pos">{c.title}</p>
         <h1 className="mt-1 text-lead font-semibold tracking-tight text-fg" data-testid="player-name">{profile.name}</h1>
         <p className="text-tiny text-fg-dim">{[profile.teamAbbr, profile.position, profile.game ? `${profile.game.matchup} · ${formatDateTime(profile.game.startsAt, lang)}` : null].filter(Boolean).join(" · ")}</p>

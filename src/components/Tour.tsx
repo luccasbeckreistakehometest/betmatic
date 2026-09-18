@@ -75,7 +75,7 @@ export function Tour({ telegram = false, ai = false }: { telegram?: boolean; ai?
         <p className="text-micro uppercase tracking-widest text-fg-dim">Betmatic</p>
         <p className="mt-1 text-base font-semibold text-fg">{t("Primeira vez aqui? Um tour de 30 segundos.", "First time here? A 30-second tour.")}</p>
         <div className="mt-3 flex gap-2">
-          <button className="rounded-control bg-action px-3 py-1.5 text-tiny font-semibold text-action-fg" data-testid="tour-start" onClick={() => { setState("running"); setStep(0); save(0, false, "tour_start"); }}>{t("Bora", "Show me")}</button>
+          <button className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint" data-testid="tour-start" onClick={() => { setState("running"); setStep(0); save(0, false, "tour_start"); }}>{t("Bora", "Show me")}</button>
           <button className="rounded-control border border-line-strong px-3 py-1.5 text-tiny text-fg-muted" data-testid="tour-later" onClick={() => { setState("done"); save(0, true, "tour_skip"); }}>{t("Depois", "Later")}</button>
         </div>
       </div>
@@ -99,7 +99,7 @@ export function Tour({ telegram = false, ai = false }: { telegram?: boolean; ai?
           <button className="text-tiny text-fg-dim hover:text-fg-muted" onClick={() => { setState("done"); save(step, true, "tour_skip"); }}>{t("Pular", "Skip")}</button>
           <div className="flex gap-2">
             {step > 0 && <button className="rounded-control border border-line-strong px-3 py-1.5 text-tiny text-fg-muted" onClick={() => { setStep(step - 1); save(step - 1); }}>{t("Voltar", "Back")}</button>}
-            <button className="rounded-control bg-action px-3 py-1.5 text-tiny font-semibold text-action-fg" data-testid="tour-next" onClick={() => { if (last) { setState("done"); save(step, true, "tour_done"); } else { setStep(step + 1); save(step + 1); } }}>{last ? t("Entendi", "Got it") : t("Próximo", "Next")}</button>
+            <button className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint" data-testid="tour-next" onClick={() => { if (last) { setState("done"); save(step, true, "tour_done"); } else { setStep(step + 1); save(step + 1); } }}>{last ? t("Entendi", "Got it") : t("Próximo", "Next")}</button>
           </div>
         </div>
       </div>

@@ -26,7 +26,7 @@ export function ReferralPanel() {
       {data && (
         <div className="mt-4 flex flex-wrap items-center gap-2" data-testid="referral">
           <span className="text-tiny text-fg-dim">{c.link}</span>
-          <code className="nums rounded-control border border-line-strong bg-surface-1 px-3 py-2 text-sm text-fg" data-testid="referral-link">{data.link}</code>
+          <code className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint" data-testid="referral-link">{data.link}</code>
           <button onClick={() => { navigator.clipboard?.writeText(data.link).catch(() => {}); setCopied(true); setTimeout(() => setCopied(false), 1500); }} className="rounded-control border border-line-strong px-3 py-2 text-tiny text-fg-muted hover:border-line-control hover:text-fg">{copied ? c.copied : c.copy}</button>
           <a href={`https://wa.me/?text=${encodeURIComponent(c.waText(data.link))}`} target="_blank" rel="noopener noreferrer" className="rounded-control bg-action px-3 py-2 text-tiny font-semibold text-focus hover:bg-action-hover">{c.wa}</a>
         </div>

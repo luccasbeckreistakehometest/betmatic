@@ -109,7 +109,7 @@ export function AccountPanel() {
       <div className="flex flex-col gap-3">
         <h1 className="text-lead font-semibold text-fg">{c.title}</h1>
         <Empty>{c.signIn}</Empty>
-        <Link href={`/login?lang=${lang}&next=${encodeURIComponent(`/app/conta?lang=${lang}`)}`} className="w-fit rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg">{c.login}</Link>
+        <Link href={`/login?lang=${lang}&next=${encodeURIComponent(`/app/conta?lang=${lang}`)}`} className="w-fit inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{c.login}</Link>
       </div>
     );
   }
@@ -141,7 +141,7 @@ export function AccountPanel() {
           ) : (
             <p className="mt-1 text-sm text-fg-muted">{c.freePlan}</p>
           )}
-          <Link href={`/planos?lang=${lang}`} className="mt-3 inline-block rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg hover:bg-action-hover">{c.seePlans}</Link>
+          <Link href={`/planos?lang=${lang}`} className="mt-3 inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{c.seePlans}</Link>
         </Panel>
         <Panel title={c.coins} lang={lang}>
           <p className="nums text-lead font-semibold text-fg" data-testid="account-coins">{user.coins}</p>

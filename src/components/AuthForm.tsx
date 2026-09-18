@@ -226,7 +226,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           type="submit"
           data-testid="auth-submit"
           disabled={!!busy || (mode === "signup" && !consent)}
-          className="mt-2 rounded-control bg-action px-4 py-2.5 text-base font-semibold text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed"
+          className="mt-2 inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint"
         >
           {busy === "checkout" ? c.toCheckout : busy ? c.working : mode === "login" ? c.submitLogin : c.submitSignup}
         </button>

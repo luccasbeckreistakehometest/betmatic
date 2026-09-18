@@ -65,7 +65,7 @@ export function AlertsPanel() {
             </div>
           ) : (
             <div className="mt-3" data-testid="telegram-status" data-linked="0">
-              <button onClick={() => { track("telegram_link_started"); void act({ action: "link_code" }); }} disabled={busy} className="rounded-control bg-action px-3.5 py-2 text-sm font-semibold text-action-fg hover:bg-action-hover disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="telegram-connect">{t("telegramConnect")}</button>
+              <button onClick={() => { track("telegram_link_started"); void act({ action: "link_code" }); }} disabled={busy} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint" data-testid="telegram-connect">{t("telegramConnect")}</button>
             </div>
           )}
         </Panel>
@@ -94,7 +94,7 @@ export function AlertsPanel() {
         {teams.length ? (
           <ul className="mt-2 flex flex-wrap gap-2" data-testid="followed-teams">
             {teams.map((f) => (
-              <li key={`${f.sportKey}:${f.key}`} className="flex items-center gap-2 rounded-control border border-line-strong px-2.5 py-1 text-tiny text-fg">
+              <li key={`${f.sportKey}:${f.key}`} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint">
                 {f.label || f.key}
                 <button disabled={busy} onClick={() => void act({ action: "unfollow", kind: "team", sportKey: f.sportKey, key: f.key })} className="text-fg-dim hover:text-warn" title={t("unfollow")}>✕</button>
               </li>

@@ -92,13 +92,13 @@ export function TipsterAudit() {
             <div className="flex flex-wrap items-center gap-3 text-tiny text-fg-muted">
               <label className="flex items-center gap-2">{c.images}<input type="file" accept="image/*" multiple onChange={(e) => setFiles(Array.from(e.target.files ?? []).slice(0, 5))} className="text-label" /></label>
               <label className="flex items-center gap-2">{c.sport}
-                <select value={sportKey} onChange={(e) => setSportKey(e.target.value)} className="rounded-control border border-line-strong bg-surface-1 px-1.5 py-1 text-fg" data-testid="tipster-sport">
+                <select value={sportKey} onChange={(e) => setSportKey(e.target.value)} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint" data-testid="tipster-sport">
                   {SOLD_SPORTS.map((s) => <option key={s.key} value={s.key}>{s.label[lang]}</option>)}
                 </select>
               </label>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <button type="button" onClick={() => void run(false)} disabled={busy || (!text.trim() && !files.length) || state?.aiReady === false} data-testid="tipster-run" className="rounded-control bg-action px-4 py-1.5 text-sm font-semibold text-action-fg hover:bg-action-hover disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed">
+              <button type="button" onClick={() => void run(false)} disabled={busy || (!text.trim() && !files.length) || state?.aiReady === false} data-testid="tipster-run" className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">
                 {busy ? c.running : c.run}
               </button>
               {state?.aiReady === false && <span className="text-tiny text-fg-dim">{c.aiOff}</span>}

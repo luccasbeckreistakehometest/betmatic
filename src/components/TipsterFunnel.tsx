@@ -45,7 +45,7 @@ export function TipsterFunnel({ lang }: { lang: Lang }) {
         <h1 className="mt-2 max-w-3xl text-h1 font-semibold tracking-tight sm:text-h1">{c.title}</h1>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-fg-muted">{c.sub}</p>
         <div className="mt-6 flex flex-wrap items-center gap-4">
-          <Link href={`/signup?lang=${lang}&next=${encodeURIComponent(next)}`} className="rounded-panel bg-action px-6 py-3 text-base font-semibold text-action-fg hover:bg-action-hover" data-testid="tipster-funnel-cta">{c.cta}</Link>
+          <Link href={`/signup?lang=${lang}&next=${encodeURIComponent(next)}`} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint" data-testid="tipster-funnel-cta">{c.cta}</Link>
           <span className="text-tiny text-fg-dim">{c.ctaSub}</span>
         </div>
         <ol className="mt-10 grid gap-px overflow-hidden rounded-panel border border-line bg-surface-3 md:grid-cols-3">
@@ -63,7 +63,7 @@ export function TipsterFunnel({ lang }: { lang: Lang }) {
             <p className="mt-2 text-sm leading-relaxed text-fg-muted">{c.privacy}</p>
             <p className="mt-3 text-tiny text-fg-dim">{c.limits}</p>
           </div>
-          <div className="rounded-panel border border-line bg-surface-1 p-5">
+          <div className="rounded-panel border border-line bg-surface-1 p-(--panel-p)">
             <h2 className="text-base font-semibold text-fg">{c.flagsTitle}</h2>
             <ul className="mt-2 flex flex-wrap gap-1.5">
               {RED_FLAGS.map((f) => <li key={f.key} className="rounded-control bg-neg-tint px-2 py-0.5 text-tiny text-neg">{f.label[lang]}</li>)}

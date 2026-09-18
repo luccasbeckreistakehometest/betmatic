@@ -63,7 +63,7 @@ export function ContactForm({ lang, defaultName = "", defaultEmail = "", default
       </div>
       <p className="text-tiny text-fg-dim">{c.hint}</p>
       {error && <p className="text-sm text-neg" role="alert" data-testid="contact-error">{error}</p>}
-      <button type="submit" disabled={state === "sending"} className="w-fit rounded-control bg-action px-5 py-2.5 text-base font-semibold text-action-fg hover:bg-action-hover disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="contact-submit">
+      <button type="submit" disabled={state === "sending"} className="w-fit inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint" data-testid="contact-submit">
         {state === "sending" ? c.sending : c.send}
       </button>
     </form>

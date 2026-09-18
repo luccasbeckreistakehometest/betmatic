@@ -113,7 +113,7 @@ function CustomForm(props: {
 }) {
   const { c, lang, meta, games, state, set } = props;
   if (meta && !meta.signedIn) {
-    return <Panel title={c.title}><div className="flex flex-col gap-2"><Empty>{c.signIn}</Empty><Link href={`/login?lang=${lang}`} className="w-fit rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg">{lang === "pt" ? "Entrar" : "Log in"}</Link></div></Panel>;
+    return <Panel title={c.title}><div className="flex flex-col gap-2"><Empty>{c.signIn}</Empty><Link href={`/login?lang=${lang}`} className="w-fit inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{lang === "pt" ? "Entrar" : "Log in"}</Link></div></Panel>;
   }
   const chip = (on: boolean) => `rounded-full border px-2.5 py-1 text-tiny transition-colors duration-(--dur-1) ease-(--ease-out) ${on ? "border-pos bg-action text-pos" : "border-line-strong text-fg-muted hover:border-line-control"}`;
   return (
@@ -122,11 +122,11 @@ function CustomForm(props: {
         <div className="flex flex-wrap items-center gap-2">
           {PRESETS.map((p) => <button key={p} type="button" onClick={() => set.setTarget(p)} className={chip(state.target === p)} data-testid={`preset-${p}`}>{p}x</button>)}
           <input type="range" min={2} max={500} step={1} value={state.target} onChange={(e) => set.setTarget(Number(e.target.value))} aria-label={c.target} className="range min-w-0 flex-1" />
-          <input type="number" min={2} max={500} value={state.target} onChange={(e) => set.setTarget(Math.min(500, Math.max(2, Number(e.target.value) || 2)))} aria-label={c.target} className="nums w-20 rounded-control border border-line-strong bg-surface-1 px-2 py-1 text-sm text-fg" data-testid="target-input" />
+          <input type="number" min={2} max={500} value={state.target} onChange={(e) => set.setTarget(Math.min(500, Math.max(2, Number(e.target.value) || 2)))} aria-label={c.target} className="w-20 inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint" data-testid="target-input" />
         </div>
         <label className="flex flex-wrap items-center gap-2 text-sm text-fg-muted">
           {c.legs}
-          <select value={state.maxLegs} onChange={(e) => set.setMaxLegs(Number(e.target.value))} className="rounded-control border border-line-strong bg-surface-1 px-2 py-1 text-fg">
+          <select value={state.maxLegs} onChange={(e) => set.setMaxLegs(Number(e.target.value))} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint">
             {[2, 3, 4, 5, 6, 7, 8].map((n) => <option key={n} value={n}>{n}</option>)}
           </select>
         </label>
@@ -149,7 +149,7 @@ function CustomForm(props: {
           <label className="flex items-center gap-2">{c.minRate} <input type="range" min={40} max={80} value={state.minRate} onChange={(e) => set.setMinRate(Number(e.target.value))} aria-label={c.minRate} /><span className="nums w-10">{state.minRate}%</span></label>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <button type="button" onClick={props.onBuild} disabled={props.busy || !props.canAfford} className="rounded-control bg-action px-4 py-2 text-sm font-semibold text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="custom-build">
+          <button type="button" onClick={props.onBuild} disabled={props.busy || !props.canAfford} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint" data-testid="custom-build">
             {c.build} · {meta?.price ?? "…"} {c.coins}
           </button>
           {meta && !props.canAfford && <span className="text-tiny text-warn">{c.noCoins} <Link href={`/planos?lang=${lang}`} className="underline">{c.buy}</Link></span>}
@@ -218,7 +218,7 @@ function CustomTicket({ c, ticket, index, slipId }: { c: Copy; ticket: CustomTic
       <footer className="flex flex-wrap items-center gap-2 border-t border-line px-3.5 py-2.5 text-tiny">
         {state === "saved" ? <span className="text-focus" data-testid="custom-saved">{c.saved}</span> : (
           <>
-            <input value={stake} onChange={(e) => setStake(e.target.value)} placeholder={c.stake} inputMode="decimal" aria-label={c.stake} className="nums w-20 rounded-control border border-line-strong bg-surface-1 px-2 py-1 text-fg" data-testid="custom-stake" />
+            <input value={stake} onChange={(e) => setStake(e.target.value)} placeholder={c.stake} inputMode="decimal" aria-label={c.stake} className="w-20 inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint" data-testid="custom-stake" />
             <button type="button" onClick={() => void save()} disabled={!(Number(stake) > 0) || state === "saving" || !slipId} className="rounded-control border border-line-strong px-2 py-1 text-fg-muted hover:text-fg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="custom-save">{c.save}</button>
             {state === "limit" && <span className="text-warn">{c.limit}</span>}
             {state === "paused" && <span className="text-warn">{c.paused}</span>}

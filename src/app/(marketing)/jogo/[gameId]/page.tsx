@@ -154,20 +154,20 @@ export default async function GamePublicPage({ params, searchParams }: { params:
               <p className="mt-3 text-sm text-fg-dim">🔒 {data.bestFree ? c.legsLocked(best.legs.length) : c.legsPaid(best.legs.length)}</p>
               <div className="mt-4 flex flex-wrap gap-3">
                 {data.bestFree
-                  ? <Link href={signup} className="rounded-control bg-action px-4 py-2 text-sm font-semibold text-action-fg hover:bg-action-hover">{c.cta}</Link>
-                  : <Link href={{ pathname: "/planos", query: { lang } }} className="rounded-control bg-action px-4 py-2 text-sm font-semibold text-action-fg hover:bg-action-hover">{c.ctaPaid}</Link>}
+                  ? <Link href={signup} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{c.cta}</Link>
+                  : <Link href={{ pathname: "/planos", query: { lang } }} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{c.ctaPaid}</Link>}
                 <Link href={{ pathname: `/app/game/${gameId}`, query: { sport: data.sportKey, lang } }} className="rounded-control border border-line-strong px-4 py-2 text-sm text-fg-muted hover:text-fg">{c.open}</Link>
               </div>
             </>
           ) : (
             <>
               <p className="mt-2 text-base text-fg-muted">{c.noTeaser}</p>
-              <Link href={signup} className="mt-4 inline-block rounded-control bg-action px-4 py-2 text-sm font-semibold text-action-fg hover:bg-action-hover">{c.cta}</Link>
+              <Link href={signup} className="mt-4 inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{c.cta}</Link>
             </>
           )}
         </section>
 
-        <section className="mt-8 rounded-panel border border-line bg-surface-1 p-5" data-testid="game-proof">
+        <section className="mt-8 rounded-panel border border-line bg-surface-1 p-(--panel-p)" data-testid="game-proof">
           <p className="text-label uppercase tracking-[0.18em] text-fg-dim">{c.proof}</p>
           {showProof ? (
             <div className="mt-3 flex flex-wrap gap-8">

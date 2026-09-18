@@ -144,7 +144,7 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
           <p className="mt-2 max-w-2xl text-base leading-relaxed text-fg-muted">{c.dailySub}</p>
           <div className="mt-8 grid gap-4 md:grid-cols-2">
             {c.daily.map((item) => (
-              <div key={item.title} className="flex flex-col rounded-panel border border-line bg-surface-1 p-6">
+              <div key={item.title} className="flex flex-col rounded-panel border border-line bg-surface-1 p-(--panel-p)">
                 <h3 className="text-body font-semibold text-fg">{item.title}</h3>
                 <p className="mt-2 flex-1 text-sm leading-relaxed text-fg-muted">{item.body}</p>
                 <Link
@@ -185,7 +185,7 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
           <p className="mt-3 max-w-2xl text-base text-fg-muted">{c.edgeSub}</p>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {c.edges.map((e) => (
-              <Link key={e.title} href={{ pathname: e.href, query: { lang } }} className="group rounded-panel border border-line bg-surface-1 p-5 transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:bg-surface-2">
+              <Link key={e.title} href={{ pathname: e.href, query: { lang } }} className="group rounded-panel border border-line bg-surface-1 p-(--panel-p) transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:bg-surface-2">
                 <p className="text-base font-semibold text-fg">{e.title}</p>
                 <p className="mt-2 text-sm leading-relaxed text-fg-muted">{e.body}</p>
               </Link>
@@ -224,7 +224,7 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
               <Link
                 key={sport.key}
                 href={`/${SPORT_LANDINGS.find((l) => l.sportKeys.some((k) => k.startsWith(sport.key === "basketball" ? "nba" : "soccer")))?.slug[lang] ?? ""}`}
-                className="group grid gap-5 rounded-panel border border-line bg-surface-1 p-6 transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:bg-surface-2 md:grid-cols-[1fr_1.5fr]"
+                className="group grid gap-5 rounded-panel border border-line bg-surface-1 p-(--panel-p) transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:bg-surface-2 md:grid-cols-[1fr_1.5fr]"
               >
                 <div>
                   <h3 className="u-title text-lead text-fg">{sport.name}</h3>
@@ -307,7 +307,7 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
             ))}
           </p>
 
-          <div className="mt-10 rounded-panel border border-line bg-surface-1 p-6">
+          <div className="mt-10 rounded-panel border border-line bg-surface-1 p-(--panel-p)">
             <h3 className="text-base font-semibold text-fg">{c.pricingCoins}</h3>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-fg-muted">{c.pricingCoinsSub}</p>
             <div className="mt-5 flex flex-wrap gap-3">

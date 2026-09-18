@@ -24,7 +24,7 @@ export default async function ToolsPage({ searchParams }: SearchProps) {
     <MarketingPage lang={lang} langHrefs={langPaths("/ferramentas")} wide>
       <Calculators lang={lang} />
       <section className="mt-10 grid gap-4 md:grid-cols-2" data-testid="tools-more">
-        <Link href={`/signup?lang=${lang}&next=${encodeURIComponent(`/app/bankroll?lang=${lang}`)}`} className="group rounded-panel border border-line bg-surface-1 p-5 hover:border-pos">
+        <Link href={`/signup?lang=${lang}&next=${encodeURIComponent(`/app/bankroll?lang=${lang}`)}`} className="group rounded-panel border border-line bg-surface-1 p-(--panel-p) hover:border-pos">
           <p className="text-base font-semibold text-fg group-hover:text-pos">{lang === "pt" ? "Manda o print do seu bilhete" : "Snap your slip"}</p>
           <p className="mt-2 text-sm leading-relaxed text-fg-muted">
             {lang === "pt"
@@ -32,7 +32,7 @@ export default async function ToolsPage({ searchParams }: SearchProps) {
               : "The same maths as these calculators, run on a slip you already placed: we read the screenshot, check the odds multiply to the total, and grade it when the game ends. The image is never kept."}
           </p>
         </Link>
-        <Link href={lang === "pt" ? "/raio-x-tipster" : "/tipster-audit"} className="group rounded-panel border border-line bg-surface-1 p-5 hover:border-pos">
+        <Link href={lang === "pt" ? "/raio-x-tipster" : "/tipster-audit"} className="group rounded-panel border border-line bg-surface-1 p-(--panel-p) hover:border-pos">
           <p className="text-base font-semibold text-fg group-hover:text-pos">{lang === "pt" ? "Raio-x do tipster" : "Tipster audit"}</p>
           <p className="mt-2 text-sm leading-relaxed text-fg-muted">
             {lang === "pt"

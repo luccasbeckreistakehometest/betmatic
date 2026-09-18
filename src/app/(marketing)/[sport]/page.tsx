@@ -103,7 +103,7 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
             <Link
               href={appPath}
               data-testid="sport-cta"
-              className="rounded-panel bg-action px-6 py-3 text-base font-semibold text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover"
+              className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint"
             >
               {s.cta[lang]}
             </Link>
@@ -158,7 +158,7 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
               <Link
                 key={item.title}
                 href={destination(item.href)}
-                className="group flex flex-col rounded-panel border border-line bg-surface-1 p-5 transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-pos"
+                className="group flex flex-col rounded-panel border border-line bg-surface-1 p-(--panel-p) transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-pos"
               >
                 <h3 className="text-base font-semibold text-fg group-hover:text-pos">{item.title}</h3>
                 <p className="mt-2 flex-1 text-sm leading-relaxed text-fg-muted">{item.body}</p>
@@ -226,13 +226,13 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
           <div className="flex flex-wrap gap-3">
             <Link
               href={signupHref}
-              className="rounded-panel bg-action px-6 py-3 text-base font-semibold text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover"
+              className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint"
             >
               {c.finalCta}
             </Link>
             <Link
               href={`/planos?lang=${lang}`}
-              className="rounded-panel border border-line-strong px-6 py-3 text-base font-semibold text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:text-fg"
+              className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint"
             >
               {c.navPricing}
             </Link>

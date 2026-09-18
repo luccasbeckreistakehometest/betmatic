@@ -24,7 +24,7 @@ export function AdminInbox() {
 
   return (
     <Panel title="Contato" meta={`${messages.length}`} action={
-      <select value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filtrar mensagens" className="rounded-control border border-line-strong bg-surface-1 px-2 py-0.5 text-tiny text-fg">
+      <select value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filtrar mensagens" className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint">
         <option value="open">abertas</option><option value="answered">respondidas</option><option value="closed">fechadas</option><option value="">todas</option>
       </select>
     }>
@@ -38,7 +38,7 @@ export function AdminInbox() {
                 {m.accountEmail && m.accountEmail !== m.email && <span className="text-fg-dim">conta: {m.accountEmail}</span>}
                 <span className="rounded-control border border-line-strong px-1.5 text-label text-fg-muted">{m.topic}</span>
                 <span className="text-label text-fg-dim">{m.lang} · {dt(m.createdAt)}</span>
-                <select value={m.status} onChange={(e) => void update(m.id, { status: e.target.value })} aria-label="Status" className="ml-auto rounded-control border border-line-strong bg-surface-1 px-2 py-0.5 text-tiny text-fg">
+                <select value={m.status} onChange={(e) => void update(m.id, { status: e.target.value })} aria-label="Status" className="ml-auto inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint">
                   <option value="open">aberta</option><option value="answered">respondida</option><option value="closed">fechada</option>
                 </select>
               </div>
@@ -66,7 +66,7 @@ export function AdminPayments() {
 
   return (
     <Panel title="Pagamentos" meta={`${payments.length}`} action={
-      <select value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filtrar pagamentos" className="rounded-control border border-line-strong bg-surface-1 px-2 py-0.5 text-tiny text-fg">
+      <select value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filtrar pagamentos" className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint">
         <option value="">todos</option><option value="approved">aprovados</option><option value="pending">pendentes</option><option value="rejected">recusados</option><option value="refunded">estornados</option><option value="charged_back">contestados</option><option value="failed">falha ao abrir</option>
       </select>
     }>

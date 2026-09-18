@@ -131,7 +131,7 @@ export function TrackRecord() {
           <button
             onClick={() => void settle()}
             disabled={settling}
-            className="rounded-control bg-action px-3.5 py-1.5 text-sm font-medium text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint"
           >
             {settling ? t("settling") : t("settleNow")}
           </button>

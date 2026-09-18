@@ -70,7 +70,7 @@ export function LearningPanel() {
               <div className="mt-2 rounded-control border border-pos bg-action px-3 py-2">
                 <p className="text-micro uppercase tracking-wider text-fg-dim">Proposta pro prompt</p>
                 <p className="mt-1 whitespace-pre-wrap text-fg">{r.promptFeedback}</p>
-                <div className="mt-2">{r.applied ? <span className="text-focus">aplicada ✓</span> : <button onClick={() => apply(r.id)} disabled={busy !== null} className="rounded-control bg-action px-3 py-1 text-tiny font-semibold text-action-fg hover:bg-action-hover disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="learn-apply">{busy === r.id ? "aplicando…" : "Aplicar no prompt"}</button>}</div>
+                <div className="mt-2">{r.applied ? <span className="text-focus">aplicada ✓</span> : <button onClick={() => apply(r.id)} disabled={busy !== null} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint" data-testid="learn-apply">{busy === r.id ? "aplicando…" : "Aplicar no prompt"}</button>}</div>
               </div>
             )}
           </li>

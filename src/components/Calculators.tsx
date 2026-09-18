@@ -23,10 +23,10 @@ const C = {
 };
 
 const Field = ({ label, value, onChange, testId }: { label: string; value: string; onChange: (v: string) => void; testId?: string }) => (
-  <label className="block text-tiny text-fg-muted">{label}<input value={value} onChange={(e) => onChange(e.target.value)} onBlur={() => { if (testId) track("tool_used", { tool: testId.split("-")[0] }); }} inputMode="decimal" data-testid={testId} className="nums mt-1 w-full rounded-control border border-line-strong bg-surface-1 px-3 py-2 text-base text-fg" /></label>
+  <label className="block text-tiny text-fg-muted">{label}<input value={value} onChange={(e) => onChange(e.target.value)} onBlur={() => { if (testId) track("tool_used", { tool: testId.split("-")[0] }); }} inputMode="decimal" data-testid={testId} className="mt-1 w-full inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint" /></label>
 );
 const Card = ({ title, help, children }: { title: string; help: string; children: React.ReactNode }) => (
-  <div className="rounded-panel border border-line bg-surface-1 p-6"><h2 className="text-lead font-semibold">{title}</h2><p className="mt-1 text-sm text-fg-dim">{help}</p><div className="mt-5">{children}</div></div>
+  <div className="rounded-panel border border-line bg-surface-1 p-(--panel-p)"><h2 className="text-lead font-semibold">{title}</h2><p className="mt-1 text-sm text-fg-dim">{help}</p><div className="mt-5">{children}</div></div>
 );
 const pct = (n: number) => (Number.isFinite(n) ? `${(n * 100).toFixed(1)}%` : "—");
 
@@ -77,7 +77,7 @@ export function Calculators({ lang }: { lang: Lang }) {
           </div>
         </Card>
       </div>
-      <Link href="/signup" className="mt-10 inline-block rounded-control bg-action px-5 py-2.5 text-base font-semibold text-action-fg hover:bg-action-hover">{c.cta}</Link>
+      <Link href="/signup" className="mt-10 inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">{c.cta}</Link>
     </section>
   );
 }

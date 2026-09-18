@@ -61,7 +61,7 @@ export function RefreshBar({ gameId, sportKey, lang, onRefreshed }: { gameId: st
       <p className="text-tiny text-fg">{state.reason === "lineup" ? c.lineup : c.lines}</p>
       {state.verdict === "available" ? (
         <div className="mt-2 flex flex-wrap items-center gap-3">
-          <button type="button" onClick={refresh} disabled={phase === "busy"} data-testid="refresh-tickets" className="rounded-control bg-action px-3 py-1.5 text-tiny font-semibold text-action-fg hover:bg-action-hover disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed">
+          <button type="button" onClick={refresh} disabled={phase === "busy"} data-testid="refresh-tickets" className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">
             {phase === "busy" ? c.busy : c.button}
           </button>
           <span className="nums text-label text-fg-dim">{c.used.replace("{used}", String(state.used ?? 0)).replace("{cap}", cap)}</span>
