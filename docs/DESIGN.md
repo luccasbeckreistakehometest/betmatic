@@ -364,3 +364,164 @@ Three density modes, one system. Density changes row height, padding and the lea
 Density is a `data-density` attribute on the shell, persisted per viewer; `comfortable` is forced
 below 768 px (touch targets stay ≥44 px regardless of mode — on touch the row grows, the type does
 not).
+
+---
+
+## 8. Radius, borders, surfaces, elevation
+
+### 8.1 Radius — square by default
+
+```
+--r-0  0      table cells, rows, the ledger, the slate, section dividers, full-bleed strips
+--r-1  2px    inputs, selects, buttons, chips, badges, tabs
+--r-2  4px    panels, popovers, dialogs, the dock
+--r-3  8px    only: the first-visit tour card and the mobile sheet
+--r-full      only: the live dot, avatars, the drag handle
+```
+
+Uniform `rounded-2xl` on everything is banned. If two adjacent elements have the same radius and
+the same border, one of them is wrong.
+
+### 8.2 Borders — one hairline, honestly rendered
+
+A 1 px border on a 2× display renders as 0.5 device pixels and goes muddy. Rules:
+
+- Panel and control edges use `1px solid var(--border)`. Table rules use
+  `box-shadow: inset 0 -1px 0 var(--border)` on the row, never `border-bottom` on cells, so a
+  sticky header and a scrolled body cannot double the line.
+- On `min-resolution: 2dppx` the rule colour is lightened one step (`--border` → `#2F3542` dark,
+  `#EDEFF3` light) so the line reads the same weight at both densities.
+- Interactive edges (input, button, select, chip) use `--border-control` (≥3:1 measured in §6) —
+  never `--border`, because the edge *is* the affordance.
+- No `border` anywhere that a `box-shadow: inset` rule would do the job, and never two borders
+  meeting (use `-1px` margin collapse or a divider parent).
+
+### 8.3 Surfaces and depth — light, not shadow
+
+Depth comes from **surface value + one hairline**, in this order: `surface-0` page → `surface-1`
+panel → `surface-2` raised row / hover → `surface-3` input well. Shadows exist only for things that
+genuinely float above the document plane and can be dismissed:
+
+```
+--elev-pop:    0 1px 2px rgb(0 0 0 / .32), 0 8px 24px rgb(0 0 0 / .36)   popover, dropdown, tooltip
+--elev-dialog: 0 2px 4px rgb(0 0 0 / .36), 0 24px 64px rgb(0 0 0 / .48)  dialog, sheet
+```
+
+That is the complete list. Drop shadows as the only depth cue on a static card are banned;
+glassmorphism, backdrop blur over content, decorative gradients and blurred colour blobs are
+banned. The one gradient permitted in the whole system is the horizontal fade that marks a
+scrollable table's clipped edge (`--surface-1` → transparent, 24 px).
+
+---
+
+## 9. Motion
+
+Short, functional, and never the thing you notice.
+
+```
+--dur-1  90ms    state change on a control (hover, press, check)
+--dur-2  140ms   popover / dropdown / tooltip enter; row expand
+--dur-3  220ms   dialog, sheet, rail collapse
+--ease-out    cubic-bezier(.2, .8, .3, 1)     things entering / settling
+--ease-in     cubic-bezier(.4, 0, 1, 1)       things leaving
+--ease-inout  cubic-bezier(.4, 0, .2, 1)      things moving between two fixed points
+```
+
+Rules: only `opacity` and `transform` are animated (never `height`, `width`, `top`, `color`).
+Nothing loops except the live indicator, which is a 2 s opacity pulse on a 6 px dot — not a ring
+that grows, because a growing ring reflows nothing but reads as an alert. **A changing number never
+animates its digits**; when a price moves, the cell flashes its background (`pos-tint`/`neg-tint`)
+for `--dur-2` and holds a 2 px leading rule for 3 s, which is how a trader sees a move without
+losing the value. Under `prefers-reduced-motion: reduce`, all durations become 1 ms and the live
+pulse becomes a static ring; nothing is removed, only stilled.
+
+---
+
+## 10. Icons
+
+No icon package. A single local sprite, `public/icons.svg`, built by hand and referenced with
+`<svg><use href="/icons.svg#name"/></svg>` — one HTTP request, cached, tree-shaken by definition
+because we only draw what we use.
+
+- **Grid 20×20, stroke 1.5, round cap, round join, no fills, single path where possible.** A 16 px
+  optical size is produced by drawing at 20 and scaling — never by shrinking a 24 px icon, which
+  thins the stroke below a device pixel.
+- Icons inherit `currentColor` and sit on the text baseline via `vertical-align: -0.15em`, not
+  flexbox guesswork.
+- The initial set (≈22 glyphs, everything the current UI needs): `calendar`, `chevron-down`,
+  `chevron-left`, `chevron-right`, `search`, `filter`, `sort`, `check`, `close`, `plus`, `minus`,
+  `arrow-up-right`, `arrow-down-right`, `external`, `copy`, `download`, `refresh`, `info`, `alert`,
+  `lock`, `user`, `menu`.
+- **Emoji are never icons and never bullets.** The flags in the language switch become the strings
+  `PT` / `EN` in Archivo `wdth 82`. "AI sparkle" iconography does not exist in this product; the
+  model's output is labelled in words (`Gerado pelo modelo`, with the cost and the timestamp).
+
+---
+
+## 11. Data display
+
+This is the part the product lives or dies on.
+
+### 11.1 Tables
+
+- Semantic `<table>` with `<caption class="sr-only">`, `<thead>` sticky at the work column's top,
+  `scope` on every header cell. Column widths are set on `<col>`, never on cells.
+- **Alignment:** text left; numbers right; a fixed-width leading column (time, crest) centred.
+  Column headers take the alignment of their column — a right-aligned number never sits under a
+  left-aligned label.
+- **Rules, not zebra.** A 1 px inset rule under every row, and a 2 px rule under `<thead>` and above
+  a totals row. Zebra striping is used only where a row is taller than 2 lines (the ledger with
+  expanded legs), at a 3.7 % luminance step (`#10131A` → `#14171F`, ratio 1.037) — visible, never
+  stripey.
+- **Row states:** hover `surface-2` (ratio 1.114 vs panel — perceptible, calm), selected = 2 px
+  `--focus` leading bar + `surface-2`, focus-visible = the standard ring (§12), settled rows carry a
+  `pos`/`neg` leading rule.
+- **Group headers** (by league, by day) are `text-label` rows spanning all columns with a
+  `surface-2` fill — not a separate table per group.
+- **Overflow:** the table is the only element allowed to scroll sideways, inside its own
+  `overflow-x:auto` container with the first column `position: sticky` and the edge fade of §8.3.
+  The page body never scrolls horizontally at any width.
+- Below 768 px a dense table becomes a **definition list per row** (label left, value right, one
+  rule between rows), not a horizontally scrolling table.
+
+### 11.2 Numerals
+
+- Plex Mono, `tabular-nums`, `slashed-zero`, right-aligned in columns, decimal-aligned by padding
+  to a fixed fraction length (odds always 2 decimals: `1,26` `21,00`).
+- **pt-BR formatting is absolute:** comma decimal separator, dot thousands, `R$ 1.234,56`,
+  `50,0 %`, `−18,5 %`, `+2,40 u`. `Intl.NumberFormat` with the request locale, one helper, no
+  hand-rolled `toFixed` in a component. The current mix of `R$ 0,00` and `0.0%` on the same page is
+  a defect this system closes.
+- **Signs:** `+` and `−` (U+2212 minus, not a hyphen) are always printed on deltas; zero prints as
+  `0,00` with **no** sign. A negative number is `neg` coloured *and* signed; a positive is `pos`
+  coloured *and* signed.
+- Odds are shown decimal-first (`2,40`) with the implied chance next to it (`41,7 %`), in that
+  order, always both — never a multiplier alone.
+- "Not priced" is `—` (em dash) in `text-tertiary`, never `- / -`, never `0`.
+
+### 11.3 Charts
+
+The equity curve, the CLV distribution and the acquisition funnel share one chart grammar:
+
+- **Ink first:** 1.5 px series line, `--text-primary` for a neutral series; `pos`/`neg` only when
+  the series encodes gain/loss, and then the line is split at the zero crossing rather than painted
+  one arbitrary colour.
+- **A zero line always** (1 px `--border-strong`, solid), y-axis with 3–5 ticks at round numbers in
+  `text-micro`, x-axis labelled at the first, last and any regime change. Gridlines are horizontal
+  only, `--border`, 1 px.
+- **Points are drawn only when n ≤ 30**; above that the line alone, with a hover crosshair and a
+  value readout in the corner (mono, tabular) instead of tooltips that cover the data.
+- **Small samples are labelled, not hidden:** below the publication threshold the chart renders at
+  40 % opacity behind the sentence `Amostra pequena: N bilhetes decididos` — the honest version of
+  today's behaviour.
+- Aspect ratio is fixed at 16:6 with a `max-width: 100%`; the chart never grows to 500 px tall for
+  four points, as it does today.
+- Every chart has a `<table class="sr-only">` twin with the same numbers.
+
+### 11.4 Money, time, identity
+
+- One currency per view. If the admin must show USD model cost and BRL revenue together, they are
+  in separate labelled groups with the currency in the column header, never mixed in a row.
+- Times are `HH:mm` in the user's zone with the zone abbreviation in `text-micro` once per group;
+  full dates as `18/09/2026` in mono inside tables, `18 de setembro de 2026` in prose.
+- IDs and hashes are truncated at 8 characters with a copy affordance, never wrapped.
