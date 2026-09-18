@@ -55,8 +55,8 @@ export const PLANS: Plan[] = [
     coinsPerPeriod: 0,
     tagline: { pt: "Prove antes de pagar", en: "Try before you pay" },
     highlights: {
-      pt: ["1 jogo por dia, você escolhe qual", "Faixa de valor (2x–5x)", "O bilhete que você gerou sai na hora; os já prontos, com 2 h de atraso", "Raio-x de 1 jogador por dia", "3 prints de bilhete por dia e 1 raio-x de tipster por mês", "Histórico público"],
-      en: ["1 game a day, your pick", "Value band (2x–5x)", "A ticket you generate shows at once; ready-made ones on a 2-hour delay", "Deep dive on 1 player a day", "3 slip screenshots a day and 1 tipster audit a month", "Public track record"],
+      pt: ["1 jogo por dia, você escolhe qual", "Faixa de valor (2x–5x)", "O bilhete que você gerou sai na hora; os destaques do dia, com 2 h de atraso", "Raio-x de 1 jogador por dia", "3 prints de bilhete por dia e 1 raio-x de tipster por mês", "Aviso de escalação nos bilhetes que você salvar", "Histórico público com o CLV"],
+      en: ["1 game a day, your pick", "Value band (2x–5x)", "A ticket you generate shows at once; the day's featured ones on a 2-hour delay", "Deep dive on 1 player a day", "3 slip screenshots a day and 1 tipster audit a month", "Lineup notices on the tickets you save", "Public track record, CLV included"],
     },
   },
   {

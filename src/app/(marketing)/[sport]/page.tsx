@@ -10,6 +10,7 @@ import { SPORT_LANDINGS, findSportLanding } from "@/lib/sport-landing";
 import { landingCopy, LADDER } from "@/lib/landing-copy";
 import { impliedProbability } from "@/lib/odds";
 import { PLANS } from "@/lib/plans";
+import { currentUser } from "@/lib/server/session";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +45,13 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
   // The visitor's sport travels through signup, so the app opens on it.
   const appPath = `/app?sport=${s.sportKeys[0]}&lang=${lang}`;
   const signupHref = `/signup?lang=${lang}&next=${encodeURIComponent(appPath)}`;
+  const signedIn = !!(await currentUser());
+  /** A feature that lives inside the app is reached through signup while nobody is signed in. */
+  const destination = (href: string) => {
+    if (!href.startsWith("/app")) return `${href}?lang=${lang}`;
+    const path = `${href}?sport=${s.sportKeys[0]}&lang=${lang}`;
+    return signedIn ? path : `/signup?lang=${lang}&next=${encodeURIComponent(path)}`;
+  };
 
   return (
     <div className="flex min-h-full flex-col bg-ink-950">
@@ -133,6 +141,29 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
               >
                 {market}
               </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Everything round 3 added, told in this sport's own terms. */}
+      <section className="border-b border-ink-800/80" data-testid="sport-stack">
+        <div className="mx-auto max-w-6xl px-5 py-16">
+          <h2 className="text-[clamp(1.5rem,3vw,2.1rem)] font-semibold tracking-[-0.02em] text-white">
+            {s.stackTitle[lang]}
+          </h2>
+          <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-mist-400">{s.stackSub[lang]}</p>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {s.stack[lang].map((item) => (
+              <Link
+                key={item.title}
+                href={destination(item.href)}
+                className="group flex flex-col rounded-xl border border-ink-800 bg-ink-900/50 p-5 transition hover:border-edge-400/50"
+              >
+                <h3 className="text-[15px] font-semibold text-white group-hover:text-edge-400">{item.title}</h3>
+                <p className="mt-2 flex-1 text-[13px] leading-relaxed text-mist-400">{item.body}</p>
+                <span className="mt-4 text-[12.5px] text-edge-400">{item.cta} →</span>
+              </Link>
             ))}
           </div>
         </div>
