@@ -635,8 +635,10 @@ export function Odds({
   const chance = Number.isFinite(probability) ? (probability as number) : impliedFromDecimal(decimal);
   if (!priced) return <span className={cx("nums text-fg-dim", className)}>{NOT_PRICED}</span>;
   return (
-    <span className={cx("inline-flex items-baseline gap-1.5 whitespace-nowrap", className)}>
+    <span className={cx("inline-flex items-baseline gap-1 whitespace-nowrap", className)}>
       <span className="nums text-fg">{formatOdds(decimal, lang)}</span>
+      {/* Without a separator "3,19 7,4 %" reads at a glance as one number with a decimal error. */}
+      <span aria-hidden="true" className="text-tiny text-fg-dim">·</span>
       <span className="nums text-tiny text-fg-dim">{formatPercent(chance, lang)}</span>
     </span>
   );

@@ -10,7 +10,8 @@ import { currentUser } from "@/lib/server/session";
 import { LADDER, landingCopy } from "@/lib/landing-copy";
 import { normaliseLang } from "@/lib/i18n";
 import { SPORT_LANDINGS } from "@/lib/sport-landing";
-import { COIN_PACKS, PERIOD, PLANS, PREPAID_NOTE, type Plan } from "@/lib/plans";
+import { COIN_PACKS, PERIOD, PLANS, PREPAID_NOTE } from "@/lib/plans";
+import { planRows } from "@/lib/plan-rows";
 import { impliedProbability } from "@/lib/odds";
 
 export const dynamic = "force-dynamic";
@@ -19,22 +20,6 @@ export async function generateMetadata({ searchParams }: SearchProps): Promise<M
   const lang = await langFrom(searchParams);
   const meta = pageMetadata({ lang, ...DEFAULT_META[lang], paths: { pt: "/", en: "/?lang=en" } });
   return { ...meta, title: { absolute: DEFAULT_META[lang].title } };
-}
-
-/** The rows of the plan comparison: only what actually differs between tiers, in the model's own
- *  fields, so the table can never drift from what the code enforces. */
-function planRows(lang: "pt" | "en"): { label: string; value: (plan: Plan) => string }[] {
-  const yes = lang === "pt" ? "sim" : "yes";
-  const no = "—";
-  return [
-    { label: lang === "pt" ? "Jogos por dia" : "Games a day", value: (p) => (p.gamesPerDay === null ? (lang === "pt" ? "todos" : "all") : String(p.gamesPerDay)) },
-    { label: lang === "pt" ? "Faixas de odds" : "Odds bands", value: (p) => String(p.bands.length) },
-    { label: lang === "pt" ? "Esportes" : "Sports", value: (p) => (p.sports.length === 0 ? (lang === "pt" ? "todos" : "all") : String(p.sports.length)) },
-    { label: lang === "pt" ? "Múltiplas entre jogos" : "Cross-game parlays", value: (p) => (p.crossGame ? yes : no) },
-    { label: lang === "pt" ? "Atraso dos destaques" : "Featured delay", value: (p) => (p.delayMinutes ? `${p.delayMinutes} min` : lang === "pt" ? "nenhum" : "none") },
-    { label: lang === "pt" ? "Coins no período" : "Coins per period", value: (p) => (p.coinsPerPeriod ? String(p.coinsPerPeriod) : no) },
-    { label: lang === "pt" ? "Histórico completo" : "Full track record", value: (p) => (p.trackRecord ? yes : no) },
-  ];
 }
 
 /** Every price on the site is in reais; English readers see it labelled BRL. */
