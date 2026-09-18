@@ -5,6 +5,9 @@ import { defineConfig, devices } from "@playwright/test";
  * Valencia slate). No AI key is used: the seeded games already have tickets, so opening them never
  * reaches the model. The key is blanked on purpose so a developer's
  * .env.local can never make a spec call the model (existing env wins over .env files).
+ *
+ * The seeded world is relative to the run's clock, so it can be run at any moment: tests/e2e/
+ * fake-clock.cjs moves that clock for seed, server and specs alike when a run has to prove it.
  */
 export default defineConfig({
   testDir: "tests/e2e",
