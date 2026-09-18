@@ -1009,3 +1009,27 @@ two design systems:
   deserve a real print sheet.
 - **`/app/slip`, `/app/player/[id]`, `/app/tipster` and `/ferramentas`** inherited the sweeps and the
   page head, but their internals were not composed by hand; they are the next screens to open.
+
+### Round two, after looking at the screens
+
+The first pass was written from the spec; this list is what only showed up in a PNG.
+
+- **The chance ramp moved to a numeric cell's trailing edge.** Right-aligned numbers end at the
+  right edge, and a 2px rule on the leading edge was reading as part of the column before it.
+- **The ladder lost its bar.** Drawn as a filled box it read as a text field; drawn as a hairline it
+  read as an underline of empty space. The argument is typographic: in tabular mono the payout gains
+  a digit a row while the chance loses one.
+- **Blue went back to focus duty.** Fourteen screens used the focus blue for "good" and amber for
+  "lost" — two contradictory result palettes, and a focus ring that looked like data.
+- **The identity lost its green.** Favicon, home-screen icon and both share cards were a green tile
+  with a green wordmark; a settled result is now the only hue on a share card.
+- **One title per screen.** Four screens said their own name three times (page head, an h1 in the
+  panel stack, the panel's own header).
+- **Forms got a measure.** Settings, the slip and both parlay builders were stretching 40-character
+  fields across a 1600px column.
+- **/ferramentas was the banned pattern verbatim** — three equal cards of unequal height with a void
+  under the third. One frame, one top rule, result blocks pinned to the same baseline.
+- **Every percentage is pt-BR**, including the ones inside the equity curve's own KPI row, which
+  were still printing `0.0%` next to a page of `0,0 %`.
+- **The native date button is hidden**: below 640px the platform painted a second calendar inside
+  our own control.
