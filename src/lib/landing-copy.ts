@@ -63,9 +63,6 @@ export interface LandingCopy {
   finalTitle: string;
   finalSub: string;
   finalCta: string;
-
-  footerNote: string;
-  footerResponsible: string;
 }
 
 const PT: LandingCopy = {
@@ -239,11 +236,6 @@ const PT: LandingCopy = {
   finalTitle: "Comece pelo grátis",
   finalSub: "Um jogo por dia, sem cartão. Se o número te convencer, você escolhe um plano.",
   finalCta: "Criar conta",
-
-  footerNote:
-    "Ferramenta de pesquisa. Dados agregados podem estar errados ou desatualizados — confirme a linha na sua casa antes de apostar. Nada aqui é recomendação.",
-  footerResponsible:
-    "18+. Aposta não é investimento: é entretenimento, não fonte de renda. Só aposte o que você pode perder sem que faça falta. Se deixar de ser diversão, esse é o sinal de parar.",
 };
 
 const EN: LandingCopy = {
@@ -404,11 +396,6 @@ const EN: LandingCopy = {
   finalTitle: "Start on the free tier",
   finalSub: "One game a day, no card. If the numbers convince you, pick a plan.",
   finalCta: "Create account",
-
-  footerNote:
-    "Research tool. Aggregated data can be wrong or stale — verify a line at your book before acting. Nothing here is advice.",
-  footerResponsible:
-    "21+ where applicable. Betting is not investing: it is entertainment, not income. Only stake what you can lose without missing it. If it stops being fun, that is the signal to stop.",
 };
 
 export function landingCopy(lang: Lang): LandingCopy {

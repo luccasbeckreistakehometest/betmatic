@@ -9,14 +9,16 @@ import type { Lang } from "@/lib/i18n";
 const COPY = {
   pt: {
     period: "Período", perMonth: "/mês", total: "total", free: "Grátis", choose: "Escolher", current: "Seu plano atual",
-    startFree: "Começar de graça", coinsTitle: "Pacotes de coins", coinsSub: "Coins pagam a análise do bilhete que você montou: 8 coins por análise. Não expiram.",
+    startFree: "Começar de graça", coinsTitle: "Pacotes de coins",
+    coinsSub: "Coins pagam o que é feito só pra você: análise do seu bilhete (8), análise profunda (14; 8 no Max), múltipla sob medida (12), leitura do analista no raio-x do jogador (5) e raio-x de tipster além do limite do plano (6). Não expiram.",
     buy: "Comprar", bonus: "bônus", working: "Abrindo o pagamento…", popular: "Mais escolhido", save: "economize",
     paymentsOff: "Os pagamentos ainda não estão disponíveis. Fale com a gente pelo formulário de contato.",
     extends: "Comprar o mesmo plano de novo soma o novo período ao que falta.",
   },
   en: {
     period: "Period", perMonth: "/mo", total: "total", free: "Free", choose: "Choose", current: "Your current plan",
-    startFree: "Start free", coinsTitle: "Coin packs", coinsSub: "Coins pay for the analysis of a slip you built: 8 coins per analysis. They don't expire.",
+    startFree: "Start free", coinsTitle: "Coin packs",
+    coinsSub: "Coins pay for work done just for you: a slip analysis (8), a deep analysis (14; 8 on Max), a custom parlay (12), the analyst read on a player deep dive (5) and a tipster audit past your plan's allowance (6). They don't expire.",
     buy: "Buy", bonus: "bonus", working: "Opening checkout…", popular: "Most popular", save: "save",
     paymentsOff: "Payments aren't available yet. Reach us through the contact form.",
     extends: "Buying the same plan again adds the new period to the time you have left.",
