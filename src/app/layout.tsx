@@ -22,8 +22,9 @@ const plexSans = IBM_Plex_Sans({ variable: "--font-plex-sans", subsets: ["latin"
 const plexMono = IBM_Plex_Mono({ variable: "--font-plex-mono", subsets: ["latin"], weight: ["400", "500", "600"], display: "swap" });
 
 /**
- * Theme before paint: the product works in dark, and an explicit choice is remembered. Written as a
- * blocking inline script because a flash of the wrong palette is worse than 300 bytes.
+ * Theme before paint: the product works in dark, and an explicit choice is remembered. A blocking
+ * inline script, because a flash of the wrong palette is worse than 300 bytes. It is server-rendered
+ * once per document, which is the only time it needs to run.
  */
 const THEME_SCRIPT = `try{var t=localStorage.getItem("bm-theme");var d=document.documentElement;if(t==="light"||t==="dark"){d.dataset.theme=t}else if(t==="system"){delete d.dataset.theme}var n=localStorage.getItem("bm-density");if(n==="compact"||n==="comfortable"||n==="default"){d.dataset.density=n}}catch(e){}`;
 
