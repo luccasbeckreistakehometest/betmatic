@@ -27,7 +27,7 @@ function Side({ team, won, score }: { team: TeamRef; won: boolean; score: boolea
       {team.logo ? (
         // ESPN logo CDN; a plain img keeps this a pure server component.
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={team.logo} alt="" width={16} height={16} className="hidden size-4 shrink-0 object-contain opacity-55 lg:block" />
+        <img src={team.logo} alt="" width={16} height={16} className="hidden size-4 shrink-0 object-contain saturate-50 opacity-80 lg:block" />
       ) : null}
       {score && team.score !== undefined && (
         <span className={`nums ml-auto shrink-0 text-sm ${won ? "text-fg" : "text-fg-dim"}`}>{team.score}</span>

@@ -355,3 +355,20 @@ export function PrintButton({ label }: { label: string }) {
     </Button>
   );
 }
+
+/**
+ * A printed sheet says who made it and when — otherwise a page that leaves the screen is an
+ * anonymous fragment. Invisible on screen; the print rules reveal it. The timestamp differs
+ * between the server render and the reader's clock by design, so the mismatch is suppressed.
+ */
+export function PrintHeader({ subject, lang }: { subject: string; lang: "pt" | "en" }) {
+  return (
+    <header data-print="only" className="mb-4 flex items-baseline justify-between gap-4 border-b border-line pb-2">
+      <span className="u-display text-lead text-fg">Betmatic</span>
+      <span className="text-tiny text-fg-muted">{subject}</span>
+      <span className="nums text-tiny text-fg-dim" suppressHydrationWarning>
+        {new Intl.DateTimeFormat(lang === "pt" ? "pt-BR" : "en-US", { dateStyle: "short", timeStyle: "short" }).format(new Date())}
+      </span>
+    </header>
+  );
+}

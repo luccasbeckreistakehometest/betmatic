@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { MarketingPage } from "@/components/MarketingShell";
 import { langFrom, langPaths, pageMetadata, type SearchProps } from "@/lib/seo";
 import { formatDate, formatPercent } from "@/lib/format";
-import { KPI, LinkButton, Notice, Panel, PrintButton, Table, Td, Th, Tr } from "@/components/ui";
+import { KPI, LinkButton, Notice, Panel, PrintButton, PrintHeader, Table, Td, Th, Tr } from "@/components/ui";
 import { readLedger } from "@/lib/ledger/store";
 import { mainTickets, proofMinDecided, proofPublishable, proofStats, publicTickets, recentTickets, ticketSlug } from "@/lib/ledger/proof";
 import { scrubText } from "@/lib/server/whitelabel";
@@ -55,6 +55,7 @@ export default async function ProofPage({ searchParams }: SearchProps) {
   return (
     <MarketingPage lang={lang} langHrefs={langPaths("/prova")} wide>
       <section className="text-fg">
+        <PrintHeader subject={c.title} lang={lang} />
         <p className="text-label u-label text-fg-dim">{c.eyebrow}</p>
         <h1 className="u-display mt-3 text-display">{c.title}</h1>
         <p className="mt-5 max-w-measure text-body text-fg-muted">{c.sub}</p>

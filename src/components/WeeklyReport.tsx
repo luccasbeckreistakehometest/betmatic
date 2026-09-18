@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useNavState } from "@/components/Controls";
-import { KPI, Panel, PrintButton } from "@/components/ui";
+import { KPI, Panel, PrintButton, PrintHeader } from "@/components/ui";
 import { AppPageHead, PanelSkeleton } from "@/components/AppPageHead";
 import { SelfExclusionLinks } from "@/components/SettingsPanel";
 import { formatDate, formatMoney, formatPercent, formatTime } from "@/lib/format";
@@ -99,6 +99,7 @@ export function WeeklyReport() {
 
   return (
     <div className="flex flex-col gap-5">
+      <PrintHeader subject={c.title} lang={lang} />
       <AppPageHead href="/app/report" meta={c.sub} actions={<PrintButton label={lang === "pt" ? "Imprimir" : "Print"} />} />
       {data?.error ? <p className="text-sm text-fg-muted">{c.signIn}</p> : !data ? <PanelSkeleton rows={4} /> : (
         <>

@@ -97,7 +97,7 @@ export function AppRail() {
                   aria-current={current ? "page" : undefined}
                   title={t(item.key)}
                   className={cx(
-                    "relative flex h-9 items-center gap-2.5 px-3 text-sm transition-colors duration-(--dur-1) ease-(--ease-out)",
+                    "u-ring-inset relative flex h-9 items-center gap-2.5 px-3 text-sm transition-colors duration-(--dur-1) ease-(--ease-out)",
                     "max-lg:justify-center max-lg:px-0",
                     current
                       ? "bg-surface-2 font-medium text-fg before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-fg"
@@ -134,7 +134,7 @@ export function AppBottomBar() {
             href={{ pathname: item.href, query: { sport: sport.key, lang } }}
             aria-current={current ? "page" : undefined}
             className={cx(
-              "flex h-12 flex-col items-center justify-center gap-0.5 text-micro",
+              "u-ring-inset flex h-12 flex-col items-center justify-center gap-0.5 text-micro",
               current ? "text-fg shadow-[inset_0_2px_0_var(--fg)]" : "text-fg-dim",
             )}
           >

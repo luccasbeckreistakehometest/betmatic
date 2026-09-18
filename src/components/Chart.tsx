@@ -78,9 +78,19 @@ export function LineChart({
   const zeroY = yOf(0);
   const dots = points.length <= 30;
   const id = testId ?? "chart";
+  // Colour is the result, not the shape: a series that ends at break-even is drawn in ink, because
+  // --pos means a win. Time spent under zero stays --neg, which is what it was.
+  const outcome = points.length ? points[points.length - 1].value : 0;
+  const aboveStroke = signed && outcome > 0 ? "var(--pos)" : "var(--fg)";
+  const belowStroke = signed ? "var(--neg)" : "var(--fg)";
+  // Four points do not deserve a third of the viewport: a sparse series is drawn narrow, and the
+  // frame's fixed ratio makes it short.
+  const sparse = points.length < 5;
+  // Both ends of the x axis on the same day is not an axis.
+  const showLast = lastLabel && lastLabel !== firstLabel;
 
   return (
-    <figure className={cx("m-0 max-w-[46rem]", className)}>
+    <figure className={cx("m-0", sparse ? "max-w-md" : "max-w-3xl", className)}>
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="block h-auto w-full max-w-full"
@@ -125,7 +135,7 @@ export function LineChart({
         <path
           d={d}
           fill="none"
-          stroke={signed ? "var(--pos)" : "var(--fg)"}
+          stroke={aboveStroke}
           strokeWidth={1.5}
           strokeLinejoin="round"
           strokeLinecap="round"
@@ -133,7 +143,7 @@ export function LineChart({
           data-testid={`${id}-path`}
         />
         {signed && (
-          <path d={d} fill="none" stroke="var(--neg)" strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" clipPath={`url(#${id}-below)`} />
+          <path d={d} fill="none" stroke={belowStroke} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" clipPath={`url(#${id}-below)`} />
         )}
 
         {dots &&
@@ -146,7 +156,7 @@ export function LineChart({
                 cy={cy}
                 r={2.5}
                 fill="var(--surface-1)"
-                stroke={signed ? (p.value >= 0 ? "var(--pos)" : "var(--neg)") : "var(--fg)"}
+                stroke={p.value < 0 && signed ? belowStroke : aboveStroke}
                 strokeWidth={1.5}
               >
                 <title>{p.title ?? `${p.label}: ${formatValue(p.value)}`}</title>
@@ -166,7 +176,7 @@ export function LineChart({
             {firstLabel}
           </text>
         )}
-        {lastLabel && (
+        {showLast && (
           <text x={W - PAD.right} y={H - 6} textAnchor="end" fontSize={10} fontFamily="var(--font-mono)" fill="var(--fg-dim)">
             {lastLabel}
           </text>

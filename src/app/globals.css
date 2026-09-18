@@ -443,6 +443,12 @@
     border-radius: inherit;
   }
 
+  /* A full-bleed row (the rail, a stretched table link) starts at x=0 and ends at its own edge, so
+     an outset ring shows as two disconnected bars. Those rows inset it instead (§12.0). */
+  :where(a, button, [tabindex]).u-ring-inset:focus-visible {
+    outline-offset: -2px;
+  }
+
   ::selection {
     background: color-mix(in oklab, var(--focus) 30%, transparent);
     color: var(--fg);
@@ -691,6 +697,14 @@ tr[data-selected="true"] > *:first-child {
   [data-print="hide"] {
     display: none !important;
   }
+  [data-print="only"] {
+    display: flex !important;
+  }
+  /* A short document must not push the legal footer onto a second, near-empty page. */
+  .min-h-dvh,
+  [class*="min-h-dvh"] {
+    min-height: 0 !important;
+  }
   tr,
   figure,
   table {
@@ -730,6 +744,11 @@ tr[data-selected="true"] > *:first-child {
   @page {
     margin: 16mm;
   }
+}
+
+/* Print-only regions are absent from the screen; @media print reveals them. */
+[data-print="only"] {
+  display: none;
 }
 
 /* The platform's own date button is hidden everywhere: the control draws its own calendar glyph,

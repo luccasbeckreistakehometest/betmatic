@@ -347,9 +347,11 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
           <h2 className="u-title text-h2 text-fg">
             {c.faqTitle}
           </h2>
-          <dl className="mt-8 grid gap-px overflow-hidden rounded-panel border border-line bg-surface-3 md:grid-cols-2">
+          {/* Ruled, not celled: nine questions in a two-column grid of filled cells paint an empty
+              tenth box. Rules belong to the items, so an odd count simply ends. */}
+          <dl className="mt-8 grid border-t border-line md:grid-cols-2">
             {c.faq.map((item) => (
-              <div key={item.q} className="bg-surface-1 p-6">
+              <div key={item.q} className="border-b border-line py-5 md:odd:border-r md:odd:pr-8 md:even:pl-8">
                 <dt className="text-base font-semibold text-fg">{item.q}</dt>
                 <dd className="mt-2 text-sm leading-relaxed text-fg-muted">{item.a}</dd>
               </div>
