@@ -98,7 +98,7 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
             <Table caption={c.ladderTitle} collapse={false}>
               <thead>
                 <tr>
-                  <Th className="w-16">{c.ladderStake}</Th>
+                  <Th className="w-20">{c.ladderStake}</Th>
                   <Th numeric>{c.ladderReturns}</Th>
                   <Th numeric className="w-20">{c.ladderChance}</Th>
                 </tr>
@@ -109,7 +109,7 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
                   const chance = impliedProbability(rung.decimal);
                   return (
                     <Tr key={rung.legs}>
-                      <Td label={c.ladderStake} className="nums text-fg-dim">{rung.label[lang]}</Td>
+                      <Td label={c.ladderStake} className="nums whitespace-nowrap text-fg-dim">{rung.label[lang]}</Td>
                       {/* No bar: the argument is already typographic. In tabular mono the payout
                           grows a digit a row while the chance loses one, and the two columns move
                           apart down the table — a drawn bar would only repeat that, badly. */}

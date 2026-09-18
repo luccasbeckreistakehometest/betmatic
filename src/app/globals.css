@@ -699,3 +699,18 @@ tr[data-selected="true"] > *:first-child {
     color: var(--fg-muted);
   }
 }
+
+/* The platform's own date button is hidden everywhere: the control draws its own calendar glyph,
+   and two calendars in one field is the tell that a native input was left unstyled (§10.3). */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+input[type="date"]::-webkit-inner-spin-button,
+input[type="date"]::-webkit-clear-button {
+  display: none;
+}

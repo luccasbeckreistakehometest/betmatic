@@ -178,7 +178,7 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
             <Table caption={c.ladderTitle} collapse={false}>
               <thead>
                 <tr>
-                  <Th className="w-16">{c.ladderStake}</Th>
+                  <Th className="w-20">{c.ladderStake}</Th>
                   <Th numeric>{c.ladderReturns}</Th>
                   <Th numeric className="w-20">{c.ladderChance}</Th>
                 </tr>
@@ -188,7 +188,7 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
                   const chance = impliedProbability(rung.decimal);
                   return (
                     <Tr key={rung.legs}>
-                      <Td label={c.ladderStake} className="nums text-fg-dim">{rung.label[lang]}</Td>
+                      <Td label={c.ladderStake} className="nums whitespace-nowrap text-fg-dim">{rung.label[lang]}</Td>
                       <NumCell label={c.ladderReturns} className="text-fg">{money(rung.decimal * 10, lang)}</NumCell>
                       <NumCell label={c.ladderChance} chance={chanceStep(chance)} className="text-fg-muted">
                         {formatPercent(chance, lang, { digits: chance >= 0.01 ? 1 : 2 })}

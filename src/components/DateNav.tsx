@@ -60,7 +60,7 @@ export function DateNav({ dateKey, label }: { dateKey: string; label: string }) 
             const v = e.target.value.replaceAll("-", "");
             if (v.length === 8) go(v);
           }}
-          className="nums h-(--row-h) w-[7.5rem] bg-transparent text-sm text-fg sm:absolute sm:inset-0 sm:w-full sm:opacity-0"
+          className="nums h-(--row-h) w-[6.5rem] bg-transparent text-sm text-fg sm:absolute sm:inset-0 sm:w-full sm:opacity-0"
         />
       </label>
 
