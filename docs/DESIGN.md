@@ -83,42 +83,48 @@ the loudest thing on the screen.
 
 Three families, self-hosted by `next/font/google` (no external stylesheet, no CDN, `display:
 swap`, `latin` + `latin-ext` subsets so Portuguese diacritics are in the same file as the Latin
-core and never fall back mid-word).
+core and never fall back mid-word). Axes and weights below were verified against
+`next/dist/compiled/@next/font/dist/google/font-data.json` in this repo — they are what the
+installed Next can actually build.
 
-### 3.1 Display / voice — **Archivo** (variable: `wght` 400–700, `wdth` 62–125)
+### 3.1 Display / voice — **Archivo** (variable: `wght` 100–900, `wdth` 62–125)
 
-Omnibus-Type's industrial grotesque, drawn for high-performance printing and screen signage. It is
-chosen for three reasons: (a) the **width axis is the identity move** — no other free family lets a
-headline be set at `wdth 112` and a dense table header at `wdth 82` in the *same* voice, which is
-exactly the range this product needs; (b) its numerals are squarish and flat-sided, so a 48 px
-"50,0 %" on `/prova` reads like an instrument readout rather than a marketing number; (c) it is a
-Latin-American foundry face with complete Portuguese coverage, which is a better cultural fit for a
-pt-BR-first product than another American UI sans.
+Omnibus-Type's industrial grotesque, drawn for signage and high-performance printing. Three reasons:
+(a) the **width axis is the identity move** — a hero at `wdth 112` and a condensed table header at
+`wdth 82` are the *same* voice at two densities, which is exactly the range this product spans;
+(b) its numerals are squarish and flat-sided, so `50,0 %` at 39 px on `/prova` reads like an
+instrument readout rather than a marketing number; (c) it is a Latin-American foundry face with
+full Portuguese coverage, a better fit for a pt-BR-first product than another American UI sans —
+and it is none of the four banned headline faces.
 
 ```
-Archivo   400 / 500 / 600 / 700     wdth 82 (condensed labels) · 100 (default) · 112 (display)
-fallback: "Archivo Fallback", "Helvetica Neue", Arial, sans-serif
+Archivo   variable, wght 400–700, wdth 82 (condensed) · 100 (default) · 112 (display)
+next/font: Archivo({ subsets: ["latin","latin-ext"], axes: ["wdth"] })
+fallback:  "Archivo Fallback", "Helvetica Neue", Arial, sans-serif
 ```
 
 Used for: `h1`–`h3`, page titles, section titles, the wordmark, KPI values above 24 px, table
 column headers (at `wdth 82`, 500). Nothing below 11 px.
 
-### 3.2 Text / UI — **IBM Plex Sans** (400 / 500 / 600)
+### 3.2 Text / UI — **IBM Plex Sans** (variable: `wght` 100–700, `wdth` 75–100)
 
 Drawn by Bold Monday for interfaces where a misread character is a defect, which is the condition
 here: `1` vs `l`, `0` vs `O`, and a disambiguated `rn`/`m` matter when the string is `MIN −6.5` or
-`IND −14.5`. Its x-height is tall enough to stay legible at the 12 px this product needs in table
-cells, and its accents are drawn tight enough that `ç`, `ã`, `õ`, `é` do not collide with the line
-above at 1.3 leading. It also ships true `tnum`.
+`IND −14.5`. Its x-height stays legible at the 12 px this product needs in table cells, and its
+accents are drawn tight enough that `ç`, `ã`, `õ`, `é` do not collide with the line above at 1.3
+leading. It also carries a `wdth` axis of its own — so the `compact` density can narrow body text
+to `wdth 92` in table cells without changing family, and dense rows gain roughly 6 % more
+characters per column for free.
 
 ```
-IBM Plex Sans   400 / 500 / 600
-fallback: "IBM Plex Sans Fallback", -apple-system, "Segoe UI", Roboto, sans-serif
+IBM Plex Sans   variable, wght 400–600, wdth 92 (compact cells) · 100 (everything else)
+next/font: IBM_Plex_Sans({ subsets: ["latin","latin-ext"], axes: ["wdth"] })
+fallback:  "IBM Plex Sans Fallback", -apple-system, "Segoe UI", Roboto, sans-serif
 ```
 
 Used for: all body copy, labels, buttons, form fields, navigation, microcopy, legal text.
 
-### 3.3 Numerals / code — **IBM Plex Mono** (400 / 500 / 600)
+### 3.3 Numerals / code — **IBM Plex Mono** (static: 400 / 500 / 600)
 
 Same skeleton, same foundry, same vertical metrics as Plex Sans — which is the whole argument. When
 a row reads `Sevilha ou empate` (Plex Sans) `1,26` (Plex Mono) the two halves sit on the same
@@ -126,8 +132,9 @@ baseline with the same colour of grey and the same apparent weight. A mono from 
 (the current `Geist Mono` next to `Geist Sans`) always looks pasted in.
 
 ```
-IBM Plex Mono   400 / 500 / 600
-fallback: "IBM Plex Mono Fallback", ui-monospace, SFMono-Regular, "Roboto Mono", monospace
+IBM Plex Mono   400 / 500 / 600   (no variable build on Google Fonts — three static weights)
+next/font: IBM_Plex_Mono({ subsets: ["latin","latin-ext"], weight: ["400","500","600"] })
+fallback:  "IBM Plex Mono Fallback", ui-monospace, SFMono-Regular, "Roboto Mono", monospace
 ```
 
 Used for: **every number a person compares to another number** — odds, decimal multipliers, implied
@@ -767,9 +774,10 @@ it. Nothing in wave 0 is visible to a user, and nothing after wave 1 changes a t
   VPS must reach `fonts.gstatic.com` or the build fails. It already does this for Geist, so the
   risk is unchanged — but three families instead of two means three fetches. Mitigation if it ever
   bites: vendor the four `.woff2` files into `public/fonts/` and switch to `next/font/local`.
-- **Payload.** Archivo variable (wght+wdth) + Plex Sans 3 weights + Plex Mono 3 weights, `latin` +
-  `latin-ext`, is roughly 180–240 KB of woff2 across seven files. Measure after wave 0; if it
-  exceeds 250 KB, drop Plex Mono 600 and Plex Sans 600 (Archivo covers emphasis).
+- **Payload.** Two variable faces (Archivo wght+wdth, Plex Sans wght+wdth) plus three static Plex
+  Mono weights, at `latin` + `latin-ext`, is an estimate of 180–260 KB of woff2 across seven files —
+  *estimated, not measured*. Measure it as the first thing in wave 0; if it exceeds 260 KB, drop
+  Plex Mono 600 (Plex Mono 500 plus colour covers emphasis in numerals).
 - **The rail costs horizontal space.** 224 px off a 1440 px screen is real. The dock is therefore
   hidden below 1280 px and the rail collapses below it; this needs a look at 1280 and 1366 before
   wave 2 ships.
