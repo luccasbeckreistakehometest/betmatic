@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { DateNav } from "@/components/DateNav";
-import { GameCard } from "@/components/GameCard";
+import { ErrorState, Notice, PageHead, Panel } from "@/components/ui";
+import { SlateTable } from "@/components/SlateTable";
 import { RememberSport } from "@/components/RememberSport";
 import { WhatsNew } from "@/components/WhatsNew";
 import { getSlateOrNearest, todayKey } from "@/lib/sources/espn";
@@ -47,46 +48,36 @@ export default async function SlatePage({ searchParams }: PageProps<"/app">) {
   const games = (slate?.games ?? []).map((g) => scrubGame(g, role, lang));
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4" data-density="compact">
       <RememberSport sportKey={sport.key} />
       {viewer && <WhatsNew lang={lang} sportKey={sport.key} />}
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-white">
-            {t("slate")} <span className="text-mist-500">· {sport.label[lang]}</span>
-          </h1>
-          <p className="mt-1 text-sm text-mist-400">
+
+      <PageHead
+        kicker={lang === "pt" ? "Mesa" : "Desk"}
+        title={`${t("slate")} · ${sport.label[lang]}`}
+        meta={
+          <>
             {games.length ? `${games.length} ${games.length === 1 ? t("game") : t("games")} · ` : ""}
             {t("slateHint")}
-          </p>
-        </div>
-        <DateNav dateKey={slate?.dateKey ?? requested} label={formatDayKey(slate?.dateKey ?? requested, lang)} />
-      </div>
+          </>
+        }
+        actions={<DateNav dateKey={slate?.dateKey ?? requested} label={formatDayKey(slate?.dateKey ?? requested, lang)} />}
+      />
 
       {slate?.shifted && (
-        <div className="rounded-xl border border-warn-400/25 bg-warn-400/5 px-4 py-3 text-sm text-warn-400">
+        <Notice>
           {t("noGamesOn")} {formatDayKey(slate.requestedKey, lang)} — {t("showingNearest")},{" "}
-          <span className="font-semibold">{formatDayKey(slate.dateKey, lang)}</span>.
-        </div>
+          <span className="nums">{formatDayKey(slate.dateKey, lang)}</span>.
+        </Notice>
       )}
 
-      {failed && (
-        <div className="rounded-xl border border-alert-400/25 bg-alert-400/5 px-4 py-3 text-sm text-alert-400" role="alert">
-          {t("slateUnavailable")}
-        </div>
+      {failed ? (
+        <ErrorState title={t("slateUnavailable")} />
+      ) : (
+        <Panel flush>
+          <SlateTable games={games} lang={lang} sportKey={sport.key} />
+        </Panel>
       )}
-
-      {!failed && games.length === 0 && (
-        <div className="rounded-xl border border-ink-800 bg-ink-900/60 px-5 py-10 text-center text-sm text-mist-400">
-          {t("noGamesNearby")}
-        </div>
-      )}
-
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-tour="games">
-        {games.map((game) => (
-          <GameCard key={game.id} game={game} lang={lang} sportKey={sport.key} />
-        ))}
-      </div>
     </div>
   );
 }

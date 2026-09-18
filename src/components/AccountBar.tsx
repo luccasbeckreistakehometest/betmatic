@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { LangPicker, PRIMARY_NAV, SECONDARY_NAV, useNavState } from "@/components/Controls";
+import { LangPicker, useNavState } from "@/components/Controls";
+import { NAV_GROUPS } from "@/components/AppRail";
+import { Icon } from "@/components/Icon";
+import { Button, LinkButton, Skeleton, cx } from "@/components/ui";
 import { makeT } from "@/lib/i18n";
 import { formatDate } from "@/lib/format";
 
@@ -19,8 +22,10 @@ interface Me {
 }
 
 /**
- * Account corner of the app header: balance, plan, and one menu that holds everything else — on
- * phones the whole navigation, on desktop the secondary pages. Logout lives here on every size.
+ * The account corner of the topbar: balance, plan, language, and the menu that holds every
+ * destination — the rail's own list, so a phone (which has five of them in the bottom bar) and a
+ * desk (which has all thirteen in the rail) read the same names in the same order. Logout lives
+ * here at every size.
  */
 export function AccountBar() {
   const { lang, sport } = useNavState();
@@ -64,36 +69,45 @@ export function AccountBar() {
   const query = { sport: sport.key, lang };
   const user = me?.user ?? null;
   const linkClass = (href: string) =>
-    `block rounded-lg px-3 py-2 text-[13px] transition ${pathname === href ? "bg-ink-800 text-mist-100" : "text-mist-300 hover:bg-ink-850 hover:text-mist-100"}`;
+    cx(
+      "flex h-8 items-center gap-2 px-2 text-sm transition-colors duration-(--dur-1)",
+      pathname === href ? "bg-surface-2 font-medium text-fg" : "text-fg-muted hover:bg-surface-2 hover:text-fg",
+    );
 
   return (
     <div className="relative flex items-center gap-2" ref={panel}>
       {!me ? (
-        <div className="h-6 w-16 animate-pulse rounded bg-ink-800" />
+        <Skeleton width="4rem" />
       ) : user ? (
-        <div className="flex items-center gap-2 text-[11px]" data-tour="account" data-testid="account">
-          <Link href={`/app/conta?lang=${lang}`} className="nums flex items-center gap-1.5 text-mist-300" title={t("coins")} aria-label={`${user.coins} ${t("coins")}`}>
-            <span className="size-1.5 rounded-full bg-edge-400" aria-hidden />
+        <div className="flex items-center gap-2" data-tour="account" data-testid="account">
+          {/* Balance and plan are numbers a person checks, so they are set like numbers. */}
+          <Link
+            href={`/app/conta?lang=${lang}`}
+            className="nums flex items-center gap-1.5 text-tiny text-fg-muted transition-colors hover:text-fg"
+            title={t("coins")}
+            aria-label={`${user.coins} ${t("coins")}`}
+          >
+            <span aria-hidden="true" className="size-1.5 rounded-full bg-fg-dim" />
             {user.coins}
           </Link>
-          <span className="hidden rounded border border-ink-700 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-mist-400 sm:inline">
+          <span className="hidden border border-line px-1.5 py-0.5 text-micro u-label text-fg-dim sm:inline">
             {user.plan.name}
           </span>
           {user.role === "admin" && (
-            <Link href="/admin" className="hidden text-warn-400 transition hover:text-warn-400/80 sm:inline">
+            <Link href="/admin" className="hidden text-tiny text-fg-muted transition-colors hover:text-fg sm:inline">
               admin
             </Link>
           )}
         </div>
       ) : (
-        <Link
+        <LinkButton
           href={`/login?lang=${lang}&next=${encodeURIComponent(here)}`}
           data-tour="account"
           data-testid="header-login"
-          className="whitespace-nowrap rounded-lg border border-ink-700 px-2.5 py-1 text-[12px] text-mist-300 transition hover:border-ink-600 hover:text-white"
+          className="h-8"
         >
           {t("login")}
-        </Link>
+        </LinkButton>
       )}
 
       <LangPicker className="hidden sm:flex" />
@@ -105,27 +119,21 @@ export function AccountBar() {
         aria-controls="app-menu"
         aria-label={open ? t("closeMenu") : t("menu")}
         data-testid="menu-button"
-        className="grid size-8 place-items-center rounded-lg border border-ink-700 text-mist-300 transition hover:border-ink-600 hover:text-white"
+        className="grid size-8 place-items-center rounded-control border border-line-control text-fg-muted transition-colors duration-(--dur-1) hover:bg-surface-2 hover:text-fg"
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-          {open ? (
-            <path d="M3.5 3.5l9 9m0-9l-9 9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-          ) : (
-            <path d="M2.5 4h11M2.5 8h11M2.5 12h11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-          )}
-        </svg>
+        <Icon name={open ? "close" : "menu"} size={16} />
       </button>
 
       {open && (
         <div
           id="app-menu"
           data-testid="app-menu"
-          className="absolute right-0 top-full z-50 mt-2 max-h-[calc(100dvh-5rem)] w-[min(88vw,19rem)] overflow-y-auto rounded-xl border border-ink-700 bg-ink-900 p-2 shadow-2xl"
+          className="absolute top-full right-0 z-50 mt-1.5 max-h-[calc(100dvh-5rem)] w-[min(88vw,17.5rem)] overflow-y-auto rounded-panel border border-line bg-surface-1 shadow-pop"
         >
           {user && (
-            <div className="border-b border-ink-800 px-3 pb-2.5 pt-1.5">
-              <p className="truncate text-[13px] font-medium text-mist-100">{user.name}</p>
-              <p className="mt-0.5 text-[11.5px] text-mist-400">
+            <div className="border-b border-line px-3 py-2">
+              <p className="truncate text-sm font-medium text-fg">{user.name}</p>
+              <p className="mt-0.5 text-tiny text-fg-dim">
                 {user.plan.name}
                 {user.plan.id !== "free" && user.planExpiresAt
                   ? ` · ${t("planUntil").replace("{date}", formatDate(user.planExpiresAt, lang, { year: true }))}`
@@ -135,53 +143,58 @@ export function AccountBar() {
               </p>
             </div>
           )}
-          <nav className="flex flex-col py-1.5 lg:hidden" aria-label={t("menu")}>
-            {PRIMARY_NAV.map((item) => (
-              <Link key={item.href} href={{ pathname: item.href, query }} onClick={() => setOpen(false)} className={linkClass(item.href)}>
-                {t(item.key)}
-              </Link>
-            ))}
-          </nav>
-          <nav className="flex flex-col border-t border-ink-800 py-1.5 lg:border-t-0" aria-label={t("navMore")}>
-            {SECONDARY_NAV.map((item) => (
-              <Link
-                key={item.href}
-                href={{ pathname: item.href, query: item.href.startsWith("/app") ? query : { lang } }}
-                onClick={() => setOpen(false)}
-                className={linkClass(item.href)}
-              >
-                {t(item.key)}
-              </Link>
-            ))}
+
+          {NAV_GROUPS.map((group) => (
+            <nav key={group.label.en} className="border-b border-line py-1" aria-label={group.label[lang]}>
+              <p className="px-2 pt-1 pb-0.5 text-label u-label text-fg-faint">{group.label[lang]}</p>
+              {group.items.map((item) => (
+                <Link
+                  key={item.href}
+                  href={{ pathname: item.href, query: item.href.startsWith("/app") ? query : { lang } }}
+                  onClick={() => setOpen(false)}
+                  className={linkClass(item.href)}
+                >
+                  <Icon name={item.icon} size={16} className="text-fg-dim" />
+                  {t(item.key)}
+                </Link>
+              ))}
+            </nav>
+          ))}
+
+          <nav className="border-b border-line py-1" aria-label={t("navMore")}>
             <Link href={`/contato?lang=${lang}`} onClick={() => setOpen(false)} className={linkClass("/contato")}>
+              <Icon name="info" size={16} className="text-fg-dim" />
               {t("contact")}
             </Link>
             {user?.role === "admin" && (
-              <Link href="/admin" onClick={() => setOpen(false)} className={`${linkClass("/admin")} text-warn-400`}>
+              <Link href="/admin" onClick={() => setOpen(false)} className={linkClass("/admin")}>
+                <Icon name="shield" size={16} className="text-fg-dim" />
                 Admin
               </Link>
             )}
           </nav>
-          <div className="flex items-center justify-between gap-2 border-t border-ink-800 px-3 pb-1 pt-2.5">
+
+          <div className="flex items-center justify-between gap-2 p-2">
             <LangPicker className="sm:hidden" />
             {user ? (
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                icon="logout"
                 onClick={() => void logout()}
-                disabled={leaving}
+                loading={leaving}
                 data-testid="logout"
-                className="ml-auto rounded-lg border border-ink-700 px-3 py-1.5 text-[12.5px] text-mist-200 transition hover:border-alert-400/50 hover:text-alert-400 disabled:opacity-50"
+                className="ml-auto h-8"
               >
                 {t("logout")}
-              </button>
+              </Button>
             ) : (
               <div className="ml-auto flex gap-2">
-                <Link href={`/login?lang=${lang}&next=${encodeURIComponent(here)}`} className="rounded-lg border border-ink-700 px-3 py-1.5 text-[12.5px] text-mist-200">
+                <LinkButton href={`/login?lang=${lang}&next=${encodeURIComponent(here)}`} className="h-8">
                   {t("login")}
-                </Link>
-                <Link href={`/signup?lang=${lang}&next=${encodeURIComponent(here)}`} className="rounded-lg bg-edge-400 px-3 py-1.5 text-[12.5px] font-semibold text-ink-950">
+                </LinkButton>
+                <LinkButton variant="primary" href={`/signup?lang=${lang}&next=${encodeURIComponent(here)}`} className="h-8">
                   {t("startFreeCta")}
-                </Link>
+                </LinkButton>
               </div>
             )}
           </div>

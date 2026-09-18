@@ -384,6 +384,48 @@ export function Panel({
   );
 }
 
+/* ── Page head ─────────────────────────────────────────────────────────────────────────────────
+ * Every screen in the app opens the same way: a title in the display face, the facts about what is
+ * on screen beside it, and the controls that change it on the right — all on one ruled line, so a
+ * reader moving between screens never has to find the heading again.
+ */
+
+export function PageHead({
+  title,
+  kicker,
+  meta,
+  actions,
+  className = "",
+}: {
+  title: ReactNode;
+  /** The section this screen belongs to, in the rail's own words. */
+  kicker?: string;
+  meta?: ReactNode;
+  actions?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <header className={cx("flex flex-wrap items-end justify-between gap-x-6 gap-y-3 border-b border-line-strong pb-3", className)}>
+      <div className="min-w-0">
+        {kicker && <p className="mb-1 text-label u-label text-fg-faint">{kicker}</p>}
+        <h1 className="u-title text-lead text-fg">{title}</h1>
+        {meta && <p className="mt-1 max-w-measure-app text-tiny text-fg-dim">{meta}</p>}
+      </div>
+      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+    </header>
+  );
+}
+
+/** A caution that is a standing condition, not a failure: amber rule, never a red box (§13). */
+export function Notice({ tone = "warn", children }: { tone?: "warn" | "info" | "neg"; children: ReactNode }) {
+  const style = tone === "neg" ? "border-neg bg-neg-tint text-neg" : tone === "info" ? "border-focus bg-focus/10 text-fg" : "border-warn bg-warn-tint text-warn";
+  return (
+    <p role={tone === "neg" ? "alert" : undefined} className={cx("border-l-2 px-3 py-2 text-sm", style)}>
+      {children}
+    </p>
+  );
+}
+
 /* ── Empty, loading, error ─────────────────────────────────────────────────────────────────────
  * Three states every data region ships. The region's own frame stays drawn so the reader can see
  * what will arrive; "filtered to nothing" is its own state, because it is not empty.

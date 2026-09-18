@@ -4,7 +4,7 @@ import { IntelBoard } from "@/components/IntelBoard";
 import { LivePanel } from "@/components/LivePanel";
 import { espnDateKey } from "@/lib/sources/espn";
 import { Empty, KeyValue, Panel } from "@/components/ui";
-import { kickoff } from "@/components/GameCard";
+import { kickoff } from "@/components/SlateTable";
 import { localizeStatLabel, localizeStatus } from "@/lib/format";
 import { scrubGameDetail } from "@/lib/server/whitelabel";
 import { getGameDetail } from "@/lib/sources/espn";
