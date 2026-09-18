@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Betmatic icon sprite. One file, no package: 23 glyphs drawn by hand on a 20×20 grid at stroke 1.5
+  Betmatic icon sprite. One file, no package: 24 glyphs drawn by hand on a 20×20 grid at stroke 1.5
   with round caps and joins, no fills, currentColor only. A 16px optical size comes from scaling
   this 20px drawing down — never from shrinking a 24px icon, which thins the stroke below a device
   pixel. Referenced as <svg><use href="/icons.svg#name"/></svg> (src/components/Icon.tsx).
@@ -54,6 +54,11 @@
   <symbol id="user" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
     <circle cx="10" cy="6.75" r="3.25" />
     <path d="M3.75 16.9a6.25 6.25 0 0 1 12.5 0" />
+  </symbol>
+  <symbol id="printer" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 7.25V2.75h8v4.5" />
+    <path d="M6 14.75H4.25a1.5 1.5 0 0 1-1.5-1.5v-4.5a1.5 1.5 0 0 1 1.5-1.5h11.5a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5H14" />
+    <rect x="6" y="11.75" width="8" height="5.5" rx="1" />
   </symbol>
   <symbol id="menu" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5.5h14M3 10h14M3 14.5h14" /></symbol>
 </svg>

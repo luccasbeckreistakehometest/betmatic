@@ -393,14 +393,14 @@ function SlateTable({ density }: { density: "compact" | "default" | "comfortable
                 tone={row.state === "ganhou" ? "pos" : row.state === "perdeu" ? "neg" : undefined}
                 selected={i === 1}
               >
-                <Td className="nums text-fg-dim">{row.time}</Td>
-                <Td className="nums whitespace-nowrap">{row.game}</Td>
-                <Td className="text-fg-muted">{row.market}</Td>
-                <Td numeric>
+                <Td label="Hora" className="nums text-fg-dim">{row.time}</Td>
+                <Td label="Jogo" className="nums whitespace-nowrap">{row.game}</Td>
+                <Td label="Mercado" className="text-fg-muted">{row.market}</Td>
+                <Td label="Preço · implícita" numeric>
                   <Odds decimal={row.price} />
                 </Td>
-                <NumCell chance={chanceStep(row.measured)}>{formatPercent(row.measured, "pt")}</NumCell>
-                <NumCell tone={row.result > 0 ? "pos" : row.result < 0 ? "neg" : undefined}>
+                <NumCell label="Medida" chance={chanceStep(row.measured)}>{formatPercent(row.measured, "pt")}</NumCell>
+                <NumCell label="Resultado" tone={row.result > 0 ? "pos" : row.result < 0 ? "neg" : undefined}>
                   {row.result === 0 ? "—" : formatUnits(row.result, "pt")}
                 </NumCell>
               </Tr>

@@ -435,6 +435,65 @@
 }
 
 /*
+ * A dense table below 768px becomes one definition list per row — label left, value right, a rule
+ * between rows — instead of a sideways scroll nobody discovers (§11.1). The markup stays a real
+ * <table>: only the boxes change, so the header still exists for a screen reader and the column
+ * label comes back as the row label through data-label.
+ */
+@media (max-width: 767px) {
+  table[data-collapse="true"] thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  table[data-collapse="true"] tr {
+    display: block;
+    padding: var(--s-3) 0;
+  }
+  table[data-collapse="true"] td {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--s-5);
+    height: auto;
+    min-height: 0;
+    padding-block: var(--s-1);
+    text-align: right;
+  }
+  table[data-collapse="true"] td::before {
+    content: attr(data-label);
+    font-family: var(--font-display);
+    font-variation-settings: "wdth" 82, "wght" 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.6875rem;
+    color: var(--fg-dim);
+    text-align: left;
+  }
+  /* The result bar moves to the whole row, where a row is now a block. */
+  table[data-collapse="true"] tr[data-tone] > *:first-child,
+  table[data-collapse="true"] tr[data-selected="true"] > *:first-child {
+    box-shadow: none;
+  }
+  table[data-collapse="true"] tr[data-tone="pos"] {
+    box-shadow: inset 2px 0 0 var(--pos), inset 0 -1px 0 var(--line);
+  }
+  table[data-collapse="true"] tr[data-tone="neg"] {
+    box-shadow: inset 2px 0 0 var(--neg), inset 0 -1px 0 var(--line);
+  }
+  table[data-collapse="true"] tr[data-selected="true"] {
+    box-shadow: inset 2px 0 0 var(--focus), inset 0 -1px 0 var(--line);
+  }
+  table[data-collapse="true"] tr[data-tone] td,
+  table[data-collapse="true"] tr[data-selected="true"] td {
+    padding-left: var(--cell-px);
+  }
+}
+
+/*
  * Table row and cell states (§11.1). Written here rather than as utilities because a leading rule
  * and the row rule are both inset shadows and must compose on one element without fighting.
  */

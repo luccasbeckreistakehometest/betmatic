@@ -417,10 +417,21 @@ export function Skeleton({ className = "", width }: { className?: string; width?
  * header takes its column's alignment. The table is the only element allowed to scroll sideways.
  */
 
-export function Table({ caption, children, className = "" }: { caption: string; children: ReactNode; className?: string }) {
+export function Table({
+  caption,
+  collapse = true,
+  children,
+  className = "",
+}: {
+  caption: string;
+  /** Below 768px the rows become definition lists. Turn it off only for a two-column table. */
+  collapse?: boolean;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="max-w-full overflow-x-auto">
-      <table className={cx("w-full border-collapse text-left", className)}>
+    <div className="max-w-full min-w-0 overflow-x-auto">
+      <table data-collapse={collapse ? "true" : undefined} className={cx("w-full border-collapse text-left", className)}>
         <caption className="sr-only">{caption}</caption>
         {children}
       </table>
@@ -470,9 +481,9 @@ export function Tr({
   );
 }
 
-export function Td({ numeric = false, className = "", children, ...rest }: ComponentProps<"td"> & { numeric?: boolean }) {
+export function Td({ label, numeric = false, className = "", children, ...rest }: ComponentProps<"td"> & { numeric?: boolean; label?: string }) {
   return (
-    <td {...rest} className={cx("h-(--row-h) px-(--cell-px) align-middle text-sm", numeric ? "nums text-right tabular-nums" : "text-fg", className)}>
+    <td {...rest} data-label={label} className={cx("h-(--row-h) px-(--cell-px) align-middle text-sm", numeric ? "nums text-right tabular-nums" : "text-fg", className)}>
       {children}
     </td>
   );
@@ -482,14 +493,16 @@ export function Td({ numeric = false, className = "", children, ...rest }: Compo
 export function NumCell({
   tone,
   chance,
+  label,
   className = "",
   children,
   ...rest
-}: ComponentProps<"td"> & { tone?: "pos" | "neg"; chance?: 1 | 2 | 3 | 4 | 5 }) {
+}: ComponentProps<"td"> & { tone?: "pos" | "neg"; chance?: 1 | 2 | 3 | 4 | 5; label?: string }) {
   return (
     <td
       {...rest}
       data-chance={chance}
+      data-label={label}
       className={cx(
         "h-(--row-h) px-(--cell-px) text-right align-middle text-sm nums",
         tone === "pos" && "text-pos",
@@ -611,7 +624,7 @@ export function Tooltip({ label, children, className = "" }: { label: string; ch
       {children}
       <span
         role="tooltip"
-        className="pointer-events-none absolute top-full left-1/2 z-30 mt-1 -translate-x-1/2 rounded-panel border border-line bg-surface-1 px-2 py-1 text-tiny whitespace-nowrap text-fg opacity-0 shadow-pop transition-opacity delay-(--dur-tip) duration-(--dur-2) group-hover:opacity-100 group-focus-within:opacity-100"
+        className="pointer-events-none absolute top-full right-0 z-30 mt-1 rounded-panel md:right-auto md:left-1/2 md:-translate-x-1/2 border border-line bg-surface-1 px-2 py-1 text-tiny whitespace-nowrap text-fg opacity-0 shadow-pop transition-opacity delay-(--dur-tip) duration-(--dur-2) group-hover:opacity-100 group-focus-within:opacity-100"
       >
         {label}
       </span>
