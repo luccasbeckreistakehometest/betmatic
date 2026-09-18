@@ -15,9 +15,24 @@ export interface SportLanding {
   angle: { pt: { title: string; body: string }[]; en: { title: string; body: string }[] };
   marketsTitle: { pt: string; en: string };
   markets: { pt: string[]; en: string[] };
+  /**
+   * What surrounds the ticket in this sport: the watch before kickoff, the backups, the live read,
+   * the grading afterwards. `href` is where the thing actually is — a path under /app goes through
+   * signup for a visitor who is not signed in.
+   */
+  stackTitle: { pt: string; en: string };
+  stackSub: { pt: string; en: string };
+  stack: { pt: StackItem[]; en: StackItem[] };
   leagues: string[];
   cta: { pt: string; en: string };
   meta: { pt: string; en: string };
+}
+
+export interface StackItem {
+  title: string;
+  body: string;
+  href: string;
+  cta: string;
 }
 
 export const SPORT_LANDINGS: SportLanding[] = [
@@ -67,6 +82,113 @@ export const SPORT_LANDINGS: SportLanding[] = [
     markets: {
       pt: ["Pontos", "Rebotes", "Assistências", "Bolas de 3", "Roubos", "Tocos", "Erros", "Faltas", "Minutos", "Pts+Reb+Ass", "Roubos+Tocos"],
       en: ["Points", "Rebounds", "Assists", "3PM", "Steals", "Blocks", "Turnovers", "Fouls", "Minutes", "PRA", "Steals+Blocks"],
+    },
+    stackTitle: { pt: "O que vem junto com o bilhete", en: "What ships around the ticket" },
+    stackSub: {
+      pt: "O palpite é o começo. O resto acontece antes da bola subir, com o jogo rolando e depois do apito final.",
+      en: "The pick is the start. The rest happens before tip-off, during the game and after the final buzzer.",
+    },
+    stack: {
+      pt: [
+        {
+          title: "Vigia de lesão nas suas pernas",
+          body: "No basquete não sai escalação publicada, então a gente acompanha o boletim de lesões: quem está na sua perna virou dúvida ou foi descartado, a perna ganha selo vermelho e quem salvou o bilhete recebe o aviso — aqui na lista ou no Telegram.",
+          href: "/app/alerts",
+          cta: "Como funcionam os avisos",
+        },
+        {
+          title: "Até duas alternativas por bilhete",
+          body: "Quando os dados sustentam, o bilhete já vem com até duas alternativas com a mesma ideia — outra linha do mesmo jogador, outro nome com o mesmo papel. Quando não sustentam, não vem nenhuma.",
+          href: "/app",
+          cta: "Ver os jogos de hoje",
+        },
+        {
+          title: "Manda o print, a gente lê",
+          body: "Apostou na casa? Manda o print: a gente lê as pernas e as odds, confere se elas multiplicam no total que está ali, e o bilhete é liquidado sozinho quando o jogo acaba. A imagem não fica guardada.",
+          href: "/app/bankroll",
+          cta: "Ver a banca",
+        },
+        {
+          title: "Raio-x do grupo de NBA",
+          body: "Antes de pagar aquele grupo VIP, cola as mensagens dele e veja o acerto real contra o placar oficial — inclusive os greens postados depois que o jogo já tinha começado. O nome do tipster não aparece em lugar nenhum.",
+          href: "/raio-x-tipster",
+          cta: "Passar um tipster no raio-x",
+        },
+        {
+          title: "Linha de fechamento (CLV)",
+          body: "No apito inicial a gente guarda a odd de fechamento de cada perna, tira a margem da casa e compara com o preço do bilhete. O número sai por mercado na prova pública, a partir de 30 pernas com fechamento.",
+          href: "/prova",
+          cta: "Ver o CLV medido",
+        },
+        {
+          title: "Com o jogo rolando",
+          body: "Cada perna mostra se já bateu, se caiu ou quanta chance ainda tem, misturando o ritmo da partida com o histórico do jogador. É estimativa, e vem escrito que é. Nos planos Pro e Max entra também a leitura do analista ao vivo.",
+          href: "/planos",
+          cta: "Ver os planos",
+        },
+        {
+          title: "Raio-x do jogador",
+          body: "Últimos 5, 10 e temporada naquela linha, minutagem e papel no time, o que o adversário concede pra posição dele e o rendimento com e sem cada companheiro. Tudo do boletim dos jogos, sem palpite de IA.",
+          href: "/app",
+          cta: "Abrir um jogador",
+        },
+        {
+          title: "Destaques do dia",
+          body: "Algumas vezes por dia o sistema escolhe jogos que começam entre 2 e 30 horas — os times e ligas mais seguidos por aqui entram primeiro, e a WNBA está na lista — e monta os bilhetes antes de qualquer pessoa abrir. É o que mantém o histórico público cheio.",
+          href: "/prova",
+          cta: "Ver o histórico público",
+        },
+      ],
+      en: [
+        {
+          title: "An injury watch on your legs",
+          body: "Basketball publishes no starting five, so we follow the injury report instead: when a player on your leg turns doubtful or is ruled out, the leg gets a red badge and whoever saved the ticket hears about it — in the notice list or on Telegram.",
+          href: "/app/alerts",
+          cta: "How the notices work",
+        },
+        {
+          title: "Up to two backups per ticket",
+          body: "When the data supports it, a ticket already carries up to two alternatives with the same idea — another line on the same player, another name in the same role. When it doesn't, it carries none.",
+          href: "/app",
+          cta: "See today's games",
+        },
+        {
+          title: "Snap your slip, we read it",
+          body: "Bet at the book? Send the screenshot: we read the legs and the odds, check they multiply into the total printed on it, and the slip grades itself when the game ends. The image is never kept.",
+          href: "/app/bankroll",
+          cta: "See the bankroll",
+        },
+        {
+          title: "Audit that NBA group",
+          body: "Before paying for a VIP group, paste its messages and see the real record against the official box score — including the wins posted after tip-off. The tipster's name shows up nowhere.",
+          href: "/tipster-audit",
+          cta: "Audit a tipster",
+        },
+        {
+          title: "Closing line value (CLV)",
+          body: "At tip-off we store each leg's closing price, strip the book's margin and compare it with what the ticket paid. It is broken down by market on the public record, once 30 legs have a close.",
+          href: "/prova",
+          cta: "See the measured CLV",
+        },
+        {
+          title: "While the game runs",
+          body: "Every leg shows whether it has cleared, busted or how much chance is left, blending the game's pace with the player's own rate. It is an estimate and says so. Pro and Max also get the analyst's live read.",
+          href: "/planos",
+          cta: "See the plans",
+        },
+        {
+          title: "Player deep dive",
+          body: "Last 5, last 10 and the season at that line, minutes and role, what tonight's opponent concedes to his position, and how he does with and without each teammate. All from box scores, no AI guesswork.",
+          href: "/app",
+          cta: "Open a player",
+        },
+        {
+          title: "Featured games of the day",
+          body: "A few times a day the system picks games starting 2 to 30 hours out — the teams and leagues most followed here come first, and the WNBA is on that list — and builds their tickets before anyone opens them. That is what keeps the public record full.",
+          href: "/prova",
+          cta: "See the public record",
+        },
+      ],
     },
     leagues: ["NBA", "WNBA"],
     cta: { pt: "Ver os jogos de hoje", en: "See today's games" },
@@ -129,6 +251,113 @@ export const SPORT_LANDINGS: SportLanding[] = [
     markets: {
       pt: ["Gols", "Assistências", "Gols+Assistências", "Finalizações", "No alvo", "Faltas cometidas", "Faltas sofridas", "Impedimentos", "Cartão amarelo", "Cartão vermelho"],
       en: ["Goals", "Assists", "Goals+Assists", "Shots", "On target", "Fouls committed", "Fouls suffered", "Offsides", "Yellow card", "Red card"],
+    },
+    stackTitle: { pt: "O que vem junto com o bilhete", en: "What ships around the ticket" },
+    stackSub: {
+      pt: "O palpite é o começo. O resto acontece antes da bola rolar, com o jogo em andamento e depois do apito final.",
+      en: "The pick is the start. The rest happens before kickoff, while the match runs and after the final whistle.",
+    },
+    stack: {
+      pt: [
+        {
+          title: "O aviso de escalação chega onde você está",
+          body: "Quando os onze saem, a gente cruza com cada bilhete salvo. Titular no banco ou fora da lista vira selo vermelho na perna e um aviso pra quem salvou — aqui na lista ou no Telegram, se você ligar.",
+          href: "/app/alerts",
+          cta: "Como funcionam os avisos",
+        },
+        {
+          title: "Até duas alternativas por bilhete",
+          body: "Quando os dados sustentam, o bilhete já vem com até duas alternativas com a mesma ideia — outra linha do mesmo jogador, outro nome com o mesmo papel. Se o titular cair, a opção sem ele fica destacada.",
+          href: "/app",
+          cta: "Ver os jogos de hoje",
+        },
+        {
+          title: "Manda o print, a gente lê",
+          body: "Apostou na casa? Manda o print: a gente lê as pernas e as odds, confere se elas multiplicam no total que está ali, e o bilhete é liquidado sozinho quando o jogo acaba. A imagem não fica guardada.",
+          href: "/app/bankroll",
+          cta: "Ver a banca",
+        },
+        {
+          title: "Raio-x do grupo de futebol",
+          body: "Antes de pagar aquele grupo VIP, cola as mensagens dele e veja o acerto real contra o placar oficial — inclusive os greens postados depois que a bola já tinha rolado. O nome do tipster não aparece em lugar nenhum.",
+          href: "/raio-x-tipster",
+          cta: "Passar um tipster no raio-x",
+        },
+        {
+          title: "Linha de fechamento (CLV)",
+          body: "No apito inicial a gente guarda a odd de fechamento de cada perna, tira a margem da casa e compara com o preço do bilhete. O número sai por mercado na prova pública, a partir de 30 pernas com fechamento.",
+          href: "/prova",
+          cta: "Ver o CLV medido",
+        },
+        {
+          title: "Com a bola rolando",
+          body: "Cada perna mostra se já bateu, se caiu ou quanta chance ainda tem no tempo que falta. É estimativa, e vem escrito que é. Nos planos Pro e Max entra também a leitura do analista ao vivo.",
+          href: "/planos",
+          cta: "Ver os planos",
+        },
+        {
+          title: "Raio-x do jogador",
+          body: "Finalizações, faltas e cartões partida a partida, quantas vezes ele passou de cada linha nos últimos 5, 10 e na temporada, minutagem e as linhas que a casa publicou pro jogo de hoje.",
+          href: "/app",
+          cta: "Abrir um jogador",
+        },
+        {
+          title: "Destaques do dia",
+          body: "Algumas vezes por dia o sistema escolhe jogos que começam entre 2 e 30 horas — Brasileirão, Premier League, Champions e Libertadores estão na lista — e monta os bilhetes antes de qualquer pessoa abrir. É o que mantém o histórico público cheio.",
+          href: "/prova",
+          cta: "Ver o histórico público",
+        },
+      ],
+      en: [
+        {
+          title: "The lineup notice finds you",
+          body: "When the elevens are out, we cross them with every saved ticket. A starter on the bench or missing from the squad turns into a red badge on the leg and a notice to whoever saved it — in the list here, or on Telegram if you switch it on.",
+          href: "/app/alerts",
+          cta: "How the notices work",
+        },
+        {
+          title: "Up to two backups per ticket",
+          body: "When the data supports it, a ticket already carries up to two alternatives with the same idea — another line on the same player, another name in the same role. If the starter drops out, the one without him is highlighted.",
+          href: "/app",
+          cta: "See today's matches",
+        },
+        {
+          title: "Snap your slip, we read it",
+          body: "Bet at the book? Send the screenshot: we read the legs and the odds, check they multiply into the total printed on it, and the slip grades itself when the match ends. The image is never kept.",
+          href: "/app/bankroll",
+          cta: "See the bankroll",
+        },
+        {
+          title: "Audit that soccer group",
+          body: "Before paying for a VIP group, paste its messages and see the real record against the official result — including the wins posted after kickoff. The tipster's name shows up nowhere.",
+          href: "/tipster-audit",
+          cta: "Audit a tipster",
+        },
+        {
+          title: "Closing line value (CLV)",
+          body: "At kickoff we store each leg's closing price, strip the book's margin and compare it with what the ticket paid. It is broken down by market on the public record, once 30 legs have a close.",
+          href: "/prova",
+          cta: "See the measured CLV",
+        },
+        {
+          title: "While the match runs",
+          body: "Every leg shows whether it has landed, busted or how much chance is left in the time remaining. It is an estimate and says so. Pro and Max also get the analyst's live read.",
+          href: "/planos",
+          cta: "See the plans",
+        },
+        {
+          title: "Player deep dive",
+          body: "Shots, fouls and cards match by match, how often he cleared each line over the last 5, the last 10 and the season, his minutes, and the lines the book posted for today's match.",
+          href: "/app",
+          cta: "Open a player",
+        },
+        {
+          title: "Featured matches of the day",
+          body: "A few times a day the system picks games starting 2 to 30 hours out — the Brasileirão, the Premier League, the Champions League and the Libertadores are on that list — and builds their tickets before anyone opens them. That is what keeps the public record full.",
+          href: "/prova",
+          cta: "See the public record",
+        },
+      ],
     },
     leagues: ["Brasileirão", "Premier League", "La Liga", "Champions", "Libertadores"],
     cta: { pt: "Ver os jogos de hoje", en: "See today's matches" },
