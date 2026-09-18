@@ -204,8 +204,8 @@ function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [] }:
             <span className="ml-auto flex items-center gap-2">
               {saved === "saved" ? <span className="text-focus">✓ {t("saved")}</span> : saved === "error" ? <span className="text-warn">{lang === "pt" ? "entre para salvar" : "sign in to save"}</span> : saved === "limit" ? <span className="text-warn" data-testid="ticket-limit">{limitNote}</span> : saved === "paused" ? <span className="text-warn" data-testid="ticket-paused">{t("pausedHint")}</span> : (
                 <>
-                  <input aria-label={lang === "pt" ? "Valor apostado (R$)" : "Stake (R$)"} value={stake} onChange={(e) => setStake(e.target.value)} placeholder={t("stake")} inputMode="decimal" className="nums w-20 rounded-control border border-line-strong bg-surface-1 px-2 py-1 text-tiny text-fg outline-none focus:border-pos" data-testid="ticket-stake" />
-                  <button onClick={addToBankroll} disabled={!(Number(stake) > 0) || saved === "saving"} className="rounded-control border border-line-strong px-2 py-1 text-fg-muted hover:border-line-control hover:text-fg disabled:opacity-40" data-testid="ticket-add">{t("addToBankroll")}</button>
+                  <input aria-label={lang === "pt" ? "Valor apostado (R$)" : "Stake (R$)"} value={stake} onChange={(e) => setStake(e.target.value)} placeholder={t("stake")} inputMode="decimal" className="nums w-20 rounded-control border border-line-strong bg-surface-1 px-2 py-1 text-tiny text-fg" data-testid="ticket-stake" />
+                  <button onClick={addToBankroll} disabled={!(Number(stake) > 0) || saved === "saving"} className="rounded-control border border-line-strong px-2 py-1 text-fg-muted hover:border-line-control hover:text-fg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="ticket-add">{t("addToBankroll")}</button>
                 </>
               )}
             </span>
@@ -227,7 +227,7 @@ function Alternatives({ main, alternatives, lang, flagged }: { main: BetSuggesti
   return (
     <details className="group mt-3 rounded-control border border-line-strong bg-surface-1" data-testid="alternatives" open={flaggedPlayers.size > 0} onToggle={(e) => { if (e.currentTarget.open) track("alt_expanded", { count: alternatives.length }); }}>
       <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-tiny font-medium text-fg">
-        <span className="text-pos transition group-open:rotate-90">›</span>
+        <span className="text-pos transition-colors duration-(--dur-1) ease-(--ease-out) group-open:rotate-90">›</span>
         {alternatives.length === 1 ? (lang === "pt" ? "1 alternativa" : "1 alternative") : lang === "pt" ? `${alternatives.length} alternativas` : `${alternatives.length} alternatives`}
         <span className="text-fg-dim">· {lang === "pt" ? "se essa cair, vai de…" : "if this one breaks, go with…"}</span>
       </summary>
@@ -236,7 +236,7 @@ function Alternatives({ main, alternatives, lang, flagged }: { main: BetSuggesti
           const diff = legDiff(main, alt);
           const highlight = avoids(alt);
           return (
-            <li key={alt.id} className={`rounded-control border p-2.5 ${highlight ? "border-pos bg-action]" : "border-line bg-surface-1"}`} data-testid="alternative">
+            <li key={alt.id} className={`rounded-control border p-2.5 ${highlight ? "border-line-strong bg-surface-2" : "border-line bg-surface-1"}`} data-testid="alternative">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-tiny font-semibold text-fg">{alt.title}</span>
                 {highlight && <span className="rounded-control bg-action px-1.5 py-0.5 text-micro font-semibold text-pos" data-testid="alt-avoids">{lang === "pt" ? "alternativa sem ele" : "backup without him"}</span>}

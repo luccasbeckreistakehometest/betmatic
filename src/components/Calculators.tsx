@@ -23,7 +23,7 @@ const C = {
 };
 
 const Field = ({ label, value, onChange, testId }: { label: string; value: string; onChange: (v: string) => void; testId?: string }) => (
-  <label className="block text-tiny text-fg-muted">{label}<input value={value} onChange={(e) => onChange(e.target.value)} onBlur={() => { if (testId) track("tool_used", { tool: testId.split("-")[0] }); }} inputMode="decimal" data-testid={testId} className="nums mt-1 w-full rounded-control border border-line-strong bg-surface-1 px-3 py-2 text-base text-fg outline-none focus:border-pos" /></label>
+  <label className="block text-tiny text-fg-muted">{label}<input value={value} onChange={(e) => onChange(e.target.value)} onBlur={() => { if (testId) track("tool_used", { tool: testId.split("-")[0] }); }} inputMode="decimal" data-testid={testId} className="nums mt-1 w-full rounded-control border border-line-strong bg-surface-1 px-3 py-2 text-base text-fg" /></label>
 );
 const Card = ({ title, help, children }: { title: string; help: string; children: React.ReactNode }) => (
   <div className="rounded-panel border border-line bg-surface-1 p-6"><h2 className="text-lead font-semibold">{title}</h2><p className="mt-1 text-sm text-fg-dim">{help}</p><div className="mt-5">{children}</div></div>
@@ -77,7 +77,7 @@ export function Calculators({ lang }: { lang: Lang }) {
           </div>
         </Card>
       </div>
-      <Link href="/signup" className="mt-10 inline-block rounded-control bg-action px-5 py-2.5 text-base font-semibold text-action-fg hover:bg-action">{c.cta}</Link>
+      <Link href="/signup" className="mt-10 inline-block rounded-control bg-action px-5 py-2.5 text-base font-semibold text-action-fg hover:bg-action-hover">{c.cta}</Link>
     </section>
   );
 }

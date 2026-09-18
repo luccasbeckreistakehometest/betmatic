@@ -64,12 +64,12 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
               <Link
                 key={other.slug[lang]}
                 href={`/${other.slug[lang]}`}
-                className={other.slug[lang] === sport ? "text-pos" : "transition hover:text-fg"}
+                className={other.slug[lang] === sport ? "text-pos" : "transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg"}
               >
                 {other.name[lang]}
               </Link>
             ))}
-            <Link href={`/planos${lang === "en" ? "?lang=en" : ""}`} className="transition hover:text-fg">{c.navPricing}</Link>
+            <Link href={`/planos${lang === "en" ? "?lang=en" : ""}`} className="transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg">{c.navPricing}</Link>
           </nav>
         }
       />
@@ -103,7 +103,7 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
             <Link
               href={appPath}
               data-testid="sport-cta"
-              className="rounded-panel bg-action px-6 py-3 text-base font-semibold text-action-fg transition hover:bg-action"
+              className="rounded-panel bg-action px-6 py-3 text-base font-semibold text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover"
             >
               {s.cta[lang]}
             </Link>
@@ -158,7 +158,7 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
               <Link
                 key={item.title}
                 href={destination(item.href)}
-                className="group flex flex-col rounded-panel border border-line bg-surface-1 p-5 transition hover:border-pos"
+                className="group flex flex-col rounded-panel border border-line bg-surface-1 p-5 transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-pos"
               >
                 <h3 className="text-base font-semibold text-fg group-hover:text-pos">{item.title}</h3>
                 <p className="mt-2 flex-1 text-sm leading-relaxed text-fg-muted">{item.body}</p>
@@ -226,13 +226,13 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
           <div className="flex flex-wrap gap-3">
             <Link
               href={signupHref}
-              className="rounded-panel bg-action px-6 py-3 text-base font-semibold text-action-fg transition hover:bg-action"
+              className="rounded-panel bg-action px-6 py-3 text-base font-semibold text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover"
             >
               {c.finalCta}
             </Link>
             <Link
               href={`/planos?lang=${lang}`}
-              className="rounded-panel border border-line-strong px-6 py-3 text-base font-semibold text-fg transition hover:border-line-control hover:text-fg"
+              className="rounded-panel border border-line-strong px-6 py-3 text-base font-semibold text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:text-fg"
             >
               {c.navPricing}
             </Link>

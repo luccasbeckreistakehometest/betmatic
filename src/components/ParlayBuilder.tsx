@@ -96,7 +96,7 @@ export function ParlayBuilder() {
         lang={lang}
         status={loading ? "pending" : locked ? "disabled" : slate ? "ok" : "empty"}
         meta={slate ? `${slate.matchup}${builtFor ? ` · ${builtFor.slice(6, 8)}/${builtFor.slice(4, 6)}` : ""}` : undefined}
-        action={<Link href={`/app/parlays/custom?sport=${sport.key}&lang=${lang}`} className="rounded-control border border-line-strong px-2 py-0.5 text-label text-fg-muted transition hover:border-line-control hover:text-fg" data-testid="custom-parlay-link">{t("customParlay")}</Link>}
+        action={<Link href={`/app/parlays/custom?sport=${sport.key}&lang=${lang}`} className="rounded-control border border-line-strong px-2 py-0.5 text-label text-fg-muted transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:text-fg" data-testid="custom-parlay-link">{t("customParlay")}</Link>}
       >
         {loading ? (
           <Empty>{t("loadingTickets")}</Empty>
@@ -105,7 +105,7 @@ export function ParlayBuilder() {
             <Empty>{t("crossGameLocked")}</Empty>
             <Link
               href={`/planos?lang=${lang}`}
-              className="w-fit rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg transition hover:bg-action"
+              className="w-fit rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover"
             >
               {t("seePlans")}
             </Link>
@@ -122,7 +122,7 @@ export function ParlayBuilder() {
               {build === "too_few_games" ? t("slateTooFew") : build === "cap_global" ? t("capGlobal") : build === "cap_user" ? t("slateCapUser") : build === "failed" ? buildMessage ?? t("generateFailed") : data?.authenticated ? t("slateEmpty") : t("signInForTickets")}
             </Empty>
             {canBuild && (build === "idle" || build === "failed") && (
-              <button onClick={() => void generate()} data-testid="build-slate" className="w-fit rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg transition hover:bg-action">
+              <button onClick={() => void generate()} data-testid="build-slate" className="w-fit rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover">
                 {t("buildSlate")}
               </button>
             )}

@@ -22,7 +22,7 @@ export default async function NotFound() {
         <h1 className="mt-2 text-[clamp(1.8rem,4vw,2.6rem)] font-semibold tracking-[-0.02em] text-fg">{c.title}</h1>
         <p className="mt-3 text-base leading-relaxed text-fg-muted">{c.body}</p>
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link href={`/${q}`} className="rounded-control bg-action px-4 py-2.5 text-base font-semibold text-action-fg hover:bg-action">{c.home}</Link>
+          <Link href={`/${q}`} className="rounded-control bg-action px-4 py-2.5 text-base font-semibold text-action-fg hover:bg-action-hover">{c.home}</Link>
           <Link href={`/app${q}`} className="rounded-control border border-line-strong px-4 py-2.5 text-base text-fg hover:border-line-control">{c.app}</Link>
           <Link href={`/prova${q}`} className="rounded-control border border-line-strong px-4 py-2.5 text-base text-fg hover:border-line-control">{c.proof}</Link>
           <Link href={`/contato${q}`} className="rounded-control border border-line-strong px-4 py-2.5 text-base text-fg hover:border-line-control">{c.contact}</Link>

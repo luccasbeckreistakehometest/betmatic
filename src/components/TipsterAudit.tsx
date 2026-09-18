@@ -73,7 +73,7 @@ export function TipsterAudit() {
   }
 
   const a = state?.allowance;
-  const field = "w-full rounded-control border border-line-strong bg-surface-1 px-2.5 py-1.5 text-sm text-fg outline-none focus:border-pos";
+  const field = "w-full rounded-control border border-line-strong bg-surface-1 px-2.5 py-1.5 text-sm text-fg";
   return (
     <div className="flex flex-col gap-5">
       <div>
@@ -98,7 +98,7 @@ export function TipsterAudit() {
               </label>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <button type="button" onClick={() => void run(false)} disabled={busy || (!text.trim() && !files.length) || state?.aiReady === false} data-testid="tipster-run" className="rounded-control bg-action px-4 py-1.5 text-sm font-semibold text-action-fg hover:bg-action disabled:opacity-40">
+              <button type="button" onClick={() => void run(false)} disabled={busy || (!text.trim() && !files.length) || state?.aiReady === false} data-testid="tipster-run" className="rounded-control bg-action px-4 py-1.5 text-sm font-semibold text-action-fg hover:bg-action-hover disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed">
                 {busy ? c.running : c.run}
               </button>
               {state?.aiReady === false && <span className="text-tiny text-fg-dim">{c.aiOff}</span>}

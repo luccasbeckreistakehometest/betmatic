@@ -45,7 +45,7 @@ export function TipsterFunnel({ lang }: { lang: Lang }) {
         <h1 className="mt-2 max-w-3xl text-h1 font-semibold tracking-tight sm:text-h1">{c.title}</h1>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-fg-muted">{c.sub}</p>
         <div className="mt-6 flex flex-wrap items-center gap-4">
-          <Link href={`/signup?lang=${lang}&next=${encodeURIComponent(next)}`} className="rounded-panel bg-action px-6 py-3 text-base font-semibold text-action-fg hover:bg-action" data-testid="tipster-funnel-cta">{c.cta}</Link>
+          <Link href={`/signup?lang=${lang}&next=${encodeURIComponent(next)}`} className="rounded-panel bg-action px-6 py-3 text-base font-semibold text-action-fg hover:bg-action-hover" data-testid="tipster-funnel-cta">{c.cta}</Link>
           <span className="text-tiny text-fg-dim">{c.ctaSub}</span>
         </div>
         <ol className="mt-10 grid gap-px overflow-hidden rounded-panel border border-line bg-surface-3 md:grid-cols-3">
@@ -58,7 +58,7 @@ export function TipsterFunnel({ lang }: { lang: Lang }) {
           ))}
         </ol>
         <div className="mt-8 grid gap-4 md:grid-cols-2">
-          <div className="rounded-panel border border-pos bg-action] p-5">
+          <div className="rounded-panel border border-line-strong bg-surface-2 p-5">
             <h2 className="text-base font-semibold text-fg">{c.privacyTitle}</h2>
             <p className="mt-2 text-sm leading-relaxed text-fg-muted">{c.privacy}</p>
             <p className="mt-3 text-tiny text-fg-dim">{c.limits}</p>

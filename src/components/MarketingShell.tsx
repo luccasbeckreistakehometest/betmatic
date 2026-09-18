@@ -30,17 +30,17 @@ export function MarketingHeader({ lang, langHrefs, nav }: { lang: Lang; langHref
         </Link>
         {nav ?? (
           <nav className="ml-2 hidden items-center gap-5 text-sm text-fg-muted md:flex">
-            <Link href={`/prova${q}`} className="transition hover:text-fg">{c.proof}</Link>
-            <Link href={`/planos${q}`} className="transition hover:text-fg">{c.plans}</Link>
-            <Link href={`/ferramentas${q}`} className="transition hover:text-fg">{c.tools}</Link>
+            <Link href={`/prova${q}`} className="transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg">{c.proof}</Link>
+            <Link href={`/planos${q}`} className="transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg">{c.plans}</Link>
+            <Link href={`/ferramentas${q}`} className="transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg">{c.tools}</Link>
           </nav>
         )}
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
           <LangSwitch lang={lang} hrefs={langHrefs} />
-          <Link href={`/login?lang=${lang}`} className="whitespace-nowrap text-sm text-fg-muted transition hover:text-fg" data-testid="landing-login">
+          <Link href={`/login?lang=${lang}`} className="whitespace-nowrap text-sm text-fg-muted transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg" data-testid="landing-login">
             {c.login}
           </Link>
-          <Link href={`/signup?lang=${lang}`} className="whitespace-nowrap rounded-control bg-action px-3 py-1.5 text-sm font-semibold text-action-fg transition hover:bg-action sm:px-3.5">
+          <Link href={`/signup?lang=${lang}`} className="whitespace-nowrap rounded-control bg-action px-3 py-1.5 text-sm font-semibold text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover sm:px-3.5">
             {c.start}
           </Link>
         </div>

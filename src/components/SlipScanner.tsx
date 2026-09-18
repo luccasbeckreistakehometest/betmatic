@@ -94,12 +94,12 @@ export function SlipScanner({ lang, sportKey: initialSport, onSaved }: { lang: L
     router.push(`/app/slip?sport=${sportKey}&lang=${lang}&from=scan`);
   }
 
-  const field = "w-full rounded-control border border-line-strong bg-surface-1 px-2 py-1 text-tiny text-fg outline-none focus:border-pos";
+  const field = "w-full rounded-control border border-line-strong bg-surface-1 px-2 py-1 text-tiny text-fg";
   return (
-    <section className="rounded-panel border border-pos bg-action] p-4" data-testid="slip-scanner">
+    <section className="rounded-panel border border-line-strong bg-surface-2 p-4" data-testid="slip-scanner">
       <div className="flex flex-wrap items-center gap-3">
         <button type="button" onClick={() => input.current?.click()} disabled={phase === "reading" || phase === "saving"} data-testid="scan-button"
-          className="rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg hover:bg-action disabled:opacity-50">
+          className="rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg hover:bg-action-hover disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed">
           {phase === "reading" ? c.reading : c.button}
         </button>
         <input ref={input} type="file" accept="image/*" className="hidden" data-testid="scan-input" onChange={(e) => void onFile(e.target.files?.[0])} />
@@ -153,7 +153,7 @@ export function SlipScanner({ lang, sportKey: initialSport, onSaved }: { lang: L
           )}
           <p className="text-label text-fg-dim">{c.privacy}</p>
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={save} disabled={!ready || phase === "saving"} data-testid="scan-save" className="rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg hover:bg-action disabled:opacity-40">{phase === "saving" ? c.saving : c.save}</button>
+            <button type="button" onClick={save} disabled={!ready || phase === "saving"} data-testid="scan-save" className="rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg hover:bg-action-hover disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed">{phase === "saving" ? c.saving : c.save}</button>
             <button type="button" onClick={analyse} className="rounded-control border border-line-strong px-3 py-1.5 text-tiny text-fg hover:border-line-control" data-testid="scan-analyse">{c.analyse}</button>
             <button type="button" onClick={() => { setDraft(null); setPhase("idle"); }} className="px-2 text-tiny text-fg-dim hover:text-fg-muted">{c.cancel}</button>
           </div>

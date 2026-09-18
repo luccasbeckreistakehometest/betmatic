@@ -48,8 +48,8 @@ const C = {
   },
 };
 
-const field = "w-full rounded-control border border-line-strong bg-surface-1 px-3 py-2 text-base text-fg outline-none focus:border-pos";
-const button = "rounded-control border border-line-strong px-3.5 py-1.5 text-sm text-fg transition hover:border-line-control hover:text-fg disabled:opacity-50";
+const field = "w-full rounded-control border border-line-strong bg-surface-1 px-3 py-2 text-base text-fg";
+const button = "rounded-control border border-line-strong px-3.5 py-1.5 text-sm text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:text-fg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed";
 
 export function AccountPanel() {
   const { lang } = useNavState();
@@ -141,7 +141,7 @@ export function AccountPanel() {
           ) : (
             <p className="mt-1 text-sm text-fg-muted">{c.freePlan}</p>
           )}
-          <Link href={`/planos?lang=${lang}`} className="mt-3 inline-block rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg hover:bg-action">{c.seePlans}</Link>
+          <Link href={`/planos?lang=${lang}`} className="mt-3 inline-block rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg hover:bg-action-hover">{c.seePlans}</Link>
         </Panel>
         <Panel title={c.coins} lang={lang}>
           <p className="nums text-lead font-semibold text-fg" data-testid="account-coins">{user.coins}</p>
@@ -220,7 +220,7 @@ export function AccountPanel() {
               <input type="checkbox" checked={del.confirm} onChange={(e) => setDel({ ...del, confirm: e.target.checked })} required className="size-4 appearance-none rounded-control border border-line-control bg-surface-3 checked:border-neg checked:bg-neg" data-testid="delete-confirm" />
               {c.deleteConfirm}
             </label>
-            <button type="submit" disabled={busy === "del" || !del.confirm} className="w-fit rounded-control border border-neg px-3.5 py-1.5 text-sm text-neg transition hover:bg-neg-tint disabled:opacity-50" data-testid="delete-submit">{c.deleteButton}</button>
+            <button type="submit" disabled={busy === "del" || !del.confirm} className="w-fit rounded-control border border-neg px-3.5 py-1.5 text-sm text-neg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-neg-tint disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="delete-submit">{c.deleteButton}</button>
             {delMsg && <p className="text-tiny text-neg" role="alert">{delMsg}</p>}
           </form>
         )}

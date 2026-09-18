@@ -149,7 +149,7 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
           )}
           {s.state === "in" && (data.canRead ? (
             cooling ? <p className="mt-1.5 text-tiny text-fg-dim">{c.readNext.replace("{t}", formatTime(data.nextReadAt!, lang))}</p> : (
-              <button type="button" onClick={askRead} disabled={busy} data-testid="live-read-btn" className="mt-2 rounded-control border border-focus px-3 py-1.5 text-tiny text-focus hover:bg-action disabled:opacity-50">{busy ? c.readBusy : c.readBtn}</button>
+              <button type="button" onClick={askRead} disabled={busy} data-testid="live-read-btn" className="mt-2 rounded-control border border-focus px-3 py-1.5 text-tiny text-focus hover:bg-action-hover disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed">{busy ? c.readBusy : c.readBtn}</button>
             )
           ) : <p className="mt-1.5 text-tiny text-fg-dim" data-testid="live-read-plan">{c.readPlan}</p>)}
           {note && <p className="mt-1.5 text-tiny text-warn">{note}</p>}

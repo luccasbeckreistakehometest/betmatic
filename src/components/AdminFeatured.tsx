@@ -41,7 +41,7 @@ export function AdminFeatured() {
     <Panel
       title="Destaques de hoje"
       meta={data ? `${data.games.length}/${data.config.perDay} · $${data.costUsd.toFixed(2)} hoje` : undefined}
-      action={<button onClick={() => void run()} disabled={running} data-testid="featured-run" className="rounded-control bg-action px-2.5 py-1 text-tiny font-medium text-action-fg disabled:opacity-50">{running ? "Gerando…" : "Gerar agora"}</button>}
+      action={<button onClick={() => void run()} disabled={running} data-testid="featured-run" className="rounded-control bg-action px-2.5 py-1 text-tiny font-medium text-action-fg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed">{running ? "Gerando…" : "Gerar agora"}</button>}
     >
       <div data-testid="admin-featured">
         {note && <p className="mb-2 text-tiny text-focus">{note}</p>}

@@ -77,8 +77,8 @@ export function ProofStrip({ lang, sportKeys }: { lang: Lang; sportKeys?: string
               <p className="mt-2 text-sm text-fg-muted">{c.blurb}</p>
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 {top.free
-                  ? <Link href={{ pathname: "/signup", query: { lang, next: top.gameId ? `/app/game/${top.gameId}?sport=${top.sportKey}&lang=${lang}` : `/app?lang=${lang}` } }} className="inline-block rounded-control bg-action px-4 py-2 text-sm font-semibold text-action-fg hover:bg-action">{c.cta}</Link>
-                  : <Link href={{ pathname: "/planos", query: { lang } }} className="inline-block rounded-control bg-action px-4 py-2 text-sm font-semibold text-action-fg hover:bg-action">{c.ctaPaid}</Link>}
+                  ? <Link href={{ pathname: "/signup", query: { lang, next: top.gameId ? `/app/game/${top.gameId}?sport=${top.sportKey}&lang=${lang}` : `/app?lang=${lang}` } }} className="inline-block rounded-control bg-action px-4 py-2 text-sm font-semibold text-action-fg hover:bg-action-hover">{c.cta}</Link>
+                  : <Link href={{ pathname: "/planos", query: { lang } }} className="inline-block rounded-control bg-action px-4 py-2 text-sm font-semibold text-action-fg hover:bg-action-hover">{c.ctaPaid}</Link>}
                 {top.gameId && <Link href={{ pathname: `/jogo/${top.gameId}`, query: { sport: top.sportKey, lang } }} className="text-sm text-fg-muted hover:text-fg" data-testid="ticket-game-link">{c.gamePage}</Link>}
               </div>
             </div>

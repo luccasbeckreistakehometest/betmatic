@@ -88,8 +88,8 @@ export default async function TicketPage({ params, searchParams }: { params: Pro
         {canReview && <div className="mt-6" data-testid="ticket-review"><LossReview slug={slug} lang={lang} /></div>}
         <p className="mt-6 text-sm text-fg-dim">{c.copy}</p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <a href={`https://wa.me/?text=${encodeURIComponent(c.wa(scrubText(e.title, lang), c.outcome[e.outcome], formatDecimal(e.combinedDecimal), url))}`} target="_blank" rel="noopener noreferrer" className="rounded-control border border-focus px-4 py-2 text-sm font-semibold text-focus hover:bg-action" data-testid="share-wa">{c.share}</a>
-          <Link href={`/signup?lang=${lang}`} className="rounded-control bg-action px-4 py-2 text-sm font-semibold text-action-fg hover:bg-action">{c.cta}</Link>
+          <a href={`https://wa.me/?text=${encodeURIComponent(c.wa(scrubText(e.title, lang), c.outcome[e.outcome], formatDecimal(e.combinedDecimal), url))}`} target="_blank" rel="noopener noreferrer" className="rounded-control border border-focus px-4 py-2 text-sm font-semibold text-focus hover:bg-action-hover" data-testid="share-wa">{c.share}</a>
+          <Link href={`/signup?lang=${lang}`} className="rounded-control bg-action px-4 py-2 text-sm font-semibold text-action-fg hover:bg-action-hover">{c.cta}</Link>
         </div>
         </div>
       </main>
@@ -112,7 +112,7 @@ function LockedTicket({ lang, slug, matchup, startsAt }: { lang: "pt" | "en"; sl
         {startsAt && <p className="mt-4 text-sm text-fg-muted"><span className="text-fg-dim">{c.kickoff}:</span> {formatDateTime(startsAt, lang)}</p>}
         <p className="mt-6 max-w-xl text-base leading-relaxed text-fg-muted">{c.lockedBody}</p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Link href={`/planos?lang=${lang}`} className="rounded-control bg-action px-4 py-2 text-sm font-semibold text-action-fg hover:bg-action">{c.lockedCta}</Link>
+          <Link href={`/planos?lang=${lang}`} className="rounded-control bg-action px-4 py-2 text-sm font-semibold text-action-fg hover:bg-action-hover">{c.lockedCta}</Link>
         </div>
       </main>
       <MarketingFooter lang={lang} />

@@ -105,7 +105,7 @@ export default async function ProofPage({ searchParams }: SearchProps) {
           </ul>
         )}
         <div className="mt-10 flex flex-wrap items-center gap-4">
-          <Link href={`/signup?lang=${lang}`} className="inline-block rounded-control bg-action px-5 py-2.5 text-base font-semibold text-action-fg hover:bg-action">{c.cta}</Link>
+          <Link href={`/signup?lang=${lang}`} className="inline-block rounded-control bg-action px-5 py-2.5 text-base font-semibold text-action-fg hover:bg-action-hover">{c.cta}</Link>
           <Link href={{ pathname: "/prova", query: withAlternatives ? { lang } : { lang, alts: "1" } }} className="text-sm text-fg-muted underline-offset-4 hover:text-fg hover:underline" data-testid="alts-toggle">{withAlternatives ? c.mainOnly : c.withAlts}</Link>
           <a href={`/api/public/ledger?lang=${lang}`} className="text-sm text-fg-muted underline-offset-4 hover:text-fg hover:underline" data-testid="csv-link">{c.csv}</a>
         </div>

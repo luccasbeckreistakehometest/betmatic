@@ -107,7 +107,7 @@ export function SlipBuilder() {
   }
 
   const field =
-    "rounded-control border border-line-strong bg-surface-1 px-2.5 py-1.5 text-sm text-fg outline-none transition placeholder:text-fg-faint focus:border-pos";
+    "rounded-control border border-line-strong bg-surface-1 px-2.5 py-1.5 text-sm text-fg transition-colors duration-(--dur-1) ease-(--ease-out) placeholder:text-fg-faint";
 
   return (
     <div className="flex flex-col gap-5">
@@ -149,7 +149,7 @@ export function SlipBuilder() {
               <button
                 onClick={() => setLegs((prev) => prev.filter((_, idx) => idx !== i))}
                 disabled={legs.length <= 2}
-                className="rounded-control border border-line-strong px-2 text-label text-fg-dim transition hover:text-neg disabled:opacity-30"
+                className="rounded-control border border-line-strong px-2 text-label text-fg-dim transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-neg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed"
               >
                 {t("removeLeg")}
               </button>
@@ -159,14 +159,14 @@ export function SlipBuilder() {
           <div className="flex flex-wrap items-center gap-3 pt-1">
             <button
               onClick={() => setLegs((prev) => [...prev, { ...emptyLeg }])}
-              className="rounded-control border border-line-strong px-3 py-1.5 text-tiny text-fg-muted transition hover:border-line-control hover:text-fg"
+              className="rounded-control border border-line-strong px-3 py-1.5 text-tiny text-fg-muted transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:text-fg"
             >
               + {t("addLeg")}
             </button>
             <button
               onClick={() => void analyse()}
               disabled={!ready || busy}
-              className="rounded-control bg-action px-4 py-1.5 text-sm font-semibold text-action-fg transition hover:bg-action disabled:opacity-40"
+              className="rounded-control bg-action px-4 py-1.5 text-sm font-semibold text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed"
             >
               {busy ? t("analysing") : t("analyseSlip")}
             </button>

@@ -115,7 +115,7 @@ function CustomForm(props: {
   if (meta && !meta.signedIn) {
     return <Panel title={c.title}><div className="flex flex-col gap-2"><Empty>{c.signIn}</Empty><Link href={`/login?lang=${lang}`} className="w-fit rounded-control bg-action px-3.5 py-1.5 text-sm font-semibold text-action-fg">{lang === "pt" ? "Entrar" : "Log in"}</Link></div></Panel>;
   }
-  const chip = (on: boolean) => `rounded-full border px-2.5 py-1 text-tiny transition ${on ? "border-pos bg-action text-pos" : "border-line-strong text-fg-muted hover:border-line-control"}`;
+  const chip = (on: boolean) => `rounded-full border px-2.5 py-1 text-tiny transition-colors duration-(--dur-1) ease-(--ease-out) ${on ? "border-pos bg-action text-pos" : "border-line-strong text-fg-muted hover:border-line-control"}`;
   return (
     <Panel title={c.target}>
       <div className="flex flex-col gap-4" data-testid="custom-form">
@@ -149,7 +149,7 @@ function CustomForm(props: {
           <label className="flex items-center gap-2">{c.minRate} <input type="range" min={40} max={80} value={state.minRate} onChange={(e) => set.setMinRate(Number(e.target.value))} aria-label={c.minRate} /><span className="nums w-10">{state.minRate}%</span></label>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <button type="button" onClick={props.onBuild} disabled={props.busy || !props.canAfford} className="rounded-control bg-action px-4 py-2 text-sm font-semibold text-action-fg transition hover:bg-action disabled:opacity-40" data-testid="custom-build">
+          <button type="button" onClick={props.onBuild} disabled={props.busy || !props.canAfford} className="rounded-control bg-action px-4 py-2 text-sm font-semibold text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="custom-build">
             {c.build} · {meta?.price ?? "…"} {c.coins}
           </button>
           {meta && !props.canAfford && <span className="text-tiny text-warn">{c.noCoins} <Link href={`/planos?lang=${lang}`} className="underline">{c.buy}</Link></span>}
@@ -219,7 +219,7 @@ function CustomTicket({ c, ticket, index, slipId }: { c: Copy; ticket: CustomTic
         {state === "saved" ? <span className="text-focus" data-testid="custom-saved">{c.saved}</span> : (
           <>
             <input value={stake} onChange={(e) => setStake(e.target.value)} placeholder={c.stake} inputMode="decimal" aria-label={c.stake} className="nums w-20 rounded-control border border-line-strong bg-surface-1 px-2 py-1 text-fg" data-testid="custom-stake" />
-            <button type="button" onClick={() => void save()} disabled={!(Number(stake) > 0) || state === "saving" || !slipId} className="rounded-control border border-line-strong px-2 py-1 text-fg-muted hover:text-fg disabled:opacity-40" data-testid="custom-save">{c.save}</button>
+            <button type="button" onClick={() => void save()} disabled={!(Number(stake) > 0) || state === "saving" || !slipId} className="rounded-control border border-line-strong px-2 py-1 text-fg-muted hover:text-fg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="custom-save">{c.save}</button>
             {state === "limit" && <span className="text-warn">{c.limit}</span>}
             {state === "paused" && <span className="text-warn">{c.paused}</span>}
             {state === "error" && <span className="text-warn">{c.failed}</span>}

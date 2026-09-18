@@ -51,7 +51,7 @@ export function PlayerReadCard({ profile, gameId, lang, c, initial }: { profile:
           <p className="text-tiny text-fg-muted">{c.readBody}</p>
           {state.aiReady ? (
             <button type="button" onClick={request} disabled={busy} data-testid="player-read-btn"
-              className="w-fit rounded-control border border-pos px-3 py-1.5 text-tiny font-semibold text-pos hover:bg-action disabled:opacity-50">
+              className="w-fit rounded-control border border-pos px-3 py-1.5 text-tiny font-semibold text-pos hover:bg-action-hover disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed">
               {busy ? c.readBusy : state.price ? c.readBtn.replace("{n}", String(state.price)) : c.readFree}
             </button>
           ) : (

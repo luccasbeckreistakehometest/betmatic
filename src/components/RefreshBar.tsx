@@ -57,11 +57,11 @@ export function RefreshBar({ gameId, sportKey, lang, onRefreshed }: { gameId: st
   if (!state || !["available", "cap_user", "cap_global"].includes(state.verdict)) return phase === "failed" ? <p className="mb-3 text-tiny text-warn">{c.failed}</p> : null;
   const cap = String(state.perUser ?? 3);
   return (
-    <div className="mb-3 rounded-control border border-focus bg-action] px-3 py-2.5" data-testid="refresh-bar">
+    <div className="mb-3 rounded-control border-l-2 border-focus bg-surface-2 px-3 py-2.5" data-testid="refresh-bar">
       <p className="text-tiny text-fg">{state.reason === "lineup" ? c.lineup : c.lines}</p>
       {state.verdict === "available" ? (
         <div className="mt-2 flex flex-wrap items-center gap-3">
-          <button type="button" onClick={refresh} disabled={phase === "busy"} data-testid="refresh-tickets" className="rounded-control bg-action px-3 py-1.5 text-tiny font-semibold text-action-fg hover:bg-action disabled:opacity-50">
+          <button type="button" onClick={refresh} disabled={phase === "busy"} data-testid="refresh-tickets" className="rounded-control bg-action px-3 py-1.5 text-tiny font-semibold text-action-fg hover:bg-action-hover disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed">
             {phase === "busy" ? c.busy : c.button}
           </button>
           <span className="nums text-label text-fg-dim">{c.used.replace("{used}", String(state.used ?? 0)).replace("{cap}", cap)}</span>

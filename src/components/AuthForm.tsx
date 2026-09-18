@@ -151,7 +151,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   }
 
   const field =
-    "w-full rounded-control border border-line-strong bg-surface-1 px-3 py-2.5 text-base text-fg outline-none transition placeholder:text-fg-faint focus:border-pos";
+    "w-full rounded-control border border-line-strong bg-surface-1 px-3 py-2.5 text-base text-fg transition-colors duration-(--dur-1) ease-(--ease-out) placeholder:text-fg-faint";
 
   const choice = plan
     ? c.chosenPlan.replace("{plan}", plan.name).replace("{period}", PERIOD[period].label[lang]).replace("{price}", formatMoneyBRL(periodPrice(plan.monthlyPrice, period), lang))
@@ -226,7 +226,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           type="submit"
           data-testid="auth-submit"
           disabled={!!busy || (mode === "signup" && !consent)}
-          className="mt-2 rounded-control bg-action px-4 py-2.5 text-base font-semibold text-action-fg transition hover:bg-action disabled:opacity-50"
+          className="mt-2 rounded-control bg-action px-4 py-2.5 text-base font-semibold text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed"
         >
           {busy === "checkout" ? c.toCheckout : busy ? c.working : mode === "login" ? c.submitLogin : c.submitSignup}
         </button>
@@ -234,12 +234,12 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
 
       <Link
         href={`${mode === "login" ? "/signup" : "/login"}?${carry.toString()}`}
-        className="mt-5 text-sm text-fg-muted transition hover:text-fg"
+        className="mt-5 text-sm text-fg-muted transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg"
       >
         {mode === "login" ? c.toSignup : c.toLogin}
       </Link>
       {mode === "login" && (
-        <Link href={`/contato?lang=${lang}&topic=account`} className="mt-2 text-tiny text-fg-dim transition hover:text-fg">
+        <Link href={`/contato?lang=${lang}&topic=account`} className="mt-2 text-tiny text-fg-dim transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg">
           {c.forgot}
         </Link>
       )}

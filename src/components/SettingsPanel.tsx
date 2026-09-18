@@ -58,8 +58,8 @@ export function SettingsPanel() {
   if (data?.error) return <Panel title={t("settingsTitle")}><Empty>{t("signInForSettings")}</Empty><Link href="/login" className="mt-2 inline-block text-sm text-pos hover:underline">{lang === "pt" ? "Entrar" : "Log in"}</Link></Panel>;
   const s = data?.settings;
   const num = (v: string) => (v.trim() === "" ? null : Number(v));
-  const input = "nums w-36 rounded-control border border-line-strong bg-surface-1 px-3 py-2 text-sm text-fg outline-none focus:border-pos";
-  const select = "rounded-control border border-line-strong bg-surface-1 px-2.5 py-1.5 text-sm text-fg outline-none focus:border-pos";
+  const input = "nums w-36 rounded-control border border-line-strong bg-surface-1 px-3 py-2 text-sm text-fg";
+  const select = "rounded-control border border-line-strong bg-surface-1 px-2.5 py-1.5 text-sm text-fg";
 
   return (
     <div className="flex flex-col gap-4" data-testid="settings">
@@ -76,7 +76,7 @@ export function SettingsPanel() {
         <div className="mt-3 flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1 text-label text-fg-dim">{t("dailyCap")}<input value={daily} onChange={(e) => setDaily(e.target.value)} placeholder={t("noCap")} inputMode="decimal" className={input} data-testid="cap-daily" /></label>
           <label className="flex flex-col gap-1 text-label text-fg-dim">{t("weeklyCap")}<input value={weekly} onChange={(e) => setWeekly(e.target.value)} placeholder={t("noCap")} inputMode="decimal" className={input} data-testid="cap-weekly" /></label>
-          <button onClick={() => void patch({ dailyStakeCap: num(daily), weeklyStakeCap: num(weekly) })} disabled={saved === "saving" || (daily.trim() !== "" && !(Number(daily) > 0)) || (weekly.trim() !== "" && !(Number(weekly) > 0))} className="rounded-control bg-action px-3.5 py-2 text-sm font-semibold text-action-fg hover:bg-action disabled:opacity-50" data-testid="limits-save">{t("save")}</button>
+          <button onClick={() => void patch({ dailyStakeCap: num(daily), weeklyStakeCap: num(weekly) })} disabled={saved === "saving" || (daily.trim() !== "" && !(Number(daily) > 0)) || (weekly.trim() !== "" && !(Number(weekly) > 0))} className="rounded-control bg-action px-3.5 py-2 text-sm font-semibold text-action-fg hover:bg-action-hover disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="limits-save">{t("save")}</button>
           {saved === "saved" && <span className="text-tiny text-focus" data-testid="limits-saved">{t("savedOk")}</span>}
         </div>
         )}
@@ -91,7 +91,7 @@ export function SettingsPanel() {
         {data && (
           <div className="mt-3 flex flex-wrap items-end gap-3">
             <input aria-label={lang === "pt" ? "Banca (R$)" : "Bankroll"} value={bankroll} onChange={(e) => setBankroll(e.target.value)} inputMode="decimal" placeholder={lang === "pt" ? "R$ —" : "—"} className={input} data-testid="bankroll-amount" />
-            <button onClick={() => void patch({ bankrollAmount: num(bankroll) })} disabled={saved === "saving" || (bankroll.trim() !== "" && !(Number(bankroll) > 0))} className="rounded-control border border-line-strong px-3 py-2 text-tiny text-fg-muted hover:text-fg disabled:opacity-50" data-testid="bankroll-amount-save">{t("save")}</button>
+            <button onClick={() => void patch({ bankrollAmount: num(bankroll) })} disabled={saved === "saving" || (bankroll.trim() !== "" && !(Number(bankroll) > 0))} className="rounded-control border border-line-strong px-3 py-2 text-tiny text-fg-muted hover:text-fg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="bankroll-amount-save">{t("save")}</button>
           </div>
         )}
       </Panel>
@@ -121,8 +121,8 @@ export function SettingsPanel() {
           <div className="mt-3 flex flex-col gap-3">
             <label className="flex items-center gap-2 text-sm text-fg"><input type="checkbox" checked={confirmPause} onChange={(e) => setConfirmPause(e.target.checked)} className="size-4 appearance-none rounded-control border border-line-control bg-surface-3 checked:border-warn checked:bg-warn" data-testid="pause-confirm" />{t("pauseConfirm")}</label>
             <div className="flex gap-2">
-              <button onClick={() => void pause(7)} disabled={!confirmPause} className="rounded-control border border-warn px-3.5 py-2 text-sm font-semibold text-warn hover:bg-warn-tint disabled:opacity-40" data-testid="pause-7">{t("pause7")}</button>
-              <button onClick={() => void pause(30)} disabled={!confirmPause} className="rounded-control border border-warn px-3.5 py-2 text-sm font-semibold text-warn hover:bg-warn-tint disabled:opacity-40" data-testid="pause-30">{t("pause30")}</button>
+              <button onClick={() => void pause(7)} disabled={!confirmPause} className="rounded-control border border-warn px-3.5 py-2 text-sm font-semibold text-warn hover:bg-warn-tint disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="pause-7">{t("pause7")}</button>
+              <button onClick={() => void pause(30)} disabled={!confirmPause} className="rounded-control border border-warn px-3.5 py-2 text-sm font-semibold text-warn hover:bg-warn-tint disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="pause-30">{t("pause30")}</button>
             </div>
           </div>
         )}

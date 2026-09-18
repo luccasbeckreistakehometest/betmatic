@@ -39,11 +39,11 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
         langHrefs={{ pt: "/", en: "/?lang=en" }}
         nav={
           <nav className="ml-4 hidden items-center gap-5 text-sm text-fg-muted md:flex">
-            <a href="#como" className="transition hover:text-fg">{c.navHow}</a>
-            <a href="#esportes" className="transition hover:text-fg">{c.navSports}</a>
-            <Link href={{ pathname: "/planos", query: { lang } }} className="transition hover:text-fg">{c.navPricing}</Link>
-            <Link href={{ pathname: "/prova", query: { lang } }} className="transition hover:text-fg">{lang === "pt" ? "Prova" : "Track record"}</Link>
-            <Link href={{ pathname: "/ferramentas", query: { lang } }} className="transition hover:text-fg">{lang === "pt" ? "Ferramentas" : "Free tools"}</Link>
+            <a href="#como" className="transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg">{c.navHow}</a>
+            <a href="#esportes" className="transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg">{c.navSports}</a>
+            <Link href={{ pathname: "/planos", query: { lang } }} className="transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg">{c.navPricing}</Link>
+            <Link href={{ pathname: "/prova", query: { lang } }} className="transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg">{lang === "pt" ? "Prova" : "Track record"}</Link>
+            <Link href={{ pathname: "/ferramentas", query: { lang } }} className="transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg">{lang === "pt" ? "Ferramentas" : "Free tools"}</Link>
           </nav>
         }
       />
@@ -75,11 +75,11 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
               <Link
                 href={{ pathname: "/signup", query: { lang } }}
                 data-testid="hero-cta"
-                className="rounded-panel bg-action px-6 py-3 text-base font-semibold text-action-fg transition hover:bg-action"
+                className="rounded-panel bg-action px-6 py-3 text-base font-semibold text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover"
               >
                 {c.heroCta}
               </Link>
-              <Link href={{ pathname: "/app", query: { lang } }} className="rounded-panel border border-line-strong px-5 py-3 text-base font-medium text-fg transition hover:border-line-control hover:text-fg">
+              <Link href={{ pathname: "/app", query: { lang } }} className="rounded-panel border border-line-strong px-5 py-3 text-base font-medium text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:text-fg">
                 {c.heroSecondary}
               </Link>
             </div>
@@ -188,7 +188,7 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
           <p className="mt-3 max-w-2xl text-base text-fg-muted">{c.edgeSub}</p>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {c.edges.map((e) => (
-              <Link key={e.title} href={{ pathname: e.href, query: { lang } }} className="group rounded-panel border border-line bg-surface-1 p-5 transition hover:border-pos">
+              <Link key={e.title} href={{ pathname: e.href, query: { lang } }} className="group rounded-panel border border-line bg-surface-1 p-5 transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-pos">
                 <p className="text-base font-semibold text-fg group-hover:text-pos">{e.title}</p>
                 <p className="mt-2 text-sm leading-relaxed text-fg-muted">{e.body}</p>
               </Link>
@@ -227,7 +227,7 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
               <Link
                 key={sport.key}
                 href={`/${SPORT_LANDINGS.find((l) => l.sportKeys.some((k) => k.startsWith(sport.key === "basketball" ? "nba" : "soccer")))?.slug[lang] ?? ""}`}
-                className="group grid gap-5 rounded-panel border border-line bg-surface-1 p-6 transition hover:border-pos md:grid-cols-[1fr_1.5fr]"
+                className="group grid gap-5 rounded-panel border border-line bg-surface-1 p-6 transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-pos md:grid-cols-[1fr_1.5fr]"
               >
                 <div>
                   <h3 className="text-[1.5rem] font-semibold tracking-[-0.02em] text-fg">{sport.name}</h3>
@@ -258,7 +258,7 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
                 <div
                   key={plan.id}
                   className={`relative flex flex-col rounded-panel border p-6 ${
-                    featured ? "border-pos bg-action]" : "border-line bg-surface-1"
+                    featured ? "border-line-strong bg-surface-2" : "border-line bg-surface-1"
                   }`}
                 >
                   {featured && (
@@ -285,9 +285,9 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
                   <Link
                     href={plan.id === "free" ? (signedIn ? `/app?lang=${lang}` : `/signup?lang=${lang}`) : signedIn ? `/planos?lang=${lang}` : `/signup?lang=${lang}&plan=${plan.id}&period=monthly`}
                     data-testid={`landing-plan-${plan.id}`}
-                    className={`mt-6 rounded-control px-4 py-2.5 text-center text-sm font-semibold transition ${
+                    className={`mt-6 rounded-control px-4 py-2.5 text-center text-sm font-semibold transition-colors duration-(--dur-1) ease-(--ease-out) ${
                       featured
-                        ? "bg-action text-action-fg hover:bg-action"
+                        ? "bg-action text-action-fg hover:bg-action-hover"
                         : "border border-line-strong text-fg hover:border-line-control hover:text-fg"
                     }`}
                   >
@@ -359,7 +359,7 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
           <p className="max-w-lg text-base text-fg-muted">{c.finalSub}</p>
           <Link
             href={{ pathname: "/signup", query: { lang } }}
-            className="rounded-panel bg-action px-6 py-3 text-base font-semibold text-action-fg transition hover:bg-action"
+            className="rounded-panel bg-action px-6 py-3 text-base font-semibold text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover"
           >
             {c.finalCta}
           </Link>

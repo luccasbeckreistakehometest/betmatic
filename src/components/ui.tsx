@@ -358,6 +358,7 @@ export function Panel({
   flush = false,
   className = "",
   children,
+  ...rest
 }: {
   title?: string;
   status?: SourceStatus | "pending" | "idle";
@@ -368,9 +369,9 @@ export function Panel({
   flush?: boolean;
   className?: string;
   children: ReactNode;
-}) {
+} & Omit<ComponentProps<"section">, "title" | "action">) {
   return (
-    <section className={cx("rounded-panel border border-line bg-surface-1", className)}>
+    <section {...rest} className={cx("rounded-panel border border-line bg-surface-1", className)}>
       {(title || action || meta || status) && (
         <header className="flex min-h-(--row-h) flex-wrap items-center gap-2 border-b border-line px-(--cell-px) py-1.5">
           {title && <h2 className="text-label u-label text-fg">{title}</h2>}

@@ -144,5 +144,5 @@ export function SplitCard({ profile, market, line, side, lang, c }: { profile: P
 }
 
 export function PlansLink({ lang, label }: { lang: Lang; label: string }) {
-  return <Link href={{ pathname: "/planos", query: { lang } }} className="rounded-control bg-action px-3 py-1.5 text-tiny font-semibold text-action-fg hover:bg-action">{label}</Link>;
+  return <Link href={{ pathname: "/planos", query: { lang } }} className="rounded-control bg-action px-3 py-1.5 text-tiny font-semibold text-action-fg hover:bg-action-hover">{label}</Link>;
 }

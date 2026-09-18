@@ -130,7 +130,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
     <div className="flex flex-col gap-5">
       <Link
         href={{ pathname: "/app", query: { sport: sport.key, lang } }}
-        className="w-fit text-tiny text-fg-dim transition hover:text-fg-muted"
+        className="w-fit text-tiny text-fg-dim transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg-muted"
       >
         {t("backToSlate")}
       </Link>

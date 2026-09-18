@@ -39,7 +39,7 @@ export function ContactForm({ lang, defaultName = "", defaultEmail = "", default
 
   if (state === "sent") return <p className="rounded-panel border border-pos bg-action px-4 py-3 text-base text-fg" role="status" data-testid="contact-sent">{c.sent}</p>;
 
-  const field = "w-full rounded-control border border-line-strong bg-surface-1 px-3 py-2.5 text-base text-fg outline-none focus:border-pos";
+  const field = "w-full rounded-control border border-line-strong bg-surface-1 px-3 py-2.5 text-base text-fg";
   return (
     <form onSubmit={submit} className="flex flex-col gap-3.5" data-testid="contact-form">
       <div className="grid gap-3.5 sm:grid-cols-2">
@@ -63,7 +63,7 @@ export function ContactForm({ lang, defaultName = "", defaultEmail = "", default
       </div>
       <p className="text-tiny text-fg-dim">{c.hint}</p>
       {error && <p className="text-sm text-neg" role="alert" data-testid="contact-error">{error}</p>}
-      <button type="submit" disabled={state === "sending"} className="w-fit rounded-control bg-action px-5 py-2.5 text-base font-semibold text-action-fg hover:bg-action disabled:opacity-50" data-testid="contact-submit">
+      <button type="submit" disabled={state === "sending"} className="w-fit rounded-control bg-action px-5 py-2.5 text-base font-semibold text-action-fg hover:bg-action-hover disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="contact-submit">
         {state === "sending" ? c.sending : c.send}
       </button>
     </form>

@@ -15,8 +15,8 @@ interface Detail {
 }
 
 const dt = (iso: string | null) => (iso ? new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "—");
-const btn = "rounded-control border border-line-strong px-2.5 py-1 text-tiny text-fg transition hover:border-line-control disabled:opacity-50";
-const field = "rounded-control border border-line-strong bg-surface-1 px-2.5 py-1.5 text-sm text-fg outline-none focus:border-pos";
+const btn = "rounded-control border border-line-strong px-2.5 py-1 text-tiny text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed";
+const field = "rounded-control border border-line-strong bg-surface-1 px-2.5 py-1.5 text-sm text-fg";
 
 /** Support tools: find a user, see plan/coins/payments, and act (plan, coins, password, disable). */
 export function AdminUsers() {

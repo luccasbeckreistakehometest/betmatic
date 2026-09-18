@@ -74,9 +74,9 @@ export default async function PaymentResult({ params, searchParams }: { params: 
 
         <div className="mt-8 flex flex-wrap gap-3">
           {status === "sucesso" ? (
-            <Link href={`/app?lang=${lang}`} className="rounded-control bg-action px-5 py-2.5 text-base font-semibold text-action-fg hover:bg-action">{lang === "pt" ? "Ir para os jogos" : "Go to the games"}</Link>
+            <Link href={`/app?lang=${lang}`} className="rounded-control bg-action px-5 py-2.5 text-base font-semibold text-action-fg hover:bg-action-hover">{lang === "pt" ? "Ir para os jogos" : "Go to the games"}</Link>
           ) : (
-            <Link href={`/planos?lang=${lang}`} className="rounded-control bg-action px-5 py-2.5 text-base font-semibold text-action-fg hover:bg-action">{lang === "pt" ? "Voltar aos planos" : "Back to plans"}</Link>
+            <Link href={`/planos?lang=${lang}`} className="rounded-control bg-action px-5 py-2.5 text-base font-semibold text-action-fg hover:bg-action-hover">{lang === "pt" ? "Voltar aos planos" : "Back to plans"}</Link>
           )}
           <Link href={`/app/conta?lang=${lang}`} className="rounded-control border border-line-strong px-5 py-2.5 text-base text-fg hover:border-line-control">{lang === "pt" ? "Minha conta" : "My account"}</Link>
           <Link href={`/contato?lang=${lang}&topic=payment`} className="rounded-control border border-line-strong px-5 py-2.5 text-base text-fg hover:border-line-control">{lang === "pt" ? "Algo errado? Fale com a gente" : "Something wrong? Contact us"}</Link>

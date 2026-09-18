@@ -75,7 +75,7 @@ export function PlanPicker({ lang, signedIn, currentPlanId, paymentsReady, initi
               aria-checked={period === p}
               data-testid={`period-${p}`}
               onClick={() => setPeriod(p)}
-              className={`px-3 py-1.5 text-tiny transition ${period === p ? "bg-action font-semibold text-action-fg" : "bg-surface-1 text-fg-muted hover:text-fg"}`}
+              className={`px-3 py-1.5 text-tiny transition-colors duration-(--dur-1) ease-(--ease-out) ${period === p ? "bg-action font-semibold text-action-fg" : "bg-surface-1 text-fg-muted hover:text-fg"}`}
             >
               {PERIOD[p].label[lang]}
               {PERIOD[p].discount > 0 && <span className="ml-1 text-micro opacity-80">−{Math.round(PERIOD[p].discount * 100)}%</span>}
@@ -91,7 +91,7 @@ export function PlanPicker({ lang, signedIn, currentPlanId, paymentsReady, initi
           const months = PERIOD[period].months;
           const isCurrent = currentPlanId === plan.id;
           return (
-            <div key={plan.id} data-testid={`plan-${plan.id}`} className={`relative flex flex-col rounded-panel border p-6 ${featured ? "border-pos bg-action]" : "border-line bg-surface-1"}`}>
+            <div key={plan.id} data-testid={`plan-${plan.id}`} className={`relative flex flex-col rounded-panel border p-6 ${featured ? "border-line-strong bg-surface-2" : "border-line bg-surface-1"}`}>
               {featured && <span className="absolute -top-2.5 left-6 rounded-control bg-action px-2 py-0.5 text-micro font-bold uppercase tracking-wide text-action-fg">{c.popular}</span>}
               <h3 className="text-base font-semibold text-fg">{plan.name}</h3>
               <p className="mt-1 text-tiny text-fg-dim">{plan.tagline[lang]}</p>
@@ -122,7 +122,7 @@ export function PlanPicker({ lang, signedIn, currentPlanId, paymentsReady, initi
                   data-testid={`buy-${plan.id}`}
                   disabled={!!busy || !paymentsReady}
                   onClick={() => void checkout({ kind: "plan", planId: plan.id, period }, plan.id)}
-                  className={`mt-6 rounded-control px-4 py-2.5 text-center text-sm font-semibold transition disabled:opacity-50 ${featured ? "bg-action text-action-fg hover:bg-action" : "border border-line-strong text-fg hover:border-line-control hover:text-fg"}`}
+                  className={`mt-6 rounded-control px-4 py-2.5 text-center text-sm font-semibold transition-colors duration-(--dur-1) ease-(--ease-out) disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed ${featured ? "bg-action text-action-fg hover:bg-action-hover" : "border border-line-strong text-fg hover:border-line-control hover:text-fg"}`}
                 >
                   {busy === plan.id ? c.working : c.choose}
                 </button>
@@ -130,7 +130,7 @@ export function PlanPicker({ lang, signedIn, currentPlanId, paymentsReady, initi
                 <Link
                   href={signupFor({ plan: plan.id, period })}
                   data-testid={`buy-${plan.id}`}
-                  className={`mt-6 rounded-control px-4 py-2.5 text-center text-sm font-semibold transition ${featured ? "bg-action text-action-fg hover:bg-action" : "border border-line-strong text-fg hover:border-line-control hover:text-fg"}`}
+                  className={`mt-6 rounded-control px-4 py-2.5 text-center text-sm font-semibold transition-colors duration-(--dur-1) ease-(--ease-out) ${featured ? "bg-action text-action-fg hover:bg-action-hover" : "border border-line-strong text-fg hover:border-line-control hover:text-fg"}`}
                 >
                   {c.choose}
                 </Link>
@@ -154,7 +154,7 @@ export function PlanPicker({ lang, signedIn, currentPlanId, paymentsReady, initi
               {pack.bonus > 0 && <p className="nums text-micro text-pos">+{pack.bonus} {c.bonus}</p>}
               <p className="nums mt-1 text-tiny text-fg-muted">{formatMoneyBRL(pack.price, lang)}</p>
               {signedIn ? (
-                <button type="button" data-testid={`buy-${pack.id}`} disabled={!!busy || !paymentsReady} onClick={() => void checkout({ kind: "coins", packId: pack.id }, pack.id)} className="mt-3 rounded-control border border-line-strong px-3 py-1.5 text-tiny text-fg transition hover:border-pos disabled:opacity-50">
+                <button type="button" data-testid={`buy-${pack.id}`} disabled={!!busy || !paymentsReady} onClick={() => void checkout({ kind: "coins", packId: pack.id }, pack.id)} className="mt-3 rounded-control border border-line-strong px-3 py-1.5 text-tiny text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-pos disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed">
                   {busy === pack.id ? c.working : c.buy}
                 </button>
               ) : (
