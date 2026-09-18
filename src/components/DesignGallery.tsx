@@ -6,6 +6,7 @@ import {
   Badge,
   Button,
   Checkbox,
+  Chip,
   DensitySwitch,
   Dialog,
   Empty,
@@ -256,6 +257,13 @@ function Controls({ onOpenDialog }: { onOpenDialog: () => void }) {
           <StatusBadge status="error" />
           <StatusBadge status="empty" />
         </Spec>
+        <Spec label="chips de mercado — seleção é acromática">
+          <Chip selected>Gols</Chip>
+          <Chip>Escanteios</Chip>
+          <Chip>Cartões</Chip>
+          <Chip>Handicap</Chip>
+          <Chip tone="warn">Sem linha</Chip>
+        </Spec>
         <Spec label="ao vivo — o único laço do sistema">
           <span className="inline-flex items-center gap-2 text-sm text-fg-muted">
             <span className="live-dot inline-block size-1.5 rounded-full bg-pos" />
@@ -381,8 +389,8 @@ function SlateTable({ density }: { density: "compact" | "default" | "comfortable
               <Th>Hora</Th>
               <Th>Jogo</Th>
               <Th>Mercado</Th>
-              <Th numeric>Preço · implícita</Th>
-              <Th numeric>Medida</Th>
+              <Th numeric>Preço</Th>
+              <Th numeric>Chance medida</Th>
               <Th numeric>Resultado</Th>
             </tr>
           </thead>
@@ -396,10 +404,10 @@ function SlateTable({ density }: { density: "compact" | "default" | "comfortable
                 <Td label="Hora" className="nums text-fg-dim">{row.time}</Td>
                 <Td label="Jogo" className="nums whitespace-nowrap">{row.game}</Td>
                 <Td label="Mercado" className="text-fg-muted">{row.market}</Td>
-                <Td label="Preço · implícita" numeric>
+                <Td label="Preço e implícita" numeric>
                   <Odds decimal={row.price} />
                 </Td>
-                <NumCell label="Medida" chance={chanceStep(row.measured)}>{formatPercent(row.measured, "pt")}</NumCell>
+                <NumCell label="Chance medida" chance={chanceStep(row.measured)}>{formatPercent(row.measured, "pt")}</NumCell>
                 <NumCell label="Resultado" tone={row.result > 0 ? "pos" : row.result < 0 ? "neg" : undefined}>
                   {row.result === 0 ? "—" : formatUnits(row.result, "pt")}
                 </NumCell>

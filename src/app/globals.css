@@ -473,6 +473,11 @@
     color: var(--fg-dim);
     text-align: left;
   }
+  /* The chance ramp is a device for scanning a column. A collapsed row has no column, so the rule
+     would be decoration — and decoration in colour is exactly what this system spends nothing on. */
+  table[data-collapse="true"] td[data-chance] {
+    box-shadow: none;
+  }
   /* The result bar moves to the whole row, where a row is now a block. */
   table[data-collapse="true"] tr[data-tone] > *:first-child,
   table[data-collapse="true"] tr[data-selected="true"] > *:first-child {
