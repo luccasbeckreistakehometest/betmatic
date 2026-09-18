@@ -46,7 +46,7 @@ export function ClvBlock({ lang }: { lang: Lang }) {
               <p className="text-label u-label text-fg-dim">{c.market}</p>
               <ul className="mt-1.5 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2" data-testid="clv-markets">
                 {s.byMarket.slice(0, 8).map((m) => (
-                  <li key={m.market} className="flex justify-between gap-3"><span className="text-fg-muted">{c.markets[m.market] ?? m.market}</span><span className="nums text-fg-muted">{pct(m.mean, lang)} · {(m.beat * 100).toFixed(0)}% · n={m.n}</span></li>
+                  <li key={m.market} className="flex justify-between gap-3"><span className="text-fg-muted">{c.markets[m.market] ?? m.market}</span><span className="nums text-fg-muted">{pct(m.mean, lang)} · {formatPercent(m.beat, lang, { digits: 0 })} · n={m.n}</span></li>
                 ))}
               </ul>
             </div>

@@ -107,7 +107,7 @@ export function PlanPicker({ lang, signedIn, currentPlanId, paymentsReady, initi
                 const total = periodPrice(plan.monthlyPrice, period);
                 const months = PERIOD[period].months;
                 return (
-                  <NumCell key={plan.id} label={plan.name} className="text-fg">
+                  <NumCell key={plan.id} label={plan.name} className="text-fg" data-testid={`plan-${plan.id}`}>
                     <span data-testid={`price-${plan.id}`}>{plan.monthlyPrice === 0 ? c.free : formatMoneyBRL(total / months, lang)}</span>
                     {plan.monthlyPrice > 0 && months > 1 && (
                       <span className="mt-0.5 block text-micro font-normal text-fg-dim">{formatMoneyBRL(total, lang)} {c.total}</span>

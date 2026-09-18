@@ -39,7 +39,7 @@ test("free calculators work without an account", async ({ page }) => {
   await page.getByTestId("leg-0").fill("2.00");
   await page.getByTestId("leg-1").fill("2.00");
   await page.getByTestId("leg-2").fill("2.00");
-  await expect(page.getByTestId("parlay-result")).toContainText("8.00");
+  await expect(page.getByTestId("parlay-result")).toContainText("8,00");
   await page.getByTestId("conv-dec").fill("1.50");
   await expect(page.getByTestId("conv-result")).toContainText("-200");
 });

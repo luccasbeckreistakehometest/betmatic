@@ -1033,3 +1033,101 @@ The first pass was written from the spec; this list is what only showed up in a 
   were still printing `0.0%` next to a page of `0,0 %`.
 - **The native date button is hidden**: below 640px the platform painted a second calendar inside
   our own control.
+
+---
+
+## Appendix E — round two: what the review found in a screenshot
+
+Wave 6. An adversarial review opened 32 routes at two widths in both themes, measured contrast with
+its own sRGB script and read 31 PNGs. Its verdict was "senior-grade foundations, junior-grade edges,
+and the edges are on the pages that convert". Everything below is one of its findings, closed.
+
+### The funnel page broke four of this document's own rules on one card
+
+`/jogo/[gameId]` is where search traffic lands. Its teaser carried an emoji as an icon (the only
+emoji in `src/`, beside a 43-glyph sprite), a `--pos` border — the colour reserved for a settled win
+— around a ticket whose state was *pending*, a multiplier with no chance beside it, and en-US
+decimals on a pt-BR document. The teaser now renders through `<Odds>`, which cannot draw a price
+without its chance; the card is bordered by a rule; the lock is the sprite's glyph; and the page's
+percentages, including the ones inside `gameFaq`, go through `lib/format`.
+
+### Two decimal conventions were shipping side by side
+
+`lib/odds.formatDecimal` was locale-blind, so `/prova` printed `21.00x` in a column under a KPI row
+reading `50,0 %`, and `/app/track` put both conventions in one row. `formatDecimal(decimal, lang)`
+now delegates to the shared formatter; plain-text outputs that are not a page (a webhook line, share
+text) keep the en form by omitting the argument. Thirty-one component-level `toFixed` calls — the
+thing §11.2 forbids in one sentence — are gone from the views that compare numbers, and `formatUsd`
+joins `formatMoney` so `/admin` stops printing `R$ 0`, `US$ 0.00` and `$0.00 de $20.00` at once.
+
+### Two tokens existed for contrast and the screens bypassed both
+
+`--line-control` is documented as "an affordance, ≥3:1", and 38 hand-rolled controls drew themselves
+with `--line-strong` instead: 1.80:1 in dark, 1.43:1 in light, against the 3:1 WCAG asks of a UI
+edge. `--fg-faint` is the *disabled* tier (3.69 / 3.17) and 25 places were reading content out of
+it — the rail's four group labels on every app screen, the account menu's headings, the landing's
+step numbers, leg numbers, placeholders, the page head's kicker. Controls moved to `--line-control`;
+content moved to `--fg-dim` (5.65 / 4.86, AA at 10px). `--fg-faint` now appears only behind
+`disabled:` and `has-[:disabled]:`.
+
+### The label style was one style in three typefaces
+
+`--text-label` and `--text-micro` carried `letter-spacing` and `font-weight`, so any 11px sentence
+in the body face rendered as a tracked-out label: on `/app/game`, 11px/500/0.66px appeared 25× in
+Archivo and 46× in Plex Sans. They are sizes again. The label style — uppercase, tracked, 500,
+Archivo — is `u-label` and only `u-label`.
+
+### The screen where a user decides had no h1
+
+`/app/game` was carried entirely by 10–13px labels; its largest type was a score. It opens with a
+page head now (competition, fixture, kickoff · venue · broadcast), and `PageHead`'s own h1 moved one
+step up the scale (20 → 25px) so a screen's name and a panel's title are two steps apart. The player
+deep dive had a green kicker and no head at all in its not-found and sign-in states. `/app/track`
+rendered its head twice. `/app/parlays/custom` had no heading above 11px.
+
+### Empty was a sentence floating in a 1,216px column
+
+`Empty` now draws the region's own rules at the row height the rows will have, so a reader sees the
+shape of what is missing, and `/app/track` stopped printing one identical sentence in three
+consecutive panels — each says what *that* panel is waiting for.
+
+### The rest, in one list
+
+- **Twelve native selects** shipped without `appearance-none`; six sat beside a styled one in the
+  same view. All twelve go through the `Select` primitive, which gained a `wrapperClassName`.
+- **59 copies of the button class** became 59 calls to `buttonClass()` — including the ones that
+  cannot be a `<Button>` because they are a `next/link`.
+- **`/planos` still had the four equal cards the landing retired**, with the Free column ending in
+  ~180px of nothing. It is the landing's comparison table now, from the same `planRows()`.
+- **The coin packs' three prices sat on two baselines** because the first pack has no bonus line. A
+  ruled table aligns them by construction.
+- **The equity curve painted break-even in win-green.** The line is ink unless the series ends above
+  zero; a series under five points is drawn narrow; both ends of the x axis stop printing one date.
+- **The landing's FAQ painted an empty tenth cell.** Rules belong to the items; an odd count ends.
+- **Crests were dimmed, not desaturated** (`opacity` keeps hue); they are `saturate-50` now.
+- **Focus on a full-bleed row showed as two disconnected bars**, because the ring's left segment
+  falls outside the viewport. Those rows carry `u-ring-inset`.
+- **The print sheet had no identity and stranded the 18+ line on a second page.** It has a header
+  (wordmark, subject, generated-at) and the shell's `min-height` is dropped for print.
+- **`<Odds>` rendered "3,19 7,4 %"** — one number with a decimal error, at a glance. It has a
+  separator.
+- **The game page's evidence column ended at 1,846px of a 3,849px page.** It sticks under the topbar.
+- **The report's amber band was the loudest thing on the screen** for a standing condition. It is a
+  rule.
+
+### The guard
+
+`scripts/design-guard.mjs` (`pnpm design:guard`) greps `src/` for the shapes ESLint cannot express:
+`--fg-faint` as content, `--line-strong` on a control, an emoji in a `.tsx`, a decorative gradient or
+`backdrop-blur` or `rounded-2xl`, a raw hex in a className, and `toFixed` in a view. It exits
+non-zero, so the next screen cannot quietly reintroduce any of them. A deliberate exception is
+marked inline with `design-guard-allow`.
+
+### Still open after wave 6
+
+- The 320px dock from §15 is still not built, so a data-light `/app` is still a wide page rather
+  than a desk.
+- `PlayerChart` still draws its own axes instead of going through §11.3's chart grammar.
+- There is no visual-regression harness; screenshots are still taken by hand.
+- The legacy token aliases in `globals.css` still resolve, so the guard catches new names but the
+  old ones are not yet deleted.

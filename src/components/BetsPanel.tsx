@@ -5,7 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 import { Badge, Chip, Empty, Odds, buttonClass } from "@/components/ui";
-import { formatNumber, formatPercent as pctOf } from "@/lib/format";
+import { formatMoney, formatNumber, formatPercent as pctOf } from "@/lib/format";
 import { groupAlternatives, legDiff } from "@/lib/bets/alternatives-view";
 import { kellyFraction, formatDecimal, getBand } from "@/lib/odds";
 import { makeT, type Lang } from "@/lib/i18n";
@@ -73,7 +73,7 @@ function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [] }:
     if (r.status === 422) {
       const j = await r.json().catch(() => ({}));
       const left = j.reason === "weekly" ? j.remainingWeekly : j.remainingDaily;
-      setLimitNote((j.reason === "weekly" ? t("limitWeekly") : t("limitDaily")).replace("{left}", lang === "pt" ? `R$ ${Number(left ?? 0).toFixed(2)}` : `$${Number(left ?? 0).toFixed(2)}`));
+      setLimitNote((j.reason === "weekly" ? t("limitWeekly") : t("limitDaily")).replace("{left}", formatMoney(Number(left ?? 0), lang)));
       setSaved("limit");
       return;
     }

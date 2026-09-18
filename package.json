@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "design:guard": "node scripts/design-guard.mjs",
     "login": "node scripts/login.mjs",
     "sessions": "node scripts/sessions.mjs",
     "browsers:install": "playwright install chromium",

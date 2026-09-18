@@ -70,9 +70,9 @@ function CalibrationTable({ rows, lang, emptyKey }: { rows: CalibrationRow[]; la
                 <td className="nums text-right text-fg-muted">{pctOf(row.averagePredicted, lang, { digits: 0 })}</td>
                 <td className={`pl-6 text-label ${over ? "text-warn" : under ? "text-fg-muted" : "text-fg-dim"}`}>
                   {over
-                    ? `${t("overconfident")} ${(row.calibrationError * 100).toFixed(0)}pts`
+                    ? `${t("overconfident")} ${formatNumber(row.calibrationError * 100, lang, { digits: 0 })} pts`
                     : under
-                      ? `${t("underconfident")} ${(-row.calibrationError * 100).toFixed(0)}pts`
+                      ? `${t("underconfident")} ${formatNumber(-row.calibrationError * 100, lang, { digits: 0 })} pts`
                       : t("wellCalibrated")}
                 </td>
               </tr>

@@ -36,8 +36,8 @@ test("/prova hides CLV under 30 legs and shows the block once the sample is ther
   await page.reload();
   const block = page.getByTestId("clv-block");
   await expect(block).toContainText("CLV médio");
-  await expect(block).toContainText("+1.8%");
-  await expect(block).toContainText("80%");
+  await expect(block).toContainText(/\+1,8\s*%/);
+  await expect(block).toContainText(/80\s*%/);
   await expect(page.getByTestId("clv-markets")).toContainText("total do jogo");
   await expect(block).toContainText("1 perna teve a linha alterada");
   await page.goto("/prova?lang=en");

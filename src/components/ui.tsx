@@ -12,7 +12,7 @@ import type { SourceStatus } from "@/lib/types";
  * HOW TO USE IT
  *
  *   · Tokens only. No raw hex, no raw px, no arbitrary Tailwind value. `bg-surface-1`,
- *     `text-fg-muted`, `border-line`, `rounded-panel`, `h-(--row-h)` — never `bg-[#10131a]`
+ *     `text-fg-muted`, `border-line`, `rounded-panel`, `h-(--row-h)` — never `bg-[#10131a]` — design-guard-allow
  *     or `text-[13.5px]`.
  *   · Colour means state, never decoration: `pos` is a settled win or a positive delta, `neg` a
  *     settled loss, `warn` a caution, `focus` the keyboard's position and the current selection.
