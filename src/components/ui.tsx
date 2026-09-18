@@ -144,8 +144,11 @@ const CONTROL_BASE =
   "w-full h-(--row-h) rounded-control border bg-surface-3 px-2.5 text-sm text-fg " +
   "transition-[border-color] duration-(--dur-1) ease-(--ease-out) " +
   "hover:border-fg-dim focus:border-focus " +
-  "disabled:cursor-not-allowed disabled:bg-surface-1 disabled:text-fg-faint " +
-  "read-only:bg-transparent read-only:border-transparent";
+  "disabled:cursor-not-allowed disabled:bg-surface-1 disabled:text-fg-faint";
+
+/* A read-only value is text, not a field: no fill, no edge, mono. Only inputs and textareas take
+   this — :read-only also matches <select>, which is what blanked every select's border once. */
+const CONTROL_READONLY = "read-only:border-transparent read-only:bg-transparent read-only:px-0 read-only:nums";
 
 export function Field({
   label,
@@ -202,6 +205,7 @@ export function Input({
       aria-describedby={rest.id ? `${rest.id}-${invalid ? "error" : "help"}` : rest["aria-describedby"]}
       className={cx(
         CONTROL_BASE,
+        CONTROL_READONLY,
         invalid ? "border-neg" : "border-line-control",
         numeric && "nums text-right",
         suffix && "pr-8",
@@ -224,7 +228,7 @@ export function Textarea({ invalid, className = "", ...rest }: ComponentProps<"t
     <textarea
       {...rest}
       aria-invalid={invalid || undefined}
-      className={cx(CONTROL_BASE, "h-auto min-h-20 py-2 leading-relaxed", invalid ? "border-neg" : "border-line-control", className)}
+      className={cx(CONTROL_BASE, CONTROL_READONLY, "h-auto min-h-20 py-2 leading-relaxed", invalid ? "border-neg" : "border-line-control", className)}
     />
   );
 }

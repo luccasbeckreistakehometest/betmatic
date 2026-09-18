@@ -258,6 +258,7 @@
   --radius-sheet: var(--r-3);
 
   /* Measure (§4): prose is never full-bleed. App 58ch, marketing 65ch, legal 72ch. */
+  --container-shell: 1240px;
   --container-dialog: min(560px, calc(100vw - 2rem));
   --container-measure-app: 58ch;
   --container-measure: 65ch;
