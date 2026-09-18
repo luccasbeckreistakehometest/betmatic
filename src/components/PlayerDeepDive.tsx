@@ -100,14 +100,14 @@ export function PlayerDeepDive({ athleteId, gameId }: { athleteId: string; gameI
           ))}
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <div className="flex overflow-hidden rounded-control border border-line-strong text-tiny">
+          <div className="flex overflow-hidden rounded-control border border-line-control text-tiny">
             {(["over", "under"] as const).map((s) => (
               <button key={s} type="button" onClick={() => setSide(s)} aria-pressed={side === s} data-testid={`side-${s}`} className={`px-2.5 py-1 ${side === s ? "bg-surface-3 text-fg" : "text-fg-muted"}`}>{s === "over" ? c.over : c.under}</button>
             ))}
           </div>
-          <button type="button" onClick={() => step(-0.5)} className="size-7 rounded-control border border-line-strong text-fg" aria-label="-0.5" data-testid="line-down">−</button>
+          <button type="button" onClick={() => step(-0.5)} className="size-7 rounded-control border border-line-control text-fg" aria-label="-0.5" data-testid="line-down">−</button>
           <span className="nums min-w-12 text-center text-base font-semibold text-warn" data-testid="line-value">{num(line, lang)}</span>
-          <button type="button" onClick={() => step(0.5)} className="size-7 rounded-control border border-line-strong text-fg" aria-label="+0.5" data-testid="line-up">+</button>
+          <button type="button" onClick={() => step(0.5)} className="size-7 rounded-control border border-line-control text-fg" aria-label="+0.5" data-testid="line-up">+</button>
           <input type="range" min={range.min} max={range.max} step={0.5} value={line} onChange={(e) => setLine(Number(e.target.value))} aria-label={c.line} className="range min-w-0 flex-1" />
         </div>
         <p className="mt-1 text-label text-fg-dim">{c.drag}</p>

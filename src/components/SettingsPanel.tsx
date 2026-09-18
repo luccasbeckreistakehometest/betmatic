@@ -59,8 +59,8 @@ export function SettingsPanel() {
   if (data?.error) return <Panel className="max-w-[56rem]" title={t("settingsTitle")}><Empty>{t("signInForSettings")}</Empty><Link href="/login" className="mt-2 inline-block text-sm text-fg underline underline-offset-2">{lang === "pt" ? "Entrar" : "Log in"}</Link></Panel>;
   const s = data?.settings;
   const num = (v: string) => (v.trim() === "" ? null : Number(v));
-  const input = "nums w-36 rounded-control border border-line-strong bg-surface-1 px-3 py-2 text-sm text-fg";
-  const select = "rounded-control border border-line-strong bg-surface-1 px-2.5 py-1.5 text-sm text-fg";
+  const input = "nums w-36 rounded-control border border-line-control bg-surface-1 px-3 py-2 text-sm text-fg";
+  const select = "rounded-control border border-line-control bg-surface-1 px-2.5 py-1.5 text-sm text-fg";
 
   return (
     <div className="flex flex-col gap-4" data-testid="settings">
@@ -92,7 +92,7 @@ export function SettingsPanel() {
         {data && (
           <div className="mt-3 flex flex-wrap items-end gap-3">
             <input aria-label={lang === "pt" ? "Banca (R$)" : "Bankroll"} value={bankroll} onChange={(e) => setBankroll(e.target.value)} inputMode="decimal" placeholder={lang === "pt" ? "R$ —" : "—"} className={input} data-testid="bankroll-amount" />
-            <button onClick={() => void patch({ bankrollAmount: num(bankroll) })} disabled={saved === "saving" || (bankroll.trim() !== "" && !(Number(bankroll) > 0))} className="rounded-control border border-line-strong px-3 py-2 text-tiny text-fg-muted hover:text-fg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="bankroll-amount-save">{t("save")}</button>
+            <button onClick={() => void patch({ bankrollAmount: num(bankroll) })} disabled={saved === "saving" || (bankroll.trim() !== "" && !(Number(bankroll) > 0))} className="rounded-control border border-line-control px-3 py-2 text-tiny text-fg-muted hover:text-fg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="bankroll-amount-save">{t("save")}</button>
           </div>
         )}
       </Panel>
@@ -134,7 +134,7 @@ export function SettingsPanel() {
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-2 text-sm text-fg"><input type="checkbox" checked={optIn} onChange={(e) => { setOptIn(e.target.checked); void patch({ leaderboardOptIn: e.target.checked }); }} className="size-4 appearance-none rounded-control border border-line-control bg-surface-3 checked:border-action checked:bg-action" data-testid="ranking-optin" />{t("rankingOptIn")}</label>
           <input aria-label={t("handle")} value={handle} onChange={(e) => setHandle(e.target.value)} placeholder={t("handle")} maxLength={16} className={`${input} w-44`} data-testid="ranking-handle" />
-          <button onClick={() => void patch({ handle: handle.trim() || null })} disabled={saved === "saving"} className="rounded-control border border-line-strong px-3 py-2 text-tiny text-fg-muted hover:text-fg" data-testid="ranking-handle-save">{t("save")}</button>
+          <button onClick={() => void patch({ handle: handle.trim() || null })} disabled={saved === "saving"} className="rounded-control border border-line-control px-3 py-2 text-tiny text-fg-muted hover:text-fg" data-testid="ranking-handle-save">{t("save")}</button>
           {handleError && <span className="text-tiny text-warn" data-testid="handle-error">{handleError}</span>}
           {s?.leaderboardOptIn && s.handle && <span className="text-tiny text-fg-dim">{t("shownAs")} <span className="nums text-fg">@{s.handle}</span></span>}
         </div>

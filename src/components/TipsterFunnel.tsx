@@ -51,7 +51,7 @@ export function TipsterFunnel({ lang }: { lang: Lang }) {
         <ol className="mt-10 grid gap-px overflow-hidden rounded-panel border border-line bg-surface-3 md:grid-cols-3">
           {c.steps.map((s) => (
             <li key={s.n} className="bg-surface-1 p-6">
-              <span className="nums text-[2rem] font-semibold leading-none text-fg-faint">{s.n}</span>
+              <span className="nums text-[2rem] font-semibold leading-none text-fg-dim">{s.n}</span>
               <h2 className="mt-3 text-base font-semibold text-fg">{s.t}</h2>
               <p className="mt-2 text-sm leading-relaxed text-fg-muted">{s.b}</p>
             </li>

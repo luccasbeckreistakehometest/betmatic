@@ -254,7 +254,7 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
         status={loading ? "pending" : mine ? "ok" : "empty"}
         meta={mine ? relTime(mine.generatedAt, lang) : undefined}
         action={
-          <Link href={`/app/slip?sport=${sport.key}&lang=${lang}`} className="rounded-control border border-line-strong px-2 py-0.5 text-label text-fg-muted transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:text-fg">
+          <Link href={`/app/slip?sport=${sport.key}&lang=${lang}`} className="rounded-control border border-line-control px-2 py-0.5 text-label text-fg-muted transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:text-fg">
             {t("mySlip")}
           </Link>
         }

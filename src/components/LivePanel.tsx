@@ -99,7 +99,7 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
         <h2 className="text-sm font-semibold text-fg">{c.title}</h2>
         <span className="nums text-sm text-fg" data-testid="live-score">{s.away.abbr} {s.away.score} × {s.home.score} {s.home.abbr}</span>
         <span className="nums text-label text-fg-dim">{s.clock}</span>
-        {updatedAt && <span className="ml-auto text-micro text-fg-faint">{c.updated.replace("{t}", formatTime(updatedAt, lang))}</span>}
+        {updatedAt && <span className="ml-auto text-micro text-fg-dim">{c.updated.replace("{t}", formatTime(updatedAt, lang))}</span>}
       </header>
       <div className="flex flex-col gap-3 px-4 py-3">
         <p className="rounded-control border border-warn bg-warn-tint px-3 py-2 text-tiny text-warn" data-testid="live-caution">{c.caution}</p>

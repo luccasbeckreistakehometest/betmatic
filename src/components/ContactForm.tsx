@@ -39,7 +39,7 @@ export function ContactForm({ lang, defaultName = "", defaultEmail = "", default
 
   if (state === "sent") return <p className="rounded-panel border border-pos bg-action px-4 py-3 text-base text-fg" role="status" data-testid="contact-sent">{c.sent}</p>;
 
-  const field = "w-full rounded-control border border-line-strong bg-surface-1 px-3 py-2.5 text-base text-fg";
+  const field = "w-full rounded-control border border-line-control bg-surface-1 px-3 py-2.5 text-base text-fg";
   return (
     <form onSubmit={submit} className="flex flex-col gap-3.5" data-testid="contact-form">
       <div className="grid gap-3.5 sm:grid-cols-2">

@@ -49,8 +49,8 @@ const C = {
   },
 };
 
-const field = "w-full rounded-control border border-line-strong bg-surface-1 px-3 py-2 text-base text-fg";
-const button = "rounded-control border border-line-strong px-3.5 py-1.5 text-sm text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:text-fg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed";
+const field = "w-full rounded-control border border-line-control bg-surface-1 px-3 py-2 text-base text-fg";
+const button = "rounded-control border border-line-control px-3.5 py-1.5 text-sm text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:text-fg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed";
 
 export function AccountPanel() {
   const { lang } = useNavState();

@@ -52,7 +52,7 @@ export function PostedLines({ market, lang, c, onPick, rateAtLine }: {
             {p.openDecimal !== null && Math.abs(p.openDecimal - p.decimal) >= 0.01 && <span className="nums text-label text-fg-dim">{c.opened} {num(p.openDecimal, lang, 2)}</span>}
             <span className="nums text-label text-fg-muted">{p.noVigFair !== null ? `${c.fair} ${Math.round(p.noVigFair * 100)}%` : c.oneSided}</span>
             <span className="nums text-label text-fg-muted">{c.measuredHere} {r.of ? `${r.hits}/${r.of}` : "—"}</span>
-            <button type="button" onClick={() => onPick(p.line, p.side)} className="ml-auto rounded-control border border-line-strong px-2 py-0.5 text-label text-fg-muted hover:border-pos hover:text-fg">{c.useLine}</button>
+            <button type="button" onClick={() => onPick(p.line, p.side)} className="ml-auto rounded-control border border-line-control px-2 py-0.5 text-label text-fg-muted hover:border-pos hover:text-fg">{c.useLine}</button>
           </li>
         );
       })}

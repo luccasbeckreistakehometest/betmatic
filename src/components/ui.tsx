@@ -417,7 +417,7 @@ export function PageHead({
   return (
     <header className={cx("flex flex-wrap items-end justify-between gap-x-6 gap-y-3 border-b border-line-strong pb-3", className)}>
       <div className="min-w-0">
-        {kicker && <p className="mb-1 text-label u-label text-fg-faint">{kicker}</p>}
+        {kicker && <p className="mb-1 text-label u-label text-fg-dim">{kicker}</p>}
         <h1 className="u-title text-lead text-fg">{title}</h1>
         {meta && <p className="mt-1 max-w-measure-app text-tiny text-fg-dim">{meta}</p>}
       </div>

@@ -30,7 +30,7 @@ export function LeaderboardPanel() {
     <div className="flex flex-col gap-4" data-testid="ranking">
       <Panel title={t("rankingTitle")} meta={data ? `${data.members} ${t("rankingMembers")}` : undefined}
         action={
-          <div className="flex overflow-hidden rounded-control border border-line-strong text-label">
+          <div className="flex overflow-hidden rounded-control border border-line-control text-label">
             {(["week", "all"] as const).map((p) => (
               <button key={p} onClick={() => setPeriod(p)} data-testid={`period-${p}`} className={`px-2.5 py-1 ${period === p ? "bg-surface-3 text-fg" : "text-fg-dim hover:text-fg"}`}>{p === "week" ? t("rankingWeek") : t("rankingAll")}</button>
             ))}

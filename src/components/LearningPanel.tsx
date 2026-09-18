@@ -43,8 +43,8 @@ export function LearningPanel() {
   return (
     <Panel title="Aprendizado" meta={runs ? `${runs.length} run(s)` : undefined} action={
       <div className="flex gap-2">
-        <button onClick={() => trigger("settle")} disabled={busy !== null} className="rounded-control border border-line-strong px-2 py-0.5 text-label text-fg-muted hover:border-line-control hover:text-fg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed">{busy === "settle" ? "liquidando…" : "Liquidar agora"}</button>
-        <button onClick={() => trigger("learn")} disabled={busy !== null} className="rounded-control border border-line-strong px-2 py-0.5 text-label text-fg-muted hover:border-line-control hover:text-fg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="learn-now">{busy === "learn" ? "analisando…" : "Rodar aprendizado"}</button>
+        <button onClick={() => trigger("settle")} disabled={busy !== null} className="rounded-control border border-line-control px-2 py-0.5 text-label text-fg-muted hover:border-line-control hover:text-fg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed">{busy === "settle" ? "liquidando…" : "Liquidar agora"}</button>
+        <button onClick={() => trigger("learn")} disabled={busy !== null} className="rounded-control border border-line-control px-2 py-0.5 text-label text-fg-muted hover:border-line-control hover:text-fg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="learn-now">{busy === "learn" ? "analisando…" : "Rodar aprendizado"}</button>
       </div>
     }>
       <p className="text-label text-fg-dim">A cada hora os jogos encerrados são liquidados (sem custo). Uma vez por dia o agente lê o que ganhou e perdeu, escreve o post-mortem e propõe uma mudança no prompt — você aplica com um clique. As taxas de acerto por fonte e mercado já entram em toda geração automaticamente.</p>

@@ -66,7 +66,7 @@ export function PlanPicker({ lang, signedIn, currentPlanId, paymentsReady, initi
     <div className="flex flex-col gap-10" data-testid="plan-picker">
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-tiny u-label text-fg-dim" id="period-label">{c.period}</span>
-        <div role="radiogroup" aria-labelledby="period-label" className="flex flex-wrap overflow-hidden rounded-control border border-line-strong">
+        <div role="radiogroup" aria-labelledby="period-label" className="flex flex-wrap overflow-hidden rounded-control border border-line-control">
           {PERIODS.map((p) => (
             <button
               key={p}
@@ -110,7 +110,7 @@ export function PlanPicker({ lang, signedIn, currentPlanId, paymentsReady, initi
               )}
               <ul className="mt-5 flex flex-1 flex-col gap-2">
                 {plan.highlights[lang].map((item) => (
-                  <li key={item} className="flex gap-2 text-tiny leading-snug text-fg-muted"><span className="mt-[3px] text-fg-faint" aria-hidden>—</span>{item}</li>
+                  <li key={item} className="flex gap-2 text-tiny leading-snug text-fg-muted"><span className="mt-[3px] text-fg-dim" aria-hidden>—</span>{item}</li>
                 ))}
               </ul>
               {isCurrent && <p className="mt-4 text-tiny text-fg-muted">{c.current}</p>}

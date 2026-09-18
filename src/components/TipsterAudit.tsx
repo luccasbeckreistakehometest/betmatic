@@ -73,7 +73,7 @@ export function TipsterAudit() {
   }
 
   const a = state?.allowance;
-  const field = "w-full rounded-control border border-line-strong bg-surface-1 px-2.5 py-1.5 text-sm text-fg";
+  const field = "w-full rounded-control border border-line-control bg-surface-1 px-2.5 py-1.5 text-sm text-fg";
   return (
     <div className="flex flex-col gap-5">
       <div>

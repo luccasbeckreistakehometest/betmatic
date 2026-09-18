@@ -64,7 +64,7 @@ export function ResponsibleGuard() {
         <div className="fixed bottom-5 right-5 z-[80] w-[min(92vw,340px)] rounded-panel border border-line-strong bg-surface-1 p-4 shadow-pop" data-testid="session-reminder">
           <p className="text-base font-semibold text-fg">{t("sessionReminder").replace("{n}", String(reminder))}</p>
           <p className="mt-1 text-tiny text-fg-dim">{t("notInvestment")}</p>
-          <button onClick={() => { try { sessionStorage.setItem(SHOWN_KEY, String(due.current)); } catch { /* private mode */ } setReminder(null); }} className="mt-3 rounded-control border border-line-strong px-3 py-1.5 text-tiny text-fg-muted hover:text-fg" data-testid="reminder-dismiss">{t("dismiss")}</button>
+          <button onClick={() => { try { sessionStorage.setItem(SHOWN_KEY, String(due.current)); } catch { /* private mode */ } setReminder(null); }} className="mt-3 rounded-control border border-line-control px-3 py-1.5 text-tiny text-fg-muted hover:text-fg" data-testid="reminder-dismiss">{t("dismiss")}</button>
         </div>
       )}
     </>

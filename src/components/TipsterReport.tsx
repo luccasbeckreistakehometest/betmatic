@@ -10,7 +10,7 @@ import { NOT_PRICED } from "@/lib/format";
 import type { Lang } from "@/lib/i18n";
 
 const pct = (x: number | null, signed = false) => (x === null ? "—" : `${signed && x > 0 ? "+" : ""}${Math.round(x * 100)}%`);
-const TONE: Record<string, string> = { won: "text-pos", lost: "text-neg", push: "text-fg-muted", void: "text-fg-dim", pending: "text-fg-dim", unverifiable: "text-fg-faint" };
+const TONE: Record<string, string> = { won: "text-pos", lost: "text-neg", push: "text-fg-muted", void: "text-fg-dim", pending: "text-fg-dim", unverifiable: "text-fg-dim" };
 
 /** One audit: aggregate numbers first, then pick by pick. The tipster's label is never in the share text. */
 export function TipsterReport({ report, picks, lang, onDelete }: { report: AuditReport; picks: GradedPick[]; lang: Lang; onDelete?: () => void }) {

@@ -151,7 +151,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   }
 
   const field =
-    "w-full rounded-control border border-line-strong bg-surface-1 px-3 py-2.5 text-base text-fg transition-colors duration-(--dur-1) ease-(--ease-out) placeholder:text-fg-faint";
+    "w-full rounded-control border border-line-control bg-surface-1 px-3 py-2.5 text-base text-fg transition-colors duration-(--dur-1) ease-(--ease-out) placeholder:text-fg-dim";
 
   const choice = plan
     ? c.chosenPlan.replace("{plan}", plan.name).replace("{period}", PERIOD[period].label[lang]).replace("{price}", formatMoneyBRL(periodPrice(plan.monthlyPrice, period), lang))

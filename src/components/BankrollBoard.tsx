@@ -137,7 +137,7 @@ export function BankrollBoard() {
                             {l.settlement ? (
                               <span data-testid="auto-grade" className="text-micro u-label text-fg-dim">{lang === "pt" ? "liquidação automática" : "graded automatically"}</span>
                             ) : (
-                              <span className="text-micro u-label text-fg-faint">{lang === "pt" ? "você marca" : "you grade it"}</span>
+                              <span className="text-micro u-label text-fg-dim">{lang === "pt" ? "você marca" : "you grade it"}</span>
                             )}
                             {l.actual && <span className="nums text-micro text-fg-dim">{l.actual}</span>}
                           </li>
@@ -183,7 +183,7 @@ export function BankrollBoard() {
                         type="button"
                         onClick={() => remove(e.id)}
                         aria-label={lang === "pt" ? "Remover da banca" : "Remove from bankroll"}
-                        className="ml-auto grid size-6 place-items-center text-fg-faint transition-colors duration-(--dur-1) hover:text-neg"
+                        className="ml-auto grid size-6 place-items-center text-fg-dim transition-colors duration-(--dur-1) hover:text-neg"
                       >
                         <Icon name="trash" size={16} />
                       </button>

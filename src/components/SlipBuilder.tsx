@@ -108,7 +108,7 @@ export function SlipBuilder() {
   }
 
   const field =
-    "h-(--row-h) rounded-control border border-line-control bg-surface-1 px-2.5 text-sm text-fg transition-colors duration-(--dur-1) ease-(--ease-out) placeholder:text-fg-faint";
+    "h-(--row-h) rounded-control border border-line-control bg-surface-1 px-2.5 text-sm text-fg transition-colors duration-(--dur-1) ease-(--ease-out) placeholder:text-fg-dim";
 
   return (
     <div className="flex max-w-[64rem] flex-col gap-4">
@@ -157,7 +157,7 @@ export function SlipBuilder() {
           <div className="flex flex-wrap items-center gap-3 pt-1">
             <button
               onClick={() => setLegs((prev) => [...prev, { ...emptyLeg }])}
-              className="rounded-control border border-line-strong px-3 py-1.5 text-tiny text-fg-muted transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:text-fg"
+              className="rounded-control border border-line-control px-3 py-1.5 text-tiny text-fg-muted transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:text-fg"
             >
               + {t("addLeg")}
             </button>
@@ -180,7 +180,7 @@ export function SlipBuilder() {
                   : `(${pricing.deep} coins)`}
               </span>
             </label>
-            {!ready && <span className="text-label text-fg-faint">{t("slipEmpty")}</span>}
+            {!ready && <span className="text-label text-fg-dim">{t("slipEmpty")}</span>}
           </div>
 
           {deep && (
@@ -232,7 +232,7 @@ export function SlipBuilder() {
                   }`}
                 >
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="nums text-micro text-fg-faint">{leg.index + 1}</span>
+                    <span className="nums text-micro text-fg-dim">{leg.index + 1}</span>
                     <span className="text-tiny font-medium text-fg">
                       {legs[leg.index]?.selection ?? "—"}
                     </span>

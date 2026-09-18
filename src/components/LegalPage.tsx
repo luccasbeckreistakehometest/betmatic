@@ -30,7 +30,7 @@ export function RichText({ text }: { text: string }) {
 function Block({ block }: { block: LegalBlock }) {
   if (typeof block === "string") return <p className="mt-3 max-w-measure-legal text-body text-fg-muted"><RichText text={block} /></p>;
   return (
-    <ul className="mt-3 flex max-w-measure-legal list-disc flex-col gap-2 pl-5 text-body text-fg-muted marker:text-fg-faint">
+    <ul className="mt-3 flex max-w-measure-legal list-disc flex-col gap-2 pl-5 text-body text-fg-muted marker:text-fg-dim">
       {block.list.map((item) => <li key={item}><RichText text={item} /></li>)}
     </ul>
   );

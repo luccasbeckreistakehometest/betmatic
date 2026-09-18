@@ -85,7 +85,7 @@ export function AppRail() {
       <div className="flex flex-col py-2">
         {NAV_GROUPS.map((group) => (
           <div key={group.label.en} className="mb-1 pb-1 not-last:border-b not-last:border-line">
-            <p className="hidden px-3 pt-2 pb-1 text-label u-label text-fg-faint lg:block">{group.label[lang]}</p>
+            <p className="hidden px-3 pt-2 pb-1 text-label u-label text-fg-dim lg:block">{group.label[lang]}</p>
             <span className="sr-only lg:hidden">{group.label[lang]}</span>
             {group.items.map((item) => {
               const current = isCurrent(pathname, item.href);

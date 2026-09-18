@@ -33,7 +33,7 @@ export function AdminAcquisition() {
     return `${origin}${utm.path.startsWith("/") ? utm.path : `/${utm.path}`}?${q}`;
   }, [utm, origin]);
   const top = Math.max(1, ...(data?.visitorsPerDay.map((d) => d.visitors) ?? [1]));
-  const field = "rounded-control border border-line-strong bg-surface-1 px-2 py-1 text-tiny text-fg";
+  const field = "rounded-control border border-line-control bg-surface-1 px-2 py-1 text-tiny text-fg";
 
   return (
     <Panel title="Aquisição" meta={data ? `${data.totals.visitors} visitantes · ${data.totals.signups} cadastros · ${data.totals.paid} pagantes` : undefined}
@@ -85,7 +85,7 @@ export function AdminAcquisition() {
               <input aria-label="utm_campaign" className={field} placeholder="campanha" value={utm.campaign} onChange={(e) => setUtm({ ...utm, campaign: e.target.value })} />
             </div>
             <p className="nums mt-2 break-all text-fg" data-testid="utm-link">{link}</p>
-            <button onClick={() => void navigator.clipboard?.writeText(link)} className="mt-1 rounded-control border border-line-strong px-2 py-0.5 text-label text-fg-muted">Copiar</button>
+            <button onClick={() => void navigator.clipboard?.writeText(link)} className="mt-1 rounded-control border border-line-control px-2 py-0.5 text-label text-fg-muted">Copiar</button>
           </div>
         </div>
       )}

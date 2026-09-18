@@ -146,7 +146,7 @@ export function AccountBar() {
 
           {NAV_GROUPS.map((group) => (
             <nav key={group.label.en} className="border-b border-line py-1" aria-label={group.label[lang]}>
-              <p className="px-2 pt-1 pb-0.5 text-label u-label text-fg-faint">{group.label[lang]}</p>
+              <p className="px-2 pt-1 pb-0.5 text-label u-label text-fg-dim">{group.label[lang]}</p>
               {group.items.map((item) => (
                 <Link
                   key={item.href}

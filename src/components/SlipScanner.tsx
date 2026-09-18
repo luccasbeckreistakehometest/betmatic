@@ -94,7 +94,7 @@ export function SlipScanner({ lang, sportKey: initialSport, onSaved }: { lang: L
     router.push(`/app/slip?sport=${sportKey}&lang=${lang}&from=scan`);
   }
 
-  const field = "w-full rounded-control border border-line-strong bg-surface-1 px-2 py-1 text-tiny text-fg";
+  const field = "w-full rounded-control border border-line-control bg-surface-1 px-2 py-1 text-tiny text-fg";
   return (
     <section className="rounded-panel border border-line-strong bg-surface-2 p-4" data-testid="slip-scanner">
       <div className="flex flex-wrap items-center gap-3">

@@ -112,7 +112,7 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
           <div className={`grid gap-px overflow-hidden rounded-panel border border-line bg-surface-3 ${s.angle[lang].length > 3 ? "md:grid-cols-2 lg:grid-cols-4" : "md:grid-cols-3"}`}>
             {s.angle[lang].map((item, i) => (
               <div key={item.title} className="flex flex-col bg-surface-1 p-6">
-                <span className="nums text-label text-fg-faint">{String(i + 1).padStart(2, "0")}</span>
+                <span className="nums text-label text-fg-dim">{String(i + 1).padStart(2, "0")}</span>
                 <h2 className="mt-3 text-base font-semibold text-fg">{item.title}</h2>
                 <p className="mt-2 text-sm leading-relaxed text-fg-muted">{item.body}</p>
               </div>

@@ -74,7 +74,7 @@ export function Calculators({ lang }: { lang: Lang }) {
             <div className="text-micro u-label text-fg-dim">{c.combined}</div>
             <div className="nums text-h2 font-semibold">{Number.isFinite(combined) ? formatDecimal(combined, lang) : "—"}</div>
             <div className="mt-1 text-tiny text-fg-dim">{c.chance}: <span className="nums">{pct(impliedProbability(combined), lang)}</span> · {c.hold}: <span className="nums text-warn">{pct(hold, lang)}</span></div>
-            <p className="mt-2 text-label text-fg-faint">{c.holdNote}</p>
+            <p className="mt-2 text-label text-fg-dim">{c.holdNote}</p>
           </div>
         </Card>
         <Card title={c.conv} help={c.convHelp}>

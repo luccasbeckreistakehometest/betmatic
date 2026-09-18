@@ -51,7 +51,7 @@ export function AlertsPanel() {
                 {t("digestDaily")}
               </label>
               <p className="text-tiny text-fg-dim">{t("digestHint")}</p>
-              <button onClick={() => void act({ action: "unlink" })} disabled={busy} className="w-fit rounded-control border border-line-strong px-3 py-1.5 text-tiny text-fg-muted hover:text-warn" data-testid="telegram-unlink">{t("telegramUnlink")}</button>
+              <button onClick={() => void act({ action: "unlink" })} disabled={busy} className="w-fit rounded-control border border-line-control px-3 py-1.5 text-tiny text-fg-muted hover:text-warn" data-testid="telegram-unlink">{t("telegramUnlink")}</button>
             </div>
           ) : tg.code ? (
             <div className="mt-3 flex flex-col gap-2" data-testid="telegram-status" data-linked="0">
@@ -59,8 +59,8 @@ export function AlertsPanel() {
               <p className="text-tiny text-fg-muted">{t("telegramCodeHint")}</p>
               <div className="flex flex-wrap gap-2">
                 {tg.deepLink && <a href={tg.deepLink} target="_blank" rel="noopener noreferrer" className="inline-flex h-(--row-h) items-center rounded-control bg-action px-3 text-tiny font-medium text-action-fg transition-colors duration-(--dur-1) hover:bg-action-hover" data-testid="telegram-open">{t("telegramOpenBot")}{tg.botUsername ? ` (@${tg.botUsername})` : ""}</a>}
-                <button onClick={() => void act({ action: "link_code" })} disabled={busy} className="rounded-control border border-line-strong px-3 py-1.5 text-tiny text-fg-muted hover:text-fg">{t("telegramNewCode")}</button>
-                <button onClick={() => void load()} className="rounded-control border border-line-strong px-3 py-1.5 text-tiny text-fg-muted hover:text-fg" data-testid="telegram-refresh">{t("refresh")}</button>
+                <button onClick={() => void act({ action: "link_code" })} disabled={busy} className="rounded-control border border-line-control px-3 py-1.5 text-tiny text-fg-muted hover:text-fg">{t("telegramNewCode")}</button>
+                <button onClick={() => void load()} className="rounded-control border border-line-control px-3 py-1.5 text-tiny text-fg-muted hover:text-fg" data-testid="telegram-refresh">{t("refresh")}</button>
               </div>
             </div>
           ) : (
@@ -82,7 +82,7 @@ export function AlertsPanel() {
                 const on = followingLeague(l.key);
                 return (
                   <button key={l.key} disabled={busy} onClick={() => void act({ action: on ? "unfollow" : "follow", kind: "league", sportKey: l.key })} data-testid={`league-${l.key}`} data-on={on ? "1" : "0"}
-                    className={`rounded-control border px-2.5 py-1 text-tiny transition-colors duration-(--dur-1) ease-(--ease-out) ${on ? "border-pos bg-action text-pos" : "border-line-strong text-fg-muted hover:border-line-control hover:text-fg"}`}>
+                    className={`rounded-control border px-2.5 py-1 text-tiny transition-colors duration-(--dur-1) ease-(--ease-out) ${on ? "border-line-control bg-surface-3 font-medium text-fg" : "border-line-control text-fg-muted hover:bg-surface-2 hover:text-fg"}`}>
                     {on ? "✓ " : ""}{l.label[lang]}
                   </button>
                 );

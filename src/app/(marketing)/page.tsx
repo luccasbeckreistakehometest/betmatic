@@ -165,7 +165,7 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
           <div className="mt-10 grid gap-px overflow-hidden rounded-panel border border-line bg-surface-3 md:grid-cols-3">
             {c.honestyPoints.map((point, i) => (
               <div key={point.title} className="flex flex-col bg-surface-1 p-6">
-                <span className="nums text-label text-fg-faint">{String(i + 1).padStart(2, "0")}</span>
+                <span className="nums text-label text-fg-dim">{String(i + 1).padStart(2, "0")}</span>
                 <h3 className="mt-3 text-base font-semibold text-fg">{point.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-fg-muted">{point.body}</p>
               </div>
@@ -199,7 +199,7 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
           <ol className="mt-10 flex flex-col gap-px overflow-hidden rounded-panel border border-line bg-surface-3">
             {c.howSteps.map((step) => (
               <li key={step.n} className="grid gap-4 bg-surface-1 p-6 sm:grid-cols-[6rem_1fr_2fr] sm:items-baseline">
-                <span className="nums text-h3 leading-none text-fg-faint">{step.n}</span>
+                <span className="nums text-h3 leading-none text-fg-dim">{step.n}</span>
                 <h3 className="text-base font-semibold text-fg">{step.title}</h3>
                 <p className="text-sm leading-relaxed text-fg-muted">{step.body}</p>
               </li>
@@ -281,7 +281,7 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
                       <ul className="flex flex-col gap-1 py-2 text-tiny leading-snug text-fg-muted">
                         {plan.highlights[lang].map((item) => (
                           <li key={item} className="flex gap-1.5">
-                            <span aria-hidden="true" className="text-fg-faint">—</span>
+                            <span aria-hidden="true" className="text-fg-dim">—</span>
                             {item}
                           </li>
                         ))}

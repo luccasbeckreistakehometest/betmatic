@@ -76,7 +76,7 @@ export function PromptPanel() {
         <pre className="mt-3 max-h-[420px] overflow-auto whitespace-pre-wrap rounded-control border border-line bg-surface-0 p-3 font-mono text-tiny leading-relaxed text-fg-muted" data-testid="prompt-content">{active.content}</pre>
       )}
       {editing && (
-        <textarea className="mt-3 h-[420px] w-full rounded-control border border-line-strong bg-surface-0 p-3 font-mono text-tiny leading-relaxed text-fg" value={draft} onChange={(e) => setDraft(e.target.value)} />
+        <textarea className="mt-3 h-[420px] w-full rounded-control border border-line-control bg-surface-0 p-3 font-mono text-tiny leading-relaxed text-fg" value={draft} onChange={(e) => setDraft(e.target.value)} />
       )}
       {active?.rationale && !editing && (
         <p className="mt-2 whitespace-pre-wrap rounded-control border border-line bg-surface-1 px-3 py-2 text-tiny text-fg-muted"><span className="font-semibold text-fg-muted">Por que esta versão: </span>{active.rationale}</p>
@@ -86,12 +86,12 @@ export function PromptPanel() {
         {editing ? (
           <>
             <button onClick={saveManual} disabled={busy !== null} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint">Salvar edição</button>
-            <button onClick={() => setEditing(false)} className="rounded-control border border-line-strong px-3 py-1.5 text-fg-muted">Cancelar</button>
+            <button onClick={() => setEditing(false)} className="rounded-control border border-line-control px-3 py-1.5 text-fg-muted">Cancelar</button>
           </>
         ) : (
           <>
-            <button onClick={() => { setDraft(active?.content ?? ""); setEditing(true); }} className="rounded-control border border-line-strong px-3 py-1.5 text-fg-muted hover:border-line-control">Editar à mão</button>
-            <button onClick={() => revert({ kind, reset: true })} disabled={busy !== null || active?.version === 0} className="rounded-control border border-line-strong px-3 py-1.5 text-fg-muted hover:border-line-control disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed">Voltar ao original</button>
+            <button onClick={() => { setDraft(active?.content ?? ""); setEditing(true); }} className="rounded-control border border-line-control px-3 py-1.5 text-fg-muted hover:border-line-control">Editar à mão</button>
+            <button onClick={() => revert({ kind, reset: true })} disabled={busy !== null || active?.version === 0} className="rounded-control border border-line-control px-3 py-1.5 text-fg-muted hover:border-line-control disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed">Voltar ao original</button>
           </>
         )}
       </div>
@@ -99,7 +99,7 @@ export function PromptPanel() {
       <div className="mt-5 border-t border-line pt-4">
         <p className="text-tiny font-semibold text-fg">Feedback pro agente</p>
         <p className="mt-0.5 text-label text-fg-dim">Diga o que os bilhetes deveriam fazer diferente. O agente reescreve o prompt nos dois idiomas, ativa a versão nova e explica o que mudou. Ex.: “pare de sugerir cartões quando o árbitro não foi confirmado” ou “nas múltiplas, no máximo 4 pernas”.</p>
-        <textarea className="mt-2 h-24 w-full rounded-control border border-line-strong bg-surface-0 p-3 text-sm text-fg" value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder="O que deve mudar na forma como o agente monta os bilhetes?" data-testid="prompt-feedback" />
+        <textarea className="mt-2 h-24 w-full rounded-control border border-line-control bg-surface-0 p-3 text-sm text-fg" value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder="O que deve mudar na forma como o agente monta os bilhetes?" data-testid="prompt-feedback" />
         <div className="mt-2 flex items-center gap-3">
           <button onClick={sendFeedback} disabled={busy !== null || feedback.trim().length < 10} className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap bg-action text-action-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-action-hover active:bg-action-active disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-fg-faint" data-testid="prompt-apply">{busy === "feedback" ? "O agente está reescrevendo…" : "Aplicar feedback"}</button>
           <span className="text-label text-fg-dim">aplica em {KIND_LABEL[kind].toLowerCase()} · pt + en</span>

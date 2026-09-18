@@ -21,7 +21,7 @@ const OUTCOME_TONE: Record<string, string> = {
   won: "text-pos",
   lost: "text-neg",
   push: "text-fg-muted",
-  void: "text-fg-faint",
+  void: "text-fg-dim",
   pending: "text-fg-muted",
 };
 

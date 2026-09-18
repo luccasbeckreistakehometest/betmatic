@@ -15,7 +15,7 @@ export function ErrorScreen({ onRetry, digest }: { onRetry: () => void; digest?:
         <Link href="/" className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint">Início · Home</Link>
         <Link href="/contato" className="inline-flex items-center justify-center gap-2 h-(--row-h) rounded-control px-3 text-sm font-medium whitespace-nowrap border border-line-control text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:bg-surface-2 active:bg-surface-3 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint">Contato · Contact</Link>
       </div>
-      {digest && <p className="nums mt-6 text-label text-fg-faint">ref {digest}</p>}
+      {digest && <p className="nums mt-6 text-label text-fg-dim">ref {digest}</p>}
     </main>
   );
 }

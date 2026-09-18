@@ -36,7 +36,7 @@ export function DeepSlipTable({ ctx, lang, sportKey }: { ctx: DeepContext; lang:
         {ctx.legs.map((l) => (
           <li key={l.index} className="py-2 text-tiny" data-testid="deep-leg">
             <div className="flex flex-wrap items-baseline gap-2">
-              <span className="nums text-micro text-fg-faint">{l.index + 1}</span>
+              <span className="nums text-micro text-fg-dim">{l.index + 1}</span>
               <span className="font-medium text-fg">{l.selection}</span>
               <span className="rounded-control bg-surface-3 px-1.5 py-0.5 text-micro u-label text-fg-muted">{c.kind[l.kind]}</span>
               {l.matchup && <span className="text-label text-fg-dim">{l.matchup}</span>}
