@@ -47,7 +47,6 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
   // Visitors carry the chosen plan through signup straight to checkout; members pick the period on /planos.
   const signedIn = !!(await currentUser());
   const stake = lang === "pt" ? 10 : 10;
-  const maxReturn = Math.max(...LADDER.map((l) => l.decimal)) * stake;
 
   return (
     <div className="flex min-h-full flex-col bg-surface-0" data-density="comfortable">
@@ -100,7 +99,7 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
               <thead>
                 <tr>
                   <Th className="w-16">{c.ladderStake}</Th>
-                  <Th>{c.ladderReturns}</Th>
+                  <Th numeric>{c.ladderReturns}</Th>
                   <Th numeric className="w-20">{c.ladderChance}</Th>
                 </tr>
               </thead>
@@ -108,16 +107,13 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
                 {LADDER.map((rung) => {
                   const payout = rung.decimal * stake;
                   const chance = impliedProbability(rung.decimal);
-                  const width = Math.max(6, (Math.log10(payout) / Math.log10(maxReturn)) * 100);
                   return (
                     <Tr key={rung.legs}>
                       <Td label={c.ladderStake} className="nums text-fg-dim">{rung.label[lang]}</Td>
-                      <Td label={c.ladderReturns} className="relative">
-                        {/* A measurement, so it is a rule under the figure at one ink value — not a
-                            filled box, which would read as a field, and never a gradient. */}
-                        <span className="nums text-fg">{money(payout, lang)}</span>
-                        <span aria-hidden="true" className="absolute bottom-1 left-(--cell-px) h-px bg-fg-dim" style={{ width: `calc(${width}% - var(--cell-px))` }} />
-                      </Td>
+                      {/* No bar: the argument is already typographic. In tabular mono the payout
+                          grows a digit a row while the chance loses one, and the two columns move
+                          apart down the table — a drawn bar would only repeat that, badly. */}
+                      <NumCell label={c.ladderReturns} className="text-fg">{money(payout, lang)}</NumCell>
                       {/* The chance is always printed beside the multiplier: the product's point,
                           and the Brazilian advertising rule. The ramp paints the rule, not the text. */}
                       <NumCell label={c.ladderChance} chance={chanceStep(chance)} className="text-fg-muted">

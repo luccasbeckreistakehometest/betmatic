@@ -73,18 +73,18 @@ export function AdminPayments() {
       {payments.length ? (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-tiny" data-testid="admin-payments">
-            <thead><tr className="border-b border-line text-micro uppercase tracking-wider text-fg-dim">
-              <th className="px-2 pb-1.5">Data</th><th className="px-2 pb-1.5">Usuário</th><th className="px-2 pb-1.5">Item</th><th className="px-2 pb-1.5 text-right">Valor</th><th className="px-2 pb-1.5">Status</th><th className="px-2 pb-1.5">MP</th>
+            <thead><tr>
+              <th className="px-2 pb-1.5">Data</th><th className="px-2 pb-1.5">Usuário</th><th className="px-2 pb-1.5">Item</th><th className="text-right">Valor</th><th className="px-2 pb-1.5">Status</th><th className="px-2 pb-1.5">MP</th>
             </tr></thead>
-            <tbody className="divide-y divide-line/70">
+            <tbody>
               {payments.map((p) => (
                 <tr key={p.id}>
-                  <td className="nums px-2 py-1.5 text-fg-muted">{dt(p.createdAt)}</td>
-                  <td className="px-2 py-1.5 text-fg">{p.email ?? "(conta excluída)"}</td>
-                  <td className="px-2 py-1.5 text-fg-muted">{p.kind}:{p.reference}{p.period ? `/${p.period}` : ""}</td>
-                  <td className="nums px-2 py-1.5 text-right text-fg">R$ {p.amount.toFixed(2)}</td>
-                  <td className={`px-2 py-1.5 ${p.status === "approved" ? "text-pos" : p.status === "pending" ? "text-focus" : "text-fg-muted"}`} title={p.statusDetail ?? ""}>{p.status}</td>
-                  <td className="nums px-2 py-1.5 text-fg-dim">{p.providerPaymentId ?? "—"}</td>
+                  <td className="nums text-fg-muted">{dt(p.createdAt)}</td>
+                  <td className="text-fg">{p.email ?? "(conta excluída)"}</td>
+                  <td className="text-fg-muted">{p.kind}:{p.reference}{p.period ? `/${p.period}` : ""}</td>
+                  <td className="nums text-right text-fg">R$ {p.amount.toFixed(2)}</td>
+                  <td className={`${p.status === "approved" ? "text-pos" : p.status === "pending" ? "text-focus" : "text-fg-muted"}`} title={p.statusDetail ?? ""}>{p.status}</td>
+                  <td className="nums text-fg-dim">{p.providerPaymentId ?? "—"}</td>
                 </tr>
               ))}
             </tbody>

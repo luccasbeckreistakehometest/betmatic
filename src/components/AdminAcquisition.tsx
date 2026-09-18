@@ -51,7 +51,7 @@ export function AdminAcquisition() {
           <div className="overflow-x-auto">
             <table className="w-full text-left" data-testid="acq-funnel">
               <thead><tr className="text-micro uppercase tracking-wider text-fg-dim"><th className="pb-1">Origem</th><th>Visitantes</th><th>Cadastros</th><th>Abriu jogo</th><th>Salvou</th><th>Pagou</th></tr></thead>
-              <tbody className="divide-y divide-line">
+              <tbody>
                 {data.funnel.map((f) => (
                   <tr key={f.source} className="nums text-fg">
                     <td className="py-1 text-fg">{f.source}</td><td>{f.visitors}</td><td>{f.signups} <span className="text-fg-dim">({pct(f.signups, f.visitors)})</span></td>

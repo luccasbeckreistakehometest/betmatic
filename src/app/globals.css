@@ -381,6 +381,39 @@
 }
 
 @layer base {
+  /* Every table in the product reads the same, whether it was built from the Table primitive or
+     written by hand on a screen the waves have not reached: the header is the condensed display
+     face on a 2px rule, cells sit at the density's row height, and each row carries one hairline.
+     The primitive's own utilities still win, because utilities come after base. */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+  }
+  th {
+    height: var(--row-h);
+    padding-inline: var(--cell-px);
+    text-align: left;
+    font-family: var(--font-display);
+    font-variation-settings: "wdth" 82, "wght" 500;
+    font-size: 0.6875rem;
+    line-height: 0.875rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--fg-dim);
+    box-shadow: inset 0 -2px 0 var(--line-strong);
+  }
+  td {
+    height: var(--row-h);
+    padding-inline: var(--cell-px);
+    vertical-align: middle;
+    font-size: var(--density-text);
+  }
+  tbody tr {
+    box-shadow: inset 0 -1px 0 var(--line);
+  }
+
   html {
     -webkit-text-size-adjust: 100%;
   }

@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
-import { Empty, Panel } from "@/components/ui";
+import { Empty, KPI, PageHead, Panel, Table, Td, Th, Tr } from "@/components/ui";
+import { formatMoney, formatNumber } from "@/lib/format";
 import { PromptPanel } from "@/components/PromptPanel";
 import { LearningPanel } from "@/components/LearningPanel";
 import { AdminUsers } from "@/components/AdminUsers";
@@ -27,15 +28,8 @@ interface AdminPayload extends OpsPayload {
   responsible?: { withLimits: number; reminders: number; paused: number; everPaused: number; leaderboardOptIn: number };
 }
 
-function Stat({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
-  return (
-    <div className="bg-surface-1 px-3 py-2.5">
-      <div className="text-micro uppercase tracking-wider text-fg-dim">{label}</div>
-      <div className="nums text-lead font-semibold text-fg">{value}</div>
-      {hint && <div className="text-micro text-fg-dim">{hint}</div>}
-    </div>
-  );
-}
+/** USD is the model's bill, BRL is the business. They never share a group (§11.2). */
+const usd = (n: number, digits = 2) => `US$\u00a0${n.toFixed(digits)}`;
 
 export function AdminDashboard() {
   const [data, setData] = useState<AdminPayload | null>(null);
@@ -76,7 +70,7 @@ export function AdminDashboard() {
       <div className="mx-auto max-w-lg px-5 py-24 text-center">
         <Logo size={32} />
         <p className="mt-6 text-base text-fg-muted">{data.error}</p>
-        <Link href="/login" className="mt-4 inline-block text-sm text-pos hover:underline">
+        <Link href="/login" className="mt-4 inline-block text-sm text-fg underline underline-offset-2">
           Entrar como admin
         </Link>
       </div>
@@ -86,16 +80,12 @@ export function AdminDashboard() {
   const revenueTotal = (data?.revenue ?? []).reduce((acc, r) => acc + r.total, 0);
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-5 px-5 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Logo size={26} />
-          <span className="rounded-control border border-warn bg-warn-tint px-2 py-0.5 text-micro font-semibold uppercase tracking-wide text-warn">
-            admin
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link href="/app" className="text-tiny text-fg-muted hover:text-fg">
+    <div className="mx-auto flex max-w-shell flex-col gap-5 px-4 py-6 sm:px-6">
+      <PageHead
+        kicker="Operação"
+        title={<span className="flex items-center gap-3"><Logo size={22} /> <span className="text-fg-dim">admin</span></span>}
+        actions={<>
+          <Link href="/app" className="text-tiny text-fg-muted underline-offset-2 hover:text-fg hover:underline">
             ver o app
           </Link>
           <button
@@ -105,32 +95,30 @@ export function AdminDashboard() {
           >
             {running ? "Gerando…" : "Rodar refresh agora"}
           </button>
-        </div>
-      </div>
+        </>}
+      />
 
-      {note && <p className="text-tiny text-focus">{note}</p>}
+      {note && <p className="text-tiny text-fg-muted">{note}</p>}
 
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-panel border border-line bg-surface-3 sm:grid-cols-4 lg:grid-cols-6">
-        <Stat label="Usuários" value={data?.totals.users ?? 0} />
-        <Stat label="Pagantes" value={data?.totals.paying ?? 0} />
-        <Stat label="Receita" value={`R$ ${revenueTotal.toFixed(0)}`} />
-        <Stat label="Coins gastos" value={data?.totals.coinsSpent ?? 0} />
-        <Stat label="Predições" value={data?.predictions.total ?? 0} />
-        <Stat label="Tour concluído" value={`${data?.onboarding?.completed ?? 0}/${data?.onboarding?.started ?? 0}`} hint="primeiros acessos" />
-        <Stat label="Telegram" value={`${data?.alerts?.linked ?? 0} · ${data?.alerts?.sent ?? 0}`} hint={`contas · enviados · ${data?.alerts?.follows ?? 0} follows`} />
-        <Stat label="Por que perdi?" value={data?.reviews?.reviews ?? 0} hint={`$${(data?.reviews?.costUsd ?? 0).toFixed(2)} em revisões`} />
-        <Stat label="Jogo responsável" value={`${data?.responsible?.withLimits ?? 0} · ${data?.responsible?.paused ?? 0}`} hint={`com teto · em pausa · ${data?.responsible?.reminders ?? 0} lembretes`} />
-        <Stat
-          label="Contato"
-          value={data?.contact?.open ?? 0}
-          hint="mensagens abertas"
-        />
-        <Stat
-          label="Custo IA"
-          value={`$${(data?.predictions.costUsd ?? 0).toFixed(2)}`}
-          hint={data?.predictions.latest ? new Date(data.predictions.latest).toLocaleString() : "—"}
-        />
-      </div>
+      {/* Two groups, because they are two things: the business in reais, the model's bill in
+          dollars. A grid whose last row has a hole is a grid with the wrong column count. */}
+      <section className="grid grid-cols-2 gap-x-6 gap-y-5 border-b border-line pb-5 sm:grid-cols-3 lg:grid-cols-5">
+        <KPI label="Usuários" value={formatNumber(data?.totals.users ?? 0, "pt")} />
+        <KPI label="Pagantes" value={formatNumber(data?.totals.paying ?? 0, "pt")} />
+        <KPI label="Receita" value={formatMoney(revenueTotal, "pt", { digits: 0 })} />
+        <KPI label="Coins gastos" value={formatNumber(data?.totals.coinsSpent ?? 0, "pt")} />
+        <KPI label="Predições" value={formatNumber(data?.predictions.total ?? 0, "pt")} />
+        <KPI label="Tour concluído" value={`${data?.onboarding?.completed ?? 0}/${data?.onboarding?.started ?? 0}`} sub="primeiros acessos" />
+        <KPI label="Telegram" value={`${data?.alerts?.linked ?? 0} · ${data?.alerts?.sent ?? 0}`} sub={`contas · enviados · ${data?.alerts?.follows ?? 0} follows`} />
+        <KPI label="Por que perdi?" value={formatNumber(data?.reviews?.reviews ?? 0, "pt")} sub="revisões pedidas" />
+        <KPI label="Jogo responsável" value={`${data?.responsible?.withLimits ?? 0} · ${data?.responsible?.paused ?? 0}`} sub={`com teto · em pausa · ${data?.responsible?.reminders ?? 0} lembretes`} />
+        <KPI label="Contato" value={formatNumber(data?.contact?.open ?? 0, "pt")} sub="mensagens abertas" />
+      </section>
+
+      <section className="grid grid-cols-2 gap-x-6 gap-y-5 border-b border-line pb-5 sm:grid-cols-3">
+        <KPI label="Custo IA (USD)" value={usd(data?.predictions.costUsd ?? 0)} sub={data?.predictions.latest ? new Date(data.predictions.latest).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "—"} />
+        <KPI label="Revisões (USD)" value={usd(data?.reviews?.costUsd ?? 0)} sub="custo das revisões de derrota" />
+      </section>
 
       <AdminHealth data={data} />
 
@@ -147,38 +135,32 @@ export function AdminDashboard() {
 
       <PromptPanel />
 
-      <Panel title="Execuções do job">
+      <Panel title="Execuções do job" flush>
         {data?.jobs.length ? (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[620px] text-left text-tiny">
-              <thead>
-                <tr className="border-b border-line text-micro uppercase tracking-wider text-fg-dim">
-                  <th className="px-2 pb-1.5 font-medium">Início</th>
-                  <th className="px-2 pb-1.5 font-medium">Status</th>
-                  <th className="px-2 pb-1.5 text-right font-medium">Jogos</th>
-                  <th className="px-2 pb-1.5 text-right font-medium">Predições</th>
-                  <th className="px-2 pb-1.5 text-right font-medium">Custo</th>
-                  <th className="px-2 pb-1.5 font-medium">Nota</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line/70">
-                {data.jobs.map((job) => (
-                  <tr key={job.id}>
-                    <td className="nums px-2 py-1.5 text-fg-muted">{new Date(job.startedAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</td>
-                    <td className={`px-2 py-1.5 ${job.status === "ok" ? "text-pos" : job.status === "error" ? "text-neg" : "text-focus"}`}>
-                      {job.status}
-                    </td>
-                    <td className="nums px-2 py-1.5 text-right text-fg">{job.gamesProcessed}</td>
-                    <td className="nums px-2 py-1.5 text-right text-fg">{job.predictionsWritten}</td>
-                    <td className="nums px-2 py-1.5 text-right text-fg">${job.costUsd.toFixed(3)}</td>
-                    <td className="max-w-[280px] truncate px-2 py-1.5 text-label text-fg-dim" title={job.note}>
-                      {job.note || "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table caption="Execuções do job">
+            <thead>
+              <tr>
+                <Th>Início</Th>
+                <Th>Status</Th>
+                <Th numeric>Jogos</Th>
+                <Th numeric>Predições</Th>
+                <Th numeric>Custo (USD)</Th>
+                <Th>Nota</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.jobs.map((job) => (
+                <Tr key={job.id} tone={job.status === "error" ? "neg" : undefined}>
+                  <Td numeric label="Início" className="text-fg-muted">{new Date(job.startedAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</Td>
+                  <Td label="Status" className={job.status === "ok" ? "text-pos" : job.status === "error" ? "text-neg" : "text-fg-muted"}>{job.status}</Td>
+                  <Td numeric label="Jogos">{job.gamesProcessed}</Td>
+                  <Td numeric label="Predições">{job.predictionsWritten}</Td>
+                  <Td numeric label="Custo (USD)">{usd(job.costUsd, 3)}</Td>
+                  <Td label="Nota" className="max-w-[280px] truncate text-tiny text-fg-dim" title={job.note}>{job.note || "—"}</Td>
+                </Tr>
+              ))}
+            </tbody>
+          </Table>
         ) : (
           <Empty>Nenhuma execução ainda.</Empty>
         )}

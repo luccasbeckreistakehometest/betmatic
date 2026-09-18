@@ -39,33 +39,33 @@ function CalibrationTable({ rows, lang }: { rows: CalibrationRow[]; lang: "pt" |
     <div className="overflow-x-auto">
       <table className="w-full min-w-[520px] text-left text-tiny">
         <thead>
-          <tr className="border-b border-line text-micro uppercase tracking-wider text-fg-dim">
-            <th className="px-2 pb-1.5 font-medium">—</th>
-            <th className="px-2 pb-1.5 text-right font-medium">{t("sample")}</th>
-            <th className="px-2 pb-1.5 text-right font-medium">{t("hitRate")}</th>
-            <th className="px-2 pb-1.5 text-right font-medium">{t("predicted")}</th>
-            <th className="px-2 pb-1.5 pl-6 font-medium">{t("calibration")}</th>
+          <tr>
+            <th>—</th>
+            <th className="text-right">{t("sample")}</th>
+            <th className="text-right">{t("hitRate")}</th>
+            <th className="text-right">{t("predicted")}</th>
+            <th className="pl-6">{t("calibration")}</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-line/70">
+        <tbody>
           {rows.map((row) => {
             const over = row.calibrationError > 0.05;
             const under = row.calibrationError < -0.05;
             return (
               <tr key={row.key}>
-                <td className="px-2 py-1.5 text-fg">{row.label}</td>
-                <td className="nums px-2 py-1.5 text-right text-fg-muted">
+                <td className="text-fg">{row.label}</td>
+                <td className="nums text-right text-fg-muted">
                   {row.won}/{row.settled}
                 </td>
                 <td
-                  className={`nums px-2 py-1.5 text-right font-medium ${
+                  className={`nums text-right font-medium ${
                     row.hitRate >= 0.55 ? "text-pos" : row.hitRate <= 0.45 ? "text-neg" : "text-fg"
                   }`}
                 >
                   {formatPercent(row.hitRate, 0)}
                 </td>
-                <td className="nums px-2 py-1.5 text-right text-fg-muted">{formatPercent(row.averagePredicted, 0)}</td>
-                <td className={`px-2 py-1.5 pl-6 text-label ${over ? "text-warn" : under ? "text-focus" : "text-fg-dim"}`}>
+                <td className="nums text-right text-fg-muted">{formatPercent(row.averagePredicted, 0)}</td>
+                <td className={`pl-6 text-label ${over ? "text-warn" : under ? "text-pos" : "text-fg-dim"}`}>
                   {over
                     ? `${t("overconfident")} ${(row.calibrationError * 100).toFixed(0)}pts`
                     : under

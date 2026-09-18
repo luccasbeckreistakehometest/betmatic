@@ -41,8 +41,8 @@ export function LeaderboardPanel() {
         )}
         {data?.rows.length ? (
           <table className="mt-4 w-full text-left text-sm" data-testid="ranking-table">
-            <thead><tr className="border-b border-line text-micro uppercase tracking-wider text-fg-dim"><th className="pb-1.5 font-medium">#</th><th className="pb-1.5 font-medium">{t("handle")}</th><th className="pb-1.5 text-right font-medium">{t("record")}</th><th className="pb-1.5 text-right font-medium">{t("roi")}</th><th className="pb-1.5 text-right font-medium">{t("rankingUnits")}</th></tr></thead>
-            <tbody className="divide-y divide-line/70">
+            <thead><tr><th>#</th><th>{t("handle")}</th><th className="text-right">{t("record")}</th><th className="text-right">{t("roi")}</th><th className="text-right">{t("rankingUnits")}</th></tr></thead>
+            <tbody>
               {data.rows.map((r) => (
                 <tr key={r.handle} className={r.you ? "bg-action" : ""} data-testid="ranking-row" data-you={r.you ? "1" : "0"}>
                   <td className="nums py-2 text-fg-dim">{r.position}</td>
