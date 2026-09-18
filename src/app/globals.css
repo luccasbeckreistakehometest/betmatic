@@ -80,11 +80,13 @@
   --dur-1: 90ms;
   --dur-2: 140ms;
   --dur-3: 220ms;
+  --dur-tip: 600ms;
   --ease-out: cubic-bezier(0.2, 0.8, 0.3, 1);
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
   --ease-inout: cubic-bezier(0.4, 0, 0.2, 1);
 
   /* The complete shadow list: two, both for things that float and can be dismissed. */
+  --scrim: rgb(16 19 26 / 0.48);
   --elev-pop: 0 1px 2px rgb(16 19 26 / 0.12), 0 8px 24px rgb(16 19 26 / 0.14);
   --elev-dialog: 0 2px 4px rgb(16 19 26 / 0.14), 0 24px 64px rgb(16 19 26 / 0.22);
 
@@ -128,6 +130,7 @@
     --chance-3: #f2a541;
     --chance-4: #f2785c;
     --chance-5: #ff6b70;
+    --scrim: rgb(0 0 0 / 0.56);
     --elev-pop: 0 1px 2px rgb(0 0 0 / 0.32), 0 8px 24px rgb(0 0 0 / 0.36);
     --elev-dialog: 0 2px 4px rgb(0 0 0 / 0.36), 0 24px 64px rgb(0 0 0 / 0.48);
   }
@@ -165,6 +168,7 @@
   --chance-3: #f2a541;
   --chance-4: #f2785c;
   --chance-5: #ff6b70;
+  --scrim: rgb(0 0 0 / 0.56);
   --elev-pop: 0 1px 2px rgb(0 0 0 / 0.32), 0 8px 24px rgb(0 0 0 / 0.36);
   --elev-dialog: 0 2px 4px rgb(0 0 0 / 0.36), 0 24px 64px rgb(0 0 0 / 0.48);
 }
@@ -232,7 +236,10 @@
   --color-line-control: var(--line-control);
   --color-action: var(--action);
   --color-action-fg: var(--action-fg);
+  --color-action-hover: var(--action-hover);
+  --color-action-active: var(--action-active);
   --color-focus: var(--focus);
+  --color-scrim: var(--scrim);
   --color-pos: var(--pos);
   --color-pos-tint: var(--pos-tint);
   --color-neg: var(--neg);
@@ -249,6 +256,12 @@
   --radius-control: var(--r-1);
   --radius-panel: var(--r-2);
   --radius-sheet: var(--r-3);
+
+  /* Measure (§4): prose is never full-bleed. App 58ch, marketing 65ch, legal 72ch. */
+  --container-dialog: min(560px, calc(100vw - 2rem));
+  --container-measure-app: 58ch;
+  --container-measure: 65ch;
+  --container-measure-legal: 72ch;
 
   --shadow-pop: var(--elev-pop);
   --shadow-dialog: var(--elev-dialog);
@@ -353,6 +366,10 @@
 @utility u-rule-2 {
   box-shadow: inset 0 -2px 0 var(--line-strong);
 }
+/* The current tab and the current rail item: a 2px rule in full-contrast ink, never a hue alone. */
+@utility u-rule-active {
+  box-shadow: inset 0 -2px 0 var(--fg);
+}
 /* The one gradient permitted in the system: the 24px fade marking a clipped scrollable table. */
 @utility u-edge-fade {
   -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
@@ -414,6 +431,94 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--line-control);
+}
+
+/*
+ * Table row and cell states (§11.1). Written here rather than as utilities because a leading rule
+ * and the row rule are both inset shadows and must compose on one element without fighting.
+ */
+tr[data-tone="pos"] > *:first-child {
+  box-shadow: inset 2px 0 0 var(--pos);
+}
+tr[data-tone="neg"] > *:first-child {
+  box-shadow: inset 2px 0 0 var(--neg);
+}
+tr[data-tone="warn"] > *:first-child {
+  box-shadow: inset 2px 0 0 var(--warn);
+}
+tr[data-selected="true"] {
+  background: var(--surface-2);
+}
+tr[data-selected="true"] > *:first-child {
+  box-shadow: inset 2px 0 0 var(--focus);
+}
+/* The one sequential ramp in the system: it paints the cell's leading edge, never the number. */
+[data-chance="1"] {
+  box-shadow: inset 2px 0 0 var(--chance-1);
+}
+[data-chance="2"] {
+  box-shadow: inset 2px 0 0 var(--chance-2);
+}
+[data-chance="3"] {
+  box-shadow: inset 2px 0 0 var(--chance-3);
+}
+[data-chance="4"] {
+  box-shadow: inset 2px 0 0 var(--chance-4);
+}
+[data-chance="5"] {
+  box-shadow: inset 2px 0 0 var(--chance-5);
+}
+
+/*
+ * The range input is the one control the platform paints that Tailwind cannot reach: both vendor
+ * pseudo-elements are written here so a slider can never come back in macOS system blue, which is
+ * what accent-color did to /app/parlays/custom (§12.2).
+ */
+.range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 20px;
+  background: transparent;
+  cursor: pointer;
+}
+.range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: var(--r-1);
+  background: var(--surface-3);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border-radius: var(--r-1);
+  background: var(--action);
+  box-shadow: 0 0 0 1px var(--surface-0);
+  transition: transform var(--dur-1) var(--ease-out);
+}
+.range:active::-webkit-slider-thumb {
+  transform: scale(1.08);
+}
+.range::-moz-range-track {
+  height: 4px;
+  border-radius: var(--r-1);
+  background: var(--surface-3);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: var(--r-1);
+  background: var(--action);
+  box-shadow: 0 0 0 1px var(--surface-0);
+}
+.range:disabled::-webkit-slider-thumb,
+.range:disabled::-moz-range-thumb {
+  background: var(--fg-faint);
 }
 
 /* Nothing in the system loops except this: a 2s opacity pulse on the live dot. Not a growing ring,
