@@ -188,6 +188,7 @@ const DICT = {
   generateFailed: { pt: "Não deu para gerar agora. Tenta de novo em instantes.", en: "Couldn't generate right now. Try again in a moment." },
   capUser: { pt: "Você atingiu o limite de gerações do seu plano por hoje.", en: "You've reached your plan's generation limit for today." },
   capGlobal: { pt: "Limite diário de gerações da plataforma atingido. Volta amanhã ou abre um jogo já gerado.", en: "The platform's daily generation limit is reached. Come back tomorrow or open a game that's already built." },
+  capAdmin: { pt: "Limite diário de gerações do admin atingido (ADMIN_GAMES_PER_DAY). Volta amanhã ou aumenta o limite no .env.", en: "The admin's daily generation limit is reached (ADMIN_GAMES_PER_DAY). Come back tomorrow, or raise it in .env." },
   gameStarted: { pt: "Esta partida já começou — bilhetes pré-jogo não são gerados depois do apito.", en: "This game already started — pre-match tickets aren't built after kickoff." },
   aiOff: { pt: "A geração está desligada neste servidor.", en: "Generation is switched off on this server." },
   signInForTickets: { pt: "Crie uma conta grátis para ver os bilhetes desta partida.", en: "Create a free account to see this game's tickets." },

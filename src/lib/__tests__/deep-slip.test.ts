@@ -72,7 +72,7 @@ describe("Max: price, headroom and refresh", () => {
   });
 
   it("lets Max go 50% past the global generation cap, and no further", () => {
-    const base = { role: "user" as const, planGamesPerDay: null, userCountToday: 0, globalDailyCap: 10, userDailyCap: 20, alreadyGenerated: false, started: false };
+    const base = { role: "user" as const, planGamesPerDay: null, userCountToday: 0, globalDailyCap: 10, userDailyCap: 20, adminDailyCap: 15, alreadyGenerated: false, started: false };
     expect(onDemandVerdict({ ...base, globalCountToday: 10 })).toBe("cap_global");
     expect(onDemandVerdict({ ...base, globalCountToday: 14, priority: true })).toBe("generate");
     expect(onDemandVerdict({ ...base, globalCountToday: 15, priority: true })).toBe("cap_global");
