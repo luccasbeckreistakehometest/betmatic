@@ -49,6 +49,32 @@ export function assertAiBudget(): void {
   if (exhausted) throw new AiBudgetExceededError(spent, budget);
 }
 
+export interface GenerationsToday {
+  userId: string;
+  email: string | null;
+  role: string | null;
+  games: number;
+  slates: number;
+  costUsd: number;
+}
+
+/**
+ * Who generated what today, for the admin panel. The per-user caps are counted from these same rows,
+ * so this is the number the cap sees — not an approximation of it.
+ */
+export function generationsToday(now = new Date()): GenerationsToday[] {
+  return getDb().prepare(
+    `SELECT g.userId AS userId, u.email AS email, u.role AS role,
+            SUM(CASE WHEN COALESCE(g.scope, 'game') = 'slate' THEN 0 ELSE 1 END) AS games,
+            SUM(CASE WHEN COALESCE(g.scope, 'game') = 'slate' THEN 1 ELSE 0 END) AS slates,
+            ROUND(COALESCE(SUM(g.costUsd), 0), 4) AS costUsd
+     FROM generation_requests g LEFT JOIN users u ON u.id = g.userId
+     WHERE g.createdAt > ?
+     GROUP BY g.userId
+     ORDER BY (games + slates) DESC, costUsd DESC`,
+  ).all(brasiliaDayStart(now)) as GenerationsToday[];
+}
+
 export function spendByDay(days = 7): { day: string; costUsd: number; calls: number }[] {
   const since = new Date(Date.now() - days * 86_400_000).toISOString();
   return getDb().prepare(

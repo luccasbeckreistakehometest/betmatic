@@ -60,6 +60,8 @@ test("an admin support flow: plan with expiry and coins show up on the user's ac
   await page.getByTestId("admin-apply-coins").click();
   await expect(page.getByTestId("admin-user-detail")).toContainText("25 coins");
   await expect(page.getByTestId("admin-ai-spend")).toBeVisible();
+  // The operator has to be able to see which provider and which models are spending the money.
+  await expect(page.getByTestId("admin-ai-provider")).toContainText(/anthropic|openai/);
 
   await loginAs(user, email, password);
   await user.goto("/app/conta?lang=pt");

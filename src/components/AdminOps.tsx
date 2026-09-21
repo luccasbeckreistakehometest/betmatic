@@ -2,7 +2,7 @@
 import { formatMoney, formatUsd } from "@/lib/format";
 
 import { useCallback, useEffect, useState } from "react";
-import { Empty, Panel, Select } from "@/components/ui";
+import { Empty, Panel, Select, Table, Td, Th, Tr } from "@/components/ui";
 
 const dt = (iso: string | null) => (iso ? new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "—");
 
@@ -96,8 +96,20 @@ export function AdminPayments() {
   );
 }
 
+export interface AiPayload {
+  spent: number;
+  budget: number;
+  exhausted: boolean;
+  byDay: { day: string; costUsd: number; calls: number }[];
+  provider?: string;
+  configured?: boolean;
+  models?: { judgement: string; extraction: string; cheap: string; live: string };
+  adminDailyCap?: number;
+  generations?: { userId: string; email: string | null; role: string | null; games: number; slates: number; costUsd: number }[];
+}
+
 export interface OpsPayload {
-  ai?: { spent: number; budget: number; exhausted: boolean; byDay: { day: string; costUsd: number; calls: number }[] };
+  ai?: AiPayload;
   ops?: { id: string; level: string; scope: string; message: string; createdAt: string }[];
 }
 
@@ -113,6 +125,22 @@ export function AdminHealth({ data }: { data: OpsPayload | null }) {
             <p className="nums text-h3 font-semibold text-fg">{formatUsd(ai.spent, "pt")} <span className="text-sm font-normal text-fg-muted">de {formatUsd(ai.budget, "pt")}</span></p>
             <div className="mt-2 h-2 overflow-hidden rounded-control bg-surface-3"><div className={`h-full ${ai.exhausted ? "bg-neg" : pct > 80 ? "bg-warn" : "bg-action"}`} style={{ width: `${pct}%` }} /></div>
             <p className="mt-2 text-tiny text-fg-muted">{ai.exhausted ? "Teto atingido: novas gerações estão bloqueadas até a virada do dia (AI_DAILY_BUDGET_USD)." : "Ajuste o teto com AI_DAILY_BUDGET_USD no .env (0 desliga a IA)."}</p>
+            {ai.provider && (
+              <dl className="mt-3 flex flex-col gap-1 border-t border-line pt-3 text-tiny text-fg-muted" data-testid="admin-ai-provider">
+                <div className="flex gap-2">
+                  <dt className="text-fg-dim">Provedor</dt>
+                  <dd className="text-fg">{ai.provider}{ai.configured ? "" : " (sem chave)"}</dd>
+                </div>
+                {ai.models && (
+                  <>
+                    <div className="flex gap-2"><dt className="text-fg-dim">Julgamento</dt><dd className="nums text-fg">{ai.models.judgement}</dd></div>
+                    <div className="flex gap-2"><dt className="text-fg-dim">Extração</dt><dd className="nums text-fg">{ai.models.extraction}</dd></div>
+                    <div className="flex gap-2"><dt className="text-fg-dim">Barato / visão</dt><dd className="nums text-fg">{ai.models.cheap}</dd></div>
+                    <div className="flex gap-2"><dt className="text-fg-dim">Ao vivo</dt><dd className="nums text-fg">{ai.models.live}</dd></div>
+                  </>
+                )}
+              </dl>
+            )}
             <ul className="mt-2 text-tiny text-fg-muted">
               {ai.byDay.map((d) => <li key={d.day} className="nums">{d.day}: {formatUsd(d.costUsd, "pt")} · {d.calls} chamadas</li>)}
             </ul>
@@ -132,6 +160,38 @@ export function AdminHealth({ data }: { data: OpsPayload | null }) {
           </ul>
         ) : <Empty>Nenhum erro registrado.</Empty>}
       </Panel>
+      <div className="lg:col-span-2"><AdminGenerations ai={data?.ai} /></div>
     </div>
+  );
+}
+
+/**
+ * Who spent the model's money today. An admin login handed to someone else shows up here, against
+ * the same allowance the cap counts.
+ */
+export function AdminGenerations({ ai }: { ai?: AiPayload }) {
+  const rows = ai?.generations ?? [];
+  const cap = ai?.adminDailyCap;
+  return (
+    <Panel title="Gerações de hoje" meta={cap === undefined ? undefined : `admin: ${cap}/dia`} flush>
+      {rows.length ? (
+        <Table caption="Gerações de hoje por usuário">
+          <thead>
+            <tr><Th>Usuário</Th><Th>Papel</Th><Th numeric>Jogos</Th><Th numeric>Múltiplas</Th><Th numeric>Custo (USD)</Th></tr>
+          </thead>
+          <tbody data-testid="admin-generations">
+            {rows.map((r) => (
+              <Tr key={r.userId} tone={r.role === "admin" && cap !== undefined && r.games >= cap ? "neg" : undefined}>
+                <Td label="Usuário">{r.email ?? "(conta excluída)"}</Td>
+                <Td label="Papel" className="text-fg-muted">{r.role ?? "—"}</Td>
+                <Td numeric label="Jogos">{r.games}{r.role === "admin" && cap !== undefined ? `/${cap}` : ""}</Td>
+                <Td numeric label="Múltiplas">{r.slates}</Td>
+                <Td numeric label="Custo (USD)">{formatUsd(r.costUsd, "pt", { digits: 3 })}</Td>
+              </Tr>
+            ))}
+          </tbody>
+        </Table>
+      ) : <Empty>Nenhuma geração hoje.</Empty>}
+    </Panel>
   );
 }
