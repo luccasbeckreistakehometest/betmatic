@@ -1,7 +1,7 @@
 import type { z } from "zod";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import type Anthropic from "@anthropic-ai/sdk";
-import { AiNotConfiguredError, EXTRACTION_MODEL, MODEL, aiConfigured, aiMockActive, getClient, recordUsage, supportsAdaptiveThinking } from "@/lib/ai/client";
+import { AiNotConfiguredError, EXTRACTION_MODEL, MODEL, ZERO_USAGE, aiConfigured, aiMockActive, recordUsage } from "@/lib/ai/client";
+import { getProvider } from "@/lib/ai/providers";
+import type { ProviderImage } from "@/lib/ai/provider";
 import { assertAiBudget } from "@/lib/server/ai-budget";
 import type { ScrapeCapture } from "@/lib/types";
 
@@ -91,40 +91,35 @@ export async function extractFromCapture<T extends z.ZodType>(
   assertAiBudget();
   const { schema, capture, instructions, context, useVision = false, maxTokens = 16000 } = args;
 
-  const content: Anthropic.ContentBlockParam[] = [];
-  if (useVision && capture.screenshotBase64) {
-    content.push({
-      type: "image",
-      source: { type: "base64", media_type: "image/jpeg", data: capture.screenshotBase64 },
-    });
-  }
-  content.push({
-    type: "text",
-    text: [
+  const images: ProviderImage[] = useVision && capture.screenshotBase64
+    ? [{ data: capture.screenshotBase64, mediaType: "image/jpeg" }]
+    : [];
+
+  const response = await getProvider().parse({
+    model: EXTRACTION_MODEL,
+    system: SYSTEM,
+    prompt: [
       `## TASK\n${instructions}`,
       `\n## MATCHUP CONTEXT\n${context}`,
       `\n## CAPTURED PAGE\n${renderCapture(capture)}`,
     ].join("\n"),
-  });
-
-  const response = await getClient().messages.parse({
-    model: EXTRACTION_MODEL,
-    max_tokens: maxTokens,
-    system: SYSTEM,
-    thinking: { type: "adaptive" },
-    output_config: { format: zodOutputFormat(schema) },
-    messages: [{ role: "user", content }],
+    schema,
+    schemaName: "page_extraction",
+    maxTokens,
+    images,
   });
 
   lastUsage = recordUsage(`extract:${capture.finalUrl.slice(8, 30)}`, response.usage, EXTRACTION_MODEL);
 
-  if (response.stop_reason === "refusal") {
-    throw new Error(`Model declined to extract: ${response.stop_details?.explanation ?? "no explanation"}`);
+  if (response.stop === "refusal") {
+    throw new Error(`Model declined to extract: ${response.refusal ?? "no explanation"}`);
   }
-  if (!response.parsed_output) {
+  if (response.parsed != null) return response.parsed as z.infer<T>;
+  try {
+    return schema.parse(JSON.parse(response.text)) as z.infer<T>;
+  } catch {
     throw new Error("Model returned no parseable structured output.");
   }
-  return response.parsed_output as z.infer<T>;
 }
 
 export interface StructuredImage {
@@ -163,7 +158,7 @@ export async function generateStructuredWithUsage<T extends z.ZodType>(args: Str
   if (aiMockActive()) {
     if (!args.mock) throw new Error(`AI_MOCK: no fixture for "${label}"`);
     const data = args.schema.parse(args.mock()) as z.infer<T>;
-    lastUsage = recordUsage(`mock:${label}`, { input_tokens: 0, output_tokens: 0 } as Anthropic.Usage, model);
+    lastUsage = recordUsage(`mock:${label}`, ZERO_USAGE, model);
     return { data, costUsd: 0, model };
   }
 
@@ -171,7 +166,7 @@ export async function generateStructuredWithUsage<T extends z.ZodType>(args: Str
     return await callModel(args, model, label);
   } catch (error) {
     // A cheap model that rejects the structured-output format falls back once to the extraction model.
-    if (model !== EXTRACTION_MODEL && error instanceof Error && /output_config|output format|json_schema/i.test(error.message)) {
+    if (model !== EXTRACTION_MODEL && error instanceof Error && /output_config|output format|json_schema|response_format|text\.format/i.test(error.message)) {
       return callModel(args, EXTRACTION_MODEL, `${label}:fallback`);
     }
     throw error;
@@ -180,41 +175,38 @@ export async function generateStructuredWithUsage<T extends z.ZodType>(args: Str
 
 async function callModel<T extends z.ZodType>(args: StructuredArgs<T>, model: string, label: string): Promise<StructuredResult<z.infer<T>>> {
   const maxTokens = args.maxTokens ?? 16000;
-  const content: Anthropic.ContentBlockParam[] = [
-    ...(args.images ?? []).map((img): Anthropic.ContentBlockParam => ({ type: "image", source: { type: "base64", media_type: img.mediaType, data: img.data } })),
-    { type: "text", text: args.prompt },
-  ];
-  // Streaming is required for large max_tokens and avoids HTTP timeouts on long generations.
   // The system prompt is the same ~3k tokens for every game in a run, so it is marked cacheable:
   // sequential calls inside the five-minute window pay a tenth of the price for it.
-  const stream = getClient().messages.stream({
+  const response = await getProvider().generate({
     model,
-    max_tokens: maxTokens,
-    system: [{ type: "text", text: args.system, cache_control: { type: "ephemeral" } }],
-    ...(supportsAdaptiveThinking(model) ? { thinking: { type: "adaptive" as const } } : {}),
-    output_config: { format: zodOutputFormat(args.schema) },
-    messages: [{ role: "user", content }],
+    system: args.system,
+    prompt: args.prompt,
+    schema: args.schema,
+    schemaName: label,
+    maxTokens,
+    images: args.images,
+    cacheSystem: true,
   });
-  const response = await stream.finalMessage();
-  const usage = recordUsage(`${label}[${response.stop_reason}]`, response.usage, model);
+  // Recorded before the checks below: a refused or truncated answer was still billed.
+  const usage = recordUsage(`${label}[${response.stop}]`, response.usage, model);
   lastUsage = usage;
 
-  if (response.stop_reason === "refusal") {
-    throw new Error(`Model declined: ${response.stop_details?.explanation ?? "no explanation"}`);
+  if (response.stop === "refusal") {
+    throw new Error(`Model declined: ${response.refusal ?? "no explanation"}`);
   }
-  if (response.stop_reason === "max_tokens") {
+  if (response.stop === "max_tokens") {
     // The JSON is cut mid-string; a parse error here would hide the real cause.
     throw new Error(
       `Output hit the ${maxTokens}-token cap and was truncated. Ask for fewer tickets, or raise maxTokens.`,
     );
   }
 
-  const text = response.content.filter((b) => b.type === "text").map((b) => b.text).join("");
   try {
-    return { data: args.schema.parse(JSON.parse(text)) as z.infer<T>, costUsd: usage.costUsd, model };
+    const data = args.schema.parse(response.parsed ?? JSON.parse(response.text)) as z.infer<T>;
+    return { data, costUsd: usage.costUsd, model };
   } catch (error) {
     throw new Error(
-      `Could not parse structured output (stop_reason=${response.stop_reason}, ${text.length} chars): ${
+      `Could not parse structured output (stop=${response.stop}, ${response.text.length} chars): ${
         error instanceof Error ? error.message : String(error)
       }`,
     );
