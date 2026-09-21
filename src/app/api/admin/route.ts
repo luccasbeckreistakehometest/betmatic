@@ -9,7 +9,9 @@ import { onboardingStats } from "@/lib/server/onboarding";
 import { alertStats } from "@/lib/server/telegram";
 import { reviewStats } from "@/lib/ledger/review";
 import { responsibleStats } from "@/lib/server/settings";
-import { budgetState, spendByDay } from "@/lib/server/ai-budget";
+import { budgetState, generationsToday, spendByDay } from "@/lib/server/ai-budget";
+import { aiConfigured, aiModels, aiProviderName } from "@/lib/ai/client";
+import { onDemandCaps } from "@/lib/server/on-demand-policy";
 import { contactCounts } from "@/lib/server/contact";
 import { listOps } from "@/lib/server/ops-log";
 import { DELETED_USER_ID } from "@/lib/server/db";
@@ -52,7 +54,15 @@ export async function GET() {
     alerts: alertStats(),
     reviews: reviewStats(),
     responsible: responsibleStats(),
-    ai: { ...budgetState(), byDay: spendByDay(7) },
+    ai: {
+      ...budgetState(),
+      byDay: spendByDay(7),
+      provider: aiProviderName(),
+      configured: aiConfigured(),
+      models: aiModels(),
+      adminDailyCap: onDemandCaps(process.env).adminDailyCap,
+      generations: generationsToday(),
+    },
     contact: contactCounts(),
     ops: listOps(30),
   });

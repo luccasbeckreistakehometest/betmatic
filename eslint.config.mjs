@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Playwright writes HTML reports and traces here; linting them fails a clean tree after `pnpm e2e`.
+    "playwright-report/**",
+    "test-results/**",
   ]),
 ]);
 

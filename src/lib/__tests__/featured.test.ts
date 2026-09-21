@@ -7,6 +7,8 @@ process.env.DATA_DIR = DIR;
 process.env.AUTH_SECRET = "test-secret-that-is-long-enough";
 process.env.CRON_LANGS = "pt";
 process.env.FEATURED_SPORTS = "soccer-bra";
+// These cases mean "AI is off" by clearing the Anthropic key, so they pin the provider they test.
+process.env.AI_PROVIDER = "anthropic";
 fs.rmSync(DIR, { recursive: true, force: true });
 
 const HOUR = 3_600_000;

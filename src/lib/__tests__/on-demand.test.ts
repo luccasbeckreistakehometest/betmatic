@@ -6,6 +6,8 @@ const DIR = path.join(process.cwd(), "data", "unit-on-demand");
 process.env.DATA_DIR = DIR;
 process.env.AUTH_SECRET = "test-secret-that-is-long-enough";
 process.env.CRON_LANGS = "pt";
+// These cases mean "AI is off" by clearing the Anthropic key, so they pin the provider they test.
+process.env.AI_PROVIDER = "anthropic";
 fs.rmSync(DIR, { recursive: true, force: true });
 
 const details = new Map<string, unknown>();
@@ -18,6 +20,7 @@ vi.mock("@/lib/server/generate-game", () => ({ generateGame: (...args: unknown[]
 
 const { ensureGameGenerated } = await import("@/lib/server/on-demand");
 const { createUser, toPublic } = await import("@/lib/server/users");
+const { getDb } = await import("@/lib/server/db");
 const { releaseUnlock, unlockGame, unlockedGames } = await import("@/lib/server/unlocks");
 const { savePrediction } = await import("@/lib/server/predictions");
 const { espnDateKey } = await import("@/lib/sources/espn");
@@ -45,6 +48,7 @@ async function freeUser() {
 beforeEach(() => {
   generate.mockReset();
   delete process.env.ANTHROPIC_API_KEY;
+  delete process.env.ADMIN_GAMES_PER_DAY;
 });
 
 describe("a free user's daily pick", () => {
@@ -92,5 +96,39 @@ describe("a free user's daily pick", () => {
     expect(u.picks()).toEqual(["g-stored"]);
     expect((await u.open("g-unknown")).status).toBe("not_found");
     expect(u.picks()).toEqual(["g-stored"]);
+  });
+});
+
+describe("an admin's daily generation cap", () => {
+  async function admin() {
+    const row = await createUser({ email: `admin${++n}@x.com`, name: "Admin", password: "password123" });
+    getDb().prepare("UPDATE users SET role = 'admin' WHERE id = ?").run(row.id);
+    const user = { ...toPublic(row), role: "admin" as const };
+    return { user, open: (gameId: string) => ensureGameGenerated({ sportKey: "soccer-bra", gameId, user }) };
+  }
+
+  it("stops at ADMIN_GAMES_PER_DAY and says so, having generated up to it", async () => {
+    process.env.ANTHROPIC_API_KEY = "sk-ant-test-key-long-enough-to-count";
+    process.env.ADMIN_GAMES_PER_DAY = "2";
+    const a = await admin();
+    generate.mockResolvedValue({ costUsd: 0, notes: [], info: [] });
+    for (const id of ["a-1", "a-2", "a-3"]) game(id, 5);
+
+    expect((await a.open("a-1")).status).toBe("generated");
+    expect((await a.open("a-2")).status).toBe("generated");
+    expect((await a.open("a-3")).status).toBe("cap_admin");
+    expect(generate).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not charge a failed generation against the cap", async () => {
+    process.env.ANTHROPIC_API_KEY = "sk-ant-test-key-long-enough-to-count";
+    process.env.ADMIN_GAMES_PER_DAY = "1";
+    const a = await admin();
+    game("b-1", 5);
+    generate.mockRejectedValueOnce(new Error("model down"));
+    expect((await a.open("b-1")).status).toBe("error");
+    // The one allowance is still there: the attempt cost nothing, so it counts for nothing.
+    generate.mockResolvedValueOnce({ costUsd: 0, notes: [], info: [] });
+    expect((await a.open("b-1")).status).toBe("generated");
   });
 });

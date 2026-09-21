@@ -21,7 +21,7 @@ interface Payload {
   paused: { until: string | null } | null;
 }
 
-type BuildState = "idle" | "running" | "done" | "too_few_games" | "cap_global" | "cap_user" | "failed";
+type BuildState = "idle" | "running" | "done" | "too_few_games" | "cap_global" | "cap_user" | "cap_admin" | "failed";
 
 /** Cross-game tickets: read from inventory; a plan that includes them builds the day's slate once. */
 export function ParlayBuilder() {
@@ -67,7 +67,7 @@ export function ParlayBuilder() {
         setBuild("done");
         if (j.dateKey) setBuiltFor(j.dateKey);
         await load(j.dateKey);
-      } else if (j.status === "too_few_games" || j.status === "cap_global" || j.status === "cap_user") {
+      } else if (j.status === "too_few_games" || j.status === "cap_global" || j.status === "cap_user" || j.status === "cap_admin") {
         setBuild(j.status);
       } else {
         setBuild("failed");
@@ -116,7 +116,7 @@ export function ParlayBuilder() {
         ) : (
           <div className="flex flex-col gap-3">
             <Empty>
-              {build === "too_few_games" ? t("slateTooFew") : build === "cap_global" ? t("capGlobal") : build === "cap_user" ? t("slateCapUser") : build === "failed" ? buildMessage ?? t("generateFailed") : data?.authenticated ? t("slateEmpty") : t("signInForTickets")}
+              {build === "too_few_games" ? t("slateTooFew") : build === "cap_global" ? t("capGlobal") : build === "cap_admin" ? t("capAdmin") : build === "cap_user" ? t("slateCapUser") : build === "failed" ? buildMessage ?? t("generateFailed") : data?.authenticated ? t("slateEmpty") : t("signInForTickets")}
             </Empty>
             {canBuild && (build === "idle" || build === "failed") && (
               <button onClick={() => void generate()} data-testid="build-slate" className={buttonClass("primary", "w-fit")}>

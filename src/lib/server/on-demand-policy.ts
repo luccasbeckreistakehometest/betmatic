@@ -10,17 +10,21 @@ export interface OnDemandInput {
   globalCountToday: number;
   globalDailyCap: number;
   userDailyCap: number;
+  /** Generations per admin per day. An admin login can be handed to someone else, so it is capped too. */
+  adminDailyCap: number;
   alreadyGenerated: boolean;
   started: boolean;
   /** Max plans may go up to 50% past the global cap ("prioridade"); the budget ceiling still applies. */
   priority?: boolean;
 }
-export type OnDemandVerdict = "exists" | "started" | "cap_user" | "cap_global" | "generate";
+export type OnDemandVerdict = "exists" | "started" | "cap_user" | "cap_global" | "cap_admin" | "generate";
 
 export function onDemandVerdict(i: OnDemandInput): OnDemandVerdict {
   if (i.alreadyGenerated) return "exists";
   if (i.started) return "started";
-  if (i.role === "admin") return "generate";
+  // An admin still skips the plan and the platform cap — but not a cap of their own, and never the
+  // daily spend ceiling, which is checked again at the model call.
+  if (i.role === "admin") return i.userCountToday >= i.adminDailyCap ? "cap_admin" : "generate";
   // The global cap is the circuit breaker: no plan, however generous, can push the bill past it.
   const globalCap = i.priority ? Math.floor(i.globalDailyCap * 1.5) : i.globalDailyCap;
   if (i.globalCountToday >= globalCap) return "cap_global";
@@ -29,10 +33,17 @@ export function onDemandVerdict(i: OnDemandInput): OnDemandVerdict {
   return "generate";
 }
 
-export function onDemandCaps(env: Record<string, string | undefined>): { globalDailyCap: number; userDailyCap: number } {
+/** A cap written as `0` means zero, not "unset" — that is the switch that stops a shared login dead. */
+export function capValue(raw: string | undefined, fallback: number): number {
+  if (raw === undefined || raw.trim() === "" || raw.trim().startsWith("#") || !Number.isFinite(Number(raw))) return fallback;
+  return Math.max(0, Math.floor(Number(raw)));
+}
+
+export function onDemandCaps(env: Record<string, string | undefined>): { globalDailyCap: number; userDailyCap: number; adminDailyCap: number } {
   return {
     globalDailyCap: Math.max(0, Number(env.ON_DEMAND_DAILY_CAP) || 60),
     userDailyCap: Math.max(0, Number(env.ON_DEMAND_USER_DAILY_CAP) || 20),
+    adminDailyCap: capValue(env.ADMIN_GAMES_PER_DAY, 15),
   };
 }
 
@@ -50,22 +61,27 @@ export interface SlateInput {
   userCountToday: number;
   caps: SlateCaps;
 }
-export type SlateVerdict = "not_allowed" | "exists" | "too_few_games" | "cap_global" | "cap_user" | "generate";
-export interface SlateCaps { globalDailyCap: number; userDailyCap: number; maxGames: number }
+export type SlateVerdict = "not_allowed" | "exists" | "too_few_games" | "cap_global" | "cap_user" | "cap_admin" | "generate";
+export interface SlateCaps { globalDailyCap: number; userDailyCap: number; adminDailyCap: number; maxGames: number }
 
 export function slateVerdict(i: SlateInput): SlateVerdict {
   if (i.role !== "admin" && !i.crossGame) return "not_allowed";
   if (i.exists) return "exists";
   if (i.upcomingGames < 2) return "too_few_games";
-  if (i.role === "admin") return "generate";
+  // The same ADMIN_GAMES_PER_DAY allowance, against the slate's own counter.
+  if (i.role === "admin") return i.userCountToday >= i.caps.adminDailyCap ? "cap_admin" : "generate";
   if (i.globalCountToday >= i.caps.globalDailyCap) return "cap_global";
   if (i.userCountToday >= i.caps.userDailyCap) return "cap_user";
   return "generate";
 }
 
 export function slateCaps(env: Record<string, string | undefined>): SlateCaps {
-  const n = (v: string | undefined, fallback: number) => (v !== undefined && v.trim() !== "" && Number.isFinite(Number(v)) ? Math.max(0, Math.floor(Number(v))) : fallback);
-  return { globalDailyCap: n(env.SLATE_DAILY_CAP, 5), userDailyCap: n(env.SLATE_USER_DAILY_CAP, 2), maxGames: Math.max(2, Math.min(10, n(env.SLATE_MAX_GAMES, 6))) };
+  return {
+    globalDailyCap: capValue(env.SLATE_DAILY_CAP, 5),
+    userDailyCap: capValue(env.SLATE_USER_DAILY_CAP, 2),
+    adminDailyCap: capValue(env.ADMIN_GAMES_PER_DAY, 15),
+    maxGames: Math.max(2, Math.min(10, capValue(env.SLATE_MAX_GAMES, 6))),
+  };
 }
 
 /**
@@ -98,6 +114,5 @@ export function refreshVerdict(i: RefreshInput): RefreshVerdict {
 }
 
 export function refreshCaps(env: Record<string, string | undefined>): RefreshCaps {
-  const n = (v: string | undefined, fallback: number) => (v !== undefined && v.trim() !== "" && Number.isFinite(Number(v)) ? Math.max(0, Math.floor(Number(v))) : fallback);
-  return { perUser: n(env.MAX_REFRESH_PER_DAY, 3), global: n(env.REFRESH_DAILY_CAP, 10) };
+  return { perUser: capValue(env.MAX_REFRESH_PER_DAY, 3), global: capValue(env.REFRESH_DAILY_CAP, 10) };
 }

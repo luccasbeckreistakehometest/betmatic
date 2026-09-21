@@ -30,11 +30,11 @@ interface Payload {
 }
 
 type GenState =
-  | "idle" | "running" | "done" | "capUser" | "capGlobal" | "gameStarted" | "aiOff" | "generateFailed"
+  | "idle" | "running" | "done" | "capUser" | "capGlobal" | "capAdmin" | "gameStarted" | "aiOff" | "generateFailed"
   | "aiBudget" | "tennisUnsupported" | "planSport" | "rateLimited";
 
 const STATUS_MAP: Record<string, GenState> = {
-  generated: "done", exists: "done", cap_user: "capUser", cap_global: "capGlobal", started: "gameStarted",
+  generated: "done", exists: "done", cap_user: "capUser", cap_global: "capGlobal", cap_admin: "capAdmin", started: "gameStarted",
   ai_off: "aiOff", ai_budget: "aiBudget", unsupported: "tennisUnsupported", plan_sport: "planSport",
 };
 

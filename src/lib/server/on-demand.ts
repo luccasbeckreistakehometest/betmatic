@@ -89,20 +89,31 @@ async function generateShared(sportKey: string, gameId: string, user: PublicUser
     // Saved under the game's own date so the page that reads it looks in the same place.
     const dateKey = espnDateKey(new Date(detail.game.startsAt));
     const langs = refreshConfig(process.env, SPORTS.map((s) => s.key)).langs as Lang[];
-    const counts = todayCounts(user.id);
-    const verdict = onDemandVerdict({
-      role: user.role, planGamesPerDay: user.plan.gamesPerDay, userCountToday: counts.user, globalCountToday: counts.global,
-      ...onDemandCaps(process.env),
-      alreadyGenerated: !!findPrediction({ scope: "game", sportKey, gameId, dateKey, lang: langs[0] }),
-      started: Date.parse(detail.game.startsAt) <= Date.now() || detail.game.status !== "scheduled",
-      priority: user.plan.id === "max",
-    });
-    if (verdict !== "generate") return { status: verdict, dateKey };
-    if (!aiConfigured()) return { status: "ai_off" };
+    const alreadyGenerated = !!findPrediction({ scope: "game", sportKey, gameId, dateKey, lang: langs[0] });
+    const started = Date.parse(detail.game.startsAt) <= Date.now() || detail.game.status !== "scheduled";
+    const configured = aiConfigured();
 
-    const reqId = newId("gr");
-    getDb().prepare("INSERT INTO generation_requests (id,userId,sportKey,gameId,dateKey,status,createdAt) VALUES (?,?,?,?,?,?,?)")
-      .run(reqId, user.id, sportKey, gameId, dateKey, "running", nowIso());
+    // Counting and claiming in one transaction: two games opened at the same moment would otherwise
+    // both read the count below the cap and both go through.
+    const claim = getDb().transaction((): { verdict: OnDemandVerdict; reqId?: string } => {
+      const counts = todayCounts(user.id);
+      const verdict = onDemandVerdict({
+        role: user.role, planGamesPerDay: user.plan.gamesPerDay, userCountToday: counts.user, globalCountToday: counts.global,
+        ...onDemandCaps(process.env),
+        alreadyGenerated,
+        started,
+        priority: user.plan.id === "max",
+      });
+      if (verdict !== "generate" || !configured) return { verdict };
+      const id = newId("gr");
+      getDb().prepare("INSERT INTO generation_requests (id,userId,sportKey,gameId,dateKey,status,createdAt) VALUES (?,?,?,?,?,?,?)")
+        .run(id, user.id, sportKey, gameId, dateKey, "running", nowIso());
+      return { verdict, reqId: id };
+    }).immediate();
+
+    if (claim.verdict !== "generate") return { status: claim.verdict, dateKey };
+    if (!configured) return { status: "ai_off" };
+    const reqId = claim.reqId!;
     try {
       const out = await generateGame({ sportKey, dateKey, detail, langs });
       getDb().prepare("UPDATE generation_requests SET status=?, costUsd=?, finishedAt=?, note=? WHERE id=?").run("ok", out.costUsd, nowIso(), [...out.notes, ...out.info].join(" | ").slice(0, 500), reqId);
@@ -121,7 +132,7 @@ async function generateShared(sportKey: string, gameId: string, user: PublicUser
 }
 
 export type SlateDemandResult =
-  | { status: "generated" | "exists" | "too_few_games" | "cap_global" | "cap_user" | "not_allowed" | "ai_off" | "unsupported" | "ai_budget" | "error"; dateKey?: string };
+  | { status: "generated" | "exists" | "too_few_games" | "cap_global" | "cap_user" | "cap_admin" | "not_allowed" | "ai_off" | "unsupported" | "ai_budget" | "error"; dateKey?: string };
 
 const slateInflight = new Map<string, Promise<SlateDemandResult>>();
 export const SLATE_BANDS = ["long", "moonshot", "lottery"];
