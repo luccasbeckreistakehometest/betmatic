@@ -29,5 +29,8 @@ describe("env hygiene", () => {
     expect(w).toMatch(/APP_URL/);
     expect(w).toMatch(/CRON_SECRET/);
     expect(startupProblems({ ...good, TELEGRAM_BOT_TOKEN: "123:abc" }).warnings.join(" ")).toMatch(/TELEGRAM_WEBHOOK_SECRET/);
+    expect(startupProblems({ ...good, AI_PROVIDER: "openai" }).warnings.join(" ")).toMatch(/OPENAI_API_KEY/);
+    expect(startupProblems({ ...good, AI_PROVIDER: "openai", OPENAI_API_KEY: "sk-proj-abc" }).warnings.join(" ")).not.toMatch(/OPENAI_API_KEY/);
+    expect(startupProblems(good).warnings.join(" ")).not.toMatch(/OPENAI_API_KEY/);
   });
 });

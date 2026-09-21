@@ -49,6 +49,10 @@ export function startupProblems(env: Env): { fatal: string[]; warnings: string[]
     warnings.push("APP_URL / NEXT_PUBLIC_BASE_URL not set: checkout is disabled and share links fall back to the default domain.");
   }
   if (!envValue("CRON_SECRET", env)) warnings.push("CRON_SECRET not set: the scheduler cannot settle tickets or send digests.");
+  // Kept as a plain string test on purpose: lib/ai must not be pulled into the startup path.
+  if (envValue("AI_PROVIDER", env).toLowerCase() === "openai" && !envValue("OPENAI_API_KEY", env)) {
+    warnings.push("AI_PROVIDER=openai but OPENAI_API_KEY is not set: every model call will fail and no tickets will be generated.");
+  }
   if (envValue("TELEGRAM_BOT_TOKEN", env) && !envValue("TELEGRAM_WEBHOOK_SECRET", env)) {
     warnings.push("TELEGRAM_BOT_TOKEN set without TELEGRAM_WEBHOOK_SECRET: the Telegram webhook refuses updates.");
   }

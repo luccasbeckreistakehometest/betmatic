@@ -21,8 +21,10 @@ cp .env.example .env && nano .env
 | `CRON_SECRET` | `openssl rand -hex 24`; o sidecar `cron` manda no header `x-cron-secret` |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | sua conta admin (criada no primeiro boot). Cadastro público **nunca** vira admin |
 | `APP_URL` e `NEXT_PUBLIC_BASE_URL` | `https://seu-dominio.com` — lidos em tempo de execução; sem eles o checkout fica desligado |
-| `ANTHROPIC_API_KEY` | console.anthropic.com — **com crédito** |
-| `AI_DAILY_BUDGET_USD` | teto de gasto de IA por dia (padrão 20; `0` desliga a IA). Aparece no `/admin` |
+| `ANTHROPIC_API_KEY` | console.anthropic.com — **com crédito**. Só é usada enquanto `AI_PROVIDER` for `anthropic` |
+| `AI_PROVIDER` | `anthropic` (padrão) ou `openai`. Veja a seção **9. OpenAI** |
+| `AI_DAILY_BUDGET_USD` | teto de gasto de IA por dia (padrão 20; `0` desliga a IA). Vale para admin também. Aparece no `/admin` |
+| `ADMIN_GAMES_PER_DAY` | gerações por admin por dia (padrão 15; `0` trava a conta admin). Veja **9.3** |
 | `MP_ACCESS_TOKEN` | Mercado Pago → credenciais de **produção** |
 | `MP_WEBHOOK_SECRET` | opcional: "assinatura secreta" do webhook no painel do MP (confere o `x-signature`) |
 | `LEGAL_NAME`, `LEGAL_DOCUMENT`, `LEGAL_ADDRESS`, `LEGAL_EMAIL` | identificação que aparece em Termos/Privacidade/Reembolso. Vazio = a linha some e as páginas apontam pro formulário de contato |
@@ -114,8 +116,105 @@ docker compose logs --tail 200 app | grep '"event"'   # uma linha JSON por job (
 curl -s https://seu-dominio.com/api/health            # {"ok":true,"db":true}
 docker compose pull && docker compose up -d --build
 ```
-Painel `/admin`: gasto de IA do dia contra o teto, erros recentes, usuários (plano, coins, senha
-provisória, desativar), pagamentos, caixa de contato, execuções do job (execução que falhou inteira
-aparece como `error`), funil do tour.
+Painel `/admin`: gasto de IA do dia contra o teto, **provedor e os quatro modelos em uso**,
+**gerações de hoje por usuário** (jogos contra o limite do admin, múltiplas e custo), erros recentes,
+usuários (plano, coins, senha provisória, desativar), pagamentos, caixa de contato, execuções do job
+(execução que falhou inteira aparece como `error`), funil do tour.
 
 Local: `pnpm dev` · `pnpm test` (unit) · `pnpm e2e` (Playwright; semeia o jogo Sevilha x Valencia).
+
+## 9. OpenAI (trocar de provedor)
+
+Uma variável troca **todas** as chamadas de modelo. Nada muda até ela dizer `openai`: prompts,
+schemas, telas e preços continuam iguais, só quem responde é outro. Tudo passa pelo mesmo ponto
+único (`generateStructuredWithUsage`), então os dois lados suportam prompt de sistema, prompt do
+usuário, imagens em base64 (a leitura de print de bilhete), schema Zod em *structured output*
+estrito, teto de tokens de saída e a contagem de tokens que alimenta o teto de gasto.
+
+### 9.1 O que colocar no `.env`
+
+```bash
+AI_PROVIDER=openai
+OPENAI_API_KEY=sk-proj-...
+```
+
+Só isso já roda, com os padrões abaixo. `ANTHROPIC_API_KEY` pode ficar no arquivo: ela deixa de
+ser lida. Para voltar atrás, apague a linha `AI_PROVIDER` (ou ponha `anthropic`) e suba de novo.
+
+### 9.2 Modelos (padrões e preços)
+
+Os padrões são a faixa barata da geração atual, porque quem gera não é você.
+
+| variável | para quê | padrão | USD por 1M tokens (entrada / cache / saída) |
+|---|---|---|---|
+| `OPENAI_MODEL` | brief e montagem dos bilhetes | `gpt-5.6-terra` | 2,00 / 0,20 / 12,00 |
+| `OPENAI_EXTRACTION_MODEL` | extração das páginas e tradução | `gpt-5.6-luna` | 0,20 / 0,02 / 1,20 |
+| `OPENAI_CHEAP_MODEL` | print de bilhete (visão), tipster, textos curtos, leitura de jogador | `gpt-5.6-luna` | 0,20 / 0,02 / 1,20 |
+| `OPENAI_LIVE_MODEL` | leitura ao vivo | `gpt-5.6-luna` | 0,20 / 0,02 / 1,20 |
+| `OPENAI_REASONING_EFFORT` | quanto o modelo pensa antes de responder | `low` | — |
+
+Preços lidos em developers.openai.com/api/docs/pricing em 21/09/2026. Eles entram na tabela de
+`src/lib/ai/client.ts`, que é o que mantém o teto diário honesto — um modelo fora da tabela é
+cobrado pelo preço do mais caro do provedor, para o teto errar para o lado seguro.
+
+> **Confirme os ids quando a chave chegar.** Eles foram escolhidos da lista publicada, sem conta
+> para verificar. `curl -s https://api.openai.com/v1/models -H "Authorization: Bearer $OPENAI_API_KEY" | grep gpt-5.6`
+> resolve em um segundo. O servidor também pergunta sozinho no boot e escreve no log
+> `{"scope":"ai.models","message":"AI_PROVIDER=openai: the account does not list …"}` quando um id
+> configurado não está na conta.
+
+`OPENAI_REASONING_EFFORT` existe por um motivo prático: no OpenAI os tokens de raciocínio contam
+dentro do teto de saída **e** são cobrados como saída. Com `low` a resposta sobra; com `medium` um
+schema curto (1.500 tokens) pode ser cortado antes do JSON. `off` remove o campo, que é o que um
+modelo sem raciocínio precisa.
+
+### 9.3 Entregar um login de admin para outra pessoa, com segurança
+
+Quatro camadas, nesta ordem, e nenhuma delas pula o admin:
+
+1. **Teto de gasto do dia** — `AI_DAILY_BUDGET_USD` (padrão 20). É conferido em **toda** chamada de
+   modelo, antes de sair. Estourou, para tudo até a virada do dia de Brasília. Para um convidado,
+   `AI_DAILY_BUDGET_USD=3` já é folgado com os modelos acima.
+2. **Gerações por admin por dia** — `ADMIN_GAMES_PER_DAY` (padrão 15), contadas por conta, separadas
+   de `ON_DEMAND_USER_DAILY_CAP`. Jogos e múltiplas cruzadas têm a mesma cota, cada uma no seu
+   contador. Quem bate o limite vê a mensagem, não uma tela parada. `0` trava a conta.
+3. **Trava por jogo** — dez pessoas abrindo o mesmo jogo pagam uma geração só.
+4. **Teto global** — `ON_DEMAND_DAILY_CAP` segura a plataforma inteira (o admin passa por cima
+   deste, e só deste).
+
+Uma chamada que falhou ou que o modelo recusou **não** consome a cota de ninguém (a linha é apagada
+e o jogo pode ser tentado de novo), mas o que o provedor cobrou **é** registrado no gasto do dia.
+
+Antes de passar a senha:
+
+```bash
+# no .env do servidor
+AI_DAILY_BUDGET_USD=3
+ADMIN_GAMES_PER_DAY=5
+```
+
+E, do lado da OpenAI, ponha um limite mensal no projeto da chave (Settings → Limits). Esse é o único
+teto que não depende deste código estar certo.
+
+Depois, `/admin` mostra provedor, os quatro modelos, o gasto do dia contra o teto e **quem gerou o
+quê hoje**, com o contador de cada admin ao lado do limite.
+
+### 9.4 Trocar de provedor ou baixar o teto, sem reconstruir nada
+
+`AI_PROVIDER`, `OPENAI_*`, `AI_DAILY_BUDGET_USD` e `ADMIN_GAMES_PER_DAY` são lidos em tempo de
+execução, do `env_file`. Editar e recriar o contêiner basta — não há build no caminho.
+
+```bash
+# stack de produção (serviços betmatic + betmatic-cron)
+nano /srv/apps/betmatic/.env
+cd /srv/apps/stack && docker compose up -d betmatic
+
+# neste repositório (serviços app + cron)
+nano .env && docker compose up -d app
+```
+
+Depois, confirme no log do boot que nenhum id de modelo ficou para trás:
+
+```bash
+docker compose logs --tail 200 betmatic | grep ai.models   # silêncio = todos os ids existem na conta
+```
