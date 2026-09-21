@@ -6,6 +6,8 @@ const DIR = path.join(process.cwd(), "data", "unit-on-demand");
 process.env.DATA_DIR = DIR;
 process.env.AUTH_SECRET = "test-secret-that-is-long-enough";
 process.env.CRON_LANGS = "pt";
+// These cases mean "AI is off" by clearing the Anthropic key, so they pin the provider they test.
+process.env.AI_PROVIDER = "anthropic";
 fs.rmSync(DIR, { recursive: true, force: true });
 
 const details = new Map<string, unknown>();

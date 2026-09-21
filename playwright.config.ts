@@ -25,7 +25,7 @@ export default defineConfig({
     // IP limits are scaled up because every spec shares one address; account limits stay real.
     // Checkout talks to tests/e2e/fake-mercadopago.ts (started by global-setup).
     command: [
-      "DATA_DIR=data/e2e ANTHROPIC_API_KEY= ANTHROPIC_AUTH_TOKEN= ADMIN_EMAIL=admin@betmatic.app ADMIN_PASSWORD=betmatic2026",
+      "DATA_DIR=data/e2e ANTHROPIC_API_KEY= ANTHROPIC_AUTH_TOKEN= AI_PROVIDER=anthropic OPENAI_API_KEY= ADMIN_EMAIL=admin@betmatic.app ADMIN_PASSWORD=betmatic2026",
       "TELEGRAM_BOT_TOKEN=e2e-token TELEGRAM_BOT_USERNAME=betmatic_e2e_bot TELEGRAM_TRANSPORT=file",
       "APP_URL=http://localhost:3300 NEXT_PUBLIC_BASE_URL=http://localhost:3300 MP_ACCESS_TOKEN=TEST-e2e MP_API_BASE=http://localhost:3399 MP_WEBHOOK_SECRET=",
       // Replayed ESPN, an isolated cache, AI answered by fixtures only while a spec switches it on.
