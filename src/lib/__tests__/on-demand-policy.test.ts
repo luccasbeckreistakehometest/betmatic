@@ -39,6 +39,10 @@ describe("onDemandVerdict", () => {
     // "0" is a number, not an empty value: it must not fall back to 15.
     expect(onDemandCaps({ ADMIN_GAMES_PER_DAY: "0" }).adminDailyCap).toBe(0);
     expect(onDemandCaps({ ADMIN_GAMES_PER_DAY: "  " }).adminDailyCap).toBe(15);
+    // No cap for the admin: the friend generating on demand is not rationed, only the $ ceiling is.
+    expect(onDemandCaps({ ADMIN_GAMES_PER_DAY: "unlimited" }).adminDailyCap).toBe(Infinity);
+    expect(onDemandCaps({ ADMIN_GAMES_PER_DAY: "sem-limite" }).adminDailyCap).toBe(Infinity);
+    expect(onDemandCaps({ ADMIN_GAMES_PER_DAY: "-1" }).adminDailyCap).toBe(Infinity);
     // docker compose keeps a trailing comment as the value.
     expect(onDemandCaps({ ADMIN_GAMES_PER_DAY: "# 3" }).adminDailyCap).toBe(15);
   });
