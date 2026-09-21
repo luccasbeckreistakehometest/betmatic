@@ -23,6 +23,10 @@ const {
 const { generateStructuredWithUsage } = await import("@/lib/ai/extract");
 const { aiSpendToday } = await import("@/lib/server/ai-budget");
 const { unknownModels } = await import("@/lib/ai/model-check");
+const { SlateSchema } = await import("@/lib/bets/builder");
+const { ScanSchema } = await import("@/lib/bets/slip-scan");
+const { LossReviewSchema } = await import("@/lib/ledger/review");
+const { TipsterSchema } = await import("@/lib/tipster/audit");
 
 const Answer = z.object({ answer: z.string(), score: z.number() });
 
@@ -291,5 +295,26 @@ describe("what a failed call costs", () => {
   it("costs nothing under AI_MOCK", () => {
     const record = recordUsage("mock:x", ZERO_USAGE, "gpt-5.6-luna");
     expect(record.costUsd).toBe(0);
+  });
+});
+
+/**
+ * OpenAI's strict mode refuses schemas Anthropic accepts — an optional field, a bare record, a
+ * default. The four schemas below are the ones the product actually sends (the ticket slate is the
+ * deepest by far); if one stops converting, every ticket stops being built.
+ */
+describe("the product's own schemas in OpenAI strict mode", () => {
+  it.each([
+    ["slate", SlateSchema],
+    ["slip_scan", ScanSchema],
+    ["loss_review", LossReviewSchema],
+    ["tipster", TipsterSchema],
+  ])("%s converts to a strict json_schema", (name, schema) => {
+    const format = buildRequest({ model: "m", system: "S", prompt: "P", schema, schemaName: name, maxTokens: 100 }).text?.format as
+      { type: string; name: string; strict: boolean; schema: { additionalProperties: boolean } };
+    expect(format.type).toBe("json_schema");
+    expect(format.strict).toBe(true);
+    expect(format.name).toBe(name);
+    expect(format.schema.additionalProperties).toBe(false);
   });
 });
