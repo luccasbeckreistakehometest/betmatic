@@ -33,10 +33,19 @@ export function onDemandVerdict(i: OnDemandInput): OnDemandVerdict {
   return "generate";
 }
 
-/** A cap written as `0` means zero, not "unset" — that is the switch that stops a shared login dead. */
+/**
+ * A cap written as `0` means zero, not "unset" — that is the switch that stops a shared login dead.
+ * `sem-limite` / `unlimited` / `-1` removes the cap entirely; the daily spend ceiling still applies.
+ */
+export const NO_CAP = Number.POSITIVE_INFINITY;
+
 export function capValue(raw: string | undefined, fallback: number): number {
-  if (raw === undefined || raw.trim() === "" || raw.trim().startsWith("#") || !Number.isFinite(Number(raw))) return fallback;
-  return Math.max(0, Math.floor(Number(raw)));
+  if (raw === undefined || raw.trim() === "" || raw.trim().startsWith("#")) return fallback;
+  const word = raw.trim().toLowerCase();
+  if (word === "unlimited" || word === "sem-limite" || word === "sem limite" || word === "off") return NO_CAP;
+  if (!Number.isFinite(Number(raw))) return fallback;
+  const n = Math.floor(Number(raw));
+  return n < 0 ? NO_CAP : n;
 }
 
 export function onDemandCaps(env: Record<string, string | undefined>): { globalDailyCap: number; userDailyCap: number; adminDailyCap: number } {
