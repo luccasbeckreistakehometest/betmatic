@@ -14,9 +14,9 @@ function getClient(): Anthropic {
   return client;
 }
 
-/** Test seam: a new key or a stub takes effect on the next call. */
-export function resetAnthropicClient(): void {
-  client = null;
+/** Test seam: inject a stubbed client, or pass nothing to pick a new key up on the next call. */
+export function resetAnthropicClient(next: Anthropic | null = null): void {
+  client = next;
 }
 
 const stopOf = (reason: string | null | undefined): ProviderStop =>

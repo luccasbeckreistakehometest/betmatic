@@ -20,9 +20,9 @@ function getClient(): OpenAI {
   return client;
 }
 
-/** Test seam: a new key or a stub takes effect on the next call. */
-export function resetOpenaiClient(): void {
-  client = null;
+/** Test seam: inject a stubbed client, or pass nothing to pick a new key up on the next call. */
+export function resetOpenaiClient(next: OpenAI | null = null): void {
+  client = next;
 }
 
 const EFFORTS = new Set(["none", "minimal", "low", "medium", "high", "xhigh", "max"]);
