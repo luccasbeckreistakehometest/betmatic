@@ -38,6 +38,8 @@ test("a paid user gets priced player legs, line movement and two alternatives un
   await expect(ticketLink).toContainText("Abrir bilhete inteiro na Superbet");
   await expect(ticketLink).toHaveAttribute("href", /superbet\.bet\.br\/betslip\?bets%5B%5D=/);
   // The outbound click is counted (the beacon is a 204, the page stays put: the link opens a new tab).
+  // The book's site is stubbed in this context: a test never loads a bookmaker for real.
+  await page.context().route(/^https:\/\/superbet\.bet\.br\//, (route) => route.fulfill({ status: 200, contentType: "text/html", body: "<title>stub</title>" }));
   const clicked = page.waitForResponse((r) => r.url().endsWith("/api/e") && r.status() === 204);
   const [popup] = await Promise.all([page.waitForEvent("popup"), legLink.click()]);
   await clicked;
