@@ -24,7 +24,7 @@ export interface RampRow {
   event_id: number; tournament_name?: string; home: string; away: string;
   /** "2026-09-22 19:30:00", Brasília local time. */
   date_start: string;
-  market_id: number; market_name?: string; outcome_name: string; outcome_code?: string; odd: number; dataviz_id?: string; is_live?: number; selection_active?: boolean;
+  market_id: number; market_name?: string; outcome_name: string; outcome_code?: string; outcome_id?: string | number; odd: number; dataviz_id?: string; is_live?: number; selection_active?: boolean;
 }
 export interface RampPayload { odds?: RampRow[] }
 
@@ -66,7 +66,9 @@ export function parseRampRows(payload: RampPayload, sportKey: string, sport: Boo
     const name = normaliseTeam(row.outcome_name).toLowerCase();
     const side = name === event.home.toLowerCase() ? "home" : name === event.away.toLowerCase() ? "away" : /^(empate|draw|x)$/i.test(name) ? "draw" : null;
     if (!side) continue;
-    out.push({ book: "Betnacional", platform: "betnacional", sport, event, market: "moneyline", side, decimal: p, fetchedAt });
+    // The event page is /event/<sportId>/0/<eventId> (deeplinks.ts); the market and outcome ids ride along.
+    const ref = { eventId: String(row.event_id), marketId: String(row.market_id), outcomeId: row.outcome_id !== undefined ? String(row.outcome_id) : undefined };
+    out.push({ book: "Betnacional", platform: "betnacional", sport, event, market: "moneyline", side, decimal: p, fetchedAt, ref });
   }
   return out;
 }

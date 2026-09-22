@@ -4,7 +4,7 @@ import { adaptersFor, booksConfig, findAdapter, ALL_ADAPTERS } from "@/lib/sourc
 import { isAbortError } from "@/lib/sources/br-books/http";
 import { matchEvent, type EventMatch, type MatchableGame } from "@/lib/sources/br-books/match";
 import { teamKey } from "@/lib/sources/br-books/normalise";
-import { BookWallError, RobotsDisallowedError, type BookAdapter, type BookEvent, type BookPrice, type BookSport } from "@/lib/sources/br-books/types";
+import { BookWallError, RobotsDisallowedError, type BookAdapter, type BookEvent, type BookPrice, type BookSport, type SelectionRef } from "@/lib/sources/br-books/types";
 import { espnDateKey, getSlate, shiftKey } from "@/lib/sources/espn";
 import { SOLD_SPORTS } from "@/lib/sports";
 import type { Game } from "@/lib/types";
@@ -95,6 +95,10 @@ export function ensureBooksSchema(d: Db = getDb()): void {
       PRIMARY KEY (sportKey, alias)
     );
   `);
+  // Additive, idempotent: the platform's own ids of a selection (deeplinks.ts), as JSON. A row
+  // stored before the column existed keeps NULL until the next read confirms its price.
+  const columns = (d.prepare("PRAGMA table_info(book_prices)").all() as { name: string }[]).map((c) => c.name);
+  if (!columns.includes("ref")) d.exec("ALTER TABLE book_prices ADD COLUMN ref TEXT");
   ready = true;
 }
 
@@ -192,10 +196,11 @@ export function persistPrices(prices: BookPrice[], sportKey: string, games: Game
       matchedBy = CASE WHEN book_events.matchedBy = 'manual' THEN book_events.matchedBy ELSE COALESCE(excluded.matchedBy, book_events.matchedBy) END,
       swapped = CASE WHEN book_events.matchedBy = 'manual' OR excluded.gameId IS NULL THEN book_events.swapped ELSE excluded.swapped END`);
   const findCurrent = d.prepare(`SELECT id, decimal, lay FROM book_prices WHERE eventKey = ? AND book = ? AND market = ? AND COALESCE(player,'') = ? AND COALESCE(stat,'') = ? AND COALESCE(line, 0) = ? AND COALESCE(side,'') = ? AND COALESCE(kind,'') = ? AND current = 1`);
-  const touch = d.prepare("UPDATE book_prices SET seenAt = ? WHERE id = ?");
+  // An unchanged price is only touched — and, if it was stored before the ids existed, given them.
+  const touch = d.prepare("UPDATE book_prices SET seenAt = ?, ref = COALESCE(?, ref) WHERE id = ?");
   const retire = d.prepare("UPDATE book_prices SET current = 0 WHERE id = ?");
-  const insert = d.prepare(`INSERT INTO book_prices (eventKey, book, platform, market, player, stat, line, side, kind, decimal, lay, url, fetchedAt, seenAt, current)
-    VALUES (@eventKey, @book, @platform, @market, @player, @stat, @line, @side, @kind, @decimal, @lay, @url, @at, @at, 1)`);
+  const insert = d.prepare(`INSERT INTO book_prices (eventKey, book, platform, market, player, stat, line, side, kind, decimal, lay, url, ref, fetchedAt, seenAt, current)
+    VALUES (@eventKey, @book, @platform, @market, @player, @stat, @line, @side, @kind, @decimal, @lay, @url, @ref, @at, @at, 1)`);
   const retireStale = d.prepare("UPDATE book_prices SET current = 0 WHERE eventKey = ? AND book = ? AND current = 1 AND seenAt < ?");
 
   let events = 0, matched = 0, rows = 0, changed = 0;
@@ -212,9 +217,10 @@ export function persistPrices(prices: BookPrice[], sportKey: string, games: Game
       }
       const cur = findCurrent.get(p.event.key, p.book, p.market, p.player ?? "", p.stat ?? "", p.line ?? 0, p.side ?? "", p.kind ?? "") as PriceKeyRow | undefined;
       rows += 1;
-      if (cur && Math.abs(cur.decimal - p.decimal) < 0.0005 && (cur.lay ?? null) === (p.lay ?? null)) { touch.run(at, cur.id); continue; }
+      const ref = p.ref ? JSON.stringify(p.ref) : null;
+      if (cur && Math.abs(cur.decimal - p.decimal) < 0.0005 && (cur.lay ?? null) === (p.lay ?? null)) { touch.run(at, ref, cur.id); continue; }
       if (cur) retire.run(cur.id);
-      insert.run({ eventKey: p.event.key, book: p.book, platform: p.platform, market: p.market, player: p.player ?? null, stat: p.stat ?? null, line: p.line ?? null, side: p.side ?? null, kind: p.kind ?? null, decimal: p.decimal, lay: p.lay ?? null, url: p.url ?? null, at });
+      insert.run({ eventKey: p.event.key, book: p.book, platform: p.platform, market: p.market, player: p.player ?? null, stat: p.stat ?? null, line: p.line ?? null, side: p.side ?? null, kind: p.kind ?? null, decimal: p.decimal, lay: p.lay ?? null, url: p.url ?? null, ref, at });
       changed += 1;
     }
     for (const [key, { book }] of seenEvents) retireStale.run(key, book, at);
@@ -225,7 +231,20 @@ export function persistPrices(prices: BookPrice[], sportKey: string, games: Game
 // ---- reading ----------------------------------------------------------------------------------------
 
 interface EventRow { key: string; book: string; platform: string; sport: BookSport; sportKey: string | null; home: string; away: string; startsAt: string; league: string | null; externalIds: string; gameId: string | null; matchedBy: string | null; swapped: number; url: string | null; firstSeenAt: string; lastSeenAt: string }
-interface PriceRow { id: number; eventKey: string; book: string; platform: string; market: BookPrice["market"]; player: string | null; stat: string | null; line: number | null; side: BookPrice["side"] | null; kind: BookPrice["kind"] | null; decimal: number; lay: number | null; url: string | null; fetchedAt: string; seenAt: string; current: number }
+interface PriceRow { id: number; eventKey: string; book: string; platform: string; market: BookPrice["market"]; player: string | null; stat: string | null; line: number | null; side: BookPrice["side"] | null; kind: BookPrice["kind"] | null; decimal: number; lay: number | null; url: string | null; ref?: string | null; fetchedAt: string; seenAt: string; current: number }
+
+function parseRef(raw: string | null | undefined): SelectionRef | undefined {
+  if (!raw) return undefined;
+  try {
+    const v = JSON.parse(raw) as Record<string, unknown>;
+    if (!v || typeof v !== "object") return undefined;
+    const out: SelectionRef = {};
+    for (const k of ["eventId", "marketId", "outcomeId", "uuid", "specialBetValue", "handicap"] as const) if (typeof v[k] === "string" && v[k]) out[k] = v[k] as string;
+    return Object.keys(out).length ? out : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 const flip = (side: BookPrice["side"] | null): BookPrice["side"] | undefined => (side === "home" ? "away" : side === "away" ? "home" : side ?? undefined);
 
@@ -237,6 +256,7 @@ function toPrice(r: PriceRow, ev: EventRow): BookPrice {
     // A book that lists ESPN's home side as away has its sides flipped here, once, at read time.
     side: ev.swapped ? flip(r.side) : r.side ?? undefined,
     decimal: r.decimal, lay: r.lay ?? undefined, kind: r.kind ?? undefined, fetchedAt: r.fetchedAt, url: r.url ?? undefined,
+    ref: parseRef(r.ref),
   };
 }
 

@@ -70,13 +70,15 @@ export function parseKambiOffers(payload: KambiEventOffers, event: BookEvent, bo
     const outcomes = (o.outcomes ?? []).filter((x) => !x.status || x.status === "OPEN");
     const price = (x: KambiOutcome) => cleanDecimal((x.odds ?? 0) / 1000);
     const line = (x: KambiOutcome) => (typeof x.line === "number" ? x.line / 1000 : null);
+    // The ids a coupon deep link names (deeplinks.ts): the event, the bet offer and the outcome.
+    const ref = (x: KambiOutcome) => ({ eventId: String(o.eventId ?? event.externalIds.kambi), marketId: String(o.id), outcomeId: String(x.id) });
 
     // Match winner (2) — "Match Winner - Including Overtime", "Full Time" (soccer 1X2).
     if (type === 2 && /winner|moneyline|full time|match odds|1x2|result/i.test(label) && !/quarter|half|period/i.test(label)) {
       for (const x of outcomes) {
         const p = price(x); if (p === null) continue;
         const side = x.type === "OT_ONE" ? "home" : x.type === "OT_TWO" ? "away" : x.type === "OT_CROSS" ? "draw" : null;
-        if (side) out.push({ ...base, market: "moneyline", side, decimal: p });
+        if (side) out.push({ ...base, market: "moneyline", side, decimal: p, ref: ref(x) });
       }
       continue;
     }
@@ -85,7 +87,7 @@ export function parseKambiOffers(payload: KambiEventOffers, event: BookEvent, bo
       for (const x of outcomes) {
         const p = price(x), l = line(x); if (p === null || l === null) continue;
         const side = x.type === "OT_ONE" ? "home" : x.type === "OT_TWO" ? "away" : null;
-        if (side) out.push({ ...base, market: "spread", side, line: l, decimal: p });
+        if (side) out.push({ ...base, market: "spread", side, line: l, decimal: p, ref: ref(x) });
       }
       continue;
     }
@@ -98,13 +100,13 @@ export function parseKambiOffers(payload: KambiEventOffers, event: BookEvent, bo
         for (const x of outcomes) {
           const p = price(x), l = line(x); if (p === null || l === null) continue;
           const side = x.type === "OT_OVER" ? "over" : x.type === "OT_UNDER" ? "under" : null;
-          if (side) out.push({ ...base, market: "player_prop", player: normalisePlayer(player), stat, line: l, side, decimal: p, kind: "total" });
+          if (side) out.push({ ...base, market: "player_prop", player: normalisePlayer(player), stat, line: l, side, decimal: p, kind: "total", ref: ref(x) });
         }
       } else if (/total (points|goals)|total de (pontos|gols)/i.test(label) && !/quarter|half|period|team|equipe/i.test(label)) {
         for (const x of outcomes) {
           const p = price(x), l = line(x); if (p === null || l === null) continue;
           const side = x.type === "OT_OVER" ? "over" : x.type === "OT_UNDER" ? "under" : null;
-          if (side) out.push({ ...base, market: "total", side, line: l, decimal: p });
+          if (side) out.push({ ...base, market: "total", side, line: l, decimal: p, ref: ref(x) });
         }
       }
     }

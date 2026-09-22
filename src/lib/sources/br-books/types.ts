@@ -54,6 +54,26 @@ export interface BookPrice {
   kind?: "total" | "milestone";
   fetchedAt: string;
   url?: string;
+  /** The platform's own ids of this exact selection, so a deep link can name it (see deeplinks.ts). */
+  ref?: SelectionRef;
+}
+
+/**
+ * What a bookmaker's deep link needs to name one selection: the platform's event, market and
+ * outcome ids as its own web client uses them, plus the two things two platforms add (Superbet's
+ * odd uuid and special-bet value, Betfair's runner handicap). Additive: rows stored before deep
+ * links existed carry none, and a link is simply not built for them.
+ */
+export interface SelectionRef {
+  eventId?: string;
+  marketId?: string;
+  outcomeId?: string;
+  /** Superbet: the odd's uuid, the key its betslip loader resolves a selection by. */
+  uuid?: string;
+  /** Superbet: the odd's specialBetValue ("151.5", "Amoore, Georgia-7.5"), the loader's third field. */
+  specialBetValue?: string;
+  /** Betfair Exchange: a runner is a selection id plus its handicap. */
+  handicap?: string;
 }
 
 export interface FetchArgs {

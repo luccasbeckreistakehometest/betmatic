@@ -1,6 +1,8 @@
 import { resolveStatLabels } from "@/lib/props/history";
 import { booksForGame, pricesForGame } from "@/lib/server/book-prices";
-import { compareTicket, propSignals, type LegComparison, type LegQuery, type PropSignal, type TicketComparison } from "@/lib/sources/br-books/compare";
+import { compareTicket, groupBySelection, propSignals, selectionKey, type LegComparison, type LegQuery, type PropSignal, type Quote, type TicketComparison } from "@/lib/sources/br-books/compare";
+import { affiliateTagsFromEnv, deepLinkFor, ticketDeepLinkFor, type DeepLink } from "@/lib/sources/br-books/deeplinks";
+import { playerKey } from "@/lib/sources/br-books/normalise";
 import { booksConfig } from "@/lib/sources/br-books/registry";
 import type { BookPrice } from "@/lib/sources/br-books/types";
 import { getSport } from "@/lib/sports";
@@ -53,29 +55,83 @@ export function legQuery(leg: Pick<BetLeg, "settlement">, game: GameTeams, sport
   return null;
 }
 
+/** A leg's comparison plus the way to each book that prices it: best book first, same order as `quotes`. */
+export interface LegPrices extends LegComparison {
+  /** One per book with a usable link (a book whose scheme is unknown is simply absent). */
+  links: DeepLink[];
+}
+
 export interface TicketPrices extends Omit<TicketComparison, "legs"> {
   suggestionId: string;
   /** One per ticket leg, null where the leg could not be named. */
-  legs: (LegComparison | null)[];
+  legs: (LegPrices | null)[];
+  /** Every leg in one betslip at the best single book, when that book's scheme carries a whole ticket. */
+  ticketLink: DeepLink | null;
 }
 
 export interface GamePrices { books: string[]; fetchedAt: string | null; tickets: TicketPrices[]; signals: PropSignal[] }
 
+export interface CompareSuggestionsOptions {
+  dispersionPct?: number;
+  /** `bookEnvKey(book)` → affiliate tag (see deeplinks.ts). */
+  affiliate?: Record<string, string>;
+}
+
+const same = (a: number | undefined, b: number | undefined) => a === b || (a !== undefined && b !== undefined && Math.abs(a - b) < 0.011);
+
+/**
+ * The stored row behind one quote: the book's newest row for that selection, line, side and kind
+ * with the quoted price — the same row compare.ts turned into the quote, found again so its ids
+ * can name it in a link.
+ */
+function rowBehind(rows: BookPrice[], q: LegQuery, quote: Quote): BookPrice | null {
+  let best: BookPrice | null = null;
+  for (const p of rows) {
+    if (p.book !== quote.book || p.market !== q.market || p.side !== q.side) continue;
+    if (q.market === "player_prop" && (!p.player || !q.player || playerKey(p.player) !== playerKey(q.player) || p.stat !== q.stat)) continue;
+    if (q.market !== "moneyline" && !same(p.line, q.line)) continue;
+    if ((p.kind ?? undefined) !== (quote.kind ?? undefined) || Math.abs(p.decimal - quote.decimal) > 0.0005) continue;
+    if (!best || p.fetchedAt > best.fetchedAt) best = p;
+  }
+  return best;
+}
+
 /** Pure form, for tests and for the API: the prices are passed in. */
-export function compareSuggestionsWith(prices: BookPrice[], suggestions: BetSuggestion[], game: GameTeams, sportKey: string, opts: { dispersionPct?: number } = {}): TicketPrices[] {
+export function compareSuggestionsWith(prices: BookPrice[], suggestions: BetSuggestion[], game: GameTeams, sportKey: string, opts: CompareSuggestionsOptions = {}): TicketPrices[] {
   const out: TicketPrices[] = [];
+  const groups = groupBySelection(prices);
+  const linkOpts = { affiliate: opts.affiliate };
   for (const s of suggestions) {
     const queries = s.legs.map((leg) => legQuery(leg, game, sportKey));
     const named = s.legs.map((leg, i) => ({ query: queries[i], decimal: leg.oddsDecimal })).filter((x): x is { query: LegQuery; decimal: number } => !!x.query);
     if (!named.length) continue;
     const cmp = compareTicket(prices, named, opts);
+    // Each leg's link per book, and the row behind each quote so the whole ticket can be linked at one book.
+    const rowsByBook: Map<string, BookPrice>[] = [];
+    const withLinks: LegPrices[] = cmp.legs.map((c) => {
+      const rows = groups.get(selectionKey({ market: c.query.market, player: c.query.player, stat: c.query.stat })) ?? [];
+      const byBook = new Map<string, BookPrice>();
+      const links: DeepLink[] = [];
+      for (const quote of c.quotes) {
+        const row = rowBehind(rows, c.query, quote);
+        if (!row) continue;
+        byBook.set(quote.book, row);
+        const link = deepLinkFor(row, linkOpts);
+        if (link) links.push(link);
+      }
+      rowsByBook.push(byBook);
+      return { ...c, links };
+    });
     // Re-expand to the ticket's leg order so the UI can put each verdict under its leg.
     let k = 0;
-    const legs = queries.map((q) => (q ? cmp.legs[k++] : null));
+    const legs = queries.map((q) => (q ? withLinks[k++] : null));
     // A ticket with an unnamed leg cannot be totalled at one book: the ceiling and the per-book totals
     // would describe a shorter ticket than the one shown.
     const complete = queries.every(Boolean);
-    out.push({ suggestionId: s.id, legs, bestSingleBook: complete ? cmp.bestSingleBook : null, perBook: complete ? cmp.perBook : [], theoreticalBest: complete ? cmp.theoreticalBest : null, referenceDecimal: cmp.referenceDecimal, bestSingleVsReferencePct: complete ? cmp.bestSingleVsReferencePct : null, theoreticalVsReferencePct: complete ? cmp.theoreticalVsReferencePct : null, books: cmp.books });
+    const bestSingleBook = complete ? cmp.bestSingleBook : null;
+    const ticketRows = bestSingleBook ? rowsByBook.map((m) => m.get(bestSingleBook.book)) : [];
+    const ticketLink = bestSingleBook && ticketRows.every((r): r is BookPrice => !!r) ? ticketDeepLinkFor(ticketRows, linkOpts) : null;
+    out.push({ suggestionId: s.id, legs, bestSingleBook, perBook: complete ? cmp.perBook : [], theoreticalBest: complete ? cmp.theoreticalBest : null, referenceDecimal: cmp.referenceDecimal, bestSingleVsReferencePct: complete ? cmp.bestSingleVsReferencePct : null, theoreticalVsReferencePct: complete ? cmp.theoreticalVsReferencePct : null, books: cmp.books, ticketLink });
   }
   return out;
 }
@@ -95,7 +151,7 @@ export function gamePrices(gameId: string, suggestions: BetSuggestion[], game: G
   const hit = memo.get(key);
   if (hit && now.getTime() - hit.at < MEMO_MS) return hit.value;
   const prices = pricesForGame(gameId, now);
-  const opts = { dispersionPct: booksConfig().dispersionPct };
+  const opts = { dispersionPct: booksConfig().dispersionPct, affiliate: affiliateTagsFromEnv() };
   const value: GamePrices = { books, fetchedAt, tickets: compareSuggestionsWith(prices, suggestions, game, sportKey, opts), signals: propSignals(prices, opts, 8) };
   memo.set(key, { at: now.getTime(), value });
   while (memo.size > MEMO_ENTRIES) { const oldest = memo.keys().next().value; if (oldest === undefined) break; memo.delete(oldest); }

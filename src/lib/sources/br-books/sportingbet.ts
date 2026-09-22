@@ -75,25 +75,27 @@ export function parseCdsFixture(f: CdsFixture, event: BookEvent, fetchedAt: stri
     if (g.visibility && g.visibility !== "Visible") continue;
     const category = g.templateCategory?.name?.value ?? g.name?.value ?? "";
     const results = (g.results ?? []).filter((r) => !r.visibility || r.visibility === "Visible");
+    // fixture-game-result is the triplet Entain's betslip deep link takes (deeplinks.ts).
+    const ref = (r: CdsResult) => ({ eventId: f.id, marketId: String(g.id), outcomeId: String(r.id) });
     if (/handicap|spread/i.test(category) && event.sport === "basketball") {
       for (const r of results) {
         const p = cleanDecimal(r.odds), line = parseLineValue((r.attr ?? "").replace(",", ".")), side = teamSide(r.name?.value ?? "");
         if (p === null || line === null || !side) continue;
-        out.push({ ...base, market: "spread", side, line, decimal: p });
+        out.push({ ...base, market: "spread", side, line, decimal: p, ref: ref(r) });
       }
     } else if (/^totais$|^totals?$|total de gols|total goals/i.test(category)) {
       for (const r of results) {
         const p = cleanDecimal(r.odds), line = parseLineValue((g.attr ?? r.attr ?? "").replace(",", "."));
         const side = r.totalsPrefix === "Over" ? "over" : r.totalsPrefix === "Under" ? "under" : null;
         if (p === null || line === null || !side) continue;
-        out.push({ ...base, market: "total", side, line, decimal: p });
+        out.push({ ...base, market: "total", side, line, decimal: p, ref: ref(r) });
       }
     } else if (/resultado da partida|money ?line|vencedor|1x2|match result|winner/i.test(category) && !/quarter|half|tempo|período/i.test(category)) {
       for (const r of results) {
         const p = cleanDecimal(r.odds); if (p === null) continue;
         const label = r.name?.value ?? "";
         const side = teamSide(label) ?? (/^(empate|x|draw)$/i.test(label) ? "draw" : null);
-        if (side) out.push({ ...base, market: "moneyline", side, decimal: p });
+        if (side) out.push({ ...base, market: "moneyline", side, decimal: p, ref: ref(r) });
       }
     }
   }

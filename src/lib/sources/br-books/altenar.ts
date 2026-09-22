@@ -83,13 +83,15 @@ export function parseAltenarEvent(detail: AltenarEventDetails, event: BookEvent,
   const base = { book, platform: "altenar", sport: event.sport, event, fetchedAt, url } as const;
   const oddsOf = (m: AltenarMarket) => (m.desktopOddIds ?? []).flat().map((id) => odds.get(id)).filter((o): o is AltenarOdd => !!o && (o.oddStatus ?? 0) === 0);
   const sideOfTeam = (o: AltenarOdd) => (o.competitorId === homeId ? "home" : o.competitorId === awayId ? "away" : null);
+  // The platform's own ids of the selection, kept for a deep link (deeplinks.ts).
+  const ref = (m: AltenarMarket, o: AltenarOdd) => ({ eventId: String(detail.id ?? event.externalIds.altenar), marketId: String(m.id), outcomeId: String(o.id) });
 
   for (const m of detail.markets ?? []) {
     if (event.sport === "basketball" && m.typeId === TYPE.winner || event.sport === "soccer" && m.typeId === TYPE.soccerWinner) {
       for (const o of oddsOf(m)) {
         const p = cleanDecimal(o.price); if (p === null) continue;
         const side = sideOfTeam(o) ?? (/^(empate|draw|x)$/i.test(o.name ?? "") ? "draw" : null);
-        if (side) out.push({ ...base, market: "moneyline", side, decimal: p });
+        if (side) out.push({ ...base, market: "moneyline", side, decimal: p, ref: ref(m, o) });
       }
     } else if (event.sport === "basketball" && m.typeId === TYPE.handicap) {
       for (const o of oddsOf(m)) {
@@ -102,13 +104,13 @@ export function parseAltenarEvent(detail: AltenarEventDetails, event: BookEvent,
         const sv = parseLineValue(o.sv);
         const line = named ?? (sv === null ? null : side === "home" ? sv : -sv);
         if (line === null) continue;
-        out.push({ ...base, market: "spread", side, line, decimal: p });
+        out.push({ ...base, market: "spread", side, line, decimal: p, ref: ref(m, o) });
       }
     } else if (m.typeId === TYPE.total || m.typeId === TYPE.soccerTotal) {
       for (const o of oddsOf(m)) {
         const p = cleanDecimal(o.price), line = parseLineValue(o.sv), side = sideFromLabel(o.name ?? "");
         if (p === null || line === null || !side) continue;
-        out.push({ ...base, market: "total", side, line, decimal: p });
+        out.push({ ...base, market: "total", side, line, decimal: p, ref: ref(m, o) });
       }
     }
   }
@@ -123,7 +125,7 @@ export function parseAltenarEvent(detail: AltenarEventDetails, event: BookEvent,
         const p = cleanDecimal(o.price), line = parseLineValue(o.sv ?? cm.sv);
         const side = o.typeId === 2501 ? "over" : o.typeId === 2502 ? "under" : sideFromLabel(o.name ?? "");
         if (p === null || line === null || !side) continue;
-        out.push({ ...base, market: "player_prop", player, stat, line, side, decimal: p, kind: "total" });
+        out.push({ ...base, market: "player_prop", player, stat, line, side, decimal: p, kind: "total", ref: ref(cm, o) });
       }
     } else if (TYPE.ladder.has(cm.typeId)) {
       // "Pontos - Kiki Iriafen (WAS)": the stat sits before the dash; the player after it.
@@ -132,7 +134,7 @@ export function parseAltenarEvent(detail: AltenarEventDetails, event: BookEvent,
       for (const o of oddsOf(cm)) {
         const p = cleanDecimal(o.price), rung = milestoneRung(o.name ?? "");
         if (p === null || rung === null) continue;
-        out.push({ ...base, market: "player_prop", player, stat, line: milestoneLine(rung), side: "over", decimal: p, kind: "milestone" });
+        out.push({ ...base, market: "player_prop", player, stat, line: milestoneLine(rung), side: "over", decimal: p, kind: "milestone", ref: ref(cm, o) });
       }
     }
   }
