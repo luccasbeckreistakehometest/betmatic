@@ -34,18 +34,18 @@ beforeEach(() => {
 });
 
 describe("the live scope of the ledger", () => {
-  it("keeps a live read out of the default read and out of the pre-game ids", () => {
+  it("counts a live read in the default read, apart from the pre-game ids, and hides it only on request", () => {
     const shape = ticket("t1", "mid", ["Shepard o13.5 REB", "Bueckers o24.5 PRA"]);
     expect(recordPredictions(game, [shape])).toBe(1);
     expect(recordPredictions(game, [shape], { live: { minute: 20, period: 2 } })).toBe(1);
-    expect(readLedger()).toHaveLength(1);
-    expect(readLedger({ includeLive: true })).toHaveLength(2);
+    expect(readLedger()).toHaveLength(2);
+    expect(readLedger({ excludeLive: true })).toHaveLength(1);
     const live = readLiveLedger();
     expect(live).toHaveLength(1);
     expect(live[0]).toMatchObject({ scope: "live", minute: 20, period: 2, outcome: "pending" });
     expect(live[0].id).toBe(ledgerIdFor("g1", shape, { minute: 20 }));
     expect(live[0].id).not.toBe(ledgerIdFor("g1", shape));
-    expect(readLedger()[0].scope).toBeUndefined();
+    expect(readLedger({ excludeLive: true })[0].scope).toBeUndefined();
   });
 
   it("treats the same legs at another minute as another bet, and the same minute as the same one", () => {
@@ -61,9 +61,9 @@ describe("the live scope of the ledger", () => {
     recordPredictions(game, [ticket("live", "long", ["Shepard o13.5 REB", "Bueckers o24.5 PRA"], 14.65)], { live: { minute: 20 } });
     expect(pendingEntries()).toHaveLength(2);
     // The settle pass rewrites the pre-game entry only; the live one must survive the rewrite.
-    const pre = readLedger()[0];
+    const pre = readLedger({ excludeLive: true })[0];
     updateEntries([{ ...pre, outcome: "won", settledAt: "2026-09-22T03:00:00.000Z" }]);
-    expect(readLedger()[0].outcome).toBe("won");
+    expect(readLedger({ excludeLive: true })[0].outcome).toBe("won");
     expect(readLiveLedger()).toHaveLength(1);
     expect(pendingEntries().map((e) => e.scope)).toEqual(["live"]);
   });

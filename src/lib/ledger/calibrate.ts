@@ -60,7 +60,7 @@ export interface ModelRace {
   brierPredicted: number;
 }
 
-export function modelRace(entries: LedgerEntry[] = readLedger()): ModelRace {
+export function modelRace(entries: LedgerEntry[] = readLedger({ excludeLive: true })): ModelRace {
   let settled = 0, won = 0, computedSum = 0, rawSum = 0, predictedSum = 0, brierC = 0, brierR = 0, brierP = 0;
   for (const entry of entries) {
     if (entry.outcome === "pending") continue;
@@ -104,7 +104,7 @@ export function modelRaceLine(race: ModelRace = modelRace()): string {
  * tells you little, but the individual legs inside it are clean evidence about each source.
  */
 export function calibrate(minSample = 5): CalibrationReport {
-  const entries = readLedger().filter((e) => e.outcome !== "pending");
+  const entries = readLedger({ excludeLive: true }).filter((e) => e.outcome !== "pending");
   const bySource = new Map<string, Bucket>();
   const byMarket = new Map<string, Bucket>();
   const bySport = new Map<string, Bucket>();
@@ -134,7 +134,7 @@ export function calibrate(minSample = 5): CalibrationReport {
 /** Cross-tab of source × market: this is the "where does each source specialise" answer. */
 export function specialisation(minSample = 4): CalibrationRow[] {
   const buckets = new Map<string, Bucket>();
-  for (const entry of readLedger().filter((e) => e.outcome !== "pending")) {
+  for (const entry of readLedger({ excludeLive: true }).filter((e) => e.outcome !== "pending")) {
     for (const leg of entry.legs) {
       addLeg(buckets, `${leg.sourceBasis} · ${leg.market}`, `${leg.sourceBasis} on ${leg.market}`, leg);
     }
@@ -195,7 +195,7 @@ export function calibrationPrompt(): string {
 }
 
 export function ledgerSummary(): { total: number; pending: number; settled: number; won: number } {
-  const entries: LedgerEntry[] = readLedger();
+  const entries: LedgerEntry[] = readLedger({ excludeLive: true });
   return {
     total: entries.length,
     pending: entries.filter((e) => e.outcome === "pending").length,

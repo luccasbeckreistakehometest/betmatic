@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Badge, Empty, Table, Td, Th, Tr } from "@/components/ui";
+import { Badge, Empty, Table, Td, Th } from "@/components/ui";
+import { GameRow } from "@/components/GameRow";
 import { formatTime, localizeStatus } from "@/lib/format";
 import { makeT, type Lang } from "@/lib/i18n";
 import type { Game, TeamRef } from "@/lib/types";
@@ -60,13 +61,13 @@ export function SlateTable({ games, lang = "pt", sportKey }: { games: Game[]; la
           const homeWon = final && (game.home.score ?? 0) > (game.away.score ?? 0);
           const awayWon = final && (game.away.score ?? 0) > (game.home.score ?? 0);
           return (
-            <Tr key={game.id} className="group">
-              <Td label={lang === "pt" ? "Início" : "Start"} className="relative">
-                {/* One link per row, stretched over the row: the whole line is the target, and the
-                    accessible name is still the two teams. */}
+            <GameRow key={game.id} href={`/app/game/${game.id}?sport=${encodeURIComponent(sportKey ?? game.sportKey)}&lang=${lang}`} className="group">
+              <Td label={lang === "pt" ? "Início" : "Start"}>
+                {/* One link per row — the accessible name is still the two teams — and the row itself
+                    takes the tap everywhere else (GameRow). */}
                 <Link
                   href={{ pathname: `/app/game/${game.id}`, query: { sport: sportKey ?? game.sportKey, lang } }}
-                  className="after:absolute after:inset-0 after:content-[''] focus-visible:after:outline-2 focus-visible:after:outline-offset-[-2px] focus-visible:after:outline-(--focus)"
+                  className="rounded-control focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus)"
                 >
                   <span className="sr-only">
                     {game.away.displayName} × {game.home.displayName} —{" "}
@@ -98,7 +99,7 @@ export function SlateTable({ games, lang = "pt", sportKey }: { games: Game[]; la
               <Td numeric label={t("moneyline")} className="text-fg-muted">
                 {final ? "—" : `${line(game.odds?.awayMoneyline)} / ${line(game.odds?.homeMoneyline)}`}
               </Td>
-            </Tr>
+            </GameRow>
           );
         })}
       </tbody>
