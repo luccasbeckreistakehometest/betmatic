@@ -163,6 +163,7 @@ export interface PropModel {
     needPerMinute: number;
     ratePerMinuteTonight: number;
     ratePerMinutePreGame: number;
+    /** The rate the remainder is priced at: the pre-game rate (tonight's does not forecast the rest; see props/model.ts liveRate). */
     ratePerMinuteBlended: number;
     minutesPlayed: number;
     fouls: number;

@@ -84,17 +84,20 @@ describe("projection of a line", () => {
   });
 });
 
-describe("live rate posterior", () => {
-  it("moves a volatile player toward tonight and a consistent one barely", () => {
-    const volatile = liveRate({ rate: 0.6, shape: 4 }, { value: 0, minutes: 18 });
-    const steady = liveRate({ rate: 0.6, shape: 40 }, { value: 0, minutes: 18 });
-    expect(volatile.rate).toBeLessThan(steady.rate);
-    expect(steady.rate).toBeGreaterThan(0.45);
-    expect(volatile.dispersion).toBeCloseTo(1 / 4, 6); // no counts seen: shape unchanged
-    const hot = liveRate({ rate: 0.6, shape: 10 }, { value: 20, minutes: 18 });
-    expect(hot.rate).toBeGreaterThan(0.6);
-    expect(hot.dispersion).toBeCloseTo(1 / 30, 6);
-    expect(liveRate({ rate: 0.6, shape: 10 }, { value: 0, minutes: 0 }).rate).toBe(0.6);
+describe("the rate for the remainder", () => {
+  it("is the pre-game rate: tonight's production is reported, not extrapolated", () => {
+    // Measured on 190 half-time states: the pre-game rate priced the remainder better than any
+    // posterior that moved toward tonight's rate (0.460 vs 0.477 log loss), so a cold half is not
+    // extrapolated into a cold second half, nor a hot one into a hot one.
+    const cold = liveRate({ rate: 0.6, dispersion: 0.1 }, { value: 0, minutes: 18 });
+    const hot = liveRate({ rate: 0.6, dispersion: 0.1 }, { value: 20, minutes: 18 });
+    expect(cold.rate).toBe(0.6);
+    expect(hot.rate).toBe(0.6);
+    expect(cold.dispersion).toBe(0.1);
+    expect(cold.priorWeight).toBe(1);
+    expect(cold.tonightRate).toBe(0);
+    expect(hot.tonightRate).toBeCloseTo(20 / 18, 6);
+    expect(liveRate({ rate: 0.6, dispersion: 0.1 }, { value: 0, minutes: 0 }).tonightRate).toBe(0);
   });
 });
 
@@ -169,10 +172,11 @@ describe("21/09/2026, Dallas @ Phoenix, at half-time (47-43 Dallas)", () => {
     expect(r.leg.ladder.find((x) => x.line === 14.5)!.pOver).toBeLessThan(r.leg.pOver);
   });
 
-  it("Ogunbowale over 3.5 rebounds after none in the first half is a reversion bet the model prices under 10%", () => {
+  it("Ogunbowale over 3.5 rebounds after none in the first half: four more at her normal rate in the minutes left is a reversion bet, priced under 12%", () => {
     const r = half("Arike Ogunbowale", "rebounds", ["REB"], 3.5, "over", { value: 0, minutes: 13.7, fouls: 3 });
     expect(r.posterior.rate).toBeLessThan(0.12);
-    expect(r.leg.pOver).toBeLessThan(0.1);
+    expect(r.leg.pOver).toBeLessThan(0.12);
+    expect(r.leg.pOver).toBeGreaterThan(0.03);
   });
 
   it("Thomas under 8.5 rebounds with five at half-time needs her to slow down: below even", () => {

@@ -120,7 +120,7 @@ describe("the computed probability in the builder", () => {
     expect(describeModel({ ...row, model: null })).toBe("");
     const live = { ...row, live: { current: 10, remaining: 9, minutesLeft: 20 }, model: { ...model(0.62), live: { needed: 9, remainingMinutes: 16, needPerMinute: 0.563, ratePerMinuteTonight: 0.625, ratePerMinutePreGame: 0.66, ratePerMinuteBlended: 0.64, minutesPlayed: 16, fouls: 4 } } };
     const liveText = describeModel(live);
-    expect(liveText).toMatch(/COMPUTED 62% — needs 9 more in ~16 min = 0\.56\/min, vs 0\.63\/min tonight \(16 min played, 4 PF\), 0\.66\/min pre-game, 0\.64\/min blended/);
+    expect(liveText).toMatch(/COMPUTED 62% — needs 9 more in ~16 min = 0\.56\/min, vs 0\.63\/min tonight \(16 min played, 4 PF\), 0\.66\/min pre-game \(the rate used for the rest\)/);
     expect(describeProps([live])).toContain("PRE-GAME REFERENCE");
     expect(describeProps([live])).toContain(liveText.trim());
     expect(minutesFromProps([row, { ...row, line: 20.5 }]).map((m) => m.player)).toEqual(["Ana Lima"]);

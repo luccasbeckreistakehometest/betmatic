@@ -272,18 +272,18 @@ export function blendedProbability(model: number, hits: number, of: number, weig
 }
 
 /**
- * The rate for the rest of a game in play: the pre-game gamma prior updated by tonight's count over
- * tonight's minutes (a conjugate Poisson update). A consistent player (small dispersion, large shape)
- * is barely moved by a quiet half; a volatile one is. The posterior shape rises with the count seen,
- * so the remainder's dispersion shrinks as the night reveals itself.
+ * The rate for the rest of a game in play. It is the PRE-GAME rate, unchanged by tonight's count —
+ * a deliberate choice, measured: at half-time of 190 WNBA games this season (19,015 line
+ * predictions; scratchpad/walkforward-live.ts), the remainder priced from the pre-game rate scored
+ * 0.460 in log loss, a gamma-Poisson posterior that moved the rate toward tonight's production
+ * 0.477, and a 70/30 pre-game/tonight blend 0.474. A cold half does not forecast a cold second half
+ * and a hot half does not forecast a hot one; what the first half does carry is the count on the
+ * board and the minutes and fouls that shape what is left, and those enter through `current` and
+ * the remaining-minutes projection. `priorWeight` stays at 1 so the reader can see that.
  */
-export function liveRate(fit: Pick<RateFit, "rate" | "shape">, tonight: { value: number; minutes: number }): { rate: number; dispersion: number; priorWeight: number } {
+export function liveRate(fit: Pick<RateFit, "rate" | "dispersion">, tonight: { value: number; minutes: number }): { rate: number; dispersion: number; priorWeight: number; tonightRate: number } {
   const played = Math.max(0, tonight.minutes);
-  const seen = Math.max(0, tonight.value);
-  if (played <= 0 || fit.rate <= 0) return { rate: fit.rate, dispersion: 1 / fit.shape, priorWeight: 1 };
-  const priorMinutes = fit.shape / fit.rate; // the prior is worth this many minutes of evidence
-  const rate = (fit.shape + seen) / (priorMinutes + played);
-  return { rate, dispersion: 1 / (fit.shape + seen), priorWeight: priorMinutes / (priorMinutes + played) };
+  return { rate: fit.rate, dispersion: fit.dispersion, priorWeight: 1, tonightRate: played > 0 ? Math.max(0, tonight.value) / played : 0 };
 }
 
 /**

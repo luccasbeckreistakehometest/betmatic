@@ -59,6 +59,8 @@ const CAMEO = 4;
 /** Minutes a starter typically loses to a decided fourth quarter, per 40 regulation minutes. */
 const SIT_MINUTES_PER_40 = 4.5;
 const MIN_SD = 2.5;
+/** Width multiplier of the in-play remaining-minutes estimate, set by the half-time walk-forward. */
+const REMAINING_SD_SCALE = 1.5;
 
 const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x));
 const round1 = (x: number) => Number(x.toFixed(1));
@@ -234,7 +236,9 @@ export function projectRemainingMinutes(args: RemainingArgs): MinutesProjection 
   }
 
   expected = clamp(expected, 0, left);
-  const sd = left > 0 ? Math.max(1, 0.12 * left + Math.sqrt(risk * (1 - risk)) * sit) : 0;
+  // The spread of the remainder: the walk-forward on 190 half-time states (props/model.ts) was best
+  // calibrated in every decile with this width; a tighter one over-stated the sure things.
+  const sd = left > 0 ? Math.max(1.5, REMAINING_SD_SCALE * (0.12 * left + Math.sqrt(risk * (1 - risk)) * sit)) : 0;
   const pre = args.preGame;
   return {
     player: args.player,

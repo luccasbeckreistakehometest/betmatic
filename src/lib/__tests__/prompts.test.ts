@@ -81,7 +81,7 @@ describe("the basketball decision procedure", () => {
       expect(text).toMatch(/LISTED OUT/);
       expect(text).toMatch(/within 8 points of COMPUTED/);
       expect(text).toMatch(/THE LADDER HAS NUMBERS/);
-      expect(text).toMatch(/computed\s+at 45% by rate and minutes/);
+      expect(text).toMatch(/computed\s+near 45% by rate and minutes/);
       expect(text).toMatch(/SAME-GAME CORRELATION IS PRICED IN CODE/);
       expect(text).toMatch(/COMPOSE THE SLATE ACROSS BANDS/);
       expect(text).toMatch(/LIVE, WITH THE REMAINDER PROJECTED/);

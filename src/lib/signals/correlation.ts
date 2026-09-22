@@ -184,7 +184,8 @@ export function ticketCorrelation(legs: CorrLeg[], ctx: CorrContext = {}): Corre
       if (!rule) continue;
       const measured = measuredLift(a, b, rule.lift);
       if (measured) {
-        pairs.push({ a: i, b: j, lift: round2(measured.lift), basis: "measured", note: `${a.player} & ${b.player}: co-occurrence over ${measured.games} shared games (rule ${rule.lift})` });
+        const who = a.player === b.player ? `${a.player} (${(a.labels ?? []).join("+")} & ${(b.labels ?? []).join("+")})` : `${a.player} & ${b.player}`;
+        pairs.push({ a: i, b: j, lift: round2(measured.lift), basis: "measured", note: `${who}: co-occurrence over ${measured.games} shared games (rule ${rule.lift})` });
         factor *= measured.lift;
       } else if (Math.abs(rule.lift - 1) > 1e-9) {
         pairs.push({ a: i, b: j, lift: rule.lift, basis: "rule", note: rule.note });

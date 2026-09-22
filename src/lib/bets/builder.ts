@@ -100,7 +100,7 @@ export function describeModel(p: PropRow): string {
     const need = l.needed > 0
       ? `needs ${l.needed} more in ~${l.remainingMinutes} min = ${Number.isFinite(l.needPerMinute) ? l.needPerMinute.toFixed(2) : "∞"}/min`
       : "needs nothing more";
-    return ` | COMPUTED ${pct(m.computed)} — ${need}, vs ${l.ratePerMinuteTonight.toFixed(2)}/min tonight (${l.minutesPlayed} min played${l.fouls >= 3 ? `, ${l.fouls} PF` : ""}), ${l.ratePerMinutePreGame.toFixed(2)}/min pre-game, ${l.ratePerMinuteBlended.toFixed(2)}/min blended for the rest; projected final ${m.mean} ± ${m.sd}${rungs ? ` [ladder ${rungs}]` : ""}`;
+    return ` | COMPUTED ${pct(m.computed)} — ${need}, vs ${l.ratePerMinuteTonight.toFixed(2)}/min tonight (${l.minutesPlayed} min played${l.fouls >= 3 ? `, ${l.fouls} PF` : ""}), ${l.ratePerMinutePreGame.toFixed(2)}/min pre-game (the rate used for the rest); projected final ${m.mean} ± ${m.sd}${rungs ? ` [ladder ${rungs}]` : ""}`;
   }
   return ` | COMPUTED ${pct(m.computed)} (distribution ${pct(m.distribution)}; ${m.note}; minutes ${m.minutes.expected} ± ${m.minutes.sd}${availability}; rate ${m.rate}/min, L5 ${m.recentRate}/min)${rungs ? ` [ladder ${rungs}]` : ""}`;
 }

@@ -135,8 +135,8 @@ stat of the same player in one ticket, because the easier line adds price and no
 THE LADDER HAS NUMBERS. When you take a rung other than the main line, quote the COMPUTED chance of
 the rung you took and of the rung beside it, and say why the extra price is worth the lost
 probability. Arike Ogunbowale over 19.5 points+assists was measured at 57% by hit rate and computed
-at 45% by rate and minutes; the hit rate was the memory of a role that had shrunk, and the computed
-number said so before she scored seven.
+near 45% by rate and minutes; the hit rate was the memory of a role that had shrunk, and the
+computed number said so before she scored seven.
 SAME-GAME CORRELATION IS PRICED IN CODE. The ticket's real probability is adjusted for legs that
 share a player, a team or a scoreboard, and the adjustment is printed with the ticket. Build for
 positive correlation on purpose — one story — and say so in the background; never pair a big
@@ -148,11 +148,15 @@ either fewer legs on stretched rungs the ladder supports, naming the rung and it
 or five to eight legs on one story. Across the whole slate no player appears in more than half of
 the tickets, counted across every market.
 LIVE, WITH THE REMAINDER PROJECTED. In play every surviving line carries COMPUTED for the rest of the
-game: what it still needs per remaining minute, the rate produced tonight, the pre-game rate, and
-the blended rate that prices the remainder; the remaining minutes already carry the fouls and the
-scoreboard. Build from the lines where the requirement per minute sits at or below tonight's rate. A
-line marked NEEDS A REVERSION is not a leg. Quote the requirement and the rate in the evidence of
-every live leg, and keep fairProbability within 8 points of the live COMPUTED chance.
+game: what it still needs per remaining minute, the rate produced tonight, and the pre-game rate
+that prices the remainder; the remaining minutes already carry the fouls and the scoreboard. The
+pre-game rate is used on purpose: measured over 190 half-time states this season, a cold half did
+not forecast a cold second half and a hot half did not forecast a hot one — what the first half
+decides is what is already on the board and how many minutes are left. Build from the lines where
+the requirement per minute sits at or below the rate, and prefer the ones tonight's rate already
+covers. A line marked NEEDS A REVERSION or NEEDS A SLOWDOWN is not a leg. Quote the requirement and
+the rate in the evidence of every live leg, and keep fairProbability within 8 points of the live
+COMPUTED chance.
 
 For each ticket write:
 - background: the situation. What is going on in this game that makes this angle exist.
