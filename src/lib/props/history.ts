@@ -88,7 +88,11 @@ function statValue(game: PlayerGame, label: string): number {
   return Number.isFinite(num) ? num : NaN;
 }
 
-function total(game: PlayerGame, labels: string[]): number {
+/**
+ * One game's value for a market: the labels summed, NaN when the log carries none of them. Settling
+ * reads it directly — a single game is not a sample, so it must not go through measureProp.
+ */
+export function statTotal(game: PlayerGame, labels: string[]): number {
   let sum = 0;
   for (const label of labels) {
     const value = statValue(game, label);
@@ -127,7 +131,7 @@ export function measureProp(
   if (!labels || !Number.isFinite(line)) return null;
 
   const values = history.games
-    .map((g) => total(g, labels))
+    .map((g) => statTotal(g, labels))
     .filter((v) => Number.isFinite(v));
   if (values.length < 3) return null;
 
