@@ -60,7 +60,9 @@ export async function generateGame(args: { sportKey: string; dateKey: string; de
   const save = (lang: Lang, slate: BetSlate, costUsd: number) =>
     savePrediction({ scope: "game", sportKey, gameId: detail.game.id, dateKey, lang, matchup, startsAt: detail.game.startsAt, slate, costUsd });
 
-  const primarySlate = await buildBets({ game: detail.game, detail, props, picks: [], dimers: [], x: null, bands: BANDS, lang: primary, referee, dvp, roles: candidates?.roles ?? [], minutes: candidates?.minutes ?? [], consensus, lines });
+  // One main ticket per band, each with its two alternatives: fifteen tickets is the slate the
+  // prompt composes, and twice that was the output no thinking budget could finish (22/09/2026).
+  const primarySlate = await buildBets({ game: detail.game, detail, props, picks: [], dimers: [], x: null, bands: BANDS, maxPerBand: 1, lang: primary, referee, dvp, roles: candidates?.roles ?? [], minutes: candidates?.minutes ?? [], consensus, lines });
   save(primary, primarySlate, spend());
   void announceTickets({ gameId: detail.game.id, matchup, sportKey, lang: primary, suggestions: primarySlate.suggestions, base });
   const slates: Partial<Record<Lang, BetSlate>> = { [primary]: primarySlate };

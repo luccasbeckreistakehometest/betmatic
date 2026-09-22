@@ -33,11 +33,11 @@ import { mockGameSlate, mockSlateBets } from "@/lib/ai/mocks";
  * Output room for a slate. A full read is five bands, each main ticket with two alternatives and
  * five to eight legs carrying an explanation and its evidence — and on Claude the model's own
  * thinking counts against the same cap. 16k truncated every game on 22/09/2026 (three Opus reads,
- * US$1.48 for nothing); 32k is the floor, AI_MAX_OUTPUT_TOKENS raises it.
+ * US$1.48 for nothing) and 32k still cut the JSON short; 48k is the default, AI_MAX_OUTPUT_TOKENS moves it.
  */
 export const JUDGEMENT_MAX_TOKENS = (() => {
   const v = Number(process.env.AI_MAX_OUTPUT_TOKENS);
-  return Number.isFinite(v) && v >= 16000 ? Math.floor(v) : 32000;
+  return Number.isFinite(v) && v >= 16000 ? Math.floor(v) : 48000;
 })();
 
 const LegSchema = z.object({
