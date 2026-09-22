@@ -135,7 +135,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
     <div className="flex flex-col gap-5">
       <Link
         href={{ pathname: "/app", query: { sport: sport.key, lang } }}
-        className="u-hit w-fit text-tiny text-fg-dim transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg-muted"
+        className="w-fit text-tiny text-fg-dim transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg-muted max-md:inline-flex max-md:min-h-11 max-md:items-center"
       >
         {t("backToSlate")}
       </Link>
@@ -229,7 +229,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
                       <h3 className="mb-1 text-micro u-label text-fg-dim">{team.displayName}</h3>
                       <div className="flex flex-wrap gap-1">
                         {roster.slice(0, 14).map((a) => (
-                          <Link key={a.id} href={{ pathname: `/app/player/${a.id}`, query: { sport: sport.key, lang, game: game.id } }} className="rounded-control border border-line px-1.5 py-0.5 text-label text-fg-muted transition-colors duration-(--dur-1) hover:bg-surface-2 hover:text-fg">
+                          <Link key={a.id} href={{ pathname: `/app/player/${a.id}`, query: { sport: sport.key, lang, game: game.id } }} className="rounded-control border border-line px-1.5 py-0.5 text-label text-fg-muted transition-colors duration-(--dur-1) hover:bg-surface-2 hover:text-fg max-md:inline-flex max-md:min-h-11 max-md:items-center max-md:px-3">
                             {a.name}
                           </Link>
                         ))}
@@ -243,7 +243,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
 
           <Panel title={t("market")} meta={books.length ? `${books.length} ${books.length === 1 ? t("bookOne") : t("bookMany")}` : undefined}>
             {books.length ? (
-              <Table caption={t("market")} collapse={false}>
+              <Table caption={t("market")}>
                 <thead>
                   <tr>
                     <Th>{t("book")}</Th>
@@ -264,7 +264,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
                 </tbody>
               </Table>
             ) : (
-              <Empty>{t("noLines")}</Empty>
+              <Empty rows={0}>{t("noLines")}</Empty>
             )}
             <LineMovement lines={lines} home={game.home.displayName} away={game.away.displayName} lang={lang} />
             {ats.length > 0 && (

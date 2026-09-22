@@ -237,12 +237,12 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
 
       <Link
         href={`${mode === "login" ? "/signup" : "/login"}?${carry.toString()}`}
-        className="u-hit mt-5 w-fit text-sm text-fg-muted transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg"
+        className="mt-5 w-fit text-sm text-fg-muted transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg max-md:inline-flex max-md:min-h-11 max-md:items-center"
       >
         {mode === "login" ? c.toSignup : c.toLogin}
       </Link>
       {mode === "login" && (
-        <Link href={`/contato?lang=${lang}&topic=account`} className="u-hit mt-3 w-fit text-tiny text-fg-dim transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg">
+        <Link href={`/contato?lang=${lang}&topic=account`} className="mt-3 w-fit text-tiny text-fg-dim transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg max-md:mt-1 max-md:inline-flex max-md:min-h-11 max-md:items-center">
           {c.forgot}
         </Link>
       )}

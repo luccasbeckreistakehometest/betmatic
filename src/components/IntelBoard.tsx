@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BetsPanel, TicketSkeleton, type GamePricesView, type LegAlertView } from "@/components/BetsPanel";
@@ -57,7 +57,9 @@ function relTime(iso: string | undefined, lang: "pt" | "en"): string {
  */
 export function IntelBoard({ gameId, dateKey, started = false }: { gameId: string; dateKey?: string; started?: boolean }) {
   const { lang, sport } = useNavState();
-  const t = makeT(lang);
+  // Memoised: it is a dependency of `generate`, and through it of two effects, which must not
+  // re-run — and re-observe the page — on every render.
+  const t = useMemo(() => makeT(lang), [lang]);
   const pathname = usePathname();
   const search = useSearchParams();
   const router = useRouter();
@@ -303,7 +305,7 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
         status={loading ? "pending" : mine ? "ok" : "empty"}
         meta={mine ? relTime(mine.generatedAt, lang) : undefined}
         action={
-          <Link href={`/app/slip?sport=${sport.key}&lang=${lang}`} className="rounded-control border border-line-control px-2 py-0.5 text-label text-fg-muted transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:text-fg">
+          <Link href={`/app/slip?sport=${sport.key}&lang=${lang}`} className="rounded-control border border-line-control px-2 py-0.5 text-label text-fg-muted transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:text-fg max-md:inline-flex max-md:min-h-11 max-md:items-center max-md:px-3">
             {t("mySlip")}
           </Link>
         }

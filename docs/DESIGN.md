@@ -193,6 +193,12 @@ Archivo, not mono.
 `clamp(2.4375rem, 1.6rem + 3.6vw, 3.8125rem)`. Everything else is fixed, because a table cell that
 changes size with the viewport cannot be compared across screenshots.
 
+**The 12 px floor.** Below 768 px nothing is set under 12 px: `text-micro` (10) and `text-label`
+(11) rise to 12 and meet `text-tiny` there. The step is then carried by something other than size —
+a label by case and tracking (`u-label`), a footnote or an axis tick (`text-micro`) by weight 500, a
+caption (`text-tiny`) by neither. Every other size is fixed at every width. SVG text follows the
+same floor: a chart's viewBox is the width it is drawn at, so 12 in the drawing is 12 on the screen.
+
 **Measure.** Prose is capped at `65ch` (marketing) and `72ch` (legal pages, which are read in long
 runs). Panel prose inside the app is capped at `58ch`. No text block is ever full-bleed.
 
@@ -378,9 +384,10 @@ Three density modes, one system. Density changes row height, padding and the lea
 - `default` — game pages, forms, the dock, settings.
 - `comfortable` — every marketing page, legal pages, onboarding, empty states.
 
-Density is a `data-density` attribute on the shell, persisted per viewer; `comfortable` is forced
-below 768 px (touch targets stay ≥44 px regardless of mode — on touch the row grows, the type does
-not).
+Density is a `data-density` attribute on the shell, persisted per viewer. Below 768 px every mode
+resolves to one **phone density**: `--row-h` 44, `--cell-px` 16, `--panel-p` 20, `--stack-gap` 16,
+body 14 — a control drawn at the row height is a fingertip's target, and the type does not grow
+with the row.
 
 ---
 
@@ -627,10 +634,15 @@ achromatic logic as the primary button.
 
 ### 12.7 Navigation
 
-Rail item: 32 px, icon 16 + label 13, `text-secondary`; hover `surface-2`; **active = 2 px `--focus`
+Rail item: 32 px, icon 16 + label 13, `text-secondary`; hover `surface-2`; **active = 2 px ink
 leading bar + `text-primary` + `surface-2`**, `aria-current="page"`. Group label `text-label`,
 `text-tertiary`, 24 px tall. Collapsed rail shows the icon with a delayed tooltip (600 ms).
-Bottom tab bar (< 768 px): 5 items, 56 px, icon + 10 px label, active = filled icon + `text-primary`.
+Bottom tab bar (< 768 px): four items — Jogos · Múltiplas · Banca · Conta — and, while a game of
+the current sport is being played, that game as a fifth, named by its two abbreviations with the
+live dot (two or more: `N ao vivo`, opening the slate). 56 px plus the device's bottom inset, icon
+20 + 12 px label, active = 2 px ink rule on the top edge + `text-primary`. The current item is the
+same cue on both and it is not a hue: the blue is the keyboard's (§6.1 is read that way since
+Appendix D).
 
 ### 12.8 Dialog / sheet / popover
 
@@ -1136,64 +1148,100 @@ marked inline with `design-guard-allow`.
 
 ## Appendix F — the phone
 
-Written after building it, on `feat/mobile-app-feel`, so the doc and the code agree. The brief was
-one sentence from the owner: on a phone the product has to read as an app and be obvious. It is the
-same system at 390px — the same ramp, rules, numerals and prohibitions — with these decisions.
+Written after building it, on `feat/mobile-app-feel`, and rewritten after the adversarial review of
+that branch, so the doc and the code agree. The brief was one sentence from the owner: on a phone
+the product has to read as an app and be obvious. It is the same system at 390 px — the same ramp,
+rules, numerals and prohibitions — with these decisions.
 
-**Chrome.** The bottom bar of §12.7 is now fixed, 56px plus the device's own inset (`--safe-b`,
-read once in `globals.css`), and holds Jogos · Múltiplas · Banca · Conta — and, while a game of the
-current sport is being played, that game as a fifth tab with the live dot. The current tab carries
-the selection blue as a 2px rule on its top edge plus ink: §6.1 reserves the hue for focus *and the
-current nav item*, and on a 70px tab a word alone did not read at arm's length. The shell reserves
-the bar's height (`--tabbar-h`, 0 on a desk), so nothing sits under it; the tour card and the
-session reminder anchor to `--float-b` instead of a fixed 20px.
+**Chrome.** The bottom bar of §12.7 is fixed, 56 px plus the hairline above it plus the device's
+own inset (`--safe-b`, read once in `globals.css`), and `--tabbar-h` is that whole height, so
+nothing is ever a pixel under it. It holds Jogos · Múltiplas · Banca · Conta and, while a game of
+the current sport is being played, that game as a fifth tab named `DUN × CED` with the live dot.
+The shell decides that fifth tab on the server, from the remembered sport and the cached
+scoreboard, so the bar is right on first paint and never reflows; the phone then re-reads the
+slate every 90 s (a game can start while the app is open), under its own rate-limit rule. The
+current tab carries the rail's cue — a 2 px ink rule and full-contrast text — because the product
+has one current-item colour and it is not a hue. The topbar is padded by the status bar an
+installed app keeps (`--safe-t`), and `--topbar-h` includes it, so the rail and the game page's
+compact head start under the bar on a notched phone too. The tour card and the session reminder
+anchor to `--float-b`, above the bar; the tour card is placed from measurements taken in an
+effect — its own height, the bar's, the viewport's — below the anchor when it fits, above it when
+it does not, in the corner when neither does.
 
-**The slate.** Below 768px the table leaves and each fixture is a card (`GameCard`): kickoff or the
-live clock, both teams with crests and scores, the three market numbers in tabular mono, a chevron.
-The whole card is one real link — a long press, a new tab and a middle click behave as the platform
-expects without a line of script. §11.1's "definition list per row" stays the rule for every other
-dense table; a slate is scanned, not read, and six labelled lines per game was a form.
+**The slate.** Below 768 px the table leaves and each fixture is a card (`GameCard`): kickoff or the
+live clock, both teams with crests and scores, the three market numbers in tabular mono — the
+handicap takes what is left, total and winner take exactly their numbers' width, and a number is
+never cut short — and a chevron that becomes a spinner while the tap's navigation is pending. The
+whole card is one real link. Both the cards and the table are in the server's HTML and the
+breakpoint chooses, because that surface is rendered on the server; the band chips on a game page
+are built by the client along with the tickets they filter, so they are gated by the same
+breakpoint read in JavaScript (`useIsPhone`) and never exist in a desk's DOM, where their labels
+would answer a search for a price. Two mechanisms, one rule: a surface switches by CSS when the
+server drew it and by `matchMedia` when the client did.
 
-**The game page.** A compact head (`GameStickyHead`) slides under the topbar once the full team
-block has scrolled away and reads the score the live panel polls, from the same request. The odds
-bands are chips a thumb swipes (`u-swipe`), pressed/unpressed toggles that leave one band's tickets
-on screen. One primary action lives in a bar above the tab bar (`GameActionBar`): the live read, the
-day's pick, generation, sign-up or the plans, offered by the region that owns it and shown only
-while that region's own button is off screen — so a view keeps one primary action (§14) at every
-scroll position.
+**The game page.** A compact head (`GameStickyHead`, 44 px) slides under the topbar once the full
+team block has scrolled away and reads the score the live panel polls, from the same request. The
+live panel draws its own frame while its first poll is in flight, so the tickets below it do not
+jump when it arrives. The odds bands are chips a thumb swipes (`u-swipe`: snapping that respects
+the strip's own padding, so the first chip rests on the tickets' edge; a 44 px hit area kept inside
+the scroll box). One primary action lives in a bar above the tab bar (`GameActionBar`): the action
+the page's regions offered with the highest priority — the live read, the day's pick, generation,
+sign-up or the plans, else `Ver bilhetes` — and only that one, shown while its own inline control is
+off screen and gone the moment that control is in view. It never falls through to a lesser action,
+so its label cannot change under a scrolling thumb. It is the page's last element and sticks above
+the tabs for as long as its own place is below the fold; at the end of the page it rests in flow,
+above the footer, so the responsible-gambling line is never covered. The market table collapses to
+a definition list per book (§11.1) and its empty state draws no empty rows.
 
-**Touch.** Below 768px `--row-h` is 44px, so every control drawn at the row height is a target; a
-control drawn smaller keeps its box and gains a transparent 44px hit area (`u-hit`, the mechanism
-§12.1 describes). Selectable chips share one class (`chipClass`): pressed is the action fill on both
-sizes; on a phone they grow to 36px plus the hit area and take the body size. Stakes, lines and
-ceilings open the decimal keypad; e-mail opens the e-mail one.
+**Touch.** Below 768 px `--row-h` is 44 px, so every control drawn at the row height is a target.
+A control drawn smaller gets one of two things: a real box (`min-height`, padding) where a
+neighbour is closer than 44 px — the topbar's menu and balance, the date control's arrows, the
+follow buttons, the roster and panel links, the footer's legal links, the auth page's two links,
+the player page's steppers — or the transparent 44 px hit area of `u-hit` where nothing else is
+near. `u-hit` exists only below 768 px: a desk has a pointer. Selectable chips share one class
+(`chipClass`): pressed is the action fill on both sizes; on a phone they grow to 36 px plus the hit
+area and take the body size. Stakes, lines and ceilings open the decimal keypad; e-mail opens the
+e-mail one; a stake field is six characters wide, so a ticket's footer fits a 320 px phone.
 
-**Type.** The two smallest steps of §4 — `text-micro` (10) and `text-label` (11) — are 12px below
-768px, on the owner's rule that nothing on a phone is set under 12px. Every other size is fixed, as
-§4 requires; the hand-written table header and the collapsed row label read the token, so the floor
-reaches them too.
+**Type.** The 12 px floor of §4: `text-micro` and `text-label` rise to 12 px below 768 px and the
+step is carried by weight and by case. The two charts draw their viewBox at the width they are
+rendered, so a tick label is a true 12 px on a phone and a bar's label is thinned when the bars are
+too narrow to carry one each. The hand-written table header and the collapsed row label read the
+label token, so the floor reaches them too.
 
-**Loading.** The slate streams its own frame — the head's shape, the date control's box, cards on
-a phone and the table's columns on a desk — through a `Suspense` boundary placed *after* the page's
+**Loading.** The slate streams its own frame — the head's shape, the date control's box, cards on a
+phone and the table's columns on a desk — through a `Suspense` boundary placed *after* the page's
 redirect, not through a `loading.tsx`: a loading file flushes the shell before the page runs, which
-turns `redirect()` and `notFound()` into client-side hops with a 200 (and it raced the e2e's next
-navigation). The game page keeps its real 404 for the same reason; a tapped card answers at once
-(`LinkPending`: the chevron becomes a spinner while the navigation is pending), and the tickets
-panel loads as two ticket cards in the final shape instead of a sentence.
+turns `redirect()` and `notFound()` into client-side hops with a 200. The game page keeps its real
+404 for the same reason; the tickets panel loads as two ticket cards in the final shape instead of
+a sentence.
 
-**Install.** `manifest.ts` (standalone, portrait, the dark page surface as both colours), the mark
-as 192/512/maskable PNGs rasterised from the favicon's geometry, `viewport-fit=cover` and the
-Apple web-app meta. No service worker, on purpose: nothing behind a login is ever cached, and
-current browsers install without one.
+**Install.** `manifest.ts` (standalone, no orientation lock — a tablet turns — the dark page surface
+as both colours because dark is the shipped default), the mark as 192/512/maskable PNGs rasterised
+from the favicon's geometry, `viewport-fit=cover` and the Apple web-app meta. A bare `/app`, which
+is where the installed app opens, redirects in the account's own language. No service worker, on
+purpose: nothing behind a login is ever cached, and current browsers install without one.
 
 **Width is never content's to set.** Two mechanisms let one wide thing set the width of a whole
 page on a phone, and both are closed. A column with auto side margins that is a flex item of the
 body (the admin's root) shrinks to fit its content, so it carries `w-full`; and a grid that declares
 its columns only from a breakpoint up has one implicit `auto` column below it, whose floor is the
-widest thing inside — on a phone that column is `minmax(0, 1fr)` (`globals.css`). The sideways
-scroll a table is allowed (§11.1) then stays inside its own wrapper, and the phone e2e measures
-overflow against the device width rather than `innerWidth`, which grows with the page and had
-hidden every case.
+widest thing inside — on a phone that column is `minmax(0, 1fr)` (`globals.css`). A flex item that
+must be able to shrink says so (`min-w-0`): a ticket's footer once refused to be narrower than a
+twenty-character field plus a button and set the width of the page at 360 px. The sideways scroll a
+table is allowed (§11.1) stays inside its own wrapper, and the phone e2e measures overflow against
+the device width rather than `innerWidth`, which grows with the page and had hidden every case —
+at 393 px and at 360 px, in two Playwright projects.
+
+**Desk changes that came with this, all of them §12 fixes, listed so nobody finds them by
+surprise:** the auth pages' title is `text-h3` (25 px) instead of an off-scale 27 px and their fields
+are the row height; the settings ceilings and bankroll amount go through `Field`/`Input` (right-
+aligned, mono); the tipster's raw file control is a button; a ticket's "Adicionar à banca" and the
+alerts' Telegram buttons carry the button primitive's geometry; a followed league is a pressed chip
+(the action fill) instead of a raised surface; and every placeholder is prose in the body face, even
+inside a numeric field. Nothing else on a desk moved.
 
 **Not done.** The header still shows the sport picker, not a date picker; a per-viewer density
-choice is still ignored below 768px (comfortable is forced, as §7 says).
+choice is still ignored below 768 px. Text links that sit side by side in a footer row are 44 px
+tall but 16 px apart horizontally, which is what a row of links is; the public track record's
+filter controls are not part of the app and keep their compact height.

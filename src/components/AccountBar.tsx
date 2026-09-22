@@ -83,7 +83,7 @@ export function AccountBar() {
           {/* Balance and plan are numbers a person checks, so they are set like numbers. */}
           <Link
             href={`/app/conta?lang=${lang}`}
-            className="u-hit nums flex items-center gap-1.5 text-tiny text-fg-muted transition-colors hover:text-fg"
+            className="nums flex items-center gap-1.5 text-tiny text-fg-muted transition-colors hover:text-fg max-md:min-h-11 max-md:px-1.5"
             title={t("coins")}
             aria-label={`${user.coins} ${t("coins")}`}
           >
@@ -119,7 +119,7 @@ export function AccountBar() {
         aria-controls="app-menu"
         aria-label={open ? t("closeMenu") : t("menu")}
         data-testid="menu-button"
-        className="u-hit grid size-8 place-items-center rounded-control border border-line-control text-fg-muted transition-colors duration-(--dur-1) hover:bg-surface-2 hover:text-fg"
+        className="grid size-8 place-items-center rounded-control border border-line-control text-fg-muted transition-colors duration-(--dur-1) hover:bg-surface-2 hover:text-fg max-md:size-11"
       >
         <Icon name={open ? "close" : "menu"} size={16} />
       </button>

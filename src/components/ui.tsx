@@ -218,7 +218,8 @@ export function Input({
         CONTROL_BASE,
         CONTROL_READONLY,
         invalid ? "border-neg" : "border-line-control",
-        numeric && "nums text-right",
+        // The value is a number and set like one; the placeholder is prose and set in the body face (§3.4).
+        numeric && "nums text-right placeholder:font-sans placeholder:tracking-normal",
         suffix && "pr-8",
         className,
       )}
@@ -328,7 +329,7 @@ export function Badge({ tone = "neutral", children, className = "" }: { tone?: T
  */
 export function chipClass(on: boolean, className = ""): string {
   return cx(
-    "inline-flex items-center gap-1.5 rounded-control border px-2.5 py-1 text-tiny whitespace-nowrap transition-colors duration-(--dur-1) ease-(--ease-out) max-md:u-hit max-md:min-h-9 max-md:px-3 max-md:text-sm",
+    "u-hit inline-flex items-center gap-1.5 rounded-control border px-2.5 py-1 text-tiny whitespace-nowrap transition-colors duration-(--dur-1) ease-(--ease-out) max-md:min-h-9 max-md:px-3 max-md:text-sm",
     on ? "border-action bg-action text-action-fg" : "border-line-control text-fg-muted hover:bg-surface-2 hover:text-fg",
     className,
   );

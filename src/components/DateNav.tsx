@@ -36,7 +36,8 @@ export function DateNav({ dateKey, label }: { dateKey: string; label: string }) 
     startTransition(() => router.push(`/app?${params.toString()}`));
   };
 
-  const step = "grid h-(--row-h) w-8 shrink-0 place-items-center text-fg-muted transition-colors duration-(--dur-1) hover:bg-surface-2 hover:text-fg";
+  // A day back or forward is a real 44px square on a phone; a desk keeps the narrow segment.
+  const step = "grid h-(--row-h) w-8 shrink-0 place-items-center text-fg-muted transition-colors duration-(--dur-1) hover:bg-surface-2 hover:text-fg max-md:w-11";
 
   return (
     <div className="flex items-stretch divide-x divide-line rounded-control border border-line-control bg-surface-1">

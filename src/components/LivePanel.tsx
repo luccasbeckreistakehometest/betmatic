@@ -64,6 +64,7 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
   const done = useRef(false);
   const opened = useRef(false);
 
@@ -72,8 +73,10 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
     const tick = async () => {
       if (done.current || document.visibilityState !== "visible") return;
       const r = await fetch(`/api/game/${gameId}/live?sport=${sportKey}&lang=${lang}&date=${dateKey}`, { cache: "no-store" }).catch(() => null);
-      if (!alive || !r?.ok) return;
+      if (!alive) return;
+      if (!r?.ok) { setFailed(true); return; }
       const j = (await r.json()) as Payload;
+      setFailed(false);
       if (j.snapshot?.state === "post") done.current = true;
       if (!opened.current && j.snapshot) { opened.current = true; track("live_panel_open", { state: j.snapshot.state }); }
       setData(j);
@@ -113,7 +116,10 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
     return () => offerAction("live-read", null);
   }, [offerRead, busy, askRead, c.readBtn, c.readBusy]);
 
-  if (!data || !s) return null;
+  // The first poll is in flight: the panel's frame at roughly its final height, so the tickets
+  // below do not jump when it arrives. A failed poll leaves nothing, as before.
+  if (!data) return failed ? null : <LiveShell title={c.title} />;
+  if (!s) return null;
   return (
     <section className="rounded-panel border border-focus bg-surface-1" data-testid="live-panel" data-live-url={`/api/game/${gameId}/live?sport=${sportKey}&lang=${lang}&date=${dateKey}`}>
       <header className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-2.5">
@@ -194,6 +200,29 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
           ) : <p className="mt-1.5 text-tiny text-fg-dim" data-testid="live-read-plan">{c.readPlan}</p>)}
           {note && <p className="mt-1.5 text-tiny text-warn">{note}</p>}
         </div>
+      </div>
+    </section>
+  );
+}
+
+function LiveShell({ title }: { title: string }) {
+  return (
+    <section className="rounded-panel border border-line bg-surface-1" data-testid="live-loading" aria-busy="true">
+      <header className="flex items-center gap-2 border-b border-line px-4 py-2.5">
+        <span className="size-2 rounded-full bg-fg-dim" aria-hidden />
+        <h2 className="text-sm font-semibold text-fg">{title}</h2>
+        <span aria-hidden="true" className="ml-2 block h-3 w-24 rounded-control bg-surface-2" />
+      </header>
+      <div aria-hidden="true" className="flex flex-col gap-3 px-4 py-3">
+        <span className="block h-9 rounded-control bg-surface-2" />
+        {[0, 1].map((i) => (
+          <div key={i} className="flex flex-col gap-2 rounded-control border border-line bg-surface-2 p-3">
+            <span className="block h-3.5 w-2/5 rounded-control bg-surface-3" />
+            <span className="block h-3 w-3/5 rounded-control bg-surface-3" />
+            <span className="block h-3 w-1/2 rounded-control bg-surface-3" />
+          </div>
+        ))}
+        <span className="block h-3 w-1/3 rounded-control bg-surface-2" />
       </div>
     </section>
   );

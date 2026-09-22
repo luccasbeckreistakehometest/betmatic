@@ -226,7 +226,7 @@ export function BankrollBoard() {
       </Panel>
 
       <p className="text-tiny text-fg-dim">
-        <Link href={{ pathname: "/app/track", query: { lang } }} className="underline underline-offset-2 hover:text-fg">{t("navTrack")}</Link>
+        <Link href={{ pathname: "/app/track", query: { lang } }} className="underline underline-offset-2 hover:text-fg max-md:inline-flex max-md:min-h-11 max-md:items-center">{t("navTrack")}</Link>
       </p>
     </div>
   );

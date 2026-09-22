@@ -87,7 +87,7 @@ export function PlayerDeepDive({ athleteId, gameId }: { athleteId: string; gameI
   return (
     <div className="flex flex-col gap-4">
       {profile.game && (
-        <Link href={{ pathname: `/app/game/${profile.game.id}`, query: { sport: profile.sportKey, lang } }} className="w-fit text-tiny text-fg-dim hover:text-fg-muted">← {c.back}</Link>
+        <Link href={{ pathname: `/app/game/${profile.game.id}`, query: { sport: profile.sportKey, lang } }} className="w-fit text-tiny text-fg-dim hover:text-fg-muted max-md:inline-flex max-md:min-h-11 max-md:items-center">← {c.back}</Link>
       )}
       <PageHead
         kicker={c.title}

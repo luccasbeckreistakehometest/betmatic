@@ -68,26 +68,42 @@ test("the phone installs as an app: manifest, icons, theme colours, edge-to-edge
   await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveCount(1);
 });
 
-test("the tab bar sits at the bottom, marks where you are, and shows the game under way", async ({ page }) => {
+test("the tab bar sits at the bottom, names the game under way, is right on first paint, and marks where you are", async ({ page }) => {
   await registerUser(page, "tabs");
   await skipTour(page);
   await page.goto("/app?sport=wnba&lang=pt");
   const bar = page.getByTestId("tab-bar");
   await expect(bar).toBeVisible();
-  // The WNBA slate has a game in play, so the live tab is there, with the dot.
+  // The WNBA slate has a game in play: a fifth tab named by the two teams, with the live dot.
   const live = page.getByTestId("tab-live");
   await expect(live).toBeVisible();
-  await expect(bar.getByRole("link")).toHaveText(["Jogos", "Múltiplas", "Ao vivo", "Banca", "Conta"]);
-  await expect(bar.getByRole("link", { name: "Jogos" })).toHaveAttribute("aria-current", "page");
-  // Fixed to the viewport's bottom edge, every tab at least 44px tall.
+  await expect(live).toHaveAttribute("aria-label", "Ao vivo: Dunas Divers × Cedro Comets");
+  await expect(bar.getByRole("link")).toHaveText(["Jogos", "Múltiplas", "DUN × CED", "Banca", "Conta"]);
+  // The shell decides the live tab on the server (from the remembered sport), so the HTML already
+  // carries five tabs and nothing moves under the thumb after first paint.
+  const html = await page.request.get("/app?sport=wnba&lang=pt").then((r) => r.text());
+  expect(html).toContain('data-testid="tab-live"');
+  await page.goto("/app?sport=wnba&lang=pt", { waitUntil: "commit" });
+  const first = await page.locator('[data-testid="tab-bar"] a').count();
+  await page.waitForTimeout(1500);
+  expect(first).toBe(5);
+  expect(await page.locator('[data-testid="tab-bar"] a').count()).toBe(5);
+  // The current tab carries the rail's cue: a 2px rule in ink on its top edge, never a hue.
+  const current = bar.getByRole("link", { name: "Jogos" });
+  await expect(current).toHaveAttribute("aria-current", "page");
+  expect(await current.evaluate((el) => getComputedStyle(el).boxShadow)).toMatch(/rgb\(237, 240, 245\).*inset/);
+  // Fixed to the viewport's bottom edge, every tab at least 44px tall, and the token that reserves
+  // its room is the bar's real height.
   const viewport = page.viewportSize()!;
   const box = (await bar.boundingBox())!;
   expect(Math.round(box.y + box.height)).toBe(viewport.height);
   for (const tab of await bar.getByRole("link").all()) expect((await tab.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  const reserved = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--tabbar-h"));
+  expect(reserved.replace(/\s/g, "")).toBe("calc(56px+1px+0px)");
   // The main column keeps the bar's height free: the footer's last line is reachable above it.
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   const footer = (await page.locator("footer").last().boundingBox())!;
-  expect(footer.y + footer.height).toBeLessThanOrEqual(box.y + 1);
+  expect(footer.y + footer.height).toBeLessThanOrEqual(box.y + 0.5);
   await live.click();
   await expect(page).toHaveURL(/\/app\/game\/990000102/);
   await expect(page.getByTestId("tab-live")).toHaveAttribute("aria-current", "page");
@@ -112,51 +128,74 @@ test("the slate is a list of tappable cards on a phone, the table stays for the 
   await expect(live).toContainText("Dunas");
   await expect(live).toContainText("61");
   await expect(live.locator(".live-dot")).toBeVisible();
-  // The three market numbers, and a card tall enough for a thumb.
+  // The three market numbers, whole — a number is never cut short — and a card tall enough for a thumb.
   const scheduled = page.locator('[data-testid="game-card"][data-status="scheduled"]').first();
   await expect(scheduled).toContainText("Handicap");
   await expect(scheduled).toContainText("Total");
   await expect(scheduled).toContainText("Vencedor");
+  const clipped = await scheduled.locator(".nums").evaluateAll((els) => els.filter((el) => el.scrollWidth > el.clientWidth + 1).map((el) => el.textContent));
+  expect(clipped).toEqual([]);
   expect((await scheduled.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   await scheduled.click();
   await expect(page).toHaveURL(/\/app\/game\/9900001\d\d\?sport=wnba&lang=pt/);
 });
 
-test("the game page: a compact head once the team block scrolls away, and one primary action in a bottom bar", async ({ page }) => {
+test("the game page: a compact head once the team block scrolls away, and one primary action for the page's state", async ({ page }) => {
   const { email } = await registerUser(page, "phonegame");
   await setPlan(email, "pro");
   await skipTour(page);
   await page.goto("/app/game/990000102?sport=wnba&lang=pt");
   await expect(page.getByTestId("live-panel")).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId("ticket").first()).toBeVisible({ timeout: 30_000 });
-  // At the top the full team block is on screen, so there is no compact head — and the bar offers
-  // the one action whose own control is off screen: the live read while this reader can still ask
-  // for one (the game's shared read may already have been taken earlier in the run), else the
-  // tickets further down. Either way it is one button, above the tab bar, never on it.
+  // At the top the full team block is on screen, so the compact head is off (hidden and moved away).
   const head = page.getByTestId("game-sticky-head");
   await expect(head).toHaveAttribute("data-shown", "false");
+  expect(await head.evaluate((el) => getComputedStyle(el).opacity)).toBe("0");
+  // The bar shows the one action for this state: the live read while this reader can still ask for
+  // one (the game's shared read may already have been taken earlier in the run — the panel then
+  // shows the cooldown and no button), else the tickets. Its own control is off screen either way.
+  const canRead = (await page.getByTestId("live-read-btn").count()) > 0;
+  const expected = canRead ? "Pedir leitura ao vivo" : "Ver bilhetes";
   const bar = page.getByTestId("game-action-bar");
-  const primary = bar.getByRole("button");
-  await expect(primary).toBeVisible();
-  const label = (await primary.innerText()).trim();
-  expect(["Pedir leitura ao vivo", "Ver bilhetes"]).toContain(label);
+  await expect(bar.getByRole("button")).toHaveText(expected);
   const barBox = (await bar.boundingBox())!;
   expect(barBox.height).toBeGreaterThanOrEqual(44);
   const tabs = (await page.getByTestId("tab-bar").boundingBox())!;
   expect(Math.round(barBox.y + barBox.height)).toBeLessThanOrEqual(Math.round(tabs.y) + 1);
-  // Once the team block has scrolled under the topbar, the compact head takes over with the score.
+  // Once the team block has scrolled under the topbar, the compact head takes over with the score,
+  // drawn right under the topbar.
   await page.evaluate(() => window.scrollTo(0, 800));
   await expect(head).toHaveAttribute("data-shown", "true");
-  await expect(head).toBeVisible();
+  await expect.poll(() => head.evaluate((el) => getComputedStyle(el).opacity)).toBe("1");
+  const topbar = (await page.locator("header").first().boundingBox())!;
+  expect(Math.round((await head.boundingBox())!.y)).toBe(Math.round(topbar.y + topbar.height));
   await expect(head.getByTestId("sticky-score")).toHaveText("61 × 58");
+  // The label never changes while scrolling: it is the same action at every position, or nothing.
+  for (const y of [1200, 1600, 2000]) {
+    await page.evaluate((y) => window.scrollTo(0, y), y);
+    await page.waitForTimeout(150);
+    if (await bar.count()) await expect(bar.getByRole("button")).toHaveText(expected);
+  }
+  // At the end of the page the bar rests in flow above the footer: the 18+ line is never covered.
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await page.waitForTimeout(300);
+  if (await bar.count()) {
+    const b = (await bar.boundingBox())!;
+    const footer = (await page.locator("footer").last().boundingBox())!;
+    expect(b.y + b.height).toBeLessThanOrEqual(footer.y + 1);
+  }
   // The bar steps aside as soon as the control it stands for is on screen: one primary action at a time.
-  const twin = label === "Ver bilhetes" ? page.locator("#tickets") : page.getByTestId("live-read-btn");
+  const twin = canRead ? page.getByTestId("live-read-btn") : page.locator("#tickets");
   await twin.scrollIntoViewIfNeeded();
   await expect(bar).toBeHidden();
-  // Odds bands as chips a thumb can swipe: pressing one leaves that band's tickets alone on screen.
+  // Odds bands as chips a thumb can swipe, resting on the tickets' own edge; pressing one leaves
+  // that band's tickets alone on screen.
   const chips = page.getByTestId("band-chips").getByRole("button");
   await expect(chips.first()).toHaveAttribute("aria-pressed", "true");
   const tickets = page.getByTestId("ticket");
+  const chipBox = (await chips.first().boundingBox())!;
+  const ticketBox = (await tickets.first().boundingBox())!;
+  expect(Math.abs(chipBox.x - ticketBox.x)).toBeLessThanOrEqual(1);
   const all = await tickets.count();
   await chips.nth(1).click();
   await expect(chips.nth(1)).toHaveAttribute("aria-pressed", "true");
@@ -184,4 +223,31 @@ test("the tickets panel offers 'Ver bilhetes' from the bottom of the page and sc
   const top = () => page.locator("#tickets").boundingBox().then((b) => b!.y);
   await expect.poll(top, { timeout: 5_000 }).toBeGreaterThanOrEqual(0);
   expect(await top()).toBeLessThan(200);
+});
+
+test("installed on a phone with a notch, the chrome clears the status bar and the home indicator", async ({ page }) => {
+  const { email } = await registerUser(page, "insets");
+  await setPlan(email, "pro");
+  await skipTour(page);
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Emulation.setSafeAreaInsetsOverride", { insets: { top: 47, bottom: 34, left: 0, right: 0 } });
+  await page.goto("/app/game/990000102?sport=wnba&lang=pt");
+  await expect(page.getByTestId("live-panel")).toBeVisible({ timeout: 30_000 });
+  // The topbar is drawn below the 47px status bar; everything that sticks under it follows.
+  const header = (await page.locator("header").first().boundingBox())!;
+  expect(Math.round(header.y)).toBe(0);
+  expect(Math.round(header.height)).toBe(48 + 47);
+  await page.evaluate(() => window.scrollTo(0, 800));
+  const head = page.getByTestId("game-sticky-head");
+  await expect(head).toHaveAttribute("data-shown", "true");
+  expect(Math.round((await head.boundingBox())!.y)).toBe(48 + 47);
+  // The tabs sit above the 34px home indicator, and the room reserved for them says so.
+  const tabs = page.getByTestId("tab-bar");
+  const tabsBox = (await tabs.boundingBox())!;
+  const inner = await page.evaluate(() => window.innerHeight);
+  expect(Math.round(tabsBox.height)).toBe(56 + 1 + 34);
+  const link = (await tabs.getByRole("link").first().boundingBox())!;
+  expect(Math.round(link.y + link.height)).toBeLessThanOrEqual(inner - 34);
+  const reserved = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--tabbar-h"));
+  expect(reserved.replace(/\s/g, "")).toBe("calc(56px+1px+34px)");
 });

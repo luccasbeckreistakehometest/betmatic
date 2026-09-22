@@ -43,7 +43,7 @@ export function MarketingHeader({ lang, langHrefs, nav }: { lang: Lang; langHref
         )}
         <div className="ml-auto flex items-center gap-2 sm:gap-4">
           <LangSwitch lang={lang} hrefs={langHrefs} />
-          <Link href={`/login?lang=${lang}`} className={`${link} u-hit whitespace-nowrap`} data-testid="landing-login">
+          <Link href={`/login?lang=${lang}`} className={`${link} whitespace-nowrap max-md:inline-flex max-md:min-h-11 max-md:items-center`} data-testid="landing-login">
             {c.login}
           </Link>
           <LinkButton variant="primary" href={`/signup?lang=${lang}`} className="whitespace-nowrap">

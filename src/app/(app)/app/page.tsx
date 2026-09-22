@@ -21,7 +21,9 @@ export default async function SlatePage({ searchParams }: PageProps<"/app">) {
   const params = await searchParams;
   const raw = typeof params.date === "string" ? params.date.replaceAll("-", "") : todayKey();
   const requested = /^\d{8}$/.test(raw) ? raw : todayKey();
-  const lang = normaliseLang(typeof params.lang === "string" ? params.lang : undefined);
+  const viewer = await currentUser();
+  // The installed app opens at a bare /app: the account's own language then, not the default.
+  const lang = normaliseLang(typeof params.lang === "string" ? params.lang : viewer?.lang);
 
   // No sport in the URL: the one the visitor last used, else one that has games today.
   if (typeof params.sport !== "string") {
@@ -33,7 +35,6 @@ export default async function SlatePage({ searchParams }: PageProps<"/app">) {
   }
 
   const sport = getSport(params.sport);
-  const viewer = await currentUser();
 
   // The games stream in behind the slate's own frame (never a blank screen); the redirect above
   // has already been decided, so it is still a real 307. A loading.tsx would have flushed the

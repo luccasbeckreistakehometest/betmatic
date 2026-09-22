@@ -220,7 +220,7 @@ function CustomTicket({ c, lang, ticket, index, slipId }: { c: Copy; lang: Lang;
       <footer className="flex flex-wrap items-center gap-2 border-t border-line px-3.5 py-2.5 text-tiny">
         {state === "saved" ? <span className="text-pos" data-testid="custom-saved">{c.saved}</span> : (
           <>
-            <input value={stake} onChange={(e) => setStake(e.target.value)} placeholder={c.stake} inputMode="decimal" enterKeyHint="done" aria-label={c.stake} className={buttonClass("secondary", "w-20 nums max-md:w-auto max-md:min-w-0 max-md:flex-1 max-md:text-right")} data-testid="custom-stake" />
+            <input value={stake} onChange={(e) => setStake(e.target.value)} placeholder={c.stake} inputMode="decimal" enterKeyHint="done" size={6} aria-label={c.stake} className={buttonClass("secondary", "w-20 nums placeholder:font-sans placeholder:tracking-normal max-md:w-auto max-md:min-w-0 max-md:flex-1 max-md:text-right")} data-testid="custom-stake" />
             <button type="button" onClick={() => void save()} disabled={!(Number(stake) > 0) || state === "saving" || !slipId} className={buttonClass("secondary", "max-md:flex-1")} data-testid="custom-save">{c.save}</button>
             {state === "limit" && <span className="text-warn">{c.limit}</span>}
             {state === "paused" && <span className="text-warn">{c.paused}</span>}

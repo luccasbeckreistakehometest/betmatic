@@ -1,4 +1,6 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cx } from "@/components/ui";
 
 /**
@@ -15,9 +17,25 @@ import { cx } from "@/components/ui";
  *   · and a table twin for a screen reader, because a path with an aria-label is not a chart.
  */
 
-const W = 640;
-const H = 240;
-const PAD = { top: 12, right: 10, bottom: 24, left: 48 };
+/* The frame is 16:6 and its viewBox is the width it is drawn at (measured, 640 before the first
+   paint on the client), so a 12px tick label is 12px on a phone and a 1.5px line is 1.5px on a desk:
+   nothing in the drawing scales with the viewport except the drawing. */
+const W0 = 640;
+const PAD = { top: 12, right: 10, bottom: 24, left: 60 };
+
+/** The rendered width of a box, from a ResizeObserver; the fallback until the first measurement. */
+export function useMeasuredWidth<T extends HTMLElement>(fallback: number): [React.RefObject<T | null>, number] {
+  const ref = useRef<T>(null);
+  const [width, setWidth] = useState(fallback);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(([entry]) => setWidth(Math.max(240, Math.round(entry.contentRect.width))));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return [ref, width];
+}
 
 /** A round step: 1, 2, 2.5 or 5 times a power of ten, so the ticks read as numbers a person says. */
 function niceStep(span: number, count: number): number {
@@ -65,6 +83,8 @@ export function LineChart({
   testId?: string;
   className?: string;
 }) {
+  const [frame, W] = useMeasuredWidth<HTMLElement>(W0);
+  const H = Math.round((W * 6) / 16);
   const values = [0, ...points.map((p) => p.value)];
   const ticks = chartTicks(Math.min(...values), Math.max(...values));
   const lo = ticks[0];
@@ -90,7 +110,7 @@ export function LineChart({
   const showLast = lastLabel && lastLabel !== firstLabel;
 
   return (
-    <figure className={cx("m-0", sparse ? "max-w-md" : "max-w-3xl", className)}>
+    <figure ref={frame} className={cx("m-0", sparse ? "max-w-md" : "max-w-3xl", className)}>
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="block h-auto w-full max-w-full"
@@ -123,7 +143,7 @@ export function LineChart({
               x={PAD.left - 8}
               y={yOf(tick) + 3.5}
               textAnchor="end"
-              fontSize={10}
+              fontSize={12}
               fontFamily="var(--font-mono)"
               fill="var(--fg-dim)"
             >
@@ -172,12 +192,12 @@ export function LineChart({
           })}
 
         {firstLabel && (
-          <text x={PAD.left} y={H - 6} fontSize={10} fontFamily="var(--font-mono)" fill="var(--fg-dim)">
+          <text x={PAD.left} y={H - 6} fontSize={12} fontFamily="var(--font-mono)" fill="var(--fg-dim)">
             {firstLabel}
           </text>
         )}
         {showLast && (
-          <text x={W - PAD.right} y={H - 6} textAnchor="end" fontSize={10} fontFamily="var(--font-mono)" fill="var(--fg-dim)">
+          <text x={W - PAD.right} y={H - 6} textAnchor="end" fontSize={12} fontFamily="var(--font-mono)" fill="var(--fg-dim)">
             {lastLabel}
           </text>
         )}

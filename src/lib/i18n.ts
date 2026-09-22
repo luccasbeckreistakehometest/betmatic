@@ -323,6 +323,7 @@ const DICT = {
   tabBankroll: { pt: "Banca", en: "Bankroll" },
   tabAccount: { pt: "Conta", en: "Account" },
   tabLive: { pt: "Ao vivo", en: "Live" },
+  tabLiveMany: { pt: "{n} ao vivo", en: "{n} live" },
   seeTickets: { pt: "Ver bilhetes", en: "See tickets" },
   allBands: { pt: "Todas as faixas", en: "All bands" },
   navMore: { pt: "Mais", en: "More" },

@@ -69,15 +69,22 @@ const TABS: { href: string; key: DictKey; icon: IconName }[] = [
   { href: "/app/conta", key: "tabAccount", icon: "user" },
 ];
 
-interface LiveGame { id: string; label: string }
+export interface LiveTabGame { id: string; label: string; name: string }
+/** What the server knew when it rendered the shell: the sport it looked at and its games in play. */
+export interface LiveTabInitial { sportKey: string; games: LiveTabGame[] }
+
+const sameGames = (a: LiveTabGame[], b: LiveTabGame[]) => a.length === b.length && a.every((g, i) => g.id === b[i].id);
 
 /**
- * The game of the current sport that is under way right now, if there is one. Read from the slate
- * the phone is already looking at, only on a phone (a desk never draws the bar), only while the tab
- * is visible, and refreshed every 90 s — a game rarely changes state faster than that.
+ * The games of the current sport under way right now. The shell answers first, on the server, so
+ * the bar is right on first paint and nothing moves under the thumb; the phone then re-reads the
+ * slate every 90 s while the tab is visible, because a game can start while the app is open. Only
+ * a phone asks (a desk never draws the bar), and it asks at once only when the server looked at
+ * another sport than the one in the URL.
  */
-function useLiveGame(sportKey: string, lang: string): LiveGame | null {
-  const [live, setLive] = useState<LiveGame | null>(null);
+function useLiveGames(sportKey: string, lang: string, initial: LiveTabInitial | null): LiveTabGame[] {
+  const seeded = initial?.sportKey === sportKey;
+  const [read, setRead] = useState<{ sportKey: string; games: LiveTabGame[] } | null>(null);
   useEffect(() => {
     if (!window.matchMedia("(max-width: 767px)").matches) return;
     let alive = true;
@@ -85,24 +92,24 @@ function useLiveGame(sportKey: string, lang: string): LiveGame | null {
       if (document.visibilityState !== "visible") return;
       const r = await fetch(`/api/slate?sport=${encodeURIComponent(sportKey)}&lang=${lang}`, { cache: "no-store" }).catch(() => null);
       if (!alive || !r?.ok) return;
-      const j = (await r.json().catch(() => null)) as { games?: { id: string; status: string; home: { abbreviation: string }; away: { abbreviation: string } }[] } | null;
-      const game = (j?.games ?? []).find((g) => g.status === "live");
-      setLive((prev) => (game ? (prev?.id === game.id ? prev : { id: game.id, label: `${game.away.abbreviation} × ${game.home.abbreviation}` }) : null));
+      const j = (await r.json().catch(() => null)) as { games?: { id: string; status: string; home: { abbreviation: string; displayName: string }; away: { abbreviation: string; displayName: string } }[] } | null;
+      const games = (j?.games ?? []).filter((g) => g.status === "live").map((g) => ({ id: g.id, label: `${g.away.abbreviation} × ${g.home.abbreviation}`, name: `${g.away.displayName} × ${g.home.displayName}` }));
+      setRead((prev) => (prev && prev.sportKey === sportKey && sameGames(prev.games, games) ? prev : { sportKey, games }));
     };
-    const first = setTimeout(() => void tick(), 0);
+    const first = seeded ? null : setTimeout(() => void tick(), 0);
     const timer = setInterval(() => void tick(), 90_000);
     const onVisible = () => { if (document.visibilityState === "visible") void tick(); };
     document.addEventListener("visibilitychange", onVisible);
-    return () => { alive = false; clearTimeout(first); clearInterval(timer); document.removeEventListener("visibilitychange", onVisible); };
-  }, [sportKey, lang]);
-  return live;
+    return () => { alive = false; if (first) clearTimeout(first); clearInterval(timer); document.removeEventListener("visibilitychange", onVisible); };
+  }, [sportKey, lang, seeded]);
+  if (read && read.sportKey === sportKey) return read.games;
+  return seeded && initial ? initial.games : [];
 }
 
 function isCurrent(pathname: string, href: string): boolean {
   if (href === "/app") return pathname === "/app";
   return pathname === href || pathname.startsWith(`${href}/`);
 }
-
 export function AppRail() {
   const { lang, sport } = useNavState();
   const pathname = usePathname();
@@ -113,7 +120,7 @@ export function AppRail() {
     <nav
       data-tour="nav"
       aria-label={lang === "pt" ? "Navegação principal" : "Main navigation"}
-      className="sticky top-12 hidden h-[calc(100dvh-3rem)] w-14 shrink-0 self-start overflow-y-auto border-r border-line bg-surface-1 md:block lg:w-56"
+      className="sticky top-(--topbar-h) hidden h-[calc(100dvh-var(--topbar-h))] w-14 shrink-0 self-start overflow-y-auto border-r border-line bg-surface-1 md:block lg:w-56"
     >
       <div className="flex flex-col py-2">
         {NAV_GROUPS.map((group) => (
@@ -150,28 +157,31 @@ export function AppRail() {
 }
 
 /**
- * Phone navigation: a fixed bar under everything, 56px tall plus the device's own inset, every tab
- * the full height (a fingertip never misses). The current tab carries the keyboard's blue as a 2px
- * rule on top and full-contrast ink — the one place besides focus where the hue appears (§6.1) —
- * so a glance tells where you are without reading. The live tab carries the live dot.
+ * Phone navigation: a fixed bar under everything, 56px plus the device's own inset, every tab the
+ * full height (a fingertip never misses). The current tab carries the rail's cue — a 2px rule in
+ * ink on its top edge and full-contrast text (§12.7) — so a glance tells where you are without
+ * reading, and the product keeps one current-item colour. The live tab names the game.
  */
-export function AppBottomBar() {
+export function AppBottomBar({ initialLive = null }: { initialLive?: LiveTabInitial | null }) {
   const { lang, sport } = useNavState();
   const pathname = usePathname();
   const t = makeT(lang);
-  const live = useLiveGame(sport.key, lang);
-  const liveHref = live ? `/app/game/${live.id}` : null;
-  const onLiveGame = liveHref !== null && pathname === liveHref;
+  const live = useLiveGames(sport.key, lang, initialLive);
+  const one = live.length === 1 ? live[0] : null;
+  const liveHref = one ? `/app/game/${one.id}` : live.length > 1 ? "/app" : null;
+  const onLiveGame = one !== null && pathname === `/app/game/${one.id}`;
 
   const tabs = TABS.flatMap((item) => {
     const current = item.href === "/app"
       ? (pathname === "/app" || pathname.startsWith("/app/game/")) && !onLiveGame
       : isCurrent(pathname, item.href);
-    const tab = { href: item.href, label: t(item.key), icon: item.icon, current, live: false, title: undefined as string | undefined };
+    const tab = { href: item.href, label: t(item.key), icon: item.icon, current, live: false, mono: false, aria: undefined as string | undefined, title: undefined as string | undefined };
     // The live game sits between the desk and the bankroll: where you are, then what it costs you.
-    return item.href === "/app/parlays" && liveHref
-      ? [tab, { href: liveHref, label: t("tabLive"), icon: "pulse" as IconName, current: onLiveGame, live: true, title: live?.label }]
-      : [tab];
+    if (item.href !== "/app/parlays" || !liveHref) return [tab];
+    const liveTab = one
+      ? { href: liveHref, label: one.label, icon: "pulse" as IconName, current: onLiveGame, live: true, mono: true, aria: `${t("tabLive")}: ${one.name}`, title: one.name }
+      : { href: liveHref, label: t("tabLiveMany").replace("{n}", String(live.length)), icon: "pulse" as IconName, current: false, live: true, mono: false, aria: undefined, title: undefined };
+    return [tab, liveTab];
   });
 
   return (
@@ -187,6 +197,7 @@ export function AppBottomBar() {
             <Link
               href={{ pathname: tab.href, query: { sport: sport.key, lang } }}
               aria-current={tab.current ? "page" : undefined}
+              aria-label={tab.aria}
               title={tab.title}
               data-testid={tab.live ? "tab-live" : undefined}
               className={cx(
@@ -198,7 +209,7 @@ export function AppBottomBar() {
                 <Icon name={tab.icon} size={20} />
                 {tab.live && <span aria-hidden="true" className="live-dot absolute -top-0.5 -right-1 size-1.5 rounded-full bg-neg" />}
               </span>
-              <span className="max-w-full truncate px-1">{tab.label}</span>
+              <span className={cx("max-w-full truncate px-1", tab.mono && "nums")}>{tab.label}</span>
             </Link>
           </li>
         ))}

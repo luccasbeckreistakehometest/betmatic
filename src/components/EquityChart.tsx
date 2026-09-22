@@ -151,7 +151,7 @@ export function EquityChart({ rows: initial, lang, compact = false, className = 
               {comparison.map(({ band: b, summary: s }) => (
                 <Tr key={b} selected={b === band} data-testid={`band-row-${b}`}>
                   <Td label={c.band}>
-                    <button type="button" onClick={() => setBand(b === band ? "" : b)} className="text-fg underline-offset-2 hover:underline">
+                    <button type="button" onClick={() => setBand(b === band ? "" : b)} className="text-fg underline-offset-2 hover:underline max-md:inline-flex max-md:min-h-11 max-md:items-center">
                       {bandLabel(b)}
                     </button>
                   </Td>

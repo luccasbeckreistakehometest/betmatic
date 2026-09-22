@@ -27,11 +27,12 @@ function TeamLine({ team, won, showScore }: { team: TeamRef; won: boolean; showS
   );
 }
 
+/** A market's label and number. The label may be cut short; the number never is. */
 function Market({ label, value }: { label: string; value: string }) {
   return (
     <span className="flex min-w-0 flex-col gap-0.5">
       <span className="truncate text-micro u-label text-fg-dim">{label}</span>
-      <span className="nums truncate text-sm text-fg-muted">{value}</span>
+      <span className="nums text-sm whitespace-nowrap text-fg-muted">{value}</span>
     </span>
   );
 }
@@ -86,8 +87,10 @@ export function GameCard({ game, lang = "pt", sportKey }: { game: Game; lang?: L
             <TeamLine team={game.away} won={awayWon} showScore={!scheduled} />
             <TeamLine team={game.home} won={homeWon} showScore={!scheduled} />
           </span>
+          {/* The handicap takes what is left; total and winner take exactly their numbers' width,
+              so "+100 / −120" is whole at 320px. */}
           {!final && (
-            <span className="grid grid-cols-3 gap-3 border-t border-line pt-2">
+            <span className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-4 gap-y-1 border-t border-line pt-2">
               <Market label={t("spread")} value={game.odds?.details ?? NOT_PRICED} />
               <Market label={t("total")} value={total} />
               <Market label={t("moneyline")} value={moneyline} />

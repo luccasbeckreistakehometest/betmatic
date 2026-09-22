@@ -113,7 +113,7 @@ function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [], p
               <div className="flex flex-wrap items-baseline gap-2">
                 <span className="nums text-micro text-fg-dim">{i + 1}</span>
                 {leg.athleteId && sportKey ? (
-                  <Link href={{ pathname: `/app/player/${leg.athleteId}`, query: { sport: sportKey, lang, ...(gameId ? { game: gameId } : {}) } }} className="text-tiny font-medium text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg" data-testid="leg-player-link">
+                  <Link href={{ pathname: `/app/player/${leg.athleteId}`, query: { sport: sportKey, lang, ...(gameId ? { game: gameId } : {}) } }} className="text-tiny font-medium text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg max-md:inline-flex max-md:min-h-11 max-md:items-center" data-testid="leg-player-link">
                     {leg.selection}
                   </Link>
                 ) : (
@@ -193,12 +193,14 @@ function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [], p
       {(kelly > 0 || gameId) && (
         <div className="flex flex-wrap items-center gap-3 border-t border-line px-3.5 py-2.5 text-tiny" data-testid="ticket-bankroll">
           {kelly > 0 && <span className="text-fg-muted">{lang === "pt" ? "stake sugerido" : "suggested stake"}: <span className="nums text-fg">{pctOf(kelly, lang)}</span> {lang === "pt" ? "da banca" : "of bankroll"} <span className="text-fg-dim">(¼ Kelly)</span></span>}
+          {/* min-w-0: as a flex item this span would otherwise refuse to be narrower than the
+              field's default 20 characters plus the button, and set the width of the page. */}
           {gameId && (
-            <span className="ml-auto flex items-center gap-2 max-md:ml-0 max-md:basis-full">
+            <span className="ml-auto flex items-center gap-2 max-md:ml-0 max-md:min-w-0 max-md:basis-full">
               {saved === "saved" ? <span className="text-pos">✓ {t("saved")}</span> : saved === "error" ? <span className="text-warn">{lang === "pt" ? "entre para salvar" : "sign in to save"}</span> : saved === "limit" ? <span className="text-warn" data-testid="ticket-limit">{limitNote}</span> : saved === "paused" ? <span className="text-warn" data-testid="ticket-paused">{t("pausedHint")}</span> : (
                 <>
                   {/* The stake is money: the decimal keypad, and on a phone the field and the button share the line. */}
-                  <input aria-label={lang === "pt" ? "Valor apostado (R$)" : "Stake (R$)"} value={stake} onChange={(e) => setStake(e.target.value)} placeholder={t("stake")} inputMode="decimal" enterKeyHint="done" className={buttonClass("secondary", "w-20 nums max-md:w-auto max-md:min-w-0 max-md:flex-1 max-md:text-right")} data-testid="ticket-stake" />
+                  <input aria-label={lang === "pt" ? "Valor apostado (R$)" : "Stake (R$)"} value={stake} onChange={(e) => setStake(e.target.value)} placeholder={t("stake")} inputMode="decimal" enterKeyHint="done" size={6} className={buttonClass("secondary", "w-20 nums placeholder:font-sans placeholder:tracking-normal max-md:w-auto max-md:min-w-0 max-md:flex-1 max-md:text-right")} data-testid="ticket-stake" />
                   <button onClick={addToBankroll} disabled={!(Number(stake) > 0) || saved === "saving"} className={buttonClass("secondary", "max-md:flex-1")} data-testid="ticket-add">{t("addToBankroll")}</button>
                 </>
               )}

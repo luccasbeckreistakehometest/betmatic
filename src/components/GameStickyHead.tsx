@@ -52,11 +52,11 @@ export function GameStickyHead({ away, home, status, live, kickoff, lang, backHr
       data-shown={shown ? "true" : "false"}
       aria-hidden={!shown}
       className={cx(
-        "fixed inset-x-0 top-(--topbar-h) z-30 flex h-10 items-center gap-2 border-b border-line bg-surface-1 px-2 transition-[transform,opacity] duration-(--dur-2) ease-(--ease-out) md:hidden",
+        "fixed inset-x-0 top-(--topbar-h) z-30 flex h-11 items-center gap-2 border-b border-line bg-surface-1 px-1 transition-[transform,opacity] duration-(--dur-2) ease-(--ease-out) md:hidden",
         shown ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-full opacity-0",
       )}
     >
-      <Link href={backHref} aria-label={lang === "pt" ? "Voltar aos jogos" : "Back to the slate"} tabIndex={shown ? 0 : -1} className="u-hit grid size-8 shrink-0 place-items-center text-fg-muted">
+      <Link href={backHref} aria-label={lang === "pt" ? "Voltar aos jogos" : "Back to the slate"} tabIndex={shown ? 0 : -1} className="grid size-11 shrink-0 place-items-center text-fg-muted">
         <Icon name="chevron-left" size={20} />
       </Link>
       <span className="flex min-w-0 flex-1 items-center justify-center gap-2 text-sm">

@@ -93,7 +93,7 @@ export function ParlayBuilder() {
         lang={lang}
         status={loading ? "pending" : locked ? "disabled" : slate ? "ok" : "empty"}
         meta={slate ? `${slate.matchup}${builtFor ? ` · ${builtFor.slice(6, 8)}/${builtFor.slice(4, 6)}` : ""}` : undefined}
-        action={<Link href={`/app/parlays/custom?sport=${sport.key}&lang=${lang}`} className="rounded-control border border-line-control px-2 py-0.5 text-label text-fg-muted transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:text-fg" data-testid="custom-parlay-link">{t("customParlay")}</Link>}
+        action={<Link href={`/app/parlays/custom?sport=${sport.key}&lang=${lang}`} className="rounded-control border border-line-control px-2 py-0.5 text-label text-fg-muted transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:text-fg max-md:inline-flex max-md:min-h-11 max-md:items-center max-md:px-3" data-testid="custom-parlay-link">{t("customParlay")}</Link>}
       >
         {loading ? (
           <Empty>{t("loadingTickets")}</Empty>
