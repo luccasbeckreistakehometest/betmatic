@@ -14,7 +14,7 @@ interface Payload {
   paused?: boolean;
   snapshot: { state: "pre" | "in" | "post"; clock: string; period: number; home: { abbr: string; score: number }; away: { abbr: string; score: number } } | null;
   tickets: Ticket[];
-  read: { slate: BetSlate; generatedAt: string; minute: number } | null;
+  read: { slate: BetSlate; generatedAt: string; minute: number; period?: number } | null;
   canRead: boolean;
   nextReadAt: string | null;
 }
@@ -27,7 +27,7 @@ const C = {
     empty: "Nenhum bilhete deste jogo para acompanhar.", before: "chance antes", now: "chance agora", won: "bateu", lost: "caiu", alive: "vivo", unknown: "sem leitura",
     saved: "seu bilhete", served: "bilhete do jogo", foul: "5 faltas", benched: "no banco", final: "Jogo encerrado — os bilhetes são liquidados em seguida.",
     pregame: "Estes bilhetes foram montados antes de o jogo começar: os preços são daquele momento, não o que a casa mostra agora.",
-    read: "Leitura ao vivo", readBtn: "Pedir leitura ao vivo", readBusy: "Lendo o jogo…", readAt: "leitura do minuto {m} · {t}", readNext: "Nova leitura liberada às {t}.",
+    read: "Leitura ao vivo", readBtn: "Pedir leitura ao vivo", readBusy: "Lendo o jogo…", readAt: "leitura no {q} · minuto {m} · {t}", readNext: "Nova leitura liberada às {t}, ou assim que virar o quarto.", readAuto: "Nos jogos com bilhete, uma leitura nova entra sozinha a cada quarto.", quarter: "{n}º quarto", overtime: "prorrogação",
     readPlan: "A leitura ao vivo faz parte dos planos Pro e Max.", readFail: "Não deu para ler o jogo agora.", updated: "atualizado {t}",
     chance: "chance", readNote: "Montados sobre o que já aconteceu no jogo; os preços vêm da tabela de antes do apito e a casa já mexeu neles.",
   },
@@ -36,11 +36,17 @@ const C = {
     empty: "No ticket on this game to follow.", before: "chance before", now: "chance now", won: "cleared", lost: "busted", alive: "alive", unknown: "no read",
     saved: "your ticket", served: "game ticket", foul: "5 fouls", benched: "benched", final: "Game over — tickets are graded next.",
     pregame: "These tickets were built before the game started: the prices are from then, not what the book shows now.",
-    read: "Live read", readBtn: "Ask for a live read", readBusy: "Reading the game…", readAt: "read at minute {m} · {t}", readNext: "A new read unlocks at {t}.",
+    read: "Live read", readBtn: "Ask for a live read", readBusy: "Reading the game…", readAt: "read in {q} · minute {m} · {t}", readNext: "A new read unlocks at {t}, or as soon as the quarter turns.", readAuto: "Games with a ticket get a fresh read by themselves every quarter.", quarter: "Q{n}", overtime: "overtime",
     readPlan: "The live read is part of the Pro and Max plans.", readFail: "Couldn't read the game right now.", updated: "updated {t}",
     chance: "chance", readNote: "Built on what the game has already done; the prices come from the pre-tip board and the book has moved them since.",
   },
 };
+
+/** The quarter a read was taken in; older reads carry none and are named by the minute alone. */
+function quarterName(period: number, c: { quarter: string; overtime: string }): string {
+  if (period <= 0) return "—";
+  return period <= 4 ? c.quarter.replace("{n}", String(period)) : c.overtime;
+}
 
 const CHIP: Record<Leg["state"], string> = {
   won: "bg-pos-tint text-pos", lost: "bg-neg-tint text-neg", alive: "bg-surface-3 text-fg", unknown: "bg-surface-3 text-fg-dim",
@@ -140,9 +146,10 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
         )}
         <div className="border-t border-line pt-3" data-testid="live-read">
           <h3 className="text-micro u-label text-fg-dim">{c.read}</h3>
+          {/basketball|nba/.test(sportKey) && s.state === "in" && <p className="mt-1 text-label text-fg-dim" data-testid="live-read-auto">{c.readAuto}</p>}
           {data.canRead && data.read && (
             <div className="mt-1.5">
-              <p className="text-label text-fg-dim">{c.readAt.replace("{m}", String(data.read.minute)).replace("{t}", formatTime(data.read.generatedAt, lang))}</p>
+              <p className="text-label text-fg-dim">{c.readAt.replace("{q}", quarterName(data.read.period ?? 0, c)).replace("{m}", String(data.read.minute)).replace("{t}", formatTime(data.read.generatedAt, lang))}</p>
               <p className="mt-0.5 text-label text-fg-dim" data-testid="live-read-note">{c.readNote}</p>
               <ul className="mt-1 flex flex-col gap-1.5">
                 {data.read.slate.suggestions.map((sug) => (

@@ -1,4 +1,4 @@
-import { buildWorld, COMMON, CORE, etKey, HOUR, SITE, WEB, writeFile, type FakeGame, type Player, type SlateDay, type Team } from "./espn-world";
+import { buildWorld, COMMON, CORE, etKey, HOUR, SITE, WEB, writeFile, type FakeGame, type Player, type Team } from "./espn-world";
 
 const dec = (american: number) => (american > 0 ? 1 + american / 100 : 1 + 100 / Math.abs(american));
 const BB_LABELS = ["MIN", "PTS", "REB", "AST", "STL", "BLK", "TO", "FG", "FG%", "3PT", "3P%", "FT", "FT%", "PF"];

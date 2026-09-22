@@ -7,7 +7,10 @@ import { recordPredictions } from "@/lib/ledger/store";
 import { AiBudgetExceededError, brasiliaDayStart } from "@/lib/server/ai-budget";
 import { reportError } from "@/lib/server/ops-log";
 import { aiConfigured, LIVE_MODEL } from "@/lib/ai/client";
-import { espnDateKey, getGameDetail } from "@/lib/sources/espn";
+import { espnDateKey, getGameDetail, getSlate, shiftKey, todayKey } from "@/lib/sources/espn";
+import { SPORTS } from "@/lib/sports";
+import { logEvent } from "@/lib/server/ops-log";
+import { budgetState } from "@/lib/server/ai-budget";
 import type { LiveState } from "@/lib/live/state";
 import type { LiveSnapshot } from "@/lib/live/snapshot";
 import type { BetSlate, PropRow } from "@/lib/types";
@@ -15,9 +18,11 @@ import type { PublicUser } from "@/lib/server/users";
 import type { Lang } from "@/lib/i18n";
 
 /**
- * "Leitura ao vivo": Pro and Max only, one per game (per language) every 15 minutes whoever asks,
- * LIVE_READS_DAILY_CAP a day in total. Never logged to the public ledger, never pushed anywhere —
- * it lives in the panel.
+ * "Leitura ao vivo": Pro and Max only, LIVE_READS_DAILY_CAP a day in total. In basketball a read is
+ * taken AT EVERY QUARTER BREAK — end of Q1, half-time, end of Q3 — so a new quarter always opens a
+ * new read, and inside the same quarter a second one waits LIVE_COOLDOWN_MS. The quarters job on
+ * the cron takes them by itself for every game that has a pre-game slate. Kept out of the public
+ * ROI (the ledger records it under the live scope); it lives in the panel and in the live record.
  *
  * It reaches the long bands, unlike the pre-game read, because half the distribution is already on
  * the board: a line the player is on pace to clear needs the established rate to continue rather
@@ -34,15 +39,39 @@ export const liveReadsCap = (env: Record<string, string | undefined> = process.e
   return env.LIVE_READS_DAILY_CAP !== undefined && env.LIVE_READS_DAILY_CAP.trim() !== "" && Number.isFinite(v) ? Math.max(0, Math.floor(v)) : 40;
 };
 
-export const canReadLive = (user: Pick<PublicUser, "role" | "plan">) => user.role === "admin" || user.plan.id === "pro" || user.plan.id === "max";
+/** What a read needs to know about who asked: the cron asks as the system, an admin with the Max plan. */
+export type LivePrincipal = { id: string; role: string; plan: { id: string } };
+export const SYSTEM_PRINCIPAL: LivePrincipal = { id: "system", role: "admin", plan: { id: "max" } };
+export const canReadLive = (user: Pick<LivePrincipal, "role" | "plan">) => user.role === "admin" || user.plan.id === "pro" || user.plan.id === "max";
 
-export interface StoredLiveRead { slate: BetSlate; generatedAt: string; minute: number }
+export interface StoredLiveRead { slate: BetSlate; generatedAt: string; minute: number; period: number }
 
 export function latestLiveRead(sportKey: string, gameId: string, dateKey: string, lang: Lang): StoredLiveRead | null {
   const row = findPrediction({ scope: "live", sportKey, gameId, dateKey, lang });
   if (!row) return null;
-  const payload = JSON.parse(row.payload) as BetSlate & { minute?: number };
-  return { slate: { suggestions: payload.suggestions, dataNote: payload.dataNote }, generatedAt: row.generatedAt, minute: payload.minute ?? 0 };
+  const payload = JSON.parse(row.payload) as BetSlate & { minute?: number; period?: number };
+  return { slate: { suggestions: payload.suggestions, dataNote: payload.dataNote }, generatedAt: row.generatedAt, minute: payload.minute ?? 0, period: payload.period ?? 0 };
+}
+
+/**
+ * Whether a new read may be taken now. A later period than the stored read's always may: that is
+ * the quarter read. Inside the same period the stored read stands until the cooldown runs out.
+ */
+export function liveReadGate(existing: StoredLiveRead | null, period: number, now = Date.now()): { allowed: boolean; reason: "first" | "quarter" | "cooldown" | "cached"; nextAt: string | null } {
+  if (!existing) return { allowed: true, reason: "first", nextAt: null };
+  if (period > existing.period) return { allowed: true, reason: "quarter", nextAt: null };
+  const at = Date.parse(existing.generatedAt) + LIVE_COOLDOWN_MS;
+  return now >= at ? { allowed: true, reason: "cooldown", nextAt: null } : { allowed: false, reason: "cached", nextAt: new Date(at).toISOString() };
+}
+
+/** Where the game stands, named the way the read is framed: a quarter break or a quarter in play. */
+export function quarterLabel(snap: Pick<LiveSnapshot, "sportGroup" | "period" | "clock">): string {
+  if (snap.sportGroup !== "basketball") return `period ${snap.period}, clock ${snap.clock}`;
+  const atBreak = /^0*:?00(\.0+)?$/.test(snap.clock.trim()) || snap.clock.trim() === "0.0";
+  const q = snap.period;
+  const name = q <= 4 ? `Q${q}` : `OT${q - 4}`;
+  if (atBreak) return q === 2 ? "HALF-TIME" : q === 4 ? "END OF REGULATION" : `END OF ${name}`;
+  return `${name} IN PLAY, ${snap.clock} left in the ${q <= 4 ? "quarter" : "period"}`;
 }
 
 const readsToday = () => (getDb().prepare("SELECT COUNT(*) n FROM generation_requests WHERE scope='live' AND createdAt > ?").get(brasiliaDayStart()) as { n: number }).n;
@@ -101,7 +130,11 @@ export function liveContext(snap: LiveSnapshot, parts: { leaders: string; tracke
   const minutesLeft = Math.round(snap.regulationMinutes - snap.minute);
   return [
     snap.sportGroup === "basketball"
-      ? `LIVE — period ${snap.period}, clock ${snap.clock}, ${minutesLeft} regulation minutes left, score ${snap.away.abbr} ${snap.away.score} @ ${snap.home.abbr} ${snap.home.score} (margin ${margin}). The pre-match lines below are stale: reason about what is left of the game.`
+      ? `LIVE — ${quarterLabel(snap)}: ${minutesLeft} regulation minutes left, score ${snap.away.abbr} ${snap.away.score} @ ${snap.home.abbr} ${snap.home.score} (margin ${margin}). The pre-match lines below are stale: reason about what is left of the game.`
+      : "",
+    // Reads are taken at every quarter break, not once at half-time: each prices its own remainder.
+    snap.sportGroup === "basketball"
+      ? "THIS IS A QUARTER READ. In basketball a read is taken at every quarter break — end of Q1, half-time, end of Q3 — and each one prices the remainder from that point. The later the read, the less variance is left, so the same requirement per minute is worth more late and a stretched line is worth less. Never carry a ticket from an earlier read across unchanged: re-price every leg against this remainder or drop it."
       : "",
     parts.leaders ? `LIVE PLAYER LINES:\n${parts.leaders}` : "",
     parts.projections ? `REMAINING-GAME PROJECTIONS — computed per line: the requirement per remaining minute, the rate produced tonight, the pre-game rate, and the chance of the final landing (minutes left already carry the fouls and the scoreboard):\n${parts.projections}` : "",
@@ -114,14 +147,14 @@ export function liveContext(snap: LiveSnapshot, parts: { leaders: string; tracke
   ].filter(Boolean).join("\n\n");
 }
 
-export async function runLiveRead(user: PublicUser, sportKey: string, gameId: string, lang: Lang): Promise<LiveReadResult> {
+export async function runLiveRead(user: LivePrincipal, sportKey: string, gameId: string, lang: Lang): Promise<LiveReadResult> {
   if (!canReadLive(user)) return { status: "not_allowed" };
   const detail = await getGameDetail(gameId, false, sportKey).catch(() => null);
   const snap = await getLiveSnapshot(sportKey, gameId);
   if (!detail || !snap || snap.state !== "in") return { status: "not_live" };
   const dateKey = espnDateKey(new Date(detail.game.startsAt));
   const existing = latestLiveRead(sportKey, gameId, dateKey, lang);
-  if (existing && Date.now() - Date.parse(existing.generatedAt) < LIVE_COOLDOWN_MS) return { status: "ok", read: existing, cached: true };
+  if (existing && !liveReadGate(existing, snap.period).allowed) return { status: "ok", read: existing, cached: true };
   const key = `${sportKey}:${gameId}:${lang}`;
   const running = inflight.get(key);
   if (running) return running.then((r) => (r.status === "ok" ? { ...r, cached: true } : r));
@@ -137,7 +170,7 @@ export async function runLiveRead(user: PublicUser, sportKey: string, gameId: st
       // guard drops every line the game has already settled and stamps the survivors with what
       // they still need. Without this the model has no player market to build on at all.
       const candidates = await buildPropCandidates(detail, { maxPlayers: 8, limit: 24 }).catch(() => null);
-      const tracked = await liveTracker(user, sportKey, gameId, dateKey, lang);
+      const tracked = await liveTracker(user as PublicUser, sportKey, gameId, dateKey, lang);
       const trackerText = tracked.tickets.slice(0, 4).map((t) => `- ${t.title}: ${t.legs.map((l) => `${l.selection} → ${l.state}${l.probability !== null ? ` ${Math.round(l.probability * 100)}%` : ""} (${l.reason})`).join("; ")}`).join("\n");
       const leaders = snap.players.filter((p) => (p.stats.PTS ?? p.stats.SHOT ?? 0) > 0).slice(0, 10)
         .map((p) => `${p.name} (${p.team}): ${Object.entries(p.stats).filter(([k]) => ["MIN", "PTS", "REB", "AST", "PF", "SHOT", "SOG", "FC", "YC"].includes(k)).map(([k, v]) => `${k} ${v}`).join(", ")}`).join("\n");
@@ -148,10 +181,10 @@ export async function runLiveRead(user: PublicUser, sportKey: string, gameId: st
         live: snap.sportGroup === "soccer" ? soccerState(snap) : null, extraContext,
       });
       const minute = Math.round(snap.minute);
-      savePrediction({ scope: "live", sportKey, gameId, dateKey, lang, matchup: `${detail.game.away.displayName} @ ${detail.game.home.displayName}`, startsAt: detail.game.startsAt, slate: { ...slate, minute } as BetSlate });
+      savePrediction({ scope: "live", sportKey, gameId, dateKey, lang, matchup: `${detail.game.away.displayName} @ ${detail.game.home.displayName}`, startsAt: detail.game.startsAt, slate: { ...slate, minute, period: snap.period } as BetSlate });
       // Graded like every other ticket, kept out of the public ROI: the live record measures how
       // often a read lands, and the reference prices say nothing about what it would have paid.
-      recordPredictions(detail.game, slate.suggestions, { live: { minute } });
+      recordPredictions(detail.game, slate.suggestions, { live: { minute, period: snap.period } });
       getDb().prepare("UPDATE generation_requests SET status='ok', finishedAt=? WHERE id=?").run(nowIso(), reqId);
       return { status: "ok", read: latestLiveRead(sportKey, gameId, dateKey, lang)!, cached: false };
     } catch (error) {
@@ -162,4 +195,48 @@ export async function runLiveRead(user: PublicUser, sportKey: string, gameId: st
   })();
   inflight.set(key, task);
   try { return await task; } finally { inflight.delete(key); }
+}
+
+export interface QuarterReadsResult { status: "ok" | "skipped" | "error"; checked: number; generated: number; cached: number; costUsd: number; note: string }
+
+/**
+ * The quarters job. Every cron tick, for every basketball game in play that has a pre-game slate,
+ * takes the read of the current quarter if none exists yet — the first tick after a quarter
+ * changes is the quarter read. It runs as the system, so it counts against the AI budget and never
+ * against a user's allowance. LIVE_QUARTER_READS=0 switches it off.
+ */
+export async function runQuarterReads(opts: { now?: Date; env?: Record<string, string | undefined> } = {}): Promise<QuarterReadsResult> {
+  const env = opts.env ?? process.env;
+  const now = opts.now ?? new Date();
+  if ((env.LIVE_QUARTER_READS ?? "1").trim() === "0") return { status: "skipped", checked: 0, generated: 0, cached: 0, costUsd: 0, note: "LIVE_QUARTER_READS=0" };
+  if (!aiConfigured()) return { status: "skipped", checked: 0, generated: 0, cached: 0, costUsd: 0, note: "ai_off" };
+  const lang: Lang = "pt";
+  const today = todayKey();
+  let checked = 0, generated = 0, cached = 0;
+  const notes: string[] = [];
+  for (const sport of SPORTS.filter((sp) => sp.group === "basketball")) {
+    for (const day of [shiftKey(today, -1), today]) {
+      const games = await getSlate(day, false, sport.key).catch(() => []);
+      for (const g of games) {
+        if (g.status !== "live") continue;
+        const dateKey = espnDateKey(new Date(g.startsAt));
+        // A game nobody opened has no pre-game read to build on; the quarters follow the slates.
+        if (!findPrediction({ scope: "game", sportKey: sport.key, gameId: g.id, dateKey, lang })) continue;
+        checked += 1;
+        const snap = await getLiveSnapshot(sport.key, g.id).catch(() => null);
+        if (!snap || snap.state !== "in") continue;
+        const gate = liveReadGate(latestLiveRead(sport.key, g.id, dateKey, lang), snap.period, now.getTime());
+        if (gate.reason !== "first" && gate.reason !== "quarter") { cached += 1; continue; }
+        if (budgetState(now).exhausted) { notes.push("ai_budget"); break; }
+        const out = await runLiveRead(SYSTEM_PRINCIPAL, sport.key, g.id, lang);
+        if (out.status === "ok" && !out.cached) { generated += 1; notes.push(`${g.id}: ${quarterLabel(snap)}`); }
+        else if (out.status === "ok") cached += 1;
+        else notes.push(`${g.id}: ${out.status}`);
+      }
+    }
+  }
+  const status = notes.some((n) => /: (error|ai_budget)$/.test(n)) && generated === 0 ? "error" : "ok";
+  const result: QuarterReadsResult = { status, checked, generated, cached, costUsd: 0, note: notes.join(" | ").slice(0, 500) };
+  logEvent("job.quarters", { ...result });
+  return result;
 }

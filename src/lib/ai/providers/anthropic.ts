@@ -10,7 +10,13 @@ let client: Anthropic | null = null;
 
 /** The SDK reads ANTHROPIC_API_KEY / ANTHROPIC_AUTH_TOKEN itself. */
 function getClient(): Anthropic {
-  if (!client) client = new Anthropic();
+  // A key created at the organisation level is not scoped to a workspace, and Anthropic then refuses
+  // every request that does not name one. ANTHROPIC_WORKSPACE_ID names it; a workspace-scoped key
+  // needs nothing.
+  if (!client) {
+    const workspace = (process.env.ANTHROPIC_WORKSPACE_ID ?? "").trim();
+    client = new Anthropic(workspace ? { defaultHeaders: { "anthropic-workspace-id": workspace } } : {});
+  }
   return client;
 }
 

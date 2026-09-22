@@ -338,6 +338,8 @@ export interface LedgerEntry {
   scope?: "live";
   /** Regulation minute the live read was taken at. */
   minute?: number;
+  /** Period (quarter) the live read was taken in — basketball reads are taken at every quarter break. */
+  period?: number;
   legs: SettledLeg[];
   outcome: LegOutcome;
 }

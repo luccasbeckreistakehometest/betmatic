@@ -29,6 +29,8 @@ export interface LiveRecord {
   legHitRate: number;
   referenceReturn: number;
   bands: LiveBandRecord[];
+  /** The same count per quarter the read was taken in: the end of Q1, half-time and the end of Q3 are different bets. */
+  periods: { period: number; tickets: number; won: number; hitRate: number; legs: number; legsWon: number; legHitRate: number; referenceReturn: number }[];
   /** Average modelled chance of the decided tickets beside the share that landed: the calibration line. */
   modelledAverage: number;
 }
@@ -65,6 +67,7 @@ export function liveRecordFrom(entries: LedgerEntry[]): LiveRecord {
     referenceReturn: all.referenceReturn,
     modelledAverage: decided.length ? decided.reduce((s, e) => s + e.modelledProbability, 0) / decided.length : 0,
     bands: bandKeys.map((bandKey) => ({ bandKey, ...stats(decided.filter((e) => e.bandKey === bandKey)) })),
+    periods: [...new Set(decided.map((e) => e.period ?? 0))].sort((a, b) => a - b).map((period) => ({ period, ...stats(decided.filter((e) => (e.period ?? 0) === period)) })),
   };
 }
 

@@ -3,7 +3,7 @@ import { parseLiveSnapshot } from "@/lib/live/snapshot";
 
 process.env.DATA_DIR = "/tmp/bm-live-read-test";
 process.env.AUTH_SECRET = "test-secret-that-is-long-enough";
-const { LIVE_BANDS, LIVE_MAX_PER_BAND, CONTESTED_MARGIN, liveContext, projectionLines } = await import("@/lib/server/live-read");
+const { LIVE_BANDS, LIVE_MAX_PER_BAND, CONTESTED_MARGIN, liveContext, projectionLines, liveReadGate, quarterLabel, LIVE_COOLDOWN_MS } = await import("@/lib/server/live-read");
 
 /** Half-time of a one-possession game: the shape the hand-built reads were taken at. */
 const summary = (homeScore: number, awayScore: number) => ({
@@ -114,3 +114,36 @@ describe("the remaining-game projections the live read prints", () => {
     expect(liveContext(snap, { leaders: "", trackerText: "" })).not.toMatch(/REMAINING-GAME PROJECTIONS/);
   });
 });
+
+describe("a read at every quarter break", () => {
+  const stored = (period: number, generatedAt: string) => ({ slate: { suggestions: [], dataNote: "" }, generatedAt, minute: 10, period });
+  const t0 = Date.parse("2026-09-22T00:30:00.000Z");
+
+  it("always opens a new read when the quarter has turned, and holds the same quarter for the cooldown", () => {
+    expect(liveReadGate(null, 1, t0)).toMatchObject({ allowed: true, reason: "first" });
+    const q1 = stored(1, new Date(t0 - 60_000).toISOString());
+    expect(liveReadGate(q1, 2, t0)).toMatchObject({ allowed: true, reason: "quarter", nextAt: null });
+    const held = liveReadGate(q1, 1, t0);
+    expect(held).toMatchObject({ allowed: false, reason: "cached" });
+    expect(Date.parse(held.nextAt!)).toBe(Date.parse(q1.generatedAt) + LIVE_COOLDOWN_MS);
+    expect(liveReadGate(q1, 1, t0 + LIVE_COOLDOWN_MS)).toMatchObject({ allowed: true, reason: "cooldown" });
+  });
+
+  it("names the break the read is taken at", () => {
+    const bb = (period: number, clock: string) => quarterLabel({ sportGroup: "basketball", period, clock });
+    expect(bb(1, "0:00")).toBe("END OF Q1");
+    expect(bb(2, "0:00")).toBe("HALF-TIME");
+    expect(bb(3, "0:00")).toBe("END OF Q3");
+    expect(bb(3, "4:12")).toBe("Q3 IN PLAY, 4:12 left in the quarter");
+    expect(bb(5, "0:00")).toBe("END OF OT1");
+    expect(quarterLabel({ sportGroup: "soccer", period: 1, clock: "12'" })).toBe("period 1, clock 12'");
+  });
+
+  it("tells the model this is a quarter read, priced from its own break", () => {
+    const c = liveContext(parseLiveSnapshot(summary(44, 43), "g", "basketball", 10), { leaders: "", trackerText: "" });
+    expect(c).toMatch(/LIVE — HALF-TIME: /);
+    expect(c).toMatch(/THIS IS A QUARTER READ/);
+    expect(c).toMatch(/end of Q1, half-time, end of Q3/);
+  });
+});
+

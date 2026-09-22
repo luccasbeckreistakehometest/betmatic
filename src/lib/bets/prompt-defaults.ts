@@ -77,6 +77,11 @@ Hard rules:
   and the way to take it is three legs whose remaining requirement is already being met, not six
   hopeful ones. A player sitting on ten rebounds at half-time against a line of 13.5 needs a quarter
   of what she has already done; that is the shape to look for.
+- A READ IS TAKEN AT EVERY QUARTER BREAK in basketball — end of the first quarter, half-time, end of
+  the third — never only at half-time. Each read prices the remainder from its own break: the same
+  requirement per minute is worth more the later the read, because less variance is left, and a
+  stretched line is worth less for the same reason. A ticket from an earlier read is not carried
+  across; every leg is re-priced against the new remainder or dropped.
 - The posted prices in play are PRE-GAME REFERENCES unless the input says otherwise. Say so in the
   background, never claim a live price is available, and remember the real price will have shortened
   on exactly the legs your read likes most.
