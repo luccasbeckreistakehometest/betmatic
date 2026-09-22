@@ -1,10 +1,13 @@
 import { getGameDetail, getPlayerHistory } from "@/lib/sources/espn";
-import { measureProp, matchAthlete, resolveStatLabels } from "@/lib/props/history";
+import { matchAthlete, resolveStatLabels, statTotal } from "@/lib/props/history";
 import { pendingEntries, updateEntries } from "@/lib/ledger/store";
 import { getSport } from "@/lib/sports";
 import type { GameDetail, LedgerEntry, LegOutcome, SettledLeg } from "@/lib/types";
 
 interface FinalGame {
+  gameId: string;
+  /** Kickoff, from ESPN — the clock the boxscore grace window runs on. */
+  startsAt: string;
   homeAbbr: string;
   awayAbbr: string;
   homeNames: string[];
@@ -13,6 +16,31 @@ interface FinalGame {
   awayScore: number;
   athletes: { name: string; id: string }[];
   sportKey: string;
+}
+
+/**
+ * How long after kickoff a player leg may stay unsettled while ESPN publishes the game into the
+ * athletes' gamelogs. Settling runs minutes after the final whistle and the gamelog lags it: on
+ * 21/09/2026 nine tickets on Dallas @ Phoenix were written off as void within that lag, when the
+ * real record was 4 won / 5 lost. Past this window a leg the gamelog still cannot answer is written
+ * off for good, so no ticket can hang forever.
+ */
+export const BOXSCORE_GRACE_MS = 6 * 60 * 60 * 1000;
+
+/**
+ * Whether the gamelog has had its chance. A game with no usable kickoff counts as past the window:
+ * a ticket that can never settle is worse than one voided early.
+ */
+export function boxscoreGraceOver(startsAt: string | undefined, now: number = Date.now()): boolean {
+  const kickoff = startsAt ? Date.parse(startsAt) : Number.NaN;
+  return !Number.isFinite(kickoff) || now - kickoff >= BOXSCORE_GRACE_MS;
+}
+
+/** Waiting on data, not a verdict: held while the window is open, written off once it closes. */
+function unmeasured(leg: SettledLeg, final: FinalGame): SettledLeg {
+  return boxscoreGraceOver(final.startsAt)
+    ? { ...leg, outcome: "void", actual: "não é possível medir" }
+    : { ...leg, outcome: "pending", actual: "aguardando boxscore" };
 }
 
 function gradeMargin(value: number, line: number, side: "over" | "under"): LegOutcome {
@@ -57,22 +85,28 @@ async function gradeLeg(leg: SettledLeg, final: FinalGame, parsed: ParsedSelecti
   }
 
   if (parsed.type === "player_prop" && parsed.player && parsed.line !== undefined) {
-    const match = matchAthlete(parsed.player, final.athletes);
-    if (!match) return { ...leg, outcome: "void", actual: "player not on either roster" };
-    const history = await getPlayerHistory(final.sportKey, match.id).catch(() => null);
-    if (!history?.games.length) return { ...leg, outcome: "void", actual: "no game log" };
-
-    // The most recent logged game is the one that just finished.
+    // A market the vocabulary cannot name is a modelling failure, not a publishing delay: no amount
+    // of waiting turns it into something gradable, so it is written off at once.
     const labels = resolveStatLabels(parsed.stat ?? "", final.sportKey);
-    if (!labels) return { ...leg, outcome: "void", actual: "unmapped stat" };
-    const single = measureProp({ ...history, games: history.games.slice(0, 1) }, parsed.stat ?? "", parsed.line, parsed.side === "under" ? "under" : "over", final.sportKey);
-    if (!single) return { ...leg, outcome: "void", actual: "could not measure" };
-    const hit = single.season.hits === 1;
-    const pushed = single.season.of === 0;
+    if (!labels) return { ...leg, outcome: "void", actual: "não é possível medir" };
+
+    const match = matchAthlete(parsed.player, final.athletes);
+    // No roster at all is a half-published payload; a roster without this player is a wrong pick.
+    if (!match) return final.athletes.length
+      ? { ...leg, outcome: "void", actual: "player not on either roster" }
+      : unmeasured(leg, final);
+
+    const history = await getPlayerHistory(final.sportKey, match.id).catch(() => null);
+    // The game is found by its event id, never taken as "the newest logged one": until ESPN
+    // publishes this game, the newest entry is the player's PREVIOUS game and grading it is wrong.
+    const played = history?.games.find((g) => g.eventId === final.gameId);
+    const value = played ? statTotal(played, labels) : Number.NaN;
+    if (!Number.isFinite(value)) return unmeasured(leg, final);
+
     return {
       ...leg,
-      outcome: pushed ? "push" : hit ? "won" : "lost",
-      actual: `${labels.join("+")} vs ${parsed.line}`,
+      outcome: gradeMargin(value, parsed.line, parsed.side === "under" ? "under" : "over"),
+      actual: `${labels.join("+")} ${value} vs ${parsed.line}`,
     };
   }
 
@@ -121,6 +155,8 @@ function parseSelection(leg: SettledLeg, final: FinalGame): ParsedSelection {
 
 function finalOf(detail: GameDetail, sportKey: string): FinalGame {
   return {
+    gameId: detail.game.id,
+    startsAt: detail.game.startsAt,
     homeAbbr: detail.game.home.abbreviation,
     awayAbbr: detail.game.away.abbreviation,
     homeNames: [detail.game.home.displayName, detail.game.home.name, detail.game.home.abbreviation].filter(Boolean),
@@ -152,13 +188,18 @@ export function ticketOutcome(legs: Pick<SettledLeg, "outcome">[]): LegOutcome {
 /**
  * Grades every pending ticket whose game has finished. Runs on demand — there is no scheduler here,
  * and a leg that cannot be graded deterministically is marked void rather than guessed at.
+ *
+ * A ticket is only written once every leg has an answer. One still waiting on the gamelog is left
+ * exactly as it was — no outcome, no `settledAt` — so the next pass picks it up again and grades it
+ * for real; `awaitingBoxscore` counts those, and they are part of `stillPending`.
  */
-export async function settlePending(limit = 50): Promise<{ settled: number; stillPending: number }> {
+export async function settlePending(limit = 50): Promise<{ settled: number; stillPending: number; awaitingBoxscore: number }> {
   const pending = pendingEntries().slice(0, limit);
-  if (!pending.length) return { settled: 0, stillPending: 0 };
+  if (!pending.length) return { settled: 0, stillPending: 0, awaitingBoxscore: 0 };
 
   const updated: LedgerEntry[] = [];
   let stillPending = 0;
+  let awaitingBoxscore = 0;
 
   for (const entry of pending) {
     const detail = await getGameDetail(entry.gameId, false, entry.sportKey).catch(() => null);
@@ -173,24 +214,18 @@ export async function settlePending(limit = 50): Promise<{ settled: number; stil
       legs.push(await gradeLeg(leg, final, parseSelection(leg, final)));
     }
 
-    // A parlay needs every leg; pushes are ignored rather than counted as losses.
-    const decided = legs.filter((l) => l.outcome === "won" || l.outcome === "lost");
-    const anyVoid = legs.some((l) => l.outcome === "void");
-    // A lost leg settles the ticket regardless; anything else with an ungradable leg stays void,
-    // because calling it a win on partial information would poison the calibration data.
-    const outcome: LegOutcome = decided.some((l) => l.outcome === "lost")
-      ? "lost"
-      : anyVoid
-        ? "void"
-        : !decided.length
-          ? "push"
-          : decided.every((l) => l.outcome === "won")
-            ? "won"
-            : "push";
+    // A parlay needs every leg; pushes are ignored rather than counted as losses. A lost leg settles
+    // the ticket regardless — a dead parlay does not get any better once the rest lands.
+    const outcome = ticketOutcome(legs);
+    if (outcome === "pending") {
+      stillPending += 1;
+      awaitingBoxscore += 1;
+      continue;
+    }
 
     updated.push({ ...entry, legs, outcome, settledAt: new Date().toISOString() });
   }
 
   updateEntries(updated);
-  return { settled: updated.length, stillPending };
+  return { settled: updated.length, stillPending, awaitingBoxscore };
 }
