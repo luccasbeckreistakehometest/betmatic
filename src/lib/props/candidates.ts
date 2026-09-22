@@ -3,21 +3,37 @@ import { getPropPrices, PROP_BOOK, type PostedProp, type PropFeed } from "@/lib/
 import { getLiveBoxScore, type LiveBoxScore } from "@/lib/props/box-score";
 import { describeDropped, guardProps, type StaleVerdict } from "@/lib/props/stale";
 import { measureProp } from "@/lib/props/history";
+import { blendedProbability, fitRate, liveRate, projectLeg, seriesFor, type LadderRung, type RateFit, type RateSample } from "@/lib/props/model";
+import { listingAvailability, projectMinutes, projectRemainingMinutes, type AbsentTeammate, type MinutesProjection } from "@/lib/props/minutes";
 import { buildRoleFromStarts, buildRoleProfile, volumeSupports, type RoleProfile } from "@/lib/props/role";
+import { bookLine, regulationMinutes } from "@/lib/signals/environment";
+import { normaliseName } from "@/lib/resolve/names";
 import { getSport, type MarketDef, type SportDef } from "@/lib/sports";
-import type { GameDetail, PlayerHistory, PropRow } from "@/lib/types";
+import type { GameDetail, InjuryEntry, PlayerHistory, PropModel, PropRow } from "@/lib/types";
 
 /** Lines sit on the half-point so they cannot push, mirroring how books price them. */
 function candidateLine(median: number): number {
   return Math.max(0.5, Math.round(median) - 0.5);
 }
 
-export interface PlayerContext { athleteId: string; name: string; team: string; history: PlayerHistory | null; role: RoleProfile | null }
+export interface PlayerContext {
+  athleteId: string;
+  name: string;
+  team: string;
+  history: PlayerHistory | null;
+  role: RoleProfile | null;
+  /** Pre-game minutes projection; null when the log is too short to project. */
+  minutes: MinutesProjection | null;
+  /** The player's own line on the injury report, when there is one. */
+  listing: InjuryEntry | null;
+}
 
 export interface CandidateSet {
   /** Gated, ranked, at most `limit`. Priced rows first. */
   props: PropRow[];
   roles: RoleProfile[];
+  /** One minutes projection per player, the inputs of every counting-stat leg. */
+  minutes: MinutesProjection[];
   /** Players removed by the minutes/role gate before the prompt. */
   dropped: string[];
   feed: PropFeed["status"];
@@ -33,8 +49,15 @@ export interface CandidateSet {
 export const marketFair = (row: Pick<PropRow, "noVigFair" | "decimal">): number =>
   row.noVigFair ?? (row.decimal && row.decimal > 1 ? 1 / row.decimal : NaN);
 
-/** How far the measured rate sits above what the price asks: the ranking key for priced rows. */
-export const measuredGap = (row: PropRow): number => (row.measured ? row.measured.impliedFair - marketFair(row) : -Infinity);
+/** The chance this pipeline stands behind: the computed one when a model covered the line, the hit rate otherwise. */
+export const ourProbability = (row: Pick<PropRow, "model" | "measured">): number =>
+  row.model?.computed ?? row.measured?.impliedFair ?? NaN;
+
+/** How far our chance sits above what the price asks: the ranking key for priced rows. */
+export const measuredGap = (row: PropRow): number => {
+  const ours = ourProbability(row);
+  return Number.isFinite(ours) ? ours - marketFair(row) : -Infinity;
+};
 
 /**
  * The minutes/role gate, applied in code before the model ever sees a candidate: a soft matchup is
@@ -50,7 +73,7 @@ export function gateByRole(rows: PropRow[], roles: Map<string, RoleProfile | nul
   return { kept, dropped: [...dropped] };
 }
 
-/** Ranks priced rows by measured-minus-market gap, keeps two rungs per player+market, then unpriced. */
+/** Ranks priced rows by our-chance-minus-market gap, keeps two rungs per player+market, then unpriced. */
 export function rankCandidates(rows: PropRow[], limit = 40): PropRow[] {
   const priced = rows.filter((r) => r.priced).sort((a, b) => measuredGap(b) - measuredGap(a));
   const perKey = new Map<string, number>();
@@ -60,7 +83,7 @@ export function rankCandidates(rows: PropRow[], limit = 40): PropRow[] {
     perKey.set(k, n + 1);
     return n < 2;
   });
-  const unpriced = rows.filter((r) => !r.priced).sort((a, b) => (b.measured?.impliedFair ?? 0) - (a.measured?.impliedFair ?? 0));
+  const unpriced = rows.filter((r) => !r.priced).sort((a, b) => ourProbability(b) - ourProbability(a));
   return [...trimmed, ...unpriced].slice(0, limit);
 }
 
@@ -99,7 +122,164 @@ export async function roleFor(sport: SportDef, player: { athleteId: string; name
   return null;
 }
 
-function pricedRow(sport: SportDef, market: MarketDef, player: PlayerContext, posted: PostedProp, live?: { verdict: StaleVerdict; box: LiveBoxScore } | null): PropRow | null {
+/** Minutes per logged game, newest first; NaN-free. */
+export function minutesOf(history: PlayerHistory | null): number[] {
+  if (!history) return [];
+  return history.games
+    .map((g) => { const raw = g.stats.MIN; return typeof raw === "number" ? raw : Number(String(raw ?? "").replace(/[^\d.]/g, "")); })
+    .filter((m) => Number.isFinite(m));
+}
+
+/**
+ * This player's minutes with and without an absent teammate. The absentee's log lists only the
+ * games she played, so every game of the player's missing from it is a game without her. Both
+ * sides need three games: a teammate out all season is already in every number and says nothing,
+ * and one who never missed a game cannot be measured either.
+ */
+export function minutesWithout(player: PlayerHistory, absentee: PlayerHistory): { games: number; meanMinutes: number; withGames: number; withMinutes: number; recentMissed: number } | null {
+  const playedByAbsentee = new Set(absentee.games.filter((g) => minutesOf({ ...absentee, games: [g] })[0] > 0).map((g) => g.eventId));
+  const mins = (predicate: (id: string) => boolean) =>
+    player.games.filter((g) => predicate(g.eventId)).map((g) => minutesOf({ ...player, games: [g] })[0]).filter((m) => Number.isFinite(m) && m >= 4);
+  const without = mins((id) => !playedByAbsentee.has(id));
+  const withHer = mins((id) => playedByAbsentee.has(id));
+  if (without.length < 3 || withHer.length < 3) return null;
+  const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
+  // How many of the player's last five games the absentee already missed: an absence that old is in the recent minutes.
+  const recentMissed = player.games.slice(0, 5).filter((g) => !playedByAbsentee.has(g.eventId)).length;
+  return { games: without.length, meanMinutes: mean(without), withGames: withHer.length, withMinutes: mean(withHer), recentMissed };
+}
+
+const MAX_ABSENTEES_PER_TEAM = 3;
+
+/**
+ * Rostered players the injury report lists as out, with the log needed to weigh their absence. The
+ * logs are fetched together, current season only: an absentee's log is read for which games she
+ * missed, and last season answers nothing about that.
+ */
+async function absenteesFor(sport: SportDef, detail: GameDetail, team: string): Promise<{ entry: InjuryEntry; athleteId: string | null; history: PlayerHistory | null }[]> {
+  const roster = detail.rosters.find((r) => r.teamAbbreviation === team)?.athletes ?? [];
+  const listed = detail.injuries
+    .filter((i) => i.teamAbbreviation === team && listingAvailability(i.status) === "listed_out")
+    .map((entry) => ({ entry, athlete: roster.find((a) => normaliseName(a.name) === normaliseName(entry.player)) ?? null }));
+  const withLogs = listed.filter((l) => l.athlete).slice(0, MAX_ABSENTEES_PER_TEAM);
+  const logs = await Promise.all(withLogs.map((l) => getPlayerHistory(sport.key, l.athlete!.id).catch(() => null)));
+  return listed.map(({ entry, athlete }) => {
+    const at = withLogs.findIndex((l) => l.entry === entry);
+    return { entry, athleteId: athlete?.id ?? null, history: at >= 0 ? logs[at] : null };
+  });
+}
+
+interface ModelInputs {
+  fits: Map<string, { fit: RateFit | null; series: RateSample[] }>;
+  regulation: number;
+  expectedMargin: number | null;
+}
+
+function fitFor(inputs: ModelInputs, player: PlayerContext, market: MarketDef, sportKey: string): { fit: RateFit | null; series: RateSample[] } {
+  const key = `${player.athleteId}|${market.key}`;
+  const hit = inputs.fits.get(key);
+  if (hit) return hit;
+  const series = player.history ? seriesFor(player.history, market.key, sportKey) : [];
+  const fit = market.key === "minutes" || market.binary ? null : fitRate(series, { statLabels: market.statLabels });
+  const value = { fit, series };
+  inputs.fits.set(key, value);
+  return value;
+}
+
+/**
+ * A ladder on one scale, monotone in the line. Every rung is blended with the season hit rate at
+ * that rung the same way the posted line is, then any rung that a harder rung outranks is pulled
+ * down to it: the blend of two monotone curves is monotone except for the odd whole-number push,
+ * and a reader who is told "why this line and not the one beside it" must never see a harder rung
+ * printed as likelier. Over probabilities fall with the line; under is the complement.
+ */
+export function blendedLadder(
+  ladder: LadderRung[],
+  hitRate: (line: number, side: "over" | "under") => { hits: number; of: number } | null,
+  blend: boolean,
+): LadderRung[] {
+  const rows = [...ladder].sort((a, b) => a.line - b.line).map((r) => {
+    if (!blend) return { line: r.line, pOver: r.pOver, pUnder: r.pUnder };
+    const over = hitRate(r.line, "over");
+    const pOver = blendedProbability(r.pOver, over?.hits ?? 0, over?.of ?? 0);
+    return { line: r.line, pOver, pUnder: 1 - pOver };
+  });
+  for (let i = 1; i < rows.length; i += 1) {
+    if (rows[i].pOver > rows[i - 1].pOver) rows[i] = { ...rows[i], pOver: rows[i - 1].pOver, pUnder: rows[i - 1].pUnder };
+  }
+  return rows;
+}
+
+/** A finite requirement per minute; JSON drops Infinity, so a clock that has run out reads as 99. */
+const perMinute = (needed: number, minutes: number): number => (needed <= 0 ? 0 : minutes > 0 ? Number((needed / minutes).toFixed(3)) : 99);
+
+/**
+ * The computed probability of one line. Before tip-off the fitted rate runs over the projected
+ * minutes and every rung of the ladder — the posted line included — is blended with the season hit
+ * rate at that rung; in play the rate is the pre-game one, the remaining minutes come from the
+ * clock, the fouls and the margin, the minutes mixture is capped at the clock, and there is no
+ * blend — half the distribution is already on the board (see model.ts liveRate).
+ */
+function modelFor(
+  inputs: ModelInputs,
+  player: PlayerContext,
+  market: MarketDef,
+  line: number,
+  side: "over" | "under",
+  live: { current: number; box: LiveBoxScore } | null,
+  sportKey: string,
+): PropModel | null {
+  const { fit } = fitFor(inputs, player, market, sportKey);
+  if (!fit || !player.minutes || !player.history) return null;
+  const history = player.history;
+  const hitRate = (l: number, s: "over" | "under") => measureProp(history, market.key, l, s, sportKey)?.season ?? null;
+  const rung = (ladder: LadderRung[]) => ladder.find((r) => Math.abs(r.line - line) < 1e-9)!;
+  const round3 = (x: number) => Number(x.toFixed(3));
+  if (!live) {
+    const leg = projectLeg(fit, { expected: player.minutes.expected, sd: player.minutes.sd }, line, side);
+    const ladder = blendedLadder(leg.ladder, hitRate, true);
+    const posted = rung(ladder);
+    return {
+      computed: side === "over" ? posted.pOver : posted.pUnder,
+      distribution: leg.computed, pOver: posted.pOver, pUnder: posted.pUnder, mean: Number(leg.mean.toFixed(1)), sd: Number(leg.sd.toFixed(1)),
+      rate: round3(fit.rate), recentRate: round3(fit.recentRate), dispersion: round3(fit.dispersion),
+      minutes: { expected: player.minutes.expected, sd: player.minutes.sd, availability: player.minutes.availability },
+      ladder: ladder.map((r) => ({ line: r.line, pOver: round3(r.pOver), pUnder: round3(r.pUnder) })),
+      note: leg.note,
+    };
+  }
+  // A box built by hand (tests, older callers) may carry only the totals: defaults keep the read alive.
+  const tonight = live.box.players?.[player.athleteId];
+  const played = tonight?.minutes ?? 0;
+  const elapsed = live.box.minute;
+  const remaining = projectRemainingMinutes({
+    player: player.name, preGame: player.minutes, minutesPlayed: played, minutesElapsed: elapsed, minutesLeft: live.box.minutesLeft,
+    regulationMinutes: live.box.regulationMinutes ?? inputs.regulation, fouls: tonight?.fouls ?? 0, currentMargin: live.box.margin ?? 0, expectedMargin: inputs.expectedMargin,
+  });
+  const rate = liveRate(fit, { value: live.current, minutes: played });
+  const leg = projectLeg({ rate: rate.rate, dispersion: rate.dispersion }, { expected: remaining.expected, sd: remaining.sd, max: remaining.max }, line, side, { current: live.current, maxMinutes: live.box.minutesLeft });
+  const ladder = blendedLadder(leg.ladder, hitRate, false);
+  const posted = rung(ladder);
+  const needed = side === "over" ? Math.max(0, Math.floor(line) + 1 - live.current) : Math.max(0, Math.ceil(line) - 1 - live.current);
+  return {
+    computed: side === "over" ? posted.pOver : posted.pUnder,
+    distribution: leg.computed, pOver: posted.pOver, pUnder: posted.pUnder, mean: Number(leg.mean.toFixed(1)), sd: Number(leg.sd.toFixed(1)),
+    rate: round3(fit.rate), recentRate: round3(fit.recentRate), dispersion: round3(rate.dispersion),
+    minutes: { expected: remaining.expected, sd: remaining.sd, availability: "ok" },
+    ladder: ladder.map((r) => ({ line: r.line, pOver: round3(r.pOver), pUnder: round3(r.pUnder) })),
+    note: `${leg.note}; ${remaining.note}`,
+    live: {
+      needed, remainingMinutes: remaining.expected,
+      needPerMinute: perMinute(needed, remaining.expected),
+      ratePerMinuteTonight: round3(rate.tonightRate),
+      ratePerMinutePreGame: round3(fit.rate),
+      ratePerMinuteBlended: round3(rate.rate),
+      minutesPlayed: played, fouls: tonight?.fouls ?? 0,
+    },
+  };
+}
+
+function pricedRow(sport: SportDef, market: MarketDef, player: PlayerContext, posted: PostedProp, inputs: ModelInputs, live?: { verdict: StaleVerdict; box: LiveBoxScore } | null): PropRow | null {
   if (!player.history || posted.decimal < 1.15 || posted.decimal > 8) return null;
   const measured = measureProp(player.history, market.key, posted.line, posted.side, sport.key);
   if (!measured || measured.season.of < 3) return null;
@@ -107,6 +287,8 @@ function pricedRow(sport: SportDef, market: MarketDef, player: PlayerContext, po
     ? { current: live.verdict.current, remaining: live.verdict.remaining, minutesLeft: live.box.minutesLeft }
     : null;
   const liveNote = inPlay && live?.verdict.reason ? `live: ${live.verdict.reason.en}` : "";
+  const model = modelFor(inputs, player, market, posted.line, posted.side, inPlay && live ? { current: inPlay.current, box: live.box } : null, sport.key);
+  const { series } = fitFor(inputs, player, market, sport.key);
   return {
     player: player.name, team: player.team, athleteId: player.athleteId,
     market: market.label.en, marketKey: market.key, line: posted.line, side: posted.side,
@@ -120,10 +302,13 @@ function pricedRow(sport: SportDef, market: MarketDef, player: PlayerContext, po
     ].filter(Boolean).join(" · "),
     measured,
     live: inPlay,
+    model,
+    series,
+    minutesProjection: player.minutes ? { player: player.name, expected: player.minutes.expected, sd: player.minutes.sd, availability: player.minutes.availability, note: player.minutes.note } : null,
   };
 }
 
-function unpricedRows(sport: SportDef, player: PlayerContext): PropRow[] {
+function unpricedRows(sport: SportDef, player: PlayerContext, inputs: ModelInputs): PropRow[] {
   if (!player.history) return [];
   const out: PropRow[] = [];
   for (const market of sport.markets) {
@@ -137,6 +322,9 @@ function unpricedRows(sport: SportDef, player: PlayerContext): PropRow[] {
       player: player.name, team: player.team, athleteId: player.athleteId, market: market.label.en, marketKey: market.key,
       line, side: "over", odds: undefined, book: undefined, priced: false,
       note: `candidate from game logs — no market price attached · ${measured.sampleNote}`, measured,
+      model: modelFor(inputs, player, market, line, "over", null, sport.key),
+      series: fitFor(inputs, player, market, sport.key).series,
+      minutesProjection: player.minutes ? { player: player.name, expected: player.minutes.expected, sd: player.minutes.sd, availability: player.minutes.availability, note: player.minutes.note } : null,
     });
   }
   return out;
@@ -147,13 +335,17 @@ function unpricedRows(sport: SportDef, player: PlayerContext): PropRow[] {
  * book priced; each posted line is measured at that exact number against the game logs. Without one
  * (feed down, league not covered) the old behaviour remains: the statistical leaders, measured at
  * their median, flagged as unpriced — the builder never lets an unpriced leg into a ticket.
+ *
+ * Every row now also carries the computed probability of its line (props/model.ts) over a minutes
+ * projection (props/minutes.ts) that reads the injury report and the spread; in play the projection
+ * is of the remainder, against the box score.
  */
 export async function buildPropCandidates(
   detail: GameDetail,
   opts: { maxPlayers?: number; limit?: number; feed?: PropFeed; box?: LiveBoxScore | null } = {},
 ): Promise<CandidateSet> {
   const sport = getSport(detail.game.sportKey);
-  const empty: CandidateSet = { props: [], roles: [], dropped: [], feed: "empty", posted: [], players: [], staleDropped: [], live: null };
+  const empty: CandidateSet = { props: [], roles: [], minutes: [], dropped: [], feed: "empty", posted: [], players: [], staleDropped: [], live: null };
   if (!sport.hasPlayerGamelog) return empty;
   const feed = opts.feed ?? (await getPropPrices(sport.key, detail.game.id));
   const roster = detail.rosters.flatMap((r) => (r.athletes ?? []).map((a) => ({ ...a, team: r.teamAbbreviation })));
@@ -189,22 +381,43 @@ export async function buildPropCandidates(
   }
   if (!picks.length) return { ...empty, feed: feed.status, staleDropped, live: box };
 
+  // The absences that free minutes, per team, with their logs where the roster names them.
+  const regulation = regulationMinutes(sport.key);
+  const line = bookLine(detail);
+  const teams = [...new Set(picks.map((p) => p.team))];
+  const absentees = new Map(await Promise.all(teams.map(async (team) => [team, sport.group === "basketball" ? await absenteesFor(sport, detail, team) : []] as const)));
+
   const players: PlayerContext[] = [];
   for (const pick of picks) {
     const history = await historyFor(sport.key, pick.athleteId);
-    players.push({ ...pick, history, role: await roleFor(sport, pick, history) });
+    const listing = detail.injuries.find((i) => i.teamAbbreviation === pick.team && normaliseName(i.player) === normaliseName(pick.name)) ?? null;
+    const absent: AbsentTeammate[] = (absentees.get(pick.team) ?? [])
+      .filter((a) => a.athleteId !== pick.athleteId)
+      .map((a) => ({
+        name: a.entry.player, status: a.entry.status,
+        minutesPerGame: a.history ? (() => { const m = minutesOf(a.history); return m.length ? m.reduce((x, y) => x + y, 0) / m.length : null; })() : null,
+        without: history && a.history ? minutesWithout(history, a.history) : null,
+      }));
+    const minutes = sport.group === "basketball"
+      ? projectMinutes({
+          player: pick.name, minutes: minutesOf(history), regulationMinutes: regulation,
+          expectedMargin: line.spread, absentTeammates: absent, listing: listing ? { status: listing.status, updatedAt: listing.updatedAt } : null,
+        })
+      : null;
+    players.push({ ...pick, history, role: await roleFor(sport, pick, history), minutes, listing });
   }
 
+  const inputs: ModelInputs = { fits: new Map(), regulation, expectedMargin: line.spread };
   const rows: PropRow[] = [];
   for (const player of players) {
     const mine = posted.filter((p) => p.athleteId === player.athleteId);
     // A player whose every line was already decided keeps no fallback: an unpriced candidate in a
     // game under way is a pre-game median, which is exactly the number the guard exists to refuse.
-    if (!mine.length) { if (!box) rows.push(...unpricedRows(sport, player)); continue; }
+    if (!mine.length) { if (!box) rows.push(...unpricedRows(sport, player, inputs)); continue; }
     for (const p of mine) {
       const market = sport.markets.find((m) => m.key === p.marketKey);
       const verdict = verdicts.get(p);
-      const row = market ? pricedRow(sport, market, player, p, box && verdict ? { verdict, box } : null) : null;
+      const row = market ? pricedRow(sport, market, player, p, inputs, box && verdict ? { verdict, box } : null) : null;
       if (row) rows.push(row);
     }
   }
@@ -214,6 +427,7 @@ export async function buildPropCandidates(
   return {
     props: rankCandidates(kept, opts.limit ?? 40),
     roles: players.map((p) => p.role).filter((r): r is RoleProfile => r !== null),
+    minutes: players.map((p) => p.minutes).filter((m): m is MinutesProjection => m !== null),
     dropped,
     feed: feed.status,
     posted,

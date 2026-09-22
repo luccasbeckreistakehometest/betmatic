@@ -9,7 +9,7 @@ import { aiConfigured, LIVE_MODEL } from "@/lib/ai/client";
 import { espnDateKey, getGameDetail } from "@/lib/sources/espn";
 import type { LiveState } from "@/lib/live/state";
 import type { LiveSnapshot } from "@/lib/live/snapshot";
-import type { BetSlate } from "@/lib/types";
+import type { BetSlate, PropRow } from "@/lib/types";
 import type { PublicUser } from "@/lib/server/users";
 import type { Lang } from "@/lib/i18n";
 
@@ -66,7 +66,36 @@ export const CONTESTED_MARGIN = 6;
  * to exactly that gap in an 87-86 game. So the margin goes in explicitly, with the reading that
  * follows from it, rather than being left for the model to infer from a line of box score.
  */
-export function liveContext(snap: LiveSnapshot, parts: { leaders: string; trackerText: string }): string {
+/**
+ * The remaining-game projection of every surviving line, one per row, sorted by the computed chance:
+ * what it still needs per remaining minute against the rate produced tonight. The lines whose
+ * requirement tonight's rate already covers are the shape the live read exists to find; the ones
+ * that need a reversion are named so they are not bought.
+ */
+export function projectionLines(props: PropRow[]): string {
+  const rows = props.filter((p) => p.model?.live && p.line !== undefined);
+  if (!rows.length) return "";
+  const sorted = [...rows].sort((a, b) => (b.model?.computed ?? 0) - (a.model?.computed ?? 0));
+  const pct = (x: number) => `${Math.round(x * 100)}%`;
+  return sorted.slice(0, 24).map((p) => {
+    const l = p.model!.live!;
+    // Over: the requirement per minute against the rate produced tonight. Under: the room per minute
+    // against the same rate — an under whose room is below the rate tonight needs the player to slow down.
+    const under = p.side === "under";
+    const met = under ? l.needed >= 0 && l.needPerMinute >= l.ratePerMinuteTonight && l.needPerMinute >= l.ratePerMinuteBlended : Number.isFinite(l.needPerMinute) && l.needPerMinute <= l.ratePerMinuteTonight;
+    const reversion = !under && Number.isFinite(l.needPerMinute) && l.needPerMinute > 1.5 * Math.max(l.ratePerMinuteBlended, 0.001);
+    const slowdown = under && l.needPerMinute < 0.7 * l.ratePerMinuteTonight;
+    // The tags are machine labels the prompt names in English for both languages (the pt prompt is
+    // the English text plus a writing instruction); the model writes its own strings in the reader's language.
+    const tag = met ? "TONIGHT'S RATE ALREADY COVERS IT" : reversion ? "NEEDS A REVERSION — do not buy" : slowdown ? "NEEDS A SLOWDOWN — do not buy" : "";
+    const requirement = l.needed > 0
+      ? `${under ? "room for" : "needs"} ${l.needed} more in ~${l.remainingMinutes} min = ${l.needPerMinute >= 99 ? "∞" : l.needPerMinute.toFixed(2)}/min`
+      : under ? "no room left: the next one busts it" : "needs nothing more";
+    return `- ${p.player} ${p.market} ${p.side} ${p.line} @ ${p.odds ?? "?"} (pre-game reference): ${requirement} vs ${l.ratePerMinuteTonight.toFixed(2)}/min tonight (${l.minutesPlayed} min${l.fouls >= 3 ? `, ${l.fouls} PF` : ""}), ${l.ratePerMinutePreGame.toFixed(2)}/min pre-game → COMPUTED ${pct(p.model!.computed)}${tag ? ` — ${tag}` : ""}`;
+  }).join("\n");
+}
+
+export function liveContext(snap: LiveSnapshot, parts: { leaders: string; trackerText: string; projections?: string }): string {
   const margin = Math.abs(snap.home.score - snap.away.score);
   const minutesLeft = Math.round(snap.regulationMinutes - snap.minute);
   return [
@@ -74,11 +103,12 @@ export function liveContext(snap: LiveSnapshot, parts: { leaders: string; tracke
       ? `LIVE — period ${snap.period}, clock ${snap.clock}, ${minutesLeft} regulation minutes left, score ${snap.away.abbr} ${snap.away.score} @ ${snap.home.abbr} ${snap.home.score} (margin ${margin}). The pre-match lines below are stale: reason about what is left of the game.`
       : "",
     parts.leaders ? `LIVE PLAYER LINES:\n${parts.leaders}` : "",
+    parts.projections ? `REMAINING-GAME PROJECTIONS — computed per line: the requirement per remaining minute, the rate produced tonight, the pre-game rate, and the chance of the final landing (minutes left already carry the fouls and the scoreboard):\n${parts.projections}` : "",
     parts.trackerText ? `PRE-MATCH TICKETS, TRACKED NOW:\n${parts.trackerText}` : "",
     `THE MARGIN IS KNOWN, SO USE IT. ${margin <= CONTESTED_MARGIN
       ? `The game is inside ${margin} point${margin === 1 ? "" : "s"} with ${minutesLeft} minutes left: the starters are going to play them. An under on a starter's counting stat is fighting the scoreboard — move unders onto bench minutes or onto a role that has visibly shrunk tonight, and treat overs on the players already producing as the cheaper side.`
       : `The game is ${margin} points apart with ${minutesLeft} minutes left. If it stays that way the closers sit, which favours unders on starters and cuts the tail off every over — say which way you are reading the rest of the game before you use either side.`}`,
-    "BUILD REAL TICKETS, NOT A BULLETIN. Return tickets across the requested bands, including at least one at 10x or longer, built from lines the box score has NOT already decided. Every live leg must set the pace already established tonight beside what the line still needs — both are supplied per line above — and the leg to prefer is the one whose remaining requirement sits below the rate the player has already produced.",
+    "BUILD REAL TICKETS, NOT A BULLETIN. Return tickets across the requested bands, including at least one at 10x or longer, built from lines the box score has NOT already decided. Every live leg must set the pace already established tonight beside what the line still needs — both are supplied per line above — and the leg to prefer is the one whose remaining requirement sits below the rate the player has already produced. A line marked NEEDS A REVERSION or NEEDS A SLOWDOWN does not go in a ticket; fairProbability on a live leg stays within 8 points of its COMPUTED chance.",
     "Never urge the reader to bet now; describe what changed and what it means. Live prices move on every play.",
   ].filter(Boolean).join("\n\n");
 }
@@ -110,9 +140,9 @@ export async function runLiveRead(user: PublicUser, sportKey: string, gameId: st
       const trackerText = tracked.tickets.slice(0, 4).map((t) => `- ${t.title}: ${t.legs.map((l) => `${l.selection} → ${l.state}${l.probability !== null ? ` ${Math.round(l.probability * 100)}%` : ""} (${l.reason})`).join("; ")}`).join("\n");
       const leaders = snap.players.filter((p) => (p.stats.PTS ?? p.stats.SHOT ?? 0) > 0).slice(0, 10)
         .map((p) => `${p.name} (${p.team}): ${Object.entries(p.stats).filter(([k]) => ["MIN", "PTS", "REB", "AST", "PF", "SHOT", "SOG", "FC", "YC"].includes(k)).map(([k, v]) => `${k} ${v}`).join(", ")}`).join("\n");
-      const extraContext = liveContext(snap, { leaders, trackerText });
+      const extraContext = liveContext(snap, { leaders, trackerText, projections: projectionLines(candidates?.props ?? []) });
       const slate = await buildBets({
-        game: detail.game, detail, props: candidates?.props ?? [], roles: candidates?.roles ?? [], picks: [], dimers: [], x: null,
+        game: detail.game, detail, props: candidates?.props ?? [], roles: candidates?.roles ?? [], minutes: candidates?.minutes ?? [], picks: [], dimers: [], x: null,
         bands: LIVE_BANDS, maxPerBand: LIVE_MAX_PER_BAND, lang, record: false, model: LIVE_MODEL,
         live: snap.sportGroup === "soccer" ? soccerState(snap) : null, extraContext,
       });

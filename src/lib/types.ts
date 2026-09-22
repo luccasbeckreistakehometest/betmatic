@@ -133,6 +133,52 @@ export interface HitRate {
   sampleNote: string;
 }
 
+/** One rung of a prop ladder with its computed probability. */
+export interface LadderProbability { line: number; pOver: number; pUnder: number }
+
+/**
+ * The computed probability of a prop line (props/model.ts): a fitted per-minute rate over projected
+ * minutes, blended with the season hit rate. Attached in code, never by the model.
+ */
+export interface PropModel {
+  /** P(the posted side lands), the number fairProbability anchors to. */
+  computed: number;
+  /** The fitted distribution's own tail, before the blend with the hit rate. */
+  distribution: number;
+  pOver: number;
+  pUnder: number;
+  mean: number;
+  sd: number;
+  rate: number;
+  recentRate: number;
+  dispersion: number;
+  minutes: { expected: number; sd: number; availability: "ok" | "questionable" | "listed_out" };
+  ladder: LadderProbability[];
+  /** One line of arithmetic: "0.62/min × 30 ± 4 min → 18.7 ± 6.4". */
+  note: string;
+  /** In play: what the line still needs per remaining minute against the rate produced tonight. */
+  live?: {
+    needed: number;
+    remainingMinutes: number;
+    needPerMinute: number;
+    ratePerMinuteTonight: number;
+    ratePerMinutePreGame: number;
+    /** The rate the remainder is priced at: the pre-game rate (tonight's does not forecast the rest; see props/model.ts liveRate). */
+    ratePerMinuteBlended: number;
+    minutesPlayed: number;
+    fouls: number;
+  };
+}
+
+/** A minutes projection as the prompt prints it (props/minutes.ts builds it). */
+export interface MinutesView {
+  player: string;
+  expected: number;
+  sd: number;
+  availability: "ok" | "questionable" | "listed_out";
+  note: string;
+}
+
 export interface PropRow {
   player: string;
   team?: string;
@@ -163,6 +209,12 @@ export interface PropRow {
    * feed does not move once the ball is up. Legs the box score has already decided never get here.
    */
   live?: { current: number; remaining: number; minutesLeft: number } | null;
+  /** Computed probability for this exact line and side, with the minutes and rate behind it. */
+  model?: PropModel | null;
+  /** Per-game values of this market, newest first, for measured co-occurrence between legs. */
+  series?: { eventId?: string; value: number; minutes: number }[];
+  /** The projected minutes for this player, shared by every row on her. */
+  minutesProjection?: MinutesView | null;
 }
 
 export interface PickRow {
@@ -229,6 +281,12 @@ export interface BetLeg {
   openOdds?: number;
   /** Measured record at this exact line, attached in code (never by the model). */
   measured?: { last5: string; last10: string; season: string; rate: number };
+  /** The computed probability of the line (props/model.ts) at generation time; absent when no model covered it. */
+  computedProbability?: number;
+  /** The arithmetic behind computedProbability, for the reader. */
+  modelNote?: string;
+  /** The model's own estimate before it was anchored to computedProbability; the ledger races the two. */
+  rawProbability?: number;
 }
 
 export type LegOutcome = "won" | "lost" | "push" | "void" | "pending";
@@ -240,6 +298,10 @@ export interface SettledLeg {
   /** Kept so grading is deterministic rather than a re-parse of the prose. */
   settlement?: Settlement;
   predictedProbability: number;
+  /** What the deterministic model said at generation time, kept beside the model's own number so the two can be compared once settled. */
+  computedProbability?: number;
+  /** The language model's estimate before anchoring; predictedProbability is the anchored number the ticket was served with. */
+  rawProbability?: number;
   oddsDecimal: number;
   outcome: LegOutcome;
   actual?: string;
@@ -305,6 +367,8 @@ export interface BetSuggestion {
   impliedProbability: number;
   modelledProbability: number;
   edgePct: number;
+  /** Same-game correlation applied to the product of the leg probabilities (signals/correlation.ts). */
+  correlation?: { factor: number; independentProbability: number; note: string };
   riskNote: string;
   /** The model's own read. */
   confidence: "high" | "medium" | "low";

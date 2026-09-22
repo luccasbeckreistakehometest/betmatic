@@ -20,9 +20,28 @@ export interface LiveBoxScore {
   /** Match minute (soccer) or minutes played (basketball), and what is left of regulation. */
   minute: number;
   minutesLeft: number;
+  regulationMinutes: number;
   clock: string;
   period: number;
   fetchedAt: string;
+  /** Scoreboard: home minus away, and the two sides, for the margin-driven minutes read. */
+  margin: number;
+  homeAbbr: string;
+  awayAbbr: string;
+  /** Per-athlete minutes and fouls so far (basketball), by athlete id: the live minutes projection reads them. */
+  players: Record<string, { name: string; team: string; minutes: number; fouls: number }>;
+}
+
+/** Minutes and fouls per athlete from the snapshot's box-score lines. Pure. */
+export function playersFromSnapshot(snap: LiveSnapshot): LiveBoxScore["players"] {
+  const out: LiveBoxScore["players"] = {};
+  for (const p of snap.players) {
+    if (!p.id) continue;
+    const minutes = p.stats.MIN;
+    if (typeof minutes !== "number" || !Number.isFinite(minutes)) continue;
+    out[p.id] = { name: p.name, team: p.team, minutes, fouls: typeof p.stats.PF === "number" ? p.stats.PF : 0 };
+  }
+  return out;
 }
 
 /** Sums each market's gamelog labels over a live box-score line. Pure. */
@@ -51,6 +70,24 @@ export function totalsFromSnapshot(snap: LiveSnapshot, sportKey: string): LiveTo
   return totals;
 }
 
+/** The box score the guard and the live projection consume, from a parsed snapshot. Pure. */
+export function boxFromSnapshot(snap: LiveSnapshot, sportKey: string): LiveBoxScore {
+  return {
+    state: snap.state,
+    totals: totalsFromSnapshot(snap, sportKey),
+    minute: snap.minute,
+    minutesLeft: Math.max(0, Math.round(snap.regulationMinutes - snap.minute)),
+    regulationMinutes: snap.regulationMinutes,
+    clock: snap.clock,
+    period: snap.period,
+    fetchedAt: snap.fetchedAt,
+    margin: snap.home.score - snap.away.score,
+    homeAbbr: snap.home.abbr,
+    awayAbbr: snap.away.abbr,
+    players: playersFromSnapshot(snap),
+  };
+}
+
 /**
  * The live box score for one game, or null when there is nothing to read (sport without a box
  * score, game not started, ESPN unreachable). Never throws.
@@ -59,15 +96,7 @@ export async function getLiveBoxScore(sportKey: string, gameId: string): Promise
   try {
     const snap = await getLiveSnapshot(sportKey, gameId);
     if (!snap || snap.state === "pre") return null;
-    return {
-      state: snap.state,
-      totals: totalsFromSnapshot(snap, sportKey),
-      minute: snap.minute,
-      minutesLeft: Math.max(0, Math.round(snap.regulationMinutes - snap.minute)),
-      clock: snap.clock,
-      period: snap.period,
-      fetchedAt: snap.fetchedAt,
-    };
+    return boxFromSnapshot(snap, sportKey);
   } catch (error) {
     console.warn("[box-score] live read failed:", error instanceof Error ? error.message : error);
     return null;

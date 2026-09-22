@@ -79,16 +79,45 @@ export function anchoredOdds(leg: LegKey & { odds: string }, ctx: EnrichContext)
 
 const frac = (h: { hits: number; of: number }) => `${h.hits}/${h.of}`;
 
-/** Adds athlete id, opening price and the measured record to a priced leg. */
+/**
+ * How far the model's fairProbability may sit from the computed probability of the same line. The
+ * model still knows things the numbers do not (a report, a matchup) and may lean either way inside
+ * this band; outside it the computed number wins, because a leg the arithmetic puts at 45% cannot
+ * become a 70% leg by being described well.
+ */
+export const ANCHOR_BAND = 0.08;
+
+/** The model's estimate pulled inside the band around the computed probability, when one exists. */
+export function anchoredProbability(fair: number, computed: number | undefined | null): number {
+  if (computed === undefined || computed === null || !Number.isFinite(computed)) return fair;
+  return Math.min(Math.max(fair, computed - ANCHOR_BAND), computed + ANCHOR_BAND);
+}
+
+/**
+ * Adds athlete id, opening price, the measured record and the computed probability to a priced leg,
+ * and anchors fairProbability to the computed number. The model's own estimate is kept as
+ * rawProbability so the ledger can race the two once the leg settles. A player LISTED OUT keeps
+ * the model's own number: her computed probability assumes she plays, and pulling a 20% up to 70%
+ * on a player the report says is out would be the anchor working against the evidence — the flag
+ * stays on the row and the prompt treats her as unplayable until the report changes.
+ */
 export function enrichLeg(leg: BetLeg, key: LegKey, ctx: EnrichContext): BetLeg {
   const prop = matchCandidate(key, ctx);
   if (prop) {
     const m = prop.measured;
+    const model = prop.model ?? null;
+    const listedOut = model?.minutes.availability === "listed_out";
     return {
       ...leg,
       athleteId: prop.athleteId,
       openOdds: prop.openDecimal ?? undefined,
       measured: m ? { last5: frac(m.last5), last10: frac(m.last10), season: frac(m.season), rate: m.impliedFair } : undefined,
+      ...(model ? {
+        computedProbability: Number(model.computed.toFixed(3)),
+        modelNote: model.note,
+        rawProbability: leg.fairProbability,
+        fairProbability: listedOut ? leg.fairProbability : anchoredProbability(leg.fairProbability, model.computed),
+      } : {}),
     };
   }
   const line = matchGameLine(key, ctx);

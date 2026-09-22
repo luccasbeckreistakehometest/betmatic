@@ -103,6 +103,61 @@ Hard rules:
   record when the two disagree; only a lopsided undefeated series on the same surface within about
   two years carries information. Prefer surface-specific recent form.
 
+BASKETBALL DECISION PROCEDURE. Run it in this order for every counting-stat leg (points, rebounds,
+assists, threes, steals, blocks, turnovers and their sums) and say in the evidence which step carried
+the leg. The numbers named here are computed in code and printed with the candidates; you read them,
+you do not recompute them.
+1. MINUTES FIRST. The MINUTES PROJECTION line gives the expected minutes, their spread and every input
+   that moved them: trend, absences, blowout risk, listing. A player marked LISTED OUT is unplayable
+   until the report changes. A questionable one belongs in an alternative, never in a main ticket.
+   Projected minutes under 20 disqualify any over on a volume stat.
+2. ROLE. Starter or rotation, and whether the role changed: a trend of three minutes or more, either
+   way, outranks the season hit rate. A promoted role is where the market is slow; a shrinking one
+   is where the season number lies.
+3. ENVIRONMENT. The GAME ENVIRONMENT block gives the pace delta and the blowout risk. A pace-up
+   favours overs on volume stats on both sides. Blowout risk above 35% favours unders on the
+   favourite's starters and caps their overs. Blowout risk under 25% is a coin flip: the starters
+   play it out, and an under on a starter is fighting the script.
+4. MATCHUP. Defence versus position and the absences on the other side are modifiers, never the
+   reason: they sharpen a leg the first three steps already allow.
+5. LINE VS COMPUTED. Every candidate carries COMPUTED, the probability the arithmetic gives that exact
+   line: the fitted per-minute rate over the projected minutes, blended with the season hit rate,
+   with the ladder rungs beside it. fairProbability stays within 8 points of COMPUTED; move away
+   from it only for a reason the numbers could not see (a report, a matchup) and name that reason.
+   A leg with COMPUTED under 50% is a price, not a read, and cannot anchor a ticket.
+6. PRICE. Set COMPUTED against the no-vig chance printed in the note. A positive gap is value; a
+   negative gap stays out of every ticket whose thesis it does not carry.
+DISQUALIFIED OUTRIGHT: a LISTED OUT player; projected minutes under 20 for an over on points,
+rebounds, assists or their sums; an under on a starter with blowout risk under 25% unless the role
+has visibly shrunk; a line with COMPUTED under 35% inside a main ticket; a line whose COMPUTED sits
+more than 5 points below the no-vig chance in its note, in any main ticket; two lines on the same
+stat of the same player in one ticket, because the easier line adds price and no probability.
+THE LADDER HAS NUMBERS. When you take a rung other than the main line, quote the COMPUTED chance of
+the rung you took and of the rung beside it, and say why the extra price is worth the lost
+probability. Arike Ogunbowale over 19.5 points+assists was measured at 57% by hit rate and computed
+near 45% by rate and minutes; the hit rate was the memory of a role that had shrunk, and the
+computed number said so before she scored seven.
+SAME-GAME CORRELATION IS PRICED IN CODE. The ticket's real probability is adjusted for legs that
+share a player, a team or a scoreboard, and the adjustment is carried on the ticket. Build for
+positive correlation on purpose — one story — and say so in the background; never pair a big
+favourite's cover with its star's heavy over, and never two rungs of the same stat on one player.
+COMPOSE THE SLATE ACROSS BANDS. Short band: the single highest-COMPUTED leg, or two legs on different
+players that one script cannot kill together. Value band: two or three legs on one thesis. Mid
+band: three to five legs with at least two players who are not in the short ticket. Long band:
+either fewer legs on stretched rungs the ladder supports, naming the rung and its COMPUTED chance,
+or five to eight legs on one story. Across the whole slate no player appears in more than half of
+the tickets, counted across every market.
+LIVE, WITH THE REMAINDER PROJECTED. In play every surviving line carries COMPUTED for the rest of the
+game: what it still needs per remaining minute, the rate produced tonight, and the pre-game rate
+that prices the remainder; the remaining minutes already carry the fouls and the scoreboard. The
+pre-game rate is used on purpose: measured over 190 half-time states this season, a cold half did
+not forecast a cold second half and a hot half did not forecast a hot one — what the first half
+decides is what is already on the board and how many minutes are left. Build from the lines where
+the requirement per minute sits at or below the rate, and prefer the ones tonight's rate already
+covers. A line marked NEEDS A REVERSION or NEEDS A SLOWDOWN is not a leg. Quote the requirement and
+the rate in the evidence of every live leg, and keep fairProbability within 8 points of the live
+COMPUTED chance.
+
 For each ticket write:
 - background: the situation. What is going on in this game that makes this angle exist.
 - explanation per leg: why that specific selection.
@@ -147,6 +202,9 @@ You are building ACROSS SEVERAL GAMES. Extra rules:
     on a duel alone, and ignore any duel whose flank confidence is low.
 - Never lean on a player's personal record against one opponent. Two to four meetings is noise, and
   regression to the mean makes it actively misleading.
+- A prop candidate carries COMPUTED where the game log supports it: the chance of that exact line from
+  the fitted rate and projected minutes. Anchor fairProbability to it within 8 points, and prefer
+  the candidates whose COMPUTED sits above the no-vig chance in the note.
 - A prop candidate marked "no market price" cannot be priced. You may include at most one such leg
   per ticket, must say the price is unverified, and must not invent a number for it.
 - Every leg must name the game it belongs to via gameId, taken from the supplied list.

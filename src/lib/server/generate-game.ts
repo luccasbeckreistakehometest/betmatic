@@ -55,7 +55,7 @@ export async function generateGame(args: { sportKey: string; dateKey: string; de
   const save = (lang: Lang, slate: BetSlate, costUsd: number) =>
     savePrediction({ scope: "game", sportKey, gameId: detail.game.id, dateKey, lang, matchup, startsAt: detail.game.startsAt, slate, costUsd });
 
-  const primarySlate = await buildBets({ game: detail.game, detail, props, picks: [], dimers: [], x: null, bands: BANDS, lang: primary, referee, dvp, roles: candidates?.roles ?? [], consensus, lines });
+  const primarySlate = await buildBets({ game: detail.game, detail, props, picks: [], dimers: [], x: null, bands: BANDS, lang: primary, referee, dvp, roles: candidates?.roles ?? [], minutes: candidates?.minutes ?? [], consensus, lines });
   save(primary, primarySlate, spend());
   void announceTickets({ gameId: detail.game.id, matchup, sportKey, lang: primary, suggestions: primarySlate.suggestions, base });
   const slates: Partial<Record<Lang, BetSlate>> = { [primary]: primarySlate };
