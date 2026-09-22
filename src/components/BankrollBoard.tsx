@@ -174,7 +174,7 @@ export function BankrollBoard() {
                             key={o}
                             type="button"
                             onClick={() => grade(e.id, o)}
-                            className="border border-line-control px-1.5 py-0.5 text-micro u-label text-fg-muted transition-colors duration-(--dur-1) hover:bg-surface-2 hover:text-fg"
+                            className="border border-line-control px-1.5 py-0.5 text-micro u-label text-fg-muted transition-colors duration-(--dur-1) hover:bg-surface-2 hover:text-fg max-md:min-h-9 max-md:px-3"
                           >
                             {mark[o]}
                           </button>
@@ -183,7 +183,7 @@ export function BankrollBoard() {
                         type="button"
                         onClick={() => remove(e.id)}
                         aria-label={lang === "pt" ? "Remover da banca" : "Remove from bankroll"}
-                        className="ml-auto grid size-6 place-items-center text-fg-dim transition-colors duration-(--dur-1) hover:text-neg"
+                        className="u-hit ml-auto grid size-6 place-items-center text-fg-dim transition-colors duration-(--dur-1) hover:text-neg"
                       >
                         <Icon name="trash" size={16} />
                       </button>
@@ -226,7 +226,7 @@ export function BankrollBoard() {
       </Panel>
 
       <p className="text-tiny text-fg-dim">
-        <Link href={{ pathname: "/app/track", query: { lang } }} className="underline underline-offset-2 hover:text-fg">{t("navTrack")}</Link>
+        <Link href={{ pathname: "/app/track", query: { lang } }} className="underline underline-offset-2 hover:text-fg max-md:inline-flex max-md:min-h-11 max-md:items-center">{t("navTrack")}</Link>
       </p>
     </div>
   );

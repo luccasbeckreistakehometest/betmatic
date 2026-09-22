@@ -18,8 +18,10 @@ export default defineConfig({
   use: { baseURL: "http://localhost:3300", trace: "retain-on-failure", screenshot: "only-on-failure", locale: "pt-BR" },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] }, testIgnore: /mobile\.spec\.ts/ },
-    // Phone width: the app must never scroll sideways.
+    // Phone widths: the app must never scroll sideways — at 393px, and at the 360px of the cheaper
+    // Androids the product's readers actually hold.
     { name: "mobile", use: { ...devices["Pixel 5"] }, testMatch: /mobile\.spec\.ts/ },
+    { name: "mobile-360", use: { ...devices["Pixel 5"], viewport: { width: 360, height: 780 } }, testMatch: /mobile\.spec\.ts/ },
   ],
   webServer: {
     // IP limits are scaled up because every spec shares one address; account limits stay real.

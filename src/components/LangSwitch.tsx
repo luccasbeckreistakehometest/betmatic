@@ -16,7 +16,7 @@ export function LangSwitch({ lang, hrefs }: { lang: Lang; hrefs: Record<Lang, st
           hrefLang={l.key === "pt" ? "pt-BR" : "en"}
           aria-current={lang === l.key ? "true" : undefined}
           aria-label={l.label}
-          className={`px-1.5 py-1 text-micro u-label transition-colors duration-(--dur-1) ${
+          className={`px-1.5 py-1 text-micro u-label transition-colors duration-(--dur-1) max-md:inline-flex max-md:min-h-11 max-md:items-center max-md:px-3 ${
             lang === l.key ? "bg-action text-action-fg" : "bg-surface-1 text-fg-dim hover:text-fg"
           }`}
         >

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { GameActionBar } from "@/components/GameActionBar";
+import { GameStickyHead } from "@/components/GameStickyHead";
 import { IntelBoard } from "@/components/IntelBoard";
 import { LivePanel } from "@/components/LivePanel";
 import { espnDateKey } from "@/lib/sources/espn";
@@ -126,15 +128,27 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
 
   const { game, books, ats, injuries, teamStats, predictor, leaders, lastMeetings } = detail;
   const lines = sportSellsTickets(sport) && game.status === "scheduled" ? await getGameLines(sport.key, game.id).catch(() => []) : [];
+  const statusLine = game.status === "scheduled" ? kickoff(game.startsAt, lang) : localizeStatus(game.statusDetail, lang);
+  const backHref = `/app?sport=${encodeURIComponent(sport.key)}&lang=${lang}`;
 
   return (
     <div className="flex flex-col gap-5">
       <Link
         href={{ pathname: "/app", query: { sport: sport.key, lang } }}
-        className="w-fit text-tiny text-fg-dim transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg-muted"
+        className="w-fit text-tiny text-fg-dim transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg-muted max-md:inline-flex max-md:min-h-11 max-md:items-center"
       >
         {t("backToSlate")}
       </Link>
+      {/* The phone's compact head: appears once the full team block has scrolled under the topbar. */}
+      <GameStickyHead
+        away={{ abbr: game.away.abbreviation, name: game.away.displayName, score: game.away.score }}
+        home={{ abbr: game.home.abbreviation, name: game.home.displayName, score: game.home.score }}
+        status={statusLine}
+        live={game.status === "live"}
+        kickoff={game.status === "scheduled"}
+        lang={lang}
+        backHref={backHref}
+      />
 
       <PageHead
         kicker={game.tournament ? `${sport.label[lang]} · ${game.tournament}` : sport.label[lang]}
@@ -142,7 +156,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
         meta={[game.status === "scheduled" ? kickoff(game.startsAt, lang) : localizeStatus(game.statusDetail, lang), game.venue, game.broadcast].filter(Boolean).join(" · ")}
       />
 
-      <section className="border-y border-line bg-surface-1 px-4 py-4">
+      <section id="game-head" className="border-y border-line bg-surface-1 px-4 py-4">
         <div className="flex flex-wrap items-center gap-4">
           <TeamHeading team={game.away} align="left" showScore={game.status !== "scheduled"} follow={followOf(game.away.id)} />
           <div className="flex shrink-0 flex-col items-center gap-1 px-2">
@@ -167,7 +181,9 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
         </div>
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      {/* One explicit column below lg: an implicit `auto` track sizes to min-content, and a row of
+          chips that must not wrap would widen the whole page past a phone's edge. */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="flex flex-col gap-4">
           {user && sportSellsTickets(sport) && game.status !== "scheduled" && (
             <LivePanel gameId={gameId} sportKey={sport.key} dateKey={espnDateKey(new Date(game.startsAt))} lang={lang} />
@@ -213,7 +229,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
                       <h3 className="mb-1 text-micro u-label text-fg-dim">{team.displayName}</h3>
                       <div className="flex flex-wrap gap-1">
                         {roster.slice(0, 14).map((a) => (
-                          <Link key={a.id} href={{ pathname: `/app/player/${a.id}`, query: { sport: sport.key, lang, game: game.id } }} className="rounded-control border border-line px-1.5 py-0.5 text-label text-fg-muted transition-colors duration-(--dur-1) hover:bg-surface-2 hover:text-fg">
+                          <Link key={a.id} href={{ pathname: `/app/player/${a.id}`, query: { sport: sport.key, lang, game: game.id } }} className="rounded-control border border-line px-1.5 py-0.5 text-label text-fg-muted transition-colors duration-(--dur-1) hover:bg-surface-2 hover:text-fg max-md:inline-flex max-md:min-h-11 max-md:items-center max-md:px-3">
                             {a.name}
                           </Link>
                         ))}
@@ -227,7 +243,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
 
           <Panel title={t("market")} meta={books.length ? `${books.length} ${books.length === 1 ? t("bookOne") : t("bookMany")}` : undefined}>
             {books.length ? (
-              <Table caption={t("market")} collapse={false}>
+              <Table caption={t("market")}>
                 <thead>
                   <tr>
                     <Th>{t("book")}</Th>
@@ -248,7 +264,7 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
                 </tbody>
               </Table>
             ) : (
-              <Empty>{t("noLines")}</Empty>
+              <Empty rows={0}>{t("noLines")}</Empty>
             )}
             <LineMovement lines={lines} home={game.home.displayName} away={game.away.displayName} lang={lang} />
             {ats.length > 0 && (
@@ -305,6 +321,8 @@ export default async function GamePage({ params, searchParams }: PageProps<"/app
           )}
         </aside>
       </div>
+      {/* The phone's one primary action, offered by the live panel or the tickets; nothing on a desk. */}
+      <GameActionBar />
     </div>
   );
 }

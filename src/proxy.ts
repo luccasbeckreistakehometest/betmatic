@@ -13,6 +13,10 @@ export function proxy(request: NextRequest) {
   const headers = new Headers(request.headers);
   headers.set("x-bm-lang", lang);
   headers.set("x-bm-path", pathname);
+  // The sport in the URL, for the app shell: a layout cannot read search params, and the cookie
+  // that remembers the sport is only written after the first page has hydrated.
+  const sport = searchParams.get("sport");
+  if (sport && /^[a-z0-9-]{1,32}$/.test(sport)) headers.set("x-bm-sport", sport);
   return NextResponse.next({ request: { headers } });
 }
 

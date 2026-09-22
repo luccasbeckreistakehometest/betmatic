@@ -90,7 +90,13 @@ export function TipsterAudit() {
               <textarea className={`${field} min-h-40`} value={text} maxLength={30_000} onChange={(e) => setText(e.target.value)} placeholder={c.textHint} data-testid="tipster-text" />
             </label>
             <div className="flex flex-wrap items-center gap-3 text-tiny text-fg-muted">
-              <label className="flex items-center gap-2">{c.images}<input type="file" accept="image/*" multiple onChange={(e) => setFiles(Array.from(e.target.files ?? []).slice(0, 5))} className="text-label" /></label>
+              {/* The platform's file control is never shown raw (§12.2): a label in the button's own
+                  geometry opens the picker, and the count says what was chosen. */}
+              <label className={buttonClass("secondary", "cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus")}>
+                {c.images}
+                <input type="file" accept="image/*" multiple onChange={(e) => setFiles(Array.from(e.target.files ?? []).slice(0, 5))} className="sr-only" data-testid="tipster-images" />
+              </label>
+              {files.length > 0 && <span className="nums text-tiny text-fg-muted" data-testid="tipster-images-count">{files.length}/5</span>}
               <label className="flex items-center gap-2">{c.sport}
                 <Select value={sportKey} onChange={(e) => setSportKey(e.target.value)}  data-testid="tipster-sport">
                   {SOLD_SPORTS.map((s) => <option key={s.key} value={s.key}>{s.label[lang]}</option>)}

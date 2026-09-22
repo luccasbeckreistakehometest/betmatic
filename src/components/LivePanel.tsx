@@ -1,7 +1,8 @@
 "use client";
 
 import { track } from "@/lib/track";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { offerAction, publishLiveScore } from "@/components/game-stores";
 import { formatDecimal } from "@/lib/odds";
 import { formatPercent as pctOf } from "@/lib/format";
 import { formatTime } from "@/lib/format";
@@ -63,6 +64,7 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
   const done = useRef(false);
   const opened = useRef(false);
 
@@ -71,21 +73,25 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
     const tick = async () => {
       if (done.current || document.visibilityState !== "visible") return;
       const r = await fetch(`/api/game/${gameId}/live?sport=${sportKey}&lang=${lang}&date=${dateKey}`, { cache: "no-store" }).catch(() => null);
-      if (!alive || !r?.ok) return;
+      if (!alive) return;
+      if (!r?.ok) { setFailed(true); return; }
       const j = (await r.json()) as Payload;
+      setFailed(false);
       if (j.snapshot?.state === "post") done.current = true;
       if (!opened.current && j.snapshot) { opened.current = true; track("live_panel_open", { state: j.snapshot.state }); }
       setData(j);
       setUpdatedAt(new Date().toISOString());
+      // The phone's compact head shows the score this panel just fetched, from one request.
+      publishLiveScore(j.paused ? null : j.snapshot);
     };
     const first = setTimeout(() => void tick(), 0);
     const timer = setInterval(() => void tick(), POLL_MS);
     const onVisible = () => { if (document.visibilityState === "visible") void tick(); };
     document.addEventListener("visibilitychange", onVisible);
-    return () => { alive = false; clearTimeout(first); clearInterval(timer); document.removeEventListener("visibilitychange", onVisible); };
+    return () => { alive = false; clearTimeout(first); clearInterval(timer); document.removeEventListener("visibilitychange", onVisible); publishLiveScore(null); };
   }, [gameId, sportKey, lang, dateKey]);
 
-  async function askRead() {
+  const askRead = useCallback(async () => {
     setBusy(true);
     setNote(null);
     const r = await fetch(`/api/game/${gameId}/live?sport=${sportKey}&lang=${lang}&date=${dateKey}`, { method: "POST" }).catch(() => null);
@@ -96,12 +102,31 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
       setUpdatedAt(new Date().toISOString());
     }
     else setNote(j.message ?? c.readFail);
-  }
+  }, [gameId, sportKey, lang, dateKey, c.readFail]);
 
-  if (!data || data.paused || !data.snapshot) return null;
-  const s = data.snapshot;
+  const s = data && !data.paused ? data.snapshot : null;
   // Compared with the time of the last fetch, not the clock, so rendering stays pure.
-  const cooling = !!data.nextReadAt && !!updatedAt && Date.parse(data.nextReadAt) > Date.parse(updatedAt);
+  const cooling = !!data?.nextReadAt && !!updatedAt && Date.parse(data.nextReadAt) > Date.parse(updatedAt);
+  // While a read can be asked for, the phone's action bar offers it wherever the reader is on the
+  // page; the inline button below is the anchor, so the two are never on screen together. Until
+  // the first poll has answered, the bar is held silent: a lesser action shown for a moment and
+  // then replaced is a label changing under the thumb.
+  const pending = !data && !failed;
+  const offerRead = !!s && s.state === "in" && !!data?.canRead && !cooling;
+  useEffect(() => {
+    if (pending) {
+      offerAction("live-read", { label: "", priority: 20, pending: true, run: () => {}, anchor: () => null });
+      return () => offerAction("live-read", null);
+    }
+    if (!offerRead) { offerAction("live-read", null); return; }
+    offerAction("live-read", { label: busy ? c.readBusy : c.readBtn, priority: 20, busy, testId: "action-live-read", run: () => void askRead(), anchor: () => document.getElementById("live-read-btn") });
+    return () => offerAction("live-read", null);
+  }, [pending, offerRead, busy, askRead, c.readBtn, c.readBusy]);
+
+  // The first poll is in flight: the panel's frame at roughly its final height, so the tickets
+  // below do not jump when it arrives. A failed poll leaves nothing, as before.
+  if (!data) return failed ? null : <LiveShell title={c.title} />;
+  if (!s) return null;
   return (
     <section className="rounded-panel border border-focus bg-surface-1" data-testid="live-panel" data-live-url={`/api/game/${gameId}/live?sport=${sportKey}&lang=${lang}&date=${dateKey}`}>
       <header className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-2.5">
@@ -177,10 +202,40 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
           )}
           {s.state === "in" && (data.canRead ? (
             cooling ? <p className="mt-1.5 text-tiny text-fg-dim">{c.readNext.replace("{t}", formatTime(data.nextReadAt!, lang))}</p> : (
-              <button type="button" onClick={askRead} disabled={busy} data-testid="live-read-btn" className="mt-2 inline-flex h-(--row-h) items-center rounded-control border border-line-control px-3 text-tiny text-fg transition-colors duration-(--dur-1) hover:bg-surface-2 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint">{busy ? c.readBusy : c.readBtn}</button>
+              <button type="button" id="live-read-btn" onClick={() => void askRead()} disabled={busy} data-testid="live-read-btn" className="mt-2 inline-flex h-(--row-h) items-center rounded-control border border-line-control px-3 text-tiny text-fg transition-colors duration-(--dur-1) hover:bg-surface-2 disabled:cursor-not-allowed disabled:border-line disabled:text-fg-faint">{busy ? c.readBusy : c.readBtn}</button>
             )
           ) : <p className="mt-1.5 text-tiny text-fg-dim" data-testid="live-read-plan">{c.readPlan}</p>)}
           {note && <p className="mt-1.5 text-tiny text-warn">{note}</p>}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function LiveShell({ title }: { title: string }) {
+  return (
+    <section className="rounded-panel border border-line bg-surface-1" data-testid="live-loading" aria-busy="true">
+      <header className="flex items-center gap-2 border-b border-line px-4 py-2.5">
+        <span className="size-2 rounded-full bg-fg-dim" aria-hidden />
+        <h2 className="text-sm font-semibold text-fg">{title}</h2>
+        <span aria-hidden="true" className="ml-2 block h-3 w-24 rounded-control bg-surface-2" />
+      </header>
+      <div aria-hidden="true" className="flex flex-col gap-3 px-4 py-3">
+        <span className="block h-12 rounded-control bg-surface-2" />
+        <span className="block h-4 w-4/5 rounded-control bg-surface-2" />
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="flex flex-col gap-2.5 rounded-control border border-line bg-surface-2 p-3">
+            <span className="block h-3.5 w-2/5 rounded-control bg-surface-3" />
+            <span className="block h-3 w-3/5 rounded-control bg-surface-3" />
+            <span className="block h-3 w-1/2 rounded-control bg-surface-3" />
+            <span className="block h-3 w-3/5 rounded-control bg-surface-3" />
+            <span className="block h-3 w-2/5 rounded-control bg-surface-3" />
+          </div>
+        ))}
+        <div className="flex flex-col gap-2 border-t border-line pt-3">
+          <span className="block h-3 w-1/3 rounded-control bg-surface-2" />
+          <span className="block h-3 w-4/5 rounded-control bg-surface-2" />
+          <span className="block h-(--row-h) w-40 rounded-control bg-surface-2" />
         </div>
       </div>
     </section>

@@ -1,8 +1,11 @@
 import Link from "next/link";
+import { cookies, headers } from "next/headers";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { SportPicker } from "@/components/Controls";
-import { AppBottomBar, AppRail } from "@/components/AppRail";
+import { AppBottomBar, AppRail, type LiveTabInitial } from "@/components/AppRail";
+import { SPORT_COOKIE, soldSportKey } from "@/lib/server/default-sport";
+import { getSlate, todayKey } from "@/lib/sources/espn";
 import { Disclaimer } from "@/components/Disclaimer";
 import { Logo } from "@/components/Logo";
 import { AccountBar } from "@/components/AccountBar";
@@ -19,11 +22,34 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
  * column, which has no max-width — data fills the monitor it was opened on. The chrome is ruled,
  * not floated: one hairline under the bar and one down the rail, no shadow, no blur.
  */
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+/**
+ * The phone's live tab, decided here so the bar is right on first paint and never reflows: the
+ * games under way now in the sport the URL names (forwarded by the proxy), else the remembered
+ * one. Read from the cached scoreboard; a feed error answers null and the bar reads the slate.
+ */
+async function liveTabInitial(): Promise<LiveTabInitial | null> {
+  const [head, jar] = await Promise.all([headers(), cookies()]);
+  const sportKey = soldSportKey(head.get("x-bm-sport")) ?? soldSportKey(jar.get(SPORT_COOKIE)?.value) ?? null;
+  if (!sportKey) return null;
+  try {
+    const games = await getSlate(todayKey(), false, sportKey);
+    return {
+      sportKey,
+      games: games.filter((g) => g.status === "live").map((g) => ({ id: g.id, label: `${g.away.abbreviation} × ${g.home.abbreviation}`, name: `${g.away.displayName} × ${g.home.displayName}` })),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const live = await liveTabInitial();
   return (
-    <div className="flex min-h-dvh flex-col" data-density="default">
-      <header className="sticky top-0 z-40 flex h-12 shrink-0 items-center gap-3 border-b border-line bg-surface-1 px-3 md:px-4">
-        <Link href="/app" className="flex shrink-0 items-center" aria-label="Betmatic">
+    <div className="flex min-h-dvh flex-col pb-(--tabbar-h)" data-density="default">
+      {/* 48px of bar under the status bar an installed app keeps: the inset is padding, so the bar
+          is drawn below it and everything that sticks under the bar (--topbar-h) follows. */}
+      <header className="sticky top-0 z-40 flex h-[calc(3rem+var(--safe-t))] shrink-0 items-center gap-3 border-b border-line bg-surface-1 px-3 pt-(--safe-t) md:px-4">
+        <Link href="/app" className="flex h-11 min-w-11 shrink-0 items-center" aria-label="Betmatic">
           <span className="lg:hidden"><Logo size={22} showWord={false} /></span>
           <span className="hidden lg:inline"><Logo size={22} /></span>
         </Link>
@@ -61,7 +87,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       <Suspense fallback={null}>
-        <AppBottomBar />
+        <AppBottomBar initialLive={live} />
       </Suspense>
       <Suspense fallback={null}>
         <Tour telegram={telegramConfigured()} ai={aiConfigured()} />

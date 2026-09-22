@@ -30,7 +30,7 @@ export function MarketingHeader({ lang, langHrefs, nav }: { lang: Lang; langHref
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-surface-0">
       <div className="mx-auto flex h-14 max-w-shell items-center gap-4 px-4 sm:gap-8 sm:px-6">
-        <Link href={`/${q}`} aria-label="Betmatic" className="shrink-0">
+        <Link href={`/${q}`} aria-label="Betmatic" className="shrink-0 max-md:flex max-md:min-h-11 max-md:items-center">
           <span className="sm:hidden"><Logo size={22} showWord={false} /></span>
           <span className="hidden sm:inline"><Logo size={22} /></span>
         </Link>
@@ -43,7 +43,7 @@ export function MarketingHeader({ lang, langHrefs, nav }: { lang: Lang; langHref
         )}
         <div className="ml-auto flex items-center gap-2 sm:gap-4">
           <LangSwitch lang={lang} hrefs={langHrefs} />
-          <Link href={`/login?lang=${lang}`} className={`${link} whitespace-nowrap`} data-testid="landing-login">
+          <Link href={`/login?lang=${lang}`} className={`${link} whitespace-nowrap max-md:inline-flex max-md:min-h-11 max-md:items-center`} data-testid="landing-login">
             {c.login}
           </Link>
           <LinkButton variant="primary" href={`/signup?lang=${lang}`} className="whitespace-nowrap">

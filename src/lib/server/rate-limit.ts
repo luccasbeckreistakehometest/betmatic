@@ -28,6 +28,8 @@ export const RULES = {
   playerAccount: { max: 90, windowMs: 60 * MIN },
   liveAccount: { max: 150, windowMs: 60 * MIN },
   eventsIp: { max: 240, windowMs: 10 * MIN },
+  /* The phone's tab bar re-reads the slate every 90 s; a page load reads it once. */
+  slateIp: { max: 240, windowMs: 10 * MIN },
   exportAccount: { max: 5, windowMs: 60 * MIN },
   webhookIp: { max: 120, windowMs: MIN },
   tourIp: { max: 120, windowMs: MIN },

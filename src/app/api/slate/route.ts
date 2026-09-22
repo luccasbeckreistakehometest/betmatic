@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSlateOrNearest, todayKey } from "@/lib/sources/espn";
 import { currentUser } from "@/lib/server/session";
 import { apiError, requestLang } from "@/lib/server/api";
+import { hit, ipKey } from "@/lib/server/rate-limit";
 import { reportError } from "@/lib/server/ops-log";
 import { scrubGame } from "@/lib/server/whitelabel";
 
@@ -9,6 +10,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  // The phone's tab bar polls this every 90 s; the rule is wide enough for a family of phones on
+  // one address and narrow enough that a loop cannot make the feed pay.
+  if (!hit("slateIp", ipKey(request)).ok) return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   const url = new URL(request.url);
   const raw = url.searchParams.get("date") ?? todayKey();
   const date = /^\d{8}$/.test(raw) ? raw : todayKey();

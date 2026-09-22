@@ -218,7 +218,8 @@ export function Input({
         CONTROL_BASE,
         CONTROL_READONLY,
         invalid ? "border-neg" : "border-line-control",
-        numeric && "nums text-right",
+        // The value is a number and set like one; the placeholder is prose and set in the body face (§3.4).
+        numeric && "nums text-right placeholder:font-sans placeholder:tracking-normal",
         suffix && "pr-8",
         className,
       )}
@@ -268,7 +269,7 @@ export function Select({
 
 export function Checkbox({ label, className = "", ...rest }: Omit<ComponentProps<"input">, "type"> & { label: ReactNode }) {
   return (
-    <label className={cx("inline-flex cursor-pointer items-center gap-2 text-sm text-fg has-[:disabled]:cursor-not-allowed has-[:disabled]:text-fg-faint", className)}>
+    <label className={cx("inline-flex cursor-pointer items-center gap-2 text-sm text-fg has-[:disabled]:cursor-not-allowed has-[:disabled]:text-fg-faint max-md:min-h-11", className)}>
       <span className="relative inline-flex size-4 shrink-0">
         <input
           {...rest}
@@ -317,6 +318,21 @@ export function Badge({ tone = "neutral", children, className = "" }: { tone?: T
     <span className={cx("inline-flex h-5 items-center rounded-control border px-1.5 text-label u-label", TONE_STYLE[tone], className)}>
       {children}
     </span>
+  );
+}
+
+/**
+ * A chip you press — a market, a league, an odds band — is a toggle (§12.6): pressed is the
+ * achromatic action fill, exactly like the primary button; unpressed is a control edge. On a
+ * phone the chip is a real 44px box and takes the body size — chips sit six pixels apart, so a
+ * transparent hit area would overlap the next one; a desk keeps the dense geometry. Pair it with
+ * aria-pressed on the button.
+ */
+export function chipClass(on: boolean, className = ""): string {
+  return cx(
+    "inline-flex items-center gap-1.5 rounded-control border px-2.5 py-1 text-tiny whitespace-nowrap transition-colors duration-(--dur-1) ease-(--ease-out) max-md:min-h-11 max-md:px-3 max-md:text-sm",
+    on ? "border-action bg-action text-action-fg" : "border-line-control text-fg-muted hover:bg-surface-2 hover:text-fg",
+    className,
   );
 }
 
@@ -705,4 +721,4 @@ export function Tooltip({ label, children, className = "" }: { label: string; ch
 
 /* Interactive primitives (hooks, focus traps, keyboard handling) live next door so this module
    stays renderable from a server component. Screens import everything from "@/components/ui". */
-export { DensitySwitch, Dialog, PrintButton, PrintHeader, RangeField, Sheet, Tabs, ThemeSwitch } from "@/components/ui-client";
+export { DensitySwitch, Dialog, PrintButton, PrintHeader, RangeField, Sheet, Tabs, ThemeSwitch, useIsPhone } from "@/components/ui-client";

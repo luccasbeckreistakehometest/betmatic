@@ -319,6 +319,13 @@ const DICT = {
   nothingReported: { pt: "Nada informado.", en: "Nothing reported." },
   navAccount: { pt: "Minha conta", en: "My account" },
   navPlans: { pt: "Planos", en: "Plans" },
+  // The phone's tab bar: the same destinations as the rail, in the one word a 70px tab can hold.
+  tabBankroll: { pt: "Banca", en: "Bankroll" },
+  tabAccount: { pt: "Conta", en: "Account" },
+  tabLive: { pt: "Ao vivo", en: "Live" },
+  tabLiveMany: { pt: "{n} ao vivo", en: "{n} live" },
+  seeTickets: { pt: "Ver bilhetes", en: "See tickets" },
+  allBands: { pt: "Todas as faixas", en: "All bands" },
   navMore: { pt: "Mais", en: "More" },
   menu: { pt: "Menu", en: "Menu" },
   closeMenu: { pt: "Fechar menu", en: "Close menu" },

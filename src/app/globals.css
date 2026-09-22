@@ -93,8 +93,18 @@
   --elev-pop: 0 1px 2px rgb(16 19 26 / 0.12), 0 8px 24px rgb(16 19 26 / 0.14);
   --elev-dialog: 0 2px 4px rgb(16 19 26 / 0.14), 0 24px 64px rgb(16 19 26 / 0.22);
 
-  /* The desk's chrome: the topbar is 48px, so anything that sticks under it starts here. */
-  --topbar-h: 48px;
+  /* The phone's chrome. The device's own insets (the status bar of an installed app, the home
+     indicator) are read once here and never in a component; the tab bar exists only below 768px,
+     so its height is 0 on a desk and anything anchored to the bottom of the screen (a floating
+     card) offsets by it. */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --tabbar-h: 0px;
+  --float-b: var(--s-7);
+
+  /* The desk's chrome: the topbar is 48px plus the status bar it sits under when installed, so
+     anything that sticks under it (the rail, the game page's compact head) starts here. */
+  --topbar-h: calc(48px + var(--safe-t));
   --sticky-top: calc(var(--topbar-h) + var(--s-5));
 
   /* Density (§7) — default mode; [data-density] overrides below. */
@@ -214,11 +224,32 @@
 }
 @media (max-width: 767px) {
   [data-density] {
-    --row-h: 40px;
+    --row-h: 44px;
     --cell-px: 16px;
-    --panel-p: 24px;
+    --panel-p: 20px;
     --stack-gap: 16px;
     --density-text: 0.875rem;
+  }
+  :root {
+    /* 56px of tabs, the hairline above them, and whatever the device keeps for itself under them:
+       the token is the element's real height, so nothing is ever a pixel under the bar. */
+    --tabbar-h: calc(var(--s-11) + 1px + var(--safe-b));
+    --float-b: calc(var(--tabbar-h) + var(--s-5));
+    /* Nothing on a phone is set below 12px: the two smallest steps of the scale rise to it, so a
+       column label or a footnote stays readable at arm's length. Every other size is unchanged. */
+    --text-micro: 0.75rem;
+    --text-micro--line-height: 1rem;
+    --text-label: 0.75rem;
+    --text-label--line-height: 1rem;
+  }
+}
+/* At the 12px floor the three smallest steps share a size, so the step is carried by something
+   else: a label by case and tracking (u-label), a footnote or axis tick (micro) by weight. */
+@layer components {
+  @media (max-width: 767px) {
+    .text-micro {
+      font-weight: 500;
+    }
   }
 }
 
@@ -377,6 +408,47 @@
 @utility u-rule-active {
   box-shadow: inset 0 -2px 0 var(--fg);
 }
+/* The phone's current tab: the same cue as the rail — a 2px rule in ink on the tab's top edge plus
+   full-contrast text. One current-item colour in the product, and it is not a hue (§12.7). */
+@utility u-tab-current {
+  box-shadow: inset 0 2px 0 var(--fg);
+}
+/* A control drawn smaller than a fingertip keeps its box and gains a transparent 44px hit area
+   around it (§12.1) — on a phone only, and only where no other control sits within that area:
+   two hit areas that overlap hand a tap to whichever is drawn last, so neighbours closer than 44px
+   get a real box (min-height, padding) instead. A desk has a pointer and no pseudo-element. */
+@utility u-hit {
+  @media (max-width: 767px) {
+    position: relative;
+    &::after {
+      content: "";
+      position: absolute;
+      inset-block: min(0px, calc((100% - 44px) / 2));
+      inset-inline: min(0px, calc((100% - 44px) / 2));
+    }
+  }
+}
+/* A row of chips a thumb can swipe: one line, snapping, no scrollbar, the page never scrolls with it.
+   Its width comes from the layout, never from its content (contain), so a long strip can never
+   size the panel it sits in. The snap respects the strip's own padding, so the first chip rests on
+   the panel's text edge instead of scrolling the padding away. */
+@utility u-swipe {
+  display: flex;
+  overflow-x: auto;
+  contain: inline-size;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: var(--panel-p);
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  & > * {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+  }
+}
 /* The one gradient permitted in the system: the 24px fade marking a clipped scrollable table. */
 @utility u-edge-fade {
   -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
@@ -399,8 +471,8 @@
     text-align: left;
     font-family: var(--font-display);
     font-variation-settings: "wdth" 82, "wght" 500;
-    font-size: 0.6875rem;
-    line-height: 0.875rem;
+    font-size: var(--text-label);
+    line-height: var(--text-label--line-height);
     letter-spacing: 0.06em;
     text-transform: uppercase;
     white-space: nowrap;
@@ -458,9 +530,16 @@
     color: var(--fg-dim);
   }
 
-  /* Anchored sections must clear the sticky header. */
-  section[id] {
-    scroll-margin-top: 64px;
+  /* Anchored sections must clear the sticky header (and, on a phone, the compact game head). */
+  section[id],
+  [data-scroll-target] {
+    scroll-margin-top: calc(var(--topbar-h) + var(--s-6));
+  }
+  @media (max-width: 767px) {
+    section[id],
+    [data-scroll-target] {
+      scroll-margin-top: calc(var(--topbar-h) + var(--row-h) + var(--s-6));
+    }
   }
 }
 
@@ -485,6 +564,16 @@
  * <table>: only the boxes change, so the header still exists for a screen reader and the column
  * label comes back as the row label through data-label.
  */
+/* A grid that only declares its columns from a breakpoint up ("grid gap-4 lg:grid-cols-2") has one
+   implicit column below it, and an implicit column is sized `auto`: its floor is the widest thing
+   inside, which is how a single unbreakable value can push a whole page past a phone's edge. On a
+   phone the implicit column fills the container and nothing more. Explicit columns are untouched. */
+@media (max-width: 767px) {
+  .grid {
+    grid-auto-columns: minmax(0, 1fr);
+  }
+}
+
 @media (max-width: 767px) {
   table[data-collapse="true"] thead {
     position: absolute;
@@ -514,7 +603,7 @@
     font-variation-settings: "wdth" 82, "wght" 500;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    font-size: 0.6875rem;
+    font-size: var(--text-label);
     color: var(--fg-dim);
     text-align: left;
   }
@@ -645,6 +734,13 @@ tr[data-selected="true"] > *:first-child {
 }
 .live-dot {
   animation: live-pulse 2s var(--ease-inout) infinite;
+}
+
+/* On a phone the slider's box is a fingertip tall; the track and thumb keep their size. */
+@media (max-width: 767px) {
+  .range {
+    height: 44px;
+  }
 }
 
 /* A price move flashes its cell and holds a leading rule; the digits never animate. */

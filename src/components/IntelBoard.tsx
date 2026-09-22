@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
-import { BetsPanel, type GamePricesView, type LegAlertView } from "@/components/BetsPanel";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { BetsPanel, TicketSkeleton, type GamePricesView, type LegAlertView } from "@/components/BetsPanel";
 import { RefreshBar } from "@/components/RefreshBar";
 import { useNavState } from "@/components/Controls";
+import { offerAction } from "@/components/game-stores";
 import { Empty, Panel, buttonClass } from "@/components/ui";
 import { makeT, type DictKey } from "@/lib/i18n";
 import { formatDate, formatTime } from "@/lib/format";
@@ -56,9 +57,12 @@ function relTime(iso: string | undefined, lang: "pt" | "en"): string {
  */
 export function IntelBoard({ gameId, dateKey, started = false }: { gameId: string; dateKey?: string; started?: boolean }) {
   const { lang, sport } = useNavState();
-  const t = makeT(lang);
+  // Memoised: it is a dependency of `generate`, and through it of two effects, which must not
+  // re-run — and re-observe the page — on every render.
+  const t = useMemo(() => makeT(lang), [lang]);
   const pathname = usePathname();
   const search = useSearchParams();
+  const router = useRouter();
   const [data, setData] = useState<Payload | null>(null);
   const [loading, setLoading] = useState(true);
   const [gen, setGen] = useState<GenState>("idle");
@@ -159,9 +163,38 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
   const signupHref = `/signup?lang=${lang}&next=${encodeURIComponent(here)}`;
   const plansHref = `/planos?lang=${lang}`;
 
+  // What the phone's action bar offers for this region, in the states where there is one thing to
+  // do: read the tickets, spend the day's pick, generate, sign up, or see the plans. The anchor is
+  // the inline control (or the panel itself), so the bar shows only while that is off screen.
+  const offerKind: "see-tickets" | "see-plans" | "signup" | "daily-pick" | "generate" | null =
+    loading || paused ? null
+    : mine ? "see-tickets"
+    : delayed ? "see-plans"
+    : !authenticated ? "signup"
+    : started ? null
+    : pickUsedUp && gen === "idle" ? "see-plans"
+    : needsPick && gen === "idle" ? "daily-pick"
+    : gen === "generateFailed" || gen === "done" ? "generate"
+    : null;
+  useEffect(() => {
+    if (!offerKind) { offerAction("tickets", null); return; }
+    const words = makeT(lang);
+    const scrollToTickets = () => document.getElementById("tickets")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    const offers = {
+      "see-tickets": { label: words("seeTickets"), testId: "action-see-tickets", anchor: "tickets", run: scrollToTickets },
+      "see-plans": { label: words("seePlans"), testId: "action-see-plans", anchor: "see-plans", run: () => router.push(plansHref) },
+      signup: { label: words("startFreeCta"), testId: "action-signup", anchor: "signup-for-tickets", run: () => router.push(signupHref) },
+      "daily-pick": { label: words("useDailyPick"), testId: "action-daily-pick", anchor: "use-daily-pick", run: () => void generate() },
+      generate: { label: words("generateNow"), testId: "action-generate", anchor: "generate-now", run: () => void generate() },
+    } as const;
+    const offer = offers[offerKind];
+    offerAction("tickets", { label: offer.label, priority: 10, testId: offer.testId, run: offer.run, anchor: () => document.getElementById(offer.anchor) });
+    return () => offerAction("tickets", null);
+  }, [offerKind, lang, generate, router, plansHref, signupHref]);
+
   let body: React.ReactNode;
   if (loading) {
-    body = <Empty>{t("loadingTickets")}</Empty>;
+    body = <TicketSkeleton label={t("loadingTickets")} />;
   } else if (data?.paused) {
     body = (
       <p className="rounded-control border border-warn bg-warn-tint px-3 py-2 text-sm text-warn" data-testid="tickets-paused">
@@ -185,14 +218,14 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
         <p className="rounded-control border border-warn bg-warn-tint px-3 py-2 text-sm text-warn">
           {t("delayedUntil").replace("{time}", formatTime(delayed.availableAt, lang))}
         </p>
-        <Link href={plansHref} className={buttonClass("primary", "w-fit")}>{t("seePlans")}</Link>
+        <Link href={plansHref} id="see-plans" className={buttonClass("primary", "w-fit")}>{t("seePlans")}</Link>
       </div>
     );
   } else if (!authenticated) {
     body = (
       <div className="flex flex-col gap-2">
         <Empty>{t("signInForTickets")}</Empty>
-        <Link href={signupHref} data-testid="signup-for-tickets" className={buttonClass("primary", "w-fit")}>
+        <Link href={signupHref} id="signup-for-tickets" data-testid="signup-for-tickets" className={buttonClass("primary", "w-fit")}>
           {t("startFreeCta")}
         </Link>
       </div>
@@ -210,7 +243,7 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
               {t("openChosenGame")}
             </Link>
           )}
-          <Link href={plansHref} className={buttonClass("primary", "w-fit")}>{t("seePlans")}</Link>
+          <Link href={plansHref} id="see-plans" className={buttonClass("primary", "w-fit")}>{t("seePlans")}</Link>
         </div>
       </div>
     );
@@ -219,7 +252,7 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
       <div className="flex flex-col gap-2" data-testid="daily-pick">
         <Empty>{t("dailyPickPrompt")}</Empty>
         <div className="flex flex-wrap items-center gap-3">
-          <button onClick={() => void generate()} data-testid="use-daily-pick" className={buttonClass("primary", "w-fit")}>{t("useDailyPick")}</button>
+          <button onClick={() => void generate()} id="use-daily-pick" data-testid="use-daily-pick" className={buttonClass("primary", "w-fit")}>{t("useDailyPick")}</button>
           <Link href={plansHref} className="text-sm text-fg-muted underline-offset-4 hover:text-fg hover:underline">{t("seePlans")}</Link>
         </div>
         <p className="text-tiny text-fg-dim">{t("dailyPickNote")}</p>
@@ -252,7 +285,7 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
       <div className="flex flex-col gap-2">
         <Empty>{message}</Empty>
         {(gen === "generateFailed" || gen === "done") && (
-          <button onClick={() => void generate()} className={buttonClass("primary", "w-fit")}>{t("generateNow")}</button>
+          <button onClick={() => void generate()} id="generate-now" className={buttonClass("primary", "w-fit")}>{t("generateNow")}</button>
         )}
         {gen === "planSport" && (
           <Link href={plansHref} className={buttonClass("primary", "w-fit")}>{t("seePlans")}</Link>
@@ -264,12 +297,15 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
   return (
     <div className="flex flex-col gap-4">
       <Panel
+        id="tickets"
+        data-testid="tickets"
+        data-scroll-target=""
         title={t("betBuilder")}
         lang={lang}
         status={loading ? "pending" : mine ? "ok" : "empty"}
         meta={mine ? relTime(mine.generatedAt, lang) : undefined}
         action={
-          <Link href={`/app/slip?sport=${sport.key}&lang=${lang}`} className="rounded-control border border-line-control px-2 py-0.5 text-label text-fg-muted transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:text-fg">
+          <Link href={`/app/slip?sport=${sport.key}&lang=${lang}`} className="rounded-control border border-line-control px-2 py-0.5 text-label text-fg-muted transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:text-fg max-md:inline-flex max-md:min-h-11 max-md:items-center max-md:px-3">
             {t("mySlip")}
           </Link>
         }

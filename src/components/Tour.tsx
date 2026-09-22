@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useNavState } from "@/components/Controls";
 import { buttonClass } from "@/components/ui";
 
@@ -27,6 +27,7 @@ type Step = (typeof ALL_STEPS)[number];
 const visible = (s: Step, flags: { telegram: boolean; ai: boolean }) =>
   (!("telegram" in s) || s.telegram === flags.telegram) && (!("ai" in s) || flags.ai);
 type Rect = { top: number; left: number; width: number; height: number };
+const CORNER: CSSProperties = { bottom: "var(--float-b)", left: 20 };
 
 export function Tour({ telegram = false, ai = false }: { telegram?: boolean; ai?: boolean }) {
   const { lang } = useNavState();
@@ -35,6 +36,8 @@ export function Tour({ telegram = false, ai = false }: { telegram?: boolean; ai?
   const [state, setState] = useState<"idle" | "welcome" | "running" | "done">("idle");
   const [step, setStep] = useState(0);
   const [rect, setRect] = useState<Rect | null>(null);
+  const [place, setPlace] = useState<CSSProperties>(CORNER);
+  const card = useRef<HTMLDivElement>(null);
 
   const save = useCallback((s: number, completed = false, event?: string) => {
     fetch("/api/tour", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ step: s, completed, event }) }).catch(() => {});
@@ -52,12 +55,26 @@ export function Tour({ telegram = false, ai = false }: { telegram?: boolean; ai?
   }, [save, stepCount]);
 
   const measure = useCallback(() => {
-    const el = document.querySelector<HTMLElement>(`[data-tour="${STEPS[step].anchor}"]`);
-    if (!el) return setRect(null);
-    const r = el.getBoundingClientRect();
+    // The same anchor can exist twice — the slate is a table on a desk and a list of cards on a
+    // phone — so the spotlight goes on the one that is actually drawn at this width.
+    const candidates = Array.from(document.querySelectorAll<HTMLElement>(`[data-tour="${STEPS[step].anchor}"]`));
+    const el = candidates.find((c) => { const r = c.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
     // Anchors inside the phone menu are hidden: show the card without a spotlight.
-    if (r.width === 0 && r.height === 0) return setRect(null);
+    if (!el) { setRect(null); setPlace(CORNER); return; }
+    const r = el.getBoundingClientRect();
     setRect({ top: r.top - 8, left: r.left - 8, width: r.width + 16, height: r.height + 16 });
+    // Where the card goes, from what is actually on screen: its own height (this step's text), the
+    // tab bar's, the viewport's. Below the anchor when it fits, above it when it does not, and in
+    // the corner above the bar when neither does — never over the tabs.
+    const bar = document.querySelector<HTMLElement>("[data-tabbar]")?.getBoundingClientRect().height ?? 0;
+    const cardH = card.current?.offsetHeight ?? 220;
+    const cardW = Math.min(window.innerWidth * 0.92, 340);
+    const left = Math.max(12, Math.min(r.left - 8, window.innerWidth - cardW - 12));
+    const below = r.bottom + 8 + 12;
+    const above = r.top - 8 - 12 - cardH;
+    if (below + cardH <= window.innerHeight - bar - 12) setPlace({ top: below, left });
+    else if (above >= 48 + 12) setPlace({ top: above, left });
+    else setPlace({ ...CORNER, left });
   }, [step, STEPS]);
 
   useLayoutEffect(() => {
@@ -72,7 +89,7 @@ export function Tour({ telegram = false, ai = false }: { telegram?: boolean; ai?
 
   if (state === "welcome") {
     return (
-      <div className="fixed bottom-5 left-5 z-[85] w-[min(92vw,340px)] rounded-panel border border-line-strong bg-surface-1 p-4 shadow-dialog" data-testid="tour-welcome">
+      <div className="fixed bottom-(--float-b) left-5 z-[85] w-[min(92vw,340px)] rounded-panel border border-line-strong bg-surface-1 p-4 shadow-dialog" data-testid="tour-welcome">
         <p className="text-label u-label text-fg-dim">Betmatic</p>
         <p className="u-title mt-1.5 text-base text-fg">{t("Primeira vez aqui? Um tour de 30 segundos.", "First time here? A 30-second tour.")}</p>
         <div className="mt-3 flex gap-2">
@@ -86,13 +103,12 @@ export function Tour({ telegram = false, ai = false }: { telegram?: boolean; ai?
   const s = STEPS[step];
   const [title, body] = s[lang];
   const last = step === STEPS.length - 1;
-  const style = rect ? { top: Math.min(window.innerHeight - 200, rect.top + rect.height + 12), left: Math.max(12, Math.min(rect.left, window.innerWidth - 352)) } : { bottom: 20, left: 20 };
   return (
     <>
       <div className="pointer-events-none fixed inset-0 z-[90]">
         <div className="absolute rounded-panel shadow-[0_0_0_9999px_var(--scrim)] outline-2 outline-(--fg) transition-all duration-(--dur-3) ease-(--ease-out) motion-reduce:transition-none" style={rect ?? { top: -9999, left: -9999, width: 0, height: 0 }} />
       </div>
-      <div className="fixed z-[91] w-[min(92vw,340px)] rounded-panel border border-line-strong bg-surface-1 p-4 shadow-dialog" style={style} data-testid="tour-step" data-step={step}>
+      <div ref={card} className="fixed z-[91] w-[min(92vw,340px)] rounded-panel border border-line-strong bg-surface-1 p-4 shadow-dialog" style={place} data-testid="tour-step" data-step={step}>
         <p className="text-micro u-label text-fg-dim">{step + 1} / {STEPS.length}</p>
         <p className="u-title mt-1.5 text-base text-fg">{title}</p>
         <p className="mt-1.5 text-sm leading-relaxed text-fg-muted">{body}</p>

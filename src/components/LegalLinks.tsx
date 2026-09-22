@@ -13,9 +13,9 @@ export const LEGAL_LINKS: { href: { pt: string; en: string }; label: { pt: strin
 /** Footer links to every legal page and the contact form. Works in server and client trees. */
 export function LegalLinks({ lang, className = "" }: { lang: Lang; className?: string }) {
   return (
-    <nav aria-label={lang === "pt" ? "Informações legais" : "Legal"} className={`flex flex-wrap gap-x-4 gap-y-1.5 text-tiny ${className}`}>
+    <nav aria-label={lang === "pt" ? "Informações legais" : "Legal"} className={`flex flex-wrap gap-x-4 gap-y-1.5 text-tiny max-md:gap-y-0 ${className}`}>
       {LEGAL_LINKS.map((l) => (
-        <Link key={l.href.pt} href={l.href[lang]} className="text-fg-muted underline-offset-2 transition-colors duration-(--dur-1) hover:text-fg hover:underline">
+        <Link key={l.href.pt} href={l.href[lang]} className="text-fg-muted underline-offset-2 transition-colors duration-(--dur-1) hover:text-fg hover:underline max-md:inline-flex max-md:min-h-11 max-md:items-center">
           {l.label[lang]}
         </Link>
       ))}

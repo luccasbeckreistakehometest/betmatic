@@ -4,7 +4,7 @@ import { track } from "@/lib/track";
 import { useCallback, useEffect, useState } from "react";
 import { formatDateTime } from "@/lib/format";
 import Link from "next/link";
-import { Empty, Panel, buttonClass } from "@/components/ui";
+import { Empty, Panel, buttonClass, chipClass } from "@/components/ui";
 import { useNavState } from "@/components/Controls";
 import { makeT } from "@/lib/i18n";
 
@@ -46,12 +46,12 @@ export function AlertsPanel() {
           {tg.linked ? (
             <div className="mt-3 flex flex-col gap-3" data-testid="telegram-status" data-linked="1">
               <p className="text-sm font-semibold text-pos">✓ {t("telegramLinked")}</p>
-              <label className="flex items-center gap-2 text-sm text-fg">
-                <input type="checkbox" checked={tg.digest} disabled={busy} onChange={(e) => void act({ action: "digest", on: e.target.checked })} data-testid="digest-toggle" className="size-4 appearance-none rounded-control border border-line-control bg-surface-3 checked:border-action checked:bg-action" />
+              <label className="flex min-h-(--row-h) items-center gap-2 text-sm text-fg">
+                <input type="checkbox" checked={tg.digest} disabled={busy} onChange={(e) => void act({ action: "digest", on: e.target.checked })} data-testid="digest-toggle" className="u-hit size-4 appearance-none rounded-control border border-line-control bg-surface-3 checked:border-action checked:bg-action" />
                 {t("digestDaily")}
               </label>
               <p className="text-tiny text-fg-dim">{t("digestHint")}</p>
-              <button onClick={() => void act({ action: "unlink" })} disabled={busy} className="w-fit rounded-control border border-line-control px-3 py-1.5 text-tiny text-fg-muted hover:text-warn" data-testid="telegram-unlink">{t("telegramUnlink")}</button>
+              <button onClick={() => void act({ action: "unlink" })} disabled={busy} className={buttonClass("secondary", "w-fit")} data-testid="telegram-unlink">{t("telegramUnlink")}</button>
             </div>
           ) : tg.code ? (
             <div className="mt-3 flex flex-col gap-2" data-testid="telegram-status" data-linked="0">
@@ -59,8 +59,8 @@ export function AlertsPanel() {
               <p className="text-tiny text-fg-muted">{t("telegramCodeHint")}</p>
               <div className="flex flex-wrap gap-2">
                 {tg.deepLink && <a href={tg.deepLink} target="_blank" rel="noopener noreferrer" className="inline-flex h-(--row-h) items-center rounded-control bg-action px-3 text-tiny font-medium text-action-fg transition-colors duration-(--dur-1) hover:bg-action-hover" data-testid="telegram-open">{t("telegramOpenBot")}{tg.botUsername ? ` (@${tg.botUsername})` : ""}</a>}
-                <button onClick={() => void act({ action: "link_code" })} disabled={busy} className="rounded-control border border-line-control px-3 py-1.5 text-tiny text-fg-muted hover:text-fg">{t("telegramNewCode")}</button>
-                <button onClick={() => void load()} className="rounded-control border border-line-control px-3 py-1.5 text-tiny text-fg-muted hover:text-fg" data-testid="telegram-refresh">{t("refresh")}</button>
+                <button onClick={() => void act({ action: "link_code" })} disabled={busy} className={buttonClass("secondary")}>{t("telegramNewCode")}</button>
+                <button onClick={() => void load()} className={buttonClass("secondary")} data-testid="telegram-refresh">{t("refresh")}</button>
               </div>
             </div>
           ) : (
@@ -77,12 +77,12 @@ export function AlertsPanel() {
         <div className="mt-2 flex flex-col gap-2">
           {groups.map(([group, label]) => (
             <div key={group} className="flex flex-wrap items-center gap-2">
-              <span className="w-20 text-tiny text-fg-dim">{label}</span>
+              <span className="w-20 text-tiny text-fg-dim max-md:basis-full">{label}</span>
               {(data?.leagues ?? []).filter((l) => l.group === group).map((l) => {
                 const on = followingLeague(l.key);
                 return (
-                  <button key={l.key} disabled={busy} onClick={() => void act({ action: on ? "unfollow" : "follow", kind: "league", sportKey: l.key })} data-testid={`league-${l.key}`} data-on={on ? "1" : "0"}
-                    className={`rounded-control border px-2.5 py-1 text-tiny transition-colors duration-(--dur-1) ease-(--ease-out) ${on ? "border-line-control bg-surface-3 font-medium text-fg" : "border-line-control text-fg-muted hover:bg-surface-2 hover:text-fg"}`}>
+                  <button key={l.key} disabled={busy} onClick={() => void act({ action: on ? "unfollow" : "follow", kind: "league", sportKey: l.key })} data-testid={`league-${l.key}`} data-on={on ? "1" : "0"} aria-pressed={on}
+                    className={chipClass(on)}>
                     {on ? "✓ " : ""}{l.label[lang]}
                   </button>
                 );
@@ -96,7 +96,7 @@ export function AlertsPanel() {
             {teams.map((f) => (
               <li key={`${f.sportKey}:${f.key}`} className={buttonClass()}>
                 {f.label || f.key}
-                <button disabled={busy} onClick={() => void act({ action: "unfollow", kind: "team", sportKey: f.sportKey, key: f.key })} className="text-fg-dim hover:text-warn" title={t("unfollow")}>✕</button>
+                <button disabled={busy} onClick={() => void act({ action: "unfollow", kind: "team", sportKey: f.sportKey, key: f.key })} className="u-hit text-fg-dim hover:text-warn" title={t("unfollow")} aria-label={`${t("unfollow")}: ${f.label || f.key}`}>✕</button>
               </li>
             ))}
           </ul>
@@ -104,7 +104,7 @@ export function AlertsPanel() {
       </Panel>
 
       <Panel title={t("notifications")} meta={data && data.unread > 0 ? `${data.unread} ${lang === "pt" ? "novos" : "new"}` : undefined}
-        action={data && data.unread > 0 ? <button onClick={() => void act({ action: "read", ids: null })} className="text-label text-fg-muted hover:text-fg" data-testid="mark-read">{t("markAllRead")}</button> : undefined}>
+        action={data && data.unread > 0 ? <button onClick={() => void act({ action: "read", ids: null })} className="u-hit text-label text-fg-muted hover:text-fg" data-testid="mark-read">{t("markAllRead")}</button> : undefined}>
         {data?.notifications.length ? (
           <ul className="divide-y divide-line" data-testid="notifications">
             {data.notifications.map((n) => (
@@ -116,7 +116,7 @@ export function AlertsPanel() {
                   <span className="nums ml-auto text-label text-fg-dim">{when(n.createdAt)}</span>
                 </div>
                 <pre className="whitespace-pre-wrap font-sans text-tiny leading-relaxed text-fg-muted">{n.body}</pre>
-                {n.url && <a href={n.url} className="w-fit text-tiny text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{t("openTicket")} →</a>}
+                {n.url && <a href={n.url} className="w-fit text-tiny text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg max-md:inline-flex max-md:min-h-11 max-md:items-center">{t("openTicket")} →</a>}
               </li>
             ))}
           </ul>

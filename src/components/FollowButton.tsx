@@ -21,7 +21,7 @@ export function FollowButton({ sportKey, teamId, label, initial, signedIn }: { s
   }
   return (
     <button onClick={() => void toggle()} disabled={busy} data-testid={`follow-${teamId}`} data-on={on ? "1" : "0"}
-      className={`rounded-control border px-2 py-0.5 text-label transition-colors duration-(--dur-1) ease-(--ease-out) ${on ? "border-line-control bg-surface-3 font-medium text-fg" : "border-line-control text-fg-muted hover:bg-surface-2 hover:text-fg"}`}>
+      className={`rounded-control border px-2 py-0.5 text-label transition-colors duration-(--dur-1) ease-(--ease-out) max-md:min-h-11 max-md:px-3 ${on ? "border-line-control bg-surface-3 font-medium text-fg" : "border-line-control text-fg-muted hover:bg-surface-2 hover:text-fg"}`}>
       {on ? t("followingLabel") : t("follow")}
     </button>
   );
