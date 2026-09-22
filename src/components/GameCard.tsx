@@ -5,10 +5,16 @@ import { formatNumber, formatTime, localizeStatus, NOT_PRICED } from "@/lib/form
 import { makeT, type Lang } from "@/lib/i18n";
 import type { Game, TeamRef } from "@/lib/types";
 
-/** A signed book number the way ESPN prints it: +130, −150, and an em dash when there is none. */
+/**
+ * A signed American price the way ESPN prints it: +130, −150, +1000, −1800, and an em dash when
+ * there is none. Never grouped: "−1.800" on a Brazilian phone reads as the decimal odd 1,800, which
+ * is the opposite side of the bet (shipped that way on 22/09/2026 and caught in production).
+ */
 export function signedLine(value: number | undefined, lang: Lang): string {
-  if (value === undefined || Number.isNaN(value)) return NOT_PRICED;
-  return formatNumber(value, lang, { signed: true });
+  if (value === undefined || !Number.isFinite(value)) return NOT_PRICED;
+  void lang;
+  const digits = String(Math.abs(Math.round(value)));
+  return value > 0 ? `+${digits}` : value < 0 ? `\u2212${digits}` : digits;
 }
 
 function TeamLine({ team, won, showScore }: { team: TeamRef; won: boolean; showScore: boolean }) {
