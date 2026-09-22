@@ -146,7 +146,8 @@ export default async function SportLanding({ params }: PageProps<"/[sport]">) {
             {s.stackTitle[lang]}
           </h2>
           <p className="mt-2 max-w-2xl text-base leading-relaxed text-fg-muted">{s.stackSub[lang]}</p>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Nine items sit 3×3; a multiple of four fills four columns. A lone card on the last row reads as a mistake. */}
+          <div className={`mt-8 grid gap-4 sm:grid-cols-2 ${s.stack[lang].length % 4 === 0 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
             {s.stack[lang].map((item) => (
               <Link
                 key={item.title}

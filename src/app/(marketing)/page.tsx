@@ -164,7 +164,8 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
         <div className="mx-auto max-w-shell px-4 py-16 sm:px-6">
           <h2 className="u-title text-h2 text-fg">{c.edgeTitle}</h2>
           <p className="mt-3 max-w-2xl text-base text-fg-muted">{c.edgeSub}</p>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Eight cards fill two rows of four; six or nine sit three across. A lone card on the last row reads as a mistake. */}
+          <div className={`mt-8 grid gap-4 sm:grid-cols-2 ${c.edges.length % 4 === 0 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
             {c.edges.map((e) => (
               <Link key={e.title} href={{ pathname: e.href, query: { lang } }} className="group rounded-panel border border-line bg-surface-1 p-(--panel-p) transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:bg-surface-2">
                 <p className="text-base font-semibold text-fg">{e.title}</p>
