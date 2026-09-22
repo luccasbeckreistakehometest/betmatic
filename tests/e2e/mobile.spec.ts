@@ -158,6 +158,7 @@ test("the game page: a compact head once the team block scrolls away, and one pr
   const canRead = (await page.getByTestId("live-read-btn").count()) > 0;
   const expected = canRead ? "Pedir leitura ao vivo" : "Ver bilhetes";
   const bar = page.getByTestId("game-action-bar");
+  await expect(bar).toHaveAttribute("data-shown", "true");
   await expect(bar.getByRole("button")).toHaveText(expected);
   const barBox = (await bar.boundingBox())!;
   expect(barBox.height).toBeGreaterThanOrEqual(44);
@@ -171,11 +172,13 @@ test("the game page: a compact head once the team block scrolls away, and one pr
   const topbar = (await page.locator("header").first().boundingBox())!;
   expect(Math.round((await head.boundingBox())!.y)).toBe(Math.round(topbar.y + topbar.height));
   await expect(head.getByTestId("sticky-score")).toHaveText("61 × 58");
-  // The label never changes while scrolling: it is the same action at every position, or nothing.
+  // The label never changes while scrolling: the same action at every position, shown or (while
+  // its own control is on screen) held invisible — never another one. The button is read as CSS,
+  // because a held bar is hidden from the accessibility tree on purpose.
   for (const y of [1200, 1600, 2000]) {
     await page.evaluate((y) => window.scrollTo(0, y), y);
     await page.waitForTimeout(150);
-    await expect(bar.getByRole("button")).toHaveText(expected);
+    await expect(bar.locator("button")).toHaveText(expected);
   }
   // At the end of the page the bar rests in flow above the footer: the 18+ line is never covered,
   // and the page's height did not change on the way (its slot stays while the action exists).
@@ -186,9 +189,7 @@ test("the game page: a compact head once the team block scrolls away, and one pr
   const footer = (await page.locator("footer").last().boundingBox())!;
   const slot = await bar.evaluate((el) => { const r = el.getBoundingClientRect(); return { y: r.y, h: r.height }; });
   expect(slot.y + slot.h).toBeLessThanOrEqual(footer.y + 1);
-  const inner = await page.evaluate(() => window.innerHeight);
-  expect(Math.round(footer.y + footer.height)).toBeLessThanOrEqual(Math.round(tabs.y) + 1 + (await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight - window.scrollY)));
-  expect(inner).toBeGreaterThan(0);
+  expect(Math.round(footer.y + footer.height)).toBeLessThanOrEqual(Math.round(tabs.y) + 1);
   // The bar steps aside as soon as the control it stands for is on screen: one primary action at a time.
   const twin = canRead ? page.getByTestId("live-read-btn") : page.locator("#tickets");
   await twin.scrollIntoViewIfNeeded();

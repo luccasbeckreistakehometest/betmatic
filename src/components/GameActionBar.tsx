@@ -25,9 +25,10 @@ export function GameActionBar() {
   // bar never flashes on load in front of a button that is already visible.
   const [offscreen, setOffscreen] = useState<{ id: string; value: boolean } | null>(null);
 
-  const id = action?.id ?? null;
+  // Keyed on the offered action itself, not its id: a region's placeholder and its real action
+  // share an id, and the real one brings the anchor the observer has to watch.
   useEffect(() => {
-    if (!action || typeof IntersectionObserver === "undefined") return;
+    if (!action || action.pending || typeof IntersectionObserver === "undefined") return;
     const el = action.anchor();
     if (!el) return;
     const observer = new IntersectionObserver(
@@ -37,9 +38,7 @@ export function GameActionBar() {
     );
     observer.observe(el);
     return () => observer.disconnect();
-    // The observed element is the action's anchor; re-run when the offered action changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [action]);
 
   if (!action) return null;
   const known = offscreen && offscreen.id === action.id ? offscreen.value : null;
