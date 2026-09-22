@@ -1,0 +1,86 @@
+{
+ "nodes": [
+  {
+   "nodeId": "COMP:11295025",
+   "name": "WNBA",
+   "nodeType": "COMPETITION"
+  },
+  {
+   "nodeId": "EVENT:36099130",
+   "name": "Dallas Wings @ Seattle Storm",
+   "nodeType": "EVENT",
+   "eventInfo": {
+    "eventId": 36099130,
+    "name": "Dallas Wings @ Seattle Storm",
+    "openDate": "2026-09-24T02:00:00.000Z",
+    "competitionId": 11295025
+   }
+  },
+  {
+   "nodeId": "EVENT:36094858",
+   "name": "Minnesota Lynx @ Indiana Fever",
+   "nodeType": "EVENT",
+   "eventInfo": {
+    "eventId": 36094858,
+    "name": "Minnesota Lynx @ Indiana Fever",
+    "openDate": "2026-09-23T00:00:00.000Z",
+    "competitionId": 11295025
+   }
+  },
+  {
+   "nodeId": "EVENT:36094848",
+   "name": "Golden State Valkyries @ Portland Fire",
+   "nodeType": "EVENT",
+   "eventInfo": {
+    "eventId": 36094848,
+    "name": "Golden State Valkyries @ Portland Fire",
+    "openDate": "2026-09-23T02:00:00.000Z",
+    "competitionId": 11295025
+   }
+  },
+  {
+   "nodeId": "EVENT:36094851",
+   "name": "Los Angeles Sparks @ Las Vegas Aces",
+   "nodeType": "EVENT",
+   "eventInfo": {
+    "eventId": 36094851,
+    "name": "Los Angeles Sparks @ Las Vegas Aces",
+    "openDate": "2026-09-23T02:00:00.000Z",
+    "competitionId": 11295025
+   }
+  },
+  {
+   "nodeId": "EVENT:36094852",
+   "name": "Connecticut Sun @ Washington Mystics",
+   "nodeType": "EVENT",
+   "eventInfo": {
+    "eventId": 36094852,
+    "name": "Connecticut Sun @ Washington Mystics",
+    "openDate": "2026-09-22T23:30:00.000Z",
+    "competitionId": 11295025
+   }
+  },
+  {
+   "nodeId": "EVENT:36099123",
+   "name": "Atlanta Dream @ New York Liberty",
+   "nodeType": "EVENT",
+   "eventInfo": {
+    "eventId": 36099123,
+    "name": "Atlanta Dream @ New York Liberty",
+    "openDate": "2026-09-24T00:00:00.000Z",
+    "competitionId": 11295025
+   }
+  },
+  {
+   "nodeId": "EVENT:36094849",
+   "name": "Toronto Tempo @ Chicago Sky",
+   "nodeType": "EVENT",
+   "eventInfo": {
+    "eventId": 36094849,
+    "name": "Toronto Tempo @ Chicago Sky",
+    "openDate": "2026-09-23T00:00:00.000Z",
+    "competitionId": 11295025
+   }
+  }
+ ]
+}

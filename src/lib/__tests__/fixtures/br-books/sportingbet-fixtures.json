@@ -1,0 +1,215 @@
+{
+ "fixtures": [
+  {
+   "id": "19919149",
+   "name": {
+    "value": "Connecticut Sun at Washington Mystics"
+   },
+   "startDate": "2026-09-22T23:30:00Z",
+   "stage": "PreMatch",
+   "sourceId": 19919149,
+   "competition": {
+    "id": 402,
+    "name": {
+     "value": "WNBA",
+     "sign": "isB4Qw=="
+    }
+   },
+   "addons": {
+    "betRadar": 68096448
+   },
+   "participants": [
+    {
+     "name": {
+      "value": "Connecticut Sun",
+      "short": "Connecticut Sun"
+     },
+     "properties": {}
+    },
+    {
+     "name": {
+      "value": "Washington Mystics",
+      "short": "Washington Mystics"
+     },
+     "properties": {}
+    },
+    {
+     "name": {
+      "value": "Leila Lacan (CONN)",
+      "short": "Leila Lacan"
+     },
+     "properties": {
+      "type": "Player"
+     }
+    }
+   ],
+   "games": [
+    {
+     "id": 1560207544,
+     "name": {
+      "value": "Handicap"
+     },
+     "visibility": "Visible",
+     "categoryId": 44,
+     "templateCategory": {
+      "name": {
+       "value": "Handicap/Spread"
+      }
+     },
+     "results": [
+      {
+       "id": 2301308044,
+       "odds": 1.95,
+       "name": {
+        "value": "Connecticut Sun +14,5"
+       },
+       "visibility": "Visible",
+       "attr": "+14,5"
+      },
+      {
+       "id": 2301308045,
+       "odds": 1.87,
+       "name": {
+        "value": "Washington Mystics -14,5"
+       },
+       "visibility": "Visible",
+       "attr": "-14,5"
+      }
+     ]
+    },
+    {
+     "id": 1560207547,
+     "name": {
+      "value": "Totais"
+     },
+     "attr": "158.5",
+     "visibility": "Visible",
+     "categoryId": 48,
+     "templateCategory": {
+      "name": {
+       "value": "Totais"
+      }
+     },
+     "results": [
+      {
+       "id": 2301308050,
+       "odds": 1.91,
+       "name": {
+        "value": "Mais de 158.5"
+       },
+       "visibility": "Visible",
+       "totalsPrefix": "Over"
+      },
+      {
+       "id": 2301308051,
+       "odds": 1.91,
+       "name": {
+        "value": "Menos de 158.5"
+       },
+       "visibility": "Visible",
+       "totalsPrefix": "Under"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "2:7864550",
+   "name": {
+    "value": "Internacional - Corinthians"
+   },
+   "startDate": "2026-10-07T22:30:00Z",
+   "stage": "PreMatch",
+   "competition": {
+    "id": 102,
+    "name": {
+     "value": "Brasileiro Serie A"
+    }
+   },
+   "addons": {
+    "betRadar": 70000001
+   },
+   "participants": [
+    {
+     "name": {
+      "value": "Internacional"
+     },
+     "properties": {}
+    },
+    {
+     "name": {
+      "value": "Corinthians"
+     },
+     "properties": {}
+    }
+   ],
+   "games": [
+    {
+     "id": 1,
+     "name": {
+      "value": "Resultado da partida"
+     },
+     "templateCategory": {
+      "name": {
+       "value": "Resultado da partida"
+      }
+     },
+     "results": [
+      {
+       "id": 11,
+       "odds": 2.1,
+       "name": {
+        "value": "Internacional"
+       }
+      },
+      {
+       "id": 12,
+       "odds": 3.2,
+       "name": {
+        "value": "Empate"
+       }
+      },
+      {
+       "id": 13,
+       "odds": 3.5,
+       "name": {
+        "value": "Corinthians"
+       }
+      }
+     ]
+    },
+    {
+     "id": 2,
+     "name": {
+      "value": "Total de gols"
+     },
+     "attr": "2.5",
+     "templateCategory": {
+      "name": {
+       "value": "Totais"
+      }
+     },
+     "results": [
+      {
+       "id": 21,
+       "odds": 1.95,
+       "name": {
+        "value": "Mais de 2.5"
+       },
+       "totalsPrefix": "Over"
+      },
+      {
+       "id": 22,
+       "odds": 1.85,
+       "name": {
+        "value": "Menos de 2.5"
+       },
+       "totalsPrefix": "Under"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "totalCount": 2
+}

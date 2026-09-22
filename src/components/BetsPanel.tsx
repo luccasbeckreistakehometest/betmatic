@@ -10,6 +10,8 @@ import { groupAlternatives, legDiff } from "@/lib/bets/alternatives-view";
 import { kellyFraction, formatDecimal, getBand } from "@/lib/odds";
 import { makeT, type Lang } from "@/lib/i18n";
 import type { BetLeg, BetSlate, BetSuggestion } from "@/lib/types";
+import { LegPrices, PropSignalsList, TicketPrices, type TicketPricesView } from "@/components/PriceComparison";
+import type { PropSignal } from "@/lib/sources/br-books/compare";
 
 /** A leg alert from the lineup watcher, keyed by suggestion id and leg index. */
 export interface LegAlertView { suggestionId: string; legIndex: number; kind: "bench" | "out" | "doubt" | "key_absence"; player: string }
@@ -57,7 +59,7 @@ function EdgeTag({ edgePct, lang }: { edgePct: number | undefined; lang: Lang })
   );
 }
 
-function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [] }: { bet: BetSuggestion; lang: Lang; gameId?: string; sportKey?: string; alerts?: LegAlertView[]; alternatives?: BetSuggestion[] }) {
+function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [], prices = null }: { bet: BetSuggestion; lang: Lang; gameId?: string; sportKey?: string; alerts?: LegAlertView[]; alternatives?: BetSuggestion[]; prices?: TicketPricesView | null }) {
   const t = makeT(lang);
   const band = getBand(bet.bandKey);
   const longshot = bet.combinedDecimal >= 20;
@@ -124,6 +126,7 @@ function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [] }:
                   {pctOf(leg.fairProbability, lang, { digits: 0 })}
                 </span>
               </div>
+              {prices?.legs[i] && <div className="mt-1"><LegPrices leg={prices.legs[i]} lang={lang} /></div>}
               {(leg.measured || leg.openOdds) && (
                 <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
                   {leg.measured && (
@@ -182,6 +185,7 @@ function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [] }:
               : `Real chance ${pctOf(bet.modelledProbability, lang, { digits: 2 })}: out of 100 tickets like this, expect to lose ~${expectedLosers(bet.modelledProbability)}.`}
           </p>
         )}
+        {prices && <TicketPrices ticket={prices} lang={lang} />}
         {alternatives.length > 0 && <Alternatives main={bet} alternatives={alternatives} lang={lang} gameId={gameId} sportKey={sportKey} flagged={alerts} />}
       </div>
       {(kelly > 0 || gameId) && (
@@ -246,7 +250,7 @@ function Alternatives({ main, alternatives, lang, flagged }: { main: BetSuggesti
   );
 }
 
-export function BetsPanel({ slate, lang, gameId, sportKey, alerts = [] }: { slate: BetSlate | null | undefined; lang: Lang; gameId?: string; sportKey?: string; alerts?: LegAlertView[] }) {
+export function BetsPanel({ slate, lang, gameId, sportKey, alerts = [], prices = null }: { slate: BetSlate | null | undefined; lang: Lang; gameId?: string; sportKey?: string; alerts?: LegAlertView[]; prices?: { tickets: TicketPricesView[]; signals: PropSignal[] } | null }) {
   const t = makeT(lang);
   if (!slate?.suggestions.length) {
     return (
@@ -259,9 +263,10 @@ export function BetsPanel({ slate, lang, gameId, sportKey, alerts = [] }: { slat
 
   return (
     <div className="flex flex-col gap-3">
+      {prices?.signals.length && sportKey ? <PropSignalsList signals={prices.signals} sportKey={sportKey} lang={lang} /> : null}
       <ul className="flex flex-col gap-3">
         {groupAlternatives(slate.suggestions).map(({ main, alternatives }) => (
-          <Ticket key={main.id} bet={main} lang={lang} gameId={gameId} sportKey={sportKey} alerts={alerts.filter((a) => a.suggestionId === main.id)} alternatives={alternatives} />
+          <Ticket key={main.id} bet={main} lang={lang} gameId={gameId} sportKey={sportKey} alerts={alerts.filter((a) => a.suggestionId === main.id)} alternatives={alternatives} prices={prices?.tickets.find((p) => p.suggestionId === main.id) ?? null} />
         ))}
       </ul>
       {slate.dataNote && (

@@ -1,0 +1,373 @@
+{
+ "error": false,
+ "data": [
+  {
+   "eventId": 14033464,
+   "matchName": "Washington Mystics (F)·Connecticut Sun (F)",
+   "utcDate": "2026-09-22T23:30:00Z",
+   "betradarId": "68096448",
+   "tournamentId": 2174,
+   "sportId": 4,
+   "odds": [
+    {
+     "marketId": 759,
+     "outcomeId": 2182,
+     "price": 1.07,
+     "status": "active",
+     "marketTags": "preselected",
+     "code": "1",
+     "name": "1",
+     "marketName": "Vencedor (Inc. prorrogação)",
+     "info": "Washington Mystics (F) vence (Inc. prorrogação)"
+    },
+    {
+     "marketId": 759,
+     "outcomeId": 2183,
+     "price": 7.8,
+     "status": "active",
+     "marketTags": "preselected",
+     "code": "2",
+     "name": "2",
+     "marketName": "Vencedor (Inc. prorrogação)",
+     "info": "Connecticut Sun (F) vence (Inc. prorrogação)"
+    },
+    {
+     "marketId": 777,
+     "outcomeId": 2221,
+     "price": 1.08,
+     "status": "active",
+     "marketTags": "donotshowingroupfilter",
+     "code": "1",
+     "name": "1",
+     "marketName": "Resultado Final (Tempo Regulamentar)",
+     "info": "Washington Mystics (F) vence a partida"
+    },
+    {
+     "marketId": 777,
+     "outcomeId": 2222,
+     "price": 22,
+     "status": "active",
+     "marketTags": "donotshowingroupfilter",
+     "code": "0",
+     "name": "X",
+     "marketName": "Resultado Final (Tempo Regulamentar)",
+     "info": "A partida termina em um empate"
+    },
+    {
+     "marketId": 768,
+     "outcomeId": 2202,
+     "price": 2.87,
+     "specialBetValue": "-21.5",
+     "status": "active",
+     "specifiers": {
+      "hcp": "-21.5"
+     },
+     "code": "1",
+     "name": "Washington Mystics (F) (-21.5)",
+     "marketName": "Handicap (Inc. prorrogação)",
+     "info": "Washington Mystics (F) cobre o handicap de (-21.5) (Inc. prorrogação)"
+    },
+    {
+     "marketId": 768,
+     "outcomeId": 2203,
+     "price": 1.31,
+     "specialBetValue": "-21.5",
+     "status": "active",
+     "specifiers": {
+      "hcp": "-21.5"
+     },
+     "code": "2",
+     "name": "Connecticut Sun (F) (21.5)",
+     "marketName": "Handicap (Inc. prorrogação)",
+     "info": "Connecticut Sun (F) cobre o handicap de (21.5) (Inc. prorrogação)"
+    },
+    {
+     "marketId": 768,
+     "outcomeId": 2202,
+     "price": 2.7,
+     "specialBetValue": "-20.5",
+     "status": "active",
+     "specifiers": {
+      "hcp": "-20.5"
+     },
+     "code": "1",
+     "name": "Washington Mystics (F) (-20.5)",
+     "marketName": "Handicap (Inc. prorrogação)",
+     "info": "Washington Mystics (F) cobre o handicap de (-20.5) (Inc. prorrogação)"
+    },
+    {
+     "marketId": 768,
+     "outcomeId": 2203,
+     "price": 1.36,
+     "specialBetValue": "-20.5",
+     "status": "active",
+     "specifiers": {
+      "hcp": "-20.5"
+     },
+     "code": "2",
+     "name": "Connecticut Sun (F) (20.5)",
+     "marketName": "Handicap (Inc. prorrogação)",
+     "info": "Connecticut Sun (F) cobre o handicap de (20.5) (Inc. prorrogação)"
+    },
+    {
+     "marketId": 753,
+     "outcomeId": 2170,
+     "price": 1.33,
+     "specialBetValue": "149.5",
+     "status": "active",
+     "specifiers": {
+      "total": "149.5"
+     },
+     "code": "+",
+     "name": "Mais de 149.5",
+     "marketName": "Total de Pontos (Inc. prorrogação)",
+     "info": "Mais de 149.5 pontos marcados (Inc. prorrogação)"
+    },
+    {
+     "marketId": 753,
+     "outcomeId": 2169,
+     "price": 2.82,
+     "specialBetValue": "149.5",
+     "status": "active",
+     "specifiers": {
+      "total": "149.5"
+     },
+     "code": "-",
+     "name": "Menos de 149.5",
+     "marketName": "Total de Pontos (Inc. prorrogação)",
+     "info": "Menos de 149.5 pontos marcados (Inc. prorrogação)"
+    },
+    {
+     "marketId": 753,
+     "outcomeId": 2170,
+     "price": 1.37,
+     "specialBetValue": "150.5",
+     "status": "active",
+     "specifiers": {
+      "total": "150.5"
+     },
+     "code": "+",
+     "name": "Mais de 150.5",
+     "marketName": "Total de Pontos (Inc. prorrogação)",
+     "info": "Mais de 150.5 pontos marcados (Inc. prorrogação)"
+    },
+    {
+     "marketId": 753,
+     "outcomeId": 2169,
+     "price": 2.67,
+     "specialBetValue": "150.5",
+     "status": "active",
+     "specifiers": {
+      "total": "150.5"
+     },
+     "code": "-",
+     "name": "Menos de 150.5",
+     "marketName": "Total de Pontos (Inc. prorrogação)",
+     "info": "Menos de 150.5 pontos marcados (Inc. prorrogação)"
+    },
+    {
+     "marketId": 233565,
+     "outcomeId": 5788,
+     "price": 1.83,
+     "specialBetValue": "Amoore, Georgia-7.5",
+     "status": "active",
+     "specifiers": {
+      "player": "Amoore, Georgia",
+      "total": "7.5"
+     },
+     "name": "Amoore, Georgia - Mais de 7.5",
+     "marketName": "Jogador - Total de Pontos (Inc. prorrogação)",
+     "info": "Terá mais de 7.5 pontos (Inc. prorrogação)"
+    },
+    {
+     "marketId": 233565,
+     "outcomeId": 5787,
+     "price": 1.88,
+     "specialBetValue": "Amoore, Georgia-7.5",
+     "status": "active",
+     "specifiers": {
+      "player": "Amoore, Georgia",
+      "total": "7.5"
+     },
+     "name": "Amoore, Georgia - Menos de 7.5",
+     "marketName": "Jogador - Total de Pontos (Inc. prorrogação)",
+     "info": "Terá menos de 7.5 pontos (Inc. prorrogação)"
+    },
+    {
+     "marketId": 233565,
+     "outcomeId": 5788,
+     "price": 1.92,
+     "specialBetValue": "Austin, Shakira-17.5",
+     "status": "active",
+     "specifiers": {
+      "player": "Austin, Shakira",
+      "total": "17.5"
+     },
+     "name": "Austin, Shakira - Mais de 17.5",
+     "marketName": "Jogador - Total de Pontos (Inc. prorrogação)",
+     "info": "Terá mais de 17.5 pontos (Inc. prorrogação)"
+    },
+    {
+     "marketId": 233565,
+     "outcomeId": 5787,
+     "price": 1.78,
+     "specialBetValue": "Austin, Shakira-17.5",
+     "status": "active",
+     "specifiers": {
+      "player": "Austin, Shakira",
+      "total": "17.5"
+     },
+     "name": "Austin, Shakira - Menos de 17.5",
+     "marketName": "Jogador - Total de Pontos (Inc. prorrogação)",
+     "info": "Terá menos de 17.5 pontos (Inc. prorrogação)"
+    },
+    {
+     "marketId": 233567,
+     "outcomeId": 5792,
+     "price": 1.67,
+     "specialBetValue": "Austin, Shakira-8.5",
+     "status": "active",
+     "specifiers": {
+      "player": "Austin, Shakira",
+      "total": "8.5"
+     },
+     "name": "Austin, Shakira - Mais de 8.5",
+     "marketName": "Jogador - Total de Rebotes (Inc. prorrogação)",
+     "info": "Terá mais de 8.5 rebotes (Inc. prorrogação)"
+    },
+    {
+     "marketId": 233567,
+     "outcomeId": 5791,
+     "price": 2.07,
+     "specialBetValue": "Austin, Shakira-8.5",
+     "status": "active",
+     "specifiers": {
+      "player": "Austin, Shakira",
+      "total": "8.5"
+     },
+     "name": "Austin, Shakira - Menos de 8.5",
+     "marketName": "Jogador - Total de Rebotes (Inc. prorrogação)",
+     "info": "Terá menos de 8.5 rebotes (Inc. prorrogação)"
+    },
+    {
+     "marketId": 233569,
+     "outcomeId": 5796,
+     "price": 1.88,
+     "specialBetValue": "Austin, Shakira-29.5",
+     "status": "active",
+     "specifiers": {
+      "player": "Austin, Shakira",
+      "total": "29.5"
+     },
+     "name": "Austin, Shakira - Mais de 29.5",
+     "marketName": "Jogador - Total de Pontos + Rebotes + Assistências (Inc. prorrogação)",
+     "info": "Terá mais de 29.5 pontos + rebotes + assistências (Inc. prorrogação)"
+    },
+    {
+     "marketId": 233569,
+     "outcomeId": 5795,
+     "price": 1.78,
+     "specialBetValue": "Austin, Shakira-29.5",
+     "status": "active",
+     "specifiers": {
+      "player": "Austin, Shakira",
+      "total": "29.5"
+     },
+     "name": "Austin, Shakira - Menos de 29.5",
+     "marketName": "Jogador - Total de Pontos + Rebotes + Assistências (Inc. prorrogação)",
+     "info": "Terá menos de 29.5 pontos + rebotes + assistências (Inc. prorrogação)"
+    },
+    {
+     "marketId": 235311,
+     "outcomeId": 7286,
+     "price": 2.62,
+     "specialBetValue": "10-Amoore, Georgia",
+     "status": "active",
+     "specifiers": {
+      "milestone": "10",
+      "player": "Amoore, Georgia"
+     },
+     "name": "Amoore, Georgia 10+",
+     "marketName": "Jogador - Pontos (Inc. prorrogação)",
+     "info": "Terá 10 ou mais pontos (Inc. prorrogação)"
+    },
+    {
+     "marketId": 235315,
+     "outcomeId": 7294,
+     "price": 1.82,
+     "specialBetValue": "2-Amoore, Georgia",
+     "status": "active",
+     "specifiers": {
+      "milestone": "2",
+      "player": "Amoore, Georgia"
+     },
+     "name": "Amoore, Georgia 2+",
+     "marketName": "Cestas de 3 Pontos Convertidas pelo Jogador (Inc. prorrogação)",
+     "info": "Terá 2 ou mais cestas de 3 pontos convertidas (Inc. prorrogação)"
+    },
+    {
+     "marketId": 788,
+     "outcomeId": 2261,
+     "price": 1.68,
+     "specialBetValue": "1-37.5",
+     "status": "active",
+     "specifiers": {
+      "quarternr": "1",
+      "total": "37.5"
+     },
+     "marketTags": "donotshowingroupfilter",
+     "code": "+",
+     "name": "Mais de 37.5",
+     "marketName": "1º Quarto - Total de Pontos",
+     "info": "Mais de 37.5 pontos no 1º quarto"
+    },
+    {
+     "marketId": 788,
+     "outcomeId": 2260,
+     "price": 2.07,
+     "specialBetValue": "1-37.5",
+     "status": "active",
+     "specifiers": {
+      "quarternr": "1",
+      "total": "37.5"
+     },
+     "marketTags": "donotshowingroupfilter",
+     "code": "-",
+     "name": "Menos de 37.5",
+     "marketName": "1º Quarto - Total de Pontos",
+     "info": "Menos de 37.5 pontos no 1º quarto"
+    },
+    {
+     "marketId": 758,
+     "outcomeId": 2181,
+     "price": 1.41,
+     "specialBetValue": "82.5",
+     "status": "active",
+     "specifiers": {
+      "total": "82.5"
+     },
+     "marketTags": "donotshowingroupfilter",
+     "code": "+",
+     "name": "Mais de 82.5",
+     "marketName": "Washington Mystics (F) - Total de Pontos (Inc. prorrogação)",
+     "info": "Mais de 82.5 pontos por Washington Mystics (F) (Inc. prorrogação)"
+    },
+    {
+     "marketId": 758,
+     "outcomeId": 2180,
+     "price": 2.7,
+     "specialBetValue": "82.5",
+     "status": "active",
+     "specifiers": {
+      "total": "82.5"
+     },
+     "marketTags": "donotshowingroupfilter",
+     "code": "-",
+     "name": "Menos de 82.5",
+     "marketName": "Washington Mystics (F) - Total de Pontos (Inc. prorrogação)",
+     "info": "Menos de 82.5 pontos por Washington Mystics (F) (Inc. prorrogação)"
+    }
+   ]
+  }
+ ]
+}

@@ -10,6 +10,8 @@ import { Empty, Panel, buttonClass } from "@/components/ui";
 import { makeT, type DictKey } from "@/lib/i18n";
 import { formatDate, formatTime } from "@/lib/format";
 import type { BetSlate } from "@/lib/types";
+import type { TicketPricesView } from "@/components/PriceComparison";
+import type { PropSignal } from "@/lib/sources/br-books/compare";
 
 interface Served {
   gameId: string | null;
@@ -102,6 +104,20 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
     }, 0);
     return () => { alive = false; clearTimeout(id); };
   }, [hasTickets, alertDate, gameId, sport.key, lang, generatedAt]);
+  // The Brazilian books' prices on these tickets, read the same way as the alerts: only for tickets
+  // the viewer already sees, and never blocking the tickets themselves.
+  const [prices, setPrices] = useState<{ tickets: TicketPricesView[]; signals: PropSignal[] } | null>(null);
+  useEffect(() => {
+    if (!hasTickets || !alertDate) return;
+    let alive = true;
+    const id = setTimeout(() => {
+      fetch(`/api/game/${gameId}/prices?sport=${sport.key}&lang=${lang}&date=${alertDate}`, { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j) => { if (alive && j && Array.isArray(j.tickets)) setPrices({ tickets: j.tickets, signals: j.signals ?? [] }); })
+        .catch(() => {});
+    }, 0);
+    return () => { alive = false; clearTimeout(id); };
+  }, [hasTickets, alertDate, gameId, sport.key, lang, generatedAt]);
   const delayed = data?.delayedGames?.find((g) => g.gameId === gameId) ?? null;
 
   const generate = useCallback(async () => {
@@ -161,7 +177,7 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
         )}
         {data?.plan.id === "max" && !started && <RefreshBar gameId={gameId} sportKey={sport.key} lang={lang} onRefreshed={() => void load()} />}
         {alerts.length > 0 && <LineupBanner alerts={alerts} lang={lang} />}
-        <BetsPanel slate={mine.slate} lang={lang} gameId={gameId} sportKey={sport.key} alerts={alerts} />
+        <BetsPanel slate={mine.slate} lang={lang} gameId={gameId} sportKey={sport.key} alerts={alerts} prices={prices} />
       </>
     );
   } else if (delayed) {

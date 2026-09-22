@@ -1,0 +1,451 @@
+{
+ "betOffers": [
+  {
+   "id": 2694757276,
+   "criterion": {
+    "id": 1001159732,
+    "label": "Vencedor da partida - Incluindo prorrogação",
+    "englishLabel": "Moneyline - Including Overtime",
+    "order": [],
+    "occurrenceType": "POINTS",
+    "lifetime": "FULL_TIME_OVERTIME"
+   },
+   "betOfferType": {
+    "id": 2,
+    "name": "Jogo",
+    "englishName": "Match"
+   },
+   "eventId": 1027216026,
+   "outcomes": [
+    {
+     "id": 4345413448,
+     "label": "Washington Mystics (F)",
+     "englishLabel": "Washington Mystics (W)",
+     "odds": 1080,
+     "participant": "Washington Mystics (F)",
+     "type": "OT_ONE",
+     "betOfferId": 2694757276,
+     "changedDate": "2026-09-22T04:06:28Z",
+     "participantId": 1000061281,
+     "oddsFractional": "1/14",
+     "oddsAmerican": "-1250",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 0
+    },
+    {
+     "id": 4345413449,
+     "label": "Connecticut Sun (F)",
+     "englishLabel": "Connecticut Sun (W)",
+     "odds": 8000,
+     "participant": "Connecticut Sun (F)",
+     "type": "OT_TWO",
+     "betOfferId": 2694757276,
+     "changedDate": "2026-09-22T04:06:28Z",
+     "participantId": 1000071005,
+     "oddsFractional": "7/1",
+     "oddsAmerican": "700",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 1
+    }
+   ],
+   "tags": [
+    "OFFERED_PREMATCH",
+    "OFFERED_LIVE",
+    "BET_BUILDER",
+    "MAIN"
+   ],
+   "cashOutStatus": "ENABLED"
+  },
+  {
+   "id": 2694734663,
+   "criterion": {
+    "id": 1001159512,
+    "label": "Handicap - Incluindo prorrogação",
+    "englishLabel": "Point Spread - Including Overtime",
+    "order": [],
+    "occurrenceType": "POINTS",
+    "lifetime": "FULL_TIME_OVERTIME"
+   },
+   "betOfferType": {
+    "id": 1,
+    "name": "Desvantagem",
+    "englishName": "Handicap"
+   },
+   "eventId": 1027216026,
+   "outcomes": [
+    {
+     "id": 4345418971,
+     "label": "Washington Mystics (F)",
+     "englishLabel": "Washington Mystics (W)",
+     "odds": 1440,
+     "line": -10500,
+     "participant": "Washington Mystics (F)",
+     "type": "OT_ONE",
+     "betOfferId": 2694734663,
+     "changedDate": "2026-09-22T04:06:28Z",
+     "participantId": 1000061281,
+     "oddsFractional": "11/25",
+     "oddsAmerican": "-230",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 0
+    },
+    {
+     "id": 4345418972,
+     "label": "Connecticut Sun (F)",
+     "englishLabel": "Connecticut Sun (W)",
+     "odds": 2630,
+     "line": 10500,
+     "participant": "Connecticut Sun (F)",
+     "type": "OT_TWO",
+     "betOfferId": 2694734663,
+     "changedDate": "2026-09-22T04:06:28Z",
+     "participantId": 1000071005,
+     "oddsFractional": "13/8",
+     "oddsAmerican": "163",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 1
+    }
+   ],
+   "tags": [
+    "OFFERED_PREMATCH",
+    "OFFERED_LIVE",
+    "BET_BUILDER"
+   ],
+   "cashOutStatus": "ENABLED"
+  },
+  {
+   "id": 2694734664,
+   "criterion": {
+    "id": 1001159512,
+    "label": "Handicap - Incluindo prorrogação",
+    "englishLabel": "Point Spread - Including Overtime",
+    "order": [],
+    "occurrenceType": "POINTS",
+    "lifetime": "FULL_TIME_OVERTIME"
+   },
+   "betOfferType": {
+    "id": 1,
+    "name": "Desvantagem",
+    "englishName": "Handicap"
+   },
+   "eventId": 1027216026,
+   "outcomes": [
+    {
+     "id": 4345418973,
+     "label": "Washington Mystics (F)",
+     "englishLabel": "Washington Mystics (W)",
+     "odds": 2450,
+     "line": -18500,
+     "participant": "Washington Mystics (F)",
+     "type": "OT_ONE",
+     "betOfferId": 2694734664,
+     "changedDate": "2026-09-22T04:06:28Z",
+     "participantId": 1000061281,
+     "oddsFractional": "29/20",
+     "oddsAmerican": "145",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 0
+    },
+    {
+     "id": 4345418974,
+     "label": "Connecticut Sun (F)",
+     "englishLabel": "Connecticut Sun (W)",
+     "odds": 1500,
+     "line": 18500,
+     "participant": "Connecticut Sun (F)",
+     "type": "OT_TWO",
+     "betOfferId": 2694734664,
+     "changedDate": "2026-09-22T04:06:28Z",
+     "participantId": 1000071005,
+     "oddsFractional": "1/2",
+     "oddsAmerican": "-200",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 1
+    }
+   ],
+   "tags": [
+    "OFFERED_PREMATCH",
+    "OFFERED_LIVE",
+    "BET_BUILDER"
+   ],
+   "cashOutStatus": "ENABLED"
+  },
+  {
+   "id": 2694734668,
+   "criterion": {
+    "id": 1001159509,
+    "label": "Total de pontos - Incluindo prorrogação",
+    "englishLabel": "Total Points - Including Overtime",
+    "order": [],
+    "occurrenceType": "POINTS",
+    "lifetime": "FULL_TIME_OVERTIME"
+   },
+   "betOfferType": {
+    "id": 6,
+    "name": "Mais de/Menos de",
+    "englishName": "Over/Under"
+   },
+   "eventId": 1027216026,
+   "outcomes": [
+    {
+     "id": 4345418981,
+     "label": "Mais",
+     "englishLabel": "Over",
+     "odds": 1770,
+     "line": 157500,
+     "type": "OT_OVER",
+     "betOfferId": 2694734668,
+     "changedDate": "2026-09-21T21:18:30Z",
+     "oddsFractional": "3/4",
+     "oddsAmerican": "-130",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 0
+    },
+    {
+     "id": 4345418982,
+     "label": "Menos",
+     "englishLabel": "Under",
+     "odds": 1970,
+     "line": 157500,
+     "type": "OT_UNDER",
+     "betOfferId": 2694734668,
+     "changedDate": "2026-09-21T21:18:30Z",
+     "oddsFractional": "19/20",
+     "oddsAmerican": "-104",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 1
+    }
+   ],
+   "tags": [
+    "OFFERED_PREMATCH",
+    "OFFERED_LIVE",
+    "BET_BUILDER"
+   ],
+   "cashOutStatus": "ENABLED"
+  },
+  {
+   "id": 2694734669,
+   "criterion": {
+    "id": 1001159509,
+    "label": "Total de pontos - Incluindo prorrogação",
+    "englishLabel": "Total Points - Including Overtime",
+    "order": [],
+    "occurrenceType": "POINTS",
+    "lifetime": "FULL_TIME_OVERTIME"
+   },
+   "betOfferType": {
+    "id": 6,
+    "name": "Mais de/Menos de",
+    "englishName": "Over/Under"
+   },
+   "eventId": 1027216026,
+   "outcomes": [
+    {
+     "id": 4345418983,
+     "label": "Mais",
+     "englishLabel": "Over",
+     "odds": 1620,
+     "line": 155500,
+     "type": "OT_OVER",
+     "betOfferId": 2694734669,
+     "changedDate": "2026-09-21T21:18:30Z",
+     "oddsFractional": "8/13",
+     "oddsAmerican": "-162",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 0
+    },
+    {
+     "id": 4345418984,
+     "label": "Menos",
+     "englishLabel": "Under",
+     "odds": 2180,
+     "line": 155500,
+     "type": "OT_UNDER",
+     "betOfferId": 2694734669,
+     "changedDate": "2026-09-21T21:18:30Z",
+     "oddsFractional": "59/50",
+     "oddsAmerican": "118",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 1
+    }
+   ],
+   "tags": [
+    "OFFERED_PREMATCH",
+    "OFFERED_LIVE",
+    "BET_BUILDER"
+   ],
+   "cashOutStatus": "ENABLED"
+  },
+  {
+   "id": 2694748689,
+   "criterion": {
+    "id": 1001223479,
+    "label": "Total de pontos Ímpar/Par - Incluindo prorrogação",
+    "englishLabel": "Total Points Odd/Even - Including Overtime",
+    "order": [],
+    "occurrenceType": "POINTS",
+    "lifetime": "FULL_TIME_OVERTIME"
+   },
+   "betOfferType": {
+    "id": 10,
+    "name": "Ímpar/Par",
+    "englishName": "Odd/Even"
+   },
+   "eventId": 1027216026,
+   "outcomes": [
+    {
+     "id": 4345401521,
+     "label": "Impar",
+     "englishLabel": "Odd",
+     "odds": 1880,
+     "type": "OT_ODD",
+     "betOfferId": 2694748689,
+     "changedDate": "2026-09-22T04:06:28Z",
+     "oddsFractional": "22/25",
+     "oddsAmerican": "-114",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 0
+    },
+    {
+     "id": 4345401522,
+     "label": "Par",
+     "englishLabel": "Even",
+     "odds": 1900,
+     "type": "OT_EVEN",
+     "betOfferId": 2694748689,
+     "changedDate": "2026-09-22T04:06:28Z",
+     "oddsFractional": "9/10",
+     "oddsAmerican": "-112",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 1
+    }
+   ],
+   "tags": [
+    "OFFERED_PREMATCH",
+    "OFFERED_LIVE",
+    "BET_BUILDER"
+   ],
+   "cashOutStatus": "ENABLED"
+  },
+  {
+   "id": 2694734662,
+   "closed": "2026-09-22T23:30:00Z",
+   "criterion": {
+    "id": 1001211820,
+    "label": "Resultado do jogo ao final do 4º quarto",
+    "englishLabel": "Result at end of Quarter 4",
+    "order": [],
+    "occurrenceType": "POINTS",
+    "lifetime": "FULL_TIME"
+   },
+   "betOfferType": {
+    "id": 2,
+    "name": "Jogo",
+    "englishName": "Match"
+   },
+   "eventId": 1027216026,
+   "outcomes": [
+    {
+     "id": 4345418968,
+     "label": "2",
+     "englishLabel": "2",
+     "odds": 8500,
+     "participant": "Connecticut Sun (F)",
+     "type": "OT_TWO",
+     "betOfferId": 2694734662,
+     "changedDate": "2026-09-22T04:06:28Z",
+     "participantId": 1000071005,
+     "oddsFractional": "15/2",
+     "oddsAmerican": "750",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 2
+    },
+    {
+     "id": 4345418969,
+     "label": "1",
+     "englishLabel": "1",
+     "odds": 1080,
+     "participant": "Washington Mystics (F)",
+     "type": "OT_ONE",
+     "betOfferId": 2694734662,
+     "changedDate": "2026-09-22T04:06:28Z",
+     "participantId": 1000061281,
+     "oddsFractional": "1/14",
+     "oddsAmerican": "-1250",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 0
+    },
+    {
+     "id": 4345418970,
+     "label": "X",
+     "englishLabel": "X",
+     "odds": 29000,
+     "type": "OT_CROSS",
+     "betOfferId": 2694734662,
+     "changedDate": "2026-09-22T04:06:28Z",
+     "oddsFractional": "28/1",
+     "oddsAmerican": "2800",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 1
+    }
+   ],
+   "tags": [
+    "OFFERED_PREMATCH",
+    "BET_BUILDER"
+   ],
+   "cashOutStatus": "ENABLED"
+  }
+ ],
+ "events": [
+  {
+   "id": 1027216026,
+   "name": "Washington Mystics (F) - Connecticut Sun (F)",
+   "nameDelimiter": "-",
+   "englishName": "Washington Mystics (W) - Connecticut Sun (W)",
+   "homeName": "Washington Mystics (F)",
+   "awayName": "Connecticut Sun (F)",
+   "start": "2026-09-22T23:30:00Z",
+   "group": "WNBA",
+   "groupId": 1000174277,
+   "path": [
+    {
+     "id": 1000093204,
+     "name": "Basquete",
+     "englishName": "Basketball",
+     "termKey": "basketball"
+    },
+    {
+     "id": 1000174277,
+     "name": "WNBA",
+     "englishName": "WNBA",
+     "termKey": "wnba"
+    }
+   ],
+   "nonLiveBoCount": 23,
+   "sport": "BASKETBALL",
+   "tags": [
+    "OFFERED_LIVE",
+    "BET_BUILDER",
+    "MATCH"
+   ],
+   "state": "NOT_STARTED",
+   "groupSortOrder": 3999000000000000000,
+   "prematchEnd": "2026-09-22T23:30:00Z"
+  }
+ ]
+}
