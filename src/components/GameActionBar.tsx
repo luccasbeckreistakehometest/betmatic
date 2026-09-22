@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePageActions } from "@/components/game-stores";
-import { Button } from "@/components/ui";
+import { Button, cx } from "@/components/ui";
 
 /**
  * The phone's action bar: one primary button for the page's state — the action the page's regions
@@ -13,8 +13,10 @@ import { Button } from "@/components/ui";
  *
  * It is the last element of the page and sticks to the bottom of the viewport, above the tab bar,
  * for as long as its own place in the page is below the fold; at the end of the page it rests in
- * flow, above the footer, so the responsible-gambling line is never covered. Nothing on a desk:
- * the actions are in the panels, where a pointer already is.
+ * flow, above the footer, so the responsible-gambling line is never covered. Its place in the page
+ * stays while an action exists and only its visibility follows the anchor, so the page's height
+ * never changes under a scrolling thumb. Nothing on a desk: the actions are in the panels, where a
+ * pointer already is.
  */
 export function GameActionBar() {
   const actions = usePageActions();
@@ -41,16 +43,19 @@ export function GameActionBar() {
 
   if (!action) return null;
   const known = offscreen && offscreen.id === action.id ? offscreen.value : null;
-  const shown = known === true || (known === null && action.anchor() === null);
-  if (!shown) return null;
+  const shown = !action.pending && (known === true || (known === null && action.anchor() === null));
   return (
     <div
       data-testid="game-action-bar"
-      className="sticky bottom-(--tabbar-h) z-20 -mx-3 border-t border-line bg-surface-1 px-4 py-2 md:hidden"
+      data-shown={shown ? "true" : "false"}
+      aria-hidden={!shown}
+      className={cx("sticky bottom-(--tabbar-h) z-20 -mx-3 border-t border-line bg-surface-1 px-4 py-2 md:hidden", !shown && "invisible")}
     >
-      <Button variant="primary" onClick={action.run} loading={action.busy} data-testid={action.testId ?? "action-bar-primary"} className="w-full">
-        {action.label}
-      </Button>
+      {!action.pending && (
+        <Button variant="primary" onClick={action.run} loading={action.busy} data-testid={action.testId ?? "action-bar-primary"} className="w-full">
+          {action.label}
+        </Button>
+      )}
     </div>
   );
 }

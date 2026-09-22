@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { SportPicker } from "@/components/Controls";
@@ -24,11 +24,12 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
  */
 /**
  * The phone's live tab, decided here so the bar is right on first paint and never reflows: the
- * games of the remembered sport that are under way now. Read from the cached scoreboard; a feed
- * error answers null and the bar reads the slate itself.
+ * games under way now in the sport the URL names (forwarded by the proxy), else the remembered
+ * one. Read from the cached scoreboard; a feed error answers null and the bar reads the slate.
  */
 async function liveTabInitial(): Promise<LiveTabInitial | null> {
-  const sportKey = soldSportKey((await cookies()).get(SPORT_COOKIE)?.value) ?? null;
+  const [head, jar] = await Promise.all([headers(), cookies()]);
+  const sportKey = soldSportKey(head.get("x-bm-sport")) ?? soldSportKey(jar.get(SPORT_COOKIE)?.value) ?? null;
   if (!sportKey) return null;
   try {
     const games = await getSlate(todayKey(), false, sportKey);
@@ -47,7 +48,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="flex min-h-dvh flex-col pb-(--tabbar-h)" data-density="default">
       {/* 48px of bar under the status bar an installed app keeps: the inset is padding, so the bar
           is drawn below it and everything that sticks under the bar (--topbar-h) follows. */}
-      <header className="sticky top-0 z-40 box-content flex h-12 shrink-0 items-center gap-3 border-b border-line bg-surface-1 px-3 pt-(--safe-t) md:px-4">
+      <header className="sticky top-0 z-40 flex h-[calc(3rem+var(--safe-t))] shrink-0 items-center gap-3 border-b border-line bg-surface-1 px-3 pt-(--safe-t) md:px-4">
         <Link href="/app" className="flex h-11 min-w-11 shrink-0 items-center" aria-label="Betmatic">
           <span className="lg:hidden"><Logo size={22} showWord={false} /></span>
           <span className="hidden lg:inline"><Logo size={22} /></span>

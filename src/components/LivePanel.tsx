@@ -108,13 +108,20 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
   // Compared with the time of the last fetch, not the clock, so rendering stays pure.
   const cooling = !!data?.nextReadAt && !!updatedAt && Date.parse(data.nextReadAt) > Date.parse(updatedAt);
   // While a read can be asked for, the phone's action bar offers it wherever the reader is on the
-  // page; the inline button below is the anchor, so the two are never on screen together.
+  // page; the inline button below is the anchor, so the two are never on screen together. Until
+  // the first poll has answered, the bar is held silent: a lesser action shown for a moment and
+  // then replaced is a label changing under the thumb.
+  const pending = !data && !failed;
   const offerRead = !!s && s.state === "in" && !!data?.canRead && !cooling;
   useEffect(() => {
+    if (pending) {
+      offerAction("live-read", { label: "", priority: 20, pending: true, run: () => {}, anchor: () => null });
+      return () => offerAction("live-read", null);
+    }
     if (!offerRead) { offerAction("live-read", null); return; }
     offerAction("live-read", { label: busy ? c.readBusy : c.readBtn, priority: 20, busy, testId: "action-live-read", run: () => void askRead(), anchor: () => document.getElementById("live-read-btn") });
     return () => offerAction("live-read", null);
-  }, [offerRead, busy, askRead, c.readBtn, c.readBusy]);
+  }, [pending, offerRead, busy, askRead, c.readBtn, c.readBusy]);
 
   // The first poll is in flight: the panel's frame at roughly its final height, so the tickets
   // below do not jump when it arrives. A failed poll leaves nothing, as before.
@@ -214,15 +221,22 @@ function LiveShell({ title }: { title: string }) {
         <span aria-hidden="true" className="ml-2 block h-3 w-24 rounded-control bg-surface-2" />
       </header>
       <div aria-hidden="true" className="flex flex-col gap-3 px-4 py-3">
-        <span className="block h-9 rounded-control bg-surface-2" />
-        {[0, 1].map((i) => (
-          <div key={i} className="flex flex-col gap-2 rounded-control border border-line bg-surface-2 p-3">
+        <span className="block h-12 rounded-control bg-surface-2" />
+        <span className="block h-4 w-4/5 rounded-control bg-surface-2" />
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="flex flex-col gap-2.5 rounded-control border border-line bg-surface-2 p-3">
             <span className="block h-3.5 w-2/5 rounded-control bg-surface-3" />
             <span className="block h-3 w-3/5 rounded-control bg-surface-3" />
             <span className="block h-3 w-1/2 rounded-control bg-surface-3" />
+            <span className="block h-3 w-3/5 rounded-control bg-surface-3" />
+            <span className="block h-3 w-2/5 rounded-control bg-surface-3" />
           </div>
         ))}
-        <span className="block h-3 w-1/3 rounded-control bg-surface-2" />
+        <div className="flex flex-col gap-2 border-t border-line pt-3">
+          <span className="block h-3 w-1/3 rounded-control bg-surface-2" />
+          <span className="block h-3 w-4/5 rounded-control bg-surface-2" />
+          <span className="block h-(--row-h) w-40 rounded-control bg-surface-2" />
+        </div>
       </div>
     </section>
   );

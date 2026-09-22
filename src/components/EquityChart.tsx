@@ -56,7 +56,7 @@ export function EquityChart({ rows: initial, lang, compact = false, className = 
   const filter = (label: string, testId: string, value: string | number, onChange: (v: string) => void, options: { value: string | number; label: string }[]) => (
     <label className="flex items-center gap-1.5 text-label u-label text-fg-dim">
       {label}
-      <Select value={value} onChange={(e) => onChange(e.target.value)} data-testid={testId} className="h-7 text-tiny">
+      <Select value={value} onChange={(e) => onChange(e.target.value)} data-testid={testId} className="h-7 text-tiny max-md:h-(--row-h) max-md:text-sm">
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}

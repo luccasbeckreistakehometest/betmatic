@@ -83,7 +83,7 @@ export function AccountBar() {
           {/* Balance and plan are numbers a person checks, so they are set like numbers. */}
           <Link
             href={`/app/conta?lang=${lang}`}
-            className="nums flex items-center gap-1.5 text-tiny text-fg-muted transition-colors hover:text-fg max-md:min-h-11 max-md:px-1.5"
+            className="nums flex items-center justify-center gap-1.5 text-tiny text-fg-muted transition-colors hover:text-fg max-md:min-h-11 max-md:min-w-11 max-md:px-1.5"
             title={t("coins")}
             aria-label={`${user.coins} ${t("coins")}`}
           >

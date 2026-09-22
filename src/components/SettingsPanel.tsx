@@ -137,7 +137,7 @@ export function SettingsPanel() {
           {handleError && <span className="text-tiny text-warn" data-testid="handle-error">{handleError}</span>}
           {s?.leaderboardOptIn && s.handle && <span className="text-tiny text-fg-dim">{t("shownAs")} <span className="nums text-fg">@{s.handle}</span></span>}
         </div>
-        <Link href={{ pathname: "/app/ranking", query: { lang } }} className="mt-2 inline-block text-tiny text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{t("navRanking")} →</Link>
+        <Link href={{ pathname: "/app/ranking", query: { lang } }} className="mt-2 inline-block text-tiny text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg max-md:inline-flex max-md:min-h-11 max-md:items-center">{t("navRanking")} →</Link>
       </Panel>
     </div>
   );

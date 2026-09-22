@@ -269,7 +269,7 @@ export function Select({
 
 export function Checkbox({ label, className = "", ...rest }: Omit<ComponentProps<"input">, "type"> & { label: ReactNode }) {
   return (
-    <label className={cx("inline-flex cursor-pointer items-center gap-2 text-sm text-fg has-[:disabled]:cursor-not-allowed has-[:disabled]:text-fg-faint", className)}>
+    <label className={cx("inline-flex cursor-pointer items-center gap-2 text-sm text-fg has-[:disabled]:cursor-not-allowed has-[:disabled]:text-fg-faint max-md:min-h-11", className)}>
       <span className="relative inline-flex size-4 shrink-0">
         <input
           {...rest}
@@ -324,12 +324,13 @@ export function Badge({ tone = "neutral", children, className = "" }: { tone?: T
 /**
  * A chip you press — a market, a league, an odds band — is a toggle (§12.6): pressed is the
  * achromatic action fill, exactly like the primary button; unpressed is a control edge. On a
- * phone the chip grows to a fingertip and takes the body size; a desk keeps the dense geometry.
- * Pair it with aria-pressed on the button.
+ * phone the chip is a real 44px box and takes the body size — chips sit six pixels apart, so a
+ * transparent hit area would overlap the next one; a desk keeps the dense geometry. Pair it with
+ * aria-pressed on the button.
  */
 export function chipClass(on: boolean, className = ""): string {
   return cx(
-    "u-hit inline-flex items-center gap-1.5 rounded-control border px-2.5 py-1 text-tiny whitespace-nowrap transition-colors duration-(--dur-1) ease-(--ease-out) max-md:min-h-9 max-md:px-3 max-md:text-sm",
+    "inline-flex items-center gap-1.5 rounded-control border px-2.5 py-1 text-tiny whitespace-nowrap transition-colors duration-(--dur-1) ease-(--ease-out) max-md:min-h-11 max-md:px-3 max-md:text-sm",
     on ? "border-action bg-action text-action-fg" : "border-line-control text-fg-muted hover:bg-surface-2 hover:text-fg",
     className,
   );

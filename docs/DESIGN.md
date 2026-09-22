@@ -1157,9 +1157,11 @@ rules, numerals and prohibitions — with these decisions.
 own inset (`--safe-b`, read once in `globals.css`), and `--tabbar-h` is that whole height, so
 nothing is ever a pixel under it. It holds Jogos · Múltiplas · Banca · Conta and, while a game of
 the current sport is being played, that game as a fifth tab named `DUN × CED` with the live dot.
-The shell decides that fifth tab on the server, from the remembered sport and the cached
-scoreboard, so the bar is right on first paint and never reflows; the phone then re-reads the
-slate every 90 s (a game can start while the app is open), under its own rate-limit rule. The
+The shell decides that fifth tab on the server — from the sport in the URL, which the proxy
+forwards as a header because a layout cannot read search params, else the remembered one — and the
+cached scoreboard, so the bar is right on first paint, on a first visit too, and never reflows;
+the phone then re-reads the slate every 90 s (a game can start while the app is open), under its
+own rate-limit rule. The
 current tab carries the rail's cue — a 2 px ink rule and full-contrast text — because the product
 has one current-item colour and it is not a hue. The topbar is padded by the status bar an
 installed app keeps (`--safe-t`), and `--topbar-h` includes it, so the rail and the game page's
@@ -1183,14 +1185,18 @@ server drew it and by `matchMedia` when the client did.
 team block has scrolled away and reads the score the live panel polls, from the same request. The
 live panel draws its own frame while its first poll is in flight, so the tickets below it do not
 jump when it arrives. The odds bands are chips a thumb swipes (`u-swipe`: snapping that respects
-the strip's own padding, so the first chip rests on the tickets' edge; a 44 px hit area kept inside
-the scroll box). One primary action lives in a bar above the tab bar (`GameActionBar`): the action
+the strip's own padding, so the first chip rests on the tickets' edge). One primary action lives
+in a bar above the tab bar (`GameActionBar`): the action
 the page's regions offered with the highest priority — the live read, the day's pick, generation,
 sign-up or the plans, else `Ver bilhetes` — and only that one, shown while its own inline control is
 off screen and gone the moment that control is in view. It never falls through to a lesser action,
-so its label cannot change under a scrolling thumb. It is the page's last element and sticks above
+so its label cannot change under a scrolling thumb — and while the live panel's first poll is in
+flight it holds the bar silent, so no lesser action is shown for a moment and replaced. It is the
+page's last element and sticks above
 the tabs for as long as its own place is below the fold; at the end of the page it rests in flow,
-above the footer, so the responsible-gambling line is never covered. The market table collapses to
+above the footer, so the responsible-gambling line is never covered — and its place stays while an
+action exists (only its visibility follows the anchor), so the page's height never changes under a
+fling to the end. The market table collapses to
 a definition list per book (§11.1) and its empty state draws no empty rows.
 
 **Touch.** Below 768 px `--row-h` is 44 px, so every control drawn at the row height is a target.
@@ -1199,8 +1205,9 @@ neighbour is closer than 44 px — the topbar's menu and balance, the date contr
 follow buttons, the roster and panel links, the footer's legal links, the auth page's two links,
 the player page's steppers — or the transparent 44 px hit area of `u-hit` where nothing else is
 near. `u-hit` exists only below 768 px: a desk has a pointer. Selectable chips share one class
-(`chipClass`): pressed is the action fill on both sizes; on a phone they grow to 36 px plus the hit
-area and take the body size. Stakes, lines and ceilings open the decimal keypad; e-mail opens the
+(`chipClass`): pressed is the action fill on both sizes; on a phone they are real 44 px boxes in
+the body size, because chips sit six pixels apart and a hit area would overlap the next one; a
+slider's box is 44 px tall on a phone with the same track and thumb. Stakes, lines and ceilings open the decimal keypad; e-mail opens the
 e-mail one; a stake field is six characters wide, so a ticket's footer fits a 320 px phone.
 
 **Type.** The 12 px floor of §4: `text-micro` and `text-label` rise to 12 px below 768 px and the
@@ -1238,8 +1245,11 @@ surprise:** the auth pages' title is `text-h3` (25 px) instead of an off-scale 2
 are the row height; the settings ceilings and bankroll amount go through `Field`/`Input` (right-
 aligned, mono); the tipster's raw file control is a button; a ticket's "Adicionar à banca" and the
 alerts' Telegram buttons carry the button primitive's geometry; a followed league is a pressed chip
-(the action fill) instead of a raised surface; and every placeholder is prose in the body face, even
-inside a numeric field. Nothing else on a desk moved.
+(the action fill) instead of a raised surface; every placeholder is prose in the body face, even
+inside a numeric field; the custom parlay's target field sets its number in mono (§11.2); the
+chart's tick labels are a true 12 px instead of a scaled ~11; and the slate's meta line is the same
+words in two spans (a sub-pixel kerning diff in a pixel comparison, nothing a reader sees). Nothing
+else on a desk moved.
 
 **Not done.** The header still shows the sport picker, not a date picker; a per-viewer density
 choice is still ignored below 768 px. Text links that sit side by side in a footer row are 44 px

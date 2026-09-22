@@ -116,7 +116,7 @@ export function AlertsPanel() {
                   <span className="nums ml-auto text-label text-fg-dim">{when(n.createdAt)}</span>
                 </div>
                 <pre className="whitespace-pre-wrap font-sans text-tiny leading-relaxed text-fg-muted">{n.body}</pre>
-                {n.url && <a href={n.url} className="w-fit text-tiny text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{t("openTicket")} →</a>}
+                {n.url && <a href={n.url} className="w-fit text-tiny text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg max-md:inline-flex max-md:min-h-11 max-md:items-center">{t("openTicket")} →</a>}
               </li>
             ))}
           </ul>

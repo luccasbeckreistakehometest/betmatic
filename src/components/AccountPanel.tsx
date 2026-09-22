@@ -49,8 +49,8 @@ const C = {
   },
 };
 
-const field = "w-full rounded-control border border-line-control bg-surface-1 px-3 py-2 text-base text-fg";
-const button = "rounded-control border border-line-control px-3.5 py-1.5 text-sm text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:text-fg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed";
+const field = "w-full rounded-control border border-line-control bg-surface-1 px-3 py-2 text-base text-fg max-md:min-h-11";
+const button = "rounded-control border border-line-control px-3.5 py-1.5 text-sm text-fg transition-colors duration-(--dur-1) ease-(--ease-out) hover:border-line-control hover:text-fg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed max-md:min-h-11";
 
 export function AccountPanel() {
   const { lang } = useNavState();
@@ -198,8 +198,8 @@ export function AccountPanel() {
           <Panel title={c.responsible} lang={lang}>
             <p className="text-sm text-fg-muted">{c.responsibleBody}</p>
             <div className="mt-3 flex flex-wrap gap-3 text-sm">
-              <Link href={`/app/settings?lang=${lang}`} className="text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{c.responsibleLink}</Link>
-              <Link href={lang === "pt" ? "/jogo-responsavel" : "/responsible-gambling"} className="text-fg-muted hover:underline">{lang === "pt" ? "Onde buscar ajuda" : "Where to get help"}</Link>
+              <Link href={`/app/settings?lang=${lang}`} className="text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg max-md:inline-flex max-md:min-h-11 max-md:items-center">{c.responsibleLink}</Link>
+              <Link href={lang === "pt" ? "/jogo-responsavel" : "/responsible-gambling"} className="text-fg-muted hover:underline max-md:inline-flex max-md:min-h-11 max-md:items-center">{lang === "pt" ? "Onde buscar ajuda" : "Where to get help"}</Link>
             </div>
           </Panel>
         </div>

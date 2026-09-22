@@ -84,6 +84,7 @@ test("the tab bar sits at the bottom, names the game under way, is right on firs
   const html = await page.request.get("/app?sport=wnba&lang=pt").then((r) => r.text());
   expect(html).toContain('data-testid="tab-live"');
   await page.goto("/app?sport=wnba&lang=pt", { waitUntil: "commit" });
+  await page.locator('[data-testid="tab-bar"]').waitFor({ state: "attached" });
   const first = await page.locator('[data-testid="tab-bar"] a').count();
   await page.waitForTimeout(1500);
   expect(first).toBe(5);
@@ -174,16 +175,20 @@ test("the game page: a compact head once the team block scrolls away, and one pr
   for (const y of [1200, 1600, 2000]) {
     await page.evaluate((y) => window.scrollTo(0, y), y);
     await page.waitForTimeout(150);
-    if (await bar.count()) await expect(bar.getByRole("button")).toHaveText(expected);
+    await expect(bar.getByRole("button")).toHaveText(expected);
   }
-  // At the end of the page the bar rests in flow above the footer: the 18+ line is never covered.
+  // At the end of the page the bar rests in flow above the footer: the 18+ line is never covered,
+  // and the page's height did not change on the way (its slot stays while the action exists).
+  const before = await page.evaluate(() => document.documentElement.scrollHeight);
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-  await page.waitForTimeout(300);
-  if (await bar.count()) {
-    const b = (await bar.boundingBox())!;
-    const footer = (await page.locator("footer").last().boundingBox())!;
-    expect(b.y + b.height).toBeLessThanOrEqual(footer.y + 1);
-  }
+  await page.waitForTimeout(400);
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(before);
+  const footer = (await page.locator("footer").last().boundingBox())!;
+  const slot = await bar.evaluate((el) => { const r = el.getBoundingClientRect(); return { y: r.y, h: r.height }; });
+  expect(slot.y + slot.h).toBeLessThanOrEqual(footer.y + 1);
+  const inner = await page.evaluate(() => window.innerHeight);
+  expect(Math.round(footer.y + footer.height)).toBeLessThanOrEqual(Math.round(tabs.y) + 1 + (await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight - window.scrollY)));
+  expect(inner).toBeGreaterThan(0);
   // The bar steps aside as soon as the control it stands for is on screen: one primary action at a time.
   const twin = canRead ? page.getByTestId("live-read-btn") : page.locator("#tickets");
   await twin.scrollIntoViewIfNeeded();

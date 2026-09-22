@@ -163,7 +163,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-5 py-12">
-      <Link href={lang === "en" ? "/?lang=en" : "/"} className="mb-8 w-fit" aria-label="Betmatic">
+      <Link href={lang === "en" ? "/?lang=en" : "/"} className="mb-8 w-fit max-md:flex max-md:min-h-11 max-md:items-center" aria-label="Betmatic">
         <Logo size={28} />
       </Link>
       <h1 className="u-title text-h3 text-fg">

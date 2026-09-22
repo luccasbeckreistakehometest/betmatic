@@ -55,6 +55,9 @@ export interface PageAction {
   anchor: () => Element | null;
   busy?: boolean;
   testId?: string;
+  /** The region does not know its action yet (a first poll in flight): the bar shows nothing rather
+   *  than a lesser action that is about to be replaced. */
+  pending?: boolean;
 }
 
 const actions = createStore<PageAction[]>([]);

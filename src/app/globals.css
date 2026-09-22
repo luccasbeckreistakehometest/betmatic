@@ -431,8 +431,7 @@
 /* A row of chips a thumb can swipe: one line, snapping, no scrollbar, the page never scrolls with it.
    Its width comes from the layout, never from its content (contain), so a long strip can never
    size the panel it sits in. The snap respects the strip's own padding, so the first chip rests on
-   the panel's text edge instead of scrolling the padding away; the vertical padding keeps a 44px
-   hit area inside the scroll box, where it can be tapped. */
+   the panel's text edge instead of scrolling the padding away. */
 @utility u-swipe {
   display: flex;
   overflow-x: auto;
@@ -440,8 +439,6 @@
   overscroll-behavior-x: contain;
   scroll-snap-type: x proximity;
   scroll-padding-inline: var(--panel-p);
-  padding-block: var(--s-2);
-  margin-block: calc(-1 * var(--s-2));
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   &::-webkit-scrollbar {
@@ -737,6 +734,13 @@ tr[data-selected="true"] > *:first-child {
 }
 .live-dot {
   animation: live-pulse 2s var(--ease-inout) infinite;
+}
+
+/* On a phone the slider's box is a fingertip tall; the track and thumb keep their size. */
+@media (max-width: 767px) {
+  .range {
+    height: 44px;
+  }
 }
 
 /* A price move flashes its cell and holds a leading rule; the digits never animate. */
