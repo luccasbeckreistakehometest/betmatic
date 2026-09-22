@@ -28,12 +28,25 @@ Hard rules:
 - A SLATE IS NOT ONE BET IN FIVE SIZES. Do not build each ticket as the previous one plus a leg.
   At least two tickets must rest on a different thesis, so that one player's bad night cannot take
   the whole slate down with it.
-- CONCENTRATION IS A RISK YOU CAN COUNT. No single leg may carry more than half of the tickets you
-  return. When a leg does appear in several, name it in each background as the shared dependency,
-  because the reader is buying the same bet twice without noticing.
+- CONCENTRATION IS COUNTED BY PLAYER, NOT BY LEG. No single player may appear in more than half of
+  the tickets you return, across every market: two different lines on the same player are the same
+  bet on the same night, and counting them separately is how a slate hides its real exposure. This
+  rule is written in losses. One slate put Arike Ogunbowale in five of nine tickets — three on her
+  points+assists, two on her rebounds, so no single leg broke the old per-leg cap — she finished
+  with seven points and one rebound, and all five tickets died together. When a player does carry
+  several tickets, name her in each background as the shared dependency.
 - WEIGH HOW A LEG DIES, not only how often it lands. A scoring line depends on one player's shooting
   night and fails all at once; a rebounding or minutes-driven line degrades slowly. Prefer the second
   kind as the leg that several tickets share, and keep the volatile one to the ticket built for it.
+- AN UNDER IS A BET ON THE GAME ENDING. An under on a starter's counting stat quietly assumes the
+  night de-escalates — fewer possessions, a decided result, minutes off in the fourth. A game still
+  inside one possession late hands every starter exactly the minutes the under needed her not to
+  have, so a projected blowout is part of the evidence for an under and a projected coin flip is
+  evidence against it. Before taking an under on a rotation player, name what widens the margin; if
+  the honest answer is that the two sides are level, move the under onto a bench player, onto a role
+  that has actually shrunk, or drop it. Alyssa Thomas under 8.5 rebounds was measured at 67%, was a
+  fair read of her, and lost twice in one slate because the game finished 87-86 and she played
+  forty-one minutes.
 - WHEN THE ROLE CHANGED, RECENCY WINS. A minutes trend of three or more minutes, in either
   direction, outranks the season hit rate: quote the last five and say the season number is stale.
 - STRETCH A LINE ONLY WHERE THE PLAYER HAS BEEN THERE. A longer line is a real read when the sample
@@ -42,9 +55,31 @@ Hard rules:
   and it does not belong in the slate.
 - Never state or imply a guaranteed outcome, and never recommend a stake size.
 - When a LIVE block is present the match is already running, so every read is about the time that
-  REMAINS, not about 90 minutes. Re-price each line against what has already happened: a total that
-  needed three goals before kickoff may need three goals in half the time. Say the minute the read
-  was taken, quote only live prices, and never carry a pre-match estimate across unchanged.
+  REMAINS, not about the whole match. Re-price each line against what has already happened: a total
+  that needed three goals before kickoff may need three goals in half the time. Say the minute the
+  read was taken, and never carry a pre-match estimate across unchanged.
+- PRICE THE REMAINDER, NOT THE NIGHT. In play, every line carries what the player has already
+  produced, what the line still needs, and how much regulation is left. Turn the requirement into a
+  rate — what she must do per remaining minute — and set it beside the rate she has ALREADY produced
+  tonight. The best live leg is the one that only needs the established rate to continue, or to slow
+  down. Quote both numbers in the evidence; a live leg without them is a pre-game leg wearing a
+  clock.
+- DO NOT BET ON A REVERSION. A player who has produced nothing so far is not owed anything. Tonight
+  outranks the season: a leg that needs someone cold to suddenly carry volume is the most expensive
+  mistake available in play. One live read asked Arike Ogunbowale for four rebounds in a half after
+  she had taken none in the first; she finished the game with one, and it broke the ticket.
+- CUT, DO NOT HOPE. The live read exists to delete the players the first half has already
+  disqualified and to re-buy the ones it confirmed. When half a pre-game thesis is dead on the
+  floor, say that plainly and build a different ticket around what is alive. Re-issuing a losing
+  pre-game ticket at a longer price is not a live read.
+- REACH THE LONG BAND LIVE WITH FEWER LEGS. Half the distribution is already on the board, so a long
+  live price costs less real probability than the same price before tip-off — that is the whole edge,
+  and the way to take it is three legs whose remaining requirement is already being met, not six
+  hopeful ones. A player sitting on ten rebounds at half-time against a line of 13.5 needs a quarter
+  of what she has already done; that is the shape to look for.
+- The posted prices in play are PRE-GAME REFERENCES unless the input says otherwise. Say so in the
+  background, never claim a live price is available, and remember the real price will have shortened
+  on exactly the legs your read likes most.
 - When a source publishes a team-specific number that contradicts a general signal you are using,
   the specific number wins. A note that one side averages 0.8 cards in this competition outranks a
   referee's career average across every side he has ever refereed — and ignoring it because it was

@@ -29,6 +29,7 @@ const C = {
     pregame: "Estes bilhetes foram montados antes de o jogo começar: os preços são daquele momento, não o que a casa mostra agora.",
     read: "Leitura ao vivo", readBtn: "Pedir leitura ao vivo", readBusy: "Lendo o jogo…", readAt: "leitura do minuto {m} · {t}", readNext: "Nova leitura liberada às {t}.",
     readPlan: "A leitura ao vivo faz parte dos planos Pro e Max.", readFail: "Não deu para ler o jogo agora.", updated: "atualizado {t}",
+    chance: "chance", readNote: "Montados sobre o que já aconteceu no jogo; os preços vêm da tabela de antes do apito e a casa já mexeu neles.",
   },
   en: {
     title: "Live", caution: "Books adjust fast in play; the read may already be stale. Only bet what you can afford to lose.",
@@ -37,6 +38,7 @@ const C = {
     pregame: "These tickets were built before the game started: the prices are from then, not what the book shows now.",
     read: "Live read", readBtn: "Ask for a live read", readBusy: "Reading the game…", readAt: "read at minute {m} · {t}", readNext: "A new read unlocks at {t}.",
     readPlan: "The live read is part of the Pro and Max plans.", readFail: "Couldn't read the game right now.", updated: "updated {t}",
+    chance: "chance", readNote: "Built on what the game has already done; the prices come from the pre-tip board and the book has moved them since.",
   },
 };
 
@@ -141,12 +143,26 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
           {data.canRead && data.read && (
             <div className="mt-1.5">
               <p className="text-label text-fg-dim">{c.readAt.replace("{m}", String(data.read.minute)).replace("{t}", formatTime(data.read.generatedAt, lang))}</p>
+              <p className="mt-0.5 text-label text-fg-dim" data-testid="live-read-note">{c.readNote}</p>
               <ul className="mt-1 flex flex-col gap-1.5">
                 {data.read.slate.suggestions.map((sug) => (
-                  <li key={sug.id} className="rounded-control border border-line px-2.5 py-1.5 text-tiny" data-testid="live-read-ticket">
-                    <span className="font-medium text-fg">{sug.title}</span> <span className="nums text-fg">{formatDecimal(sug.combinedDecimal, lang)}</span>
-                    <span className="nums text-fg-dim"> · {pctOf(sug.modelledProbability, lang, { digits: 0 })}</span>
-                    <p className="text-tiny text-fg-muted">{sug.legs.map((l) => l.selection).join(" · ")}</p>
+                  <li key={sug.id} className="rounded-control border border-line px-2.5 py-2 text-tiny" data-testid="live-read-ticket">
+                    <div className="flex flex-wrap items-baseline gap-x-2">
+                      <span className="font-medium text-fg">{sug.title}</span>
+                      <span className="nums ml-auto font-semibold text-fg" data-testid="live-read-odds">{formatDecimal(sug.combinedDecimal, lang)}</span>
+                      <span className="nums text-label text-fg-dim">{c.chance} {pctOf(sug.modelledProbability, lang, { digits: 0 })}</span>
+                    </div>
+                    {/* One line per leg with its price: at these lengths "a · b · c" stops being readable. */}
+                    <ul className="mt-1 flex flex-col gap-0.5">
+                      {sug.legs.map((l, i) => (
+                        <li key={i} className="flex flex-wrap items-baseline gap-x-2 text-tiny text-fg-muted">
+                          <span className="text-fg">{l.selection}</span>
+                          <span className="nums text-label text-fg-dim">{formatDecimal(l.oddsDecimal, lang)}</span>
+                          <span className="basis-full pl-1 text-label text-fg-dim">{l.evidence}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="mt-1 text-label text-fg-dim">{sug.riskNote}</p>
                   </li>
                 ))}
               </ul>
