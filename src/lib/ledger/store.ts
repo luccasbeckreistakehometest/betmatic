@@ -21,11 +21,12 @@ function migrateLegacy(): void {
  * Append-only JSONL. Predictions are a historical record — rewriting them would let a later run
  * quietly launder a bad call, which would make the whole calibration exercise worthless.
  *
- * Live reads live in the same file but are hidden by default: every public surface, the ROI, the
- * calibration and the CLV read the pre-game record and nothing else. Only the code that must see
- * the whole file — settling, rewriting, a user's own bankroll — asks for `includeLive`.
+ * Live reads live in the same file and are part of the record: the owner's rule, after a night
+ * where the half-time reads carried the bankroll, is that every ticket counts and the balance shows
+ * them all. Only the readers that would be wrong with reference prices in them — calibration, the
+ * closing-line comparison, the in-play tracker — ask for `excludeLive`.
  */
-export function readLedger(opts: { includeLive?: boolean } = {}): LedgerEntry[] {
+export function readLedger(opts: { excludeLive?: boolean } = {}): LedgerEntry[] {
   migrateLegacy();
   try {
     const all = fs
@@ -33,7 +34,7 @@ export function readLedger(opts: { includeLive?: boolean } = {}): LedgerEntry[] 
       .split("\n")
       .filter((l) => l.trim())
       .map((l) => JSON.parse(l) as LedgerEntry);
-    return opts.includeLive ? all : all.filter((e) => e.scope !== "live");
+    return opts.excludeLive ? all.filter((e) => e.scope !== "live") : all;
   } catch {
     return [];
   }
@@ -41,7 +42,7 @@ export function readLedger(opts: { includeLive?: boolean } = {}): LedgerEntry[] 
 
 /** The live reads only: graded like the rest, measured for hit rate, never for money. */
 export function readLiveLedger(): LedgerEntry[] {
-  return readLedger({ includeLive: true }).filter((e) => e.scope === "live");
+  return readLedger().filter((e) => e.scope === "live");
 }
 
 function writeAll(entries: LedgerEntry[]): void {
@@ -63,7 +64,7 @@ export const ledgerIdFor = (gameId: string, s: Pick<BetSuggestion, "bandKey" | "
  */
 export function recordPredictions(game: Game, suggestions: BetSuggestion[], opts: { startsAt?: string; live?: { minute: number; period?: number } } = {}): number {
   if (!suggestions.length) return 0;
-  const existing = readLedger({ includeLive: true });
+  const existing = readLedger();
   const seen = new Set(existing.map((e) => e.id));
   const matchup = `${game.away.displayName} @ ${game.home.displayName}`;
 
@@ -115,12 +116,10 @@ export function recordPredictions(game: Game, suggestions: BetSuggestion[], opts
 export function updateEntries(updated: LedgerEntry[]): void {
   if (!updated.length) return;
   const byId = new Map(updated.map((e) => [e.id, e]));
-  // The whole file is rewritten, so the whole file must be read: dropping the live entries here
-  // would erase the live record on every settle pass.
-  writeAll(readLedger({ includeLive: true }).map((e) => byId.get(e.id) ?? e));
+  writeAll(readLedger().map((e) => byId.get(e.id) ?? e));
 }
 
 /** Everything still to grade, live reads included: they settle against the same box scores. */
 export function pendingEntries(): LedgerEntry[] {
-  return readLedger({ includeLive: true }).filter((e) => e.outcome === "pending");
+  return readLedger().filter((e) => e.outcome === "pending");
 }

@@ -145,7 +145,7 @@ const MARKET_LABEL: Record<string, string> = { moneyline: "moneyline", total: "t
 
 /** The public CLV block: legs of main tickets (alternatives excluded, like the rest of /prova). */
 export function publicClv(minSample?: number): ClvSummary {
-  const main = new Set(mainTickets(readLedger()).map((e) => e.id));
+  const main = new Set(mainTickets(readLedger({ excludeLive: true })).map((e) => e.id));
   const rows = getDb().prepare("SELECT ledgerId, marketKey, kind, status, clvPct, basis, direction FROM leg_prices WHERE status IN ('closed','line_moved') AND ledgerId NOT LIKE 'bl:%'").all() as
     { ledgerId: string; marketKey: string; kind: string; status: string; clvPct: number | null; basis: "novig" | "raw" | null; direction: string | null }[];
   return clvSummary(rows.filter((r) => main.has(r.ledgerId)).map((r) => ({ market: r.kind === "prop" ? r.marketKey : MARKET_LABEL[r.marketKey] ?? r.marketKey, clvPct: r.clvPct, status: r.status, basis: r.basis, direction: r.direction })), minSample);

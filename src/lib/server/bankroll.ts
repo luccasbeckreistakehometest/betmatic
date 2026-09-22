@@ -39,7 +39,7 @@ const pnlOf = (outcome: LegOutcome, stake: number, odds: number) => (outcome ===
 /** Ticket entries take their outcome from the ledger every time they are read — never copied. */
 export function listBankroll(userId: string): { entries: BankrollView[]; totals: { staked: number; profit: number; roi: number; won: number; lost: number; pending: number } } {
   const rows = getDb().prepare("SELECT * FROM bankroll_entries WHERE userId=? ORDER BY createdAt DESC").all(userId) as BankrollRow[];
-  const ledger = new Map(readLedger({ includeLive: true }).map((e) => [e.id, e]));
+  const ledger = new Map(readLedger().map((e) => [e.id, e]));
   const legRows = getDb().prepare("SELECT l.* FROM bankroll_legs l JOIN bankroll_entries e ON e.id = l.entryId WHERE e.userId=? ORDER BY l.entryId, l.idx").all(userId) as LegRow[];
   const byEntry = new Map<string, LegRow[]>();
   for (const r of legRows) byEntry.set(r.entryId, [...(byEntry.get(r.entryId) ?? []), r]);
@@ -66,7 +66,7 @@ export function listBankroll(userId: string): { entries: BankrollView[]; totals:
 /** The ledger id is reconstructed from what the browser knows, then verified to exist. */
 export function addTicket(userId: string, input: { gameId: string; bandKey: string; selections: string[]; stake: number }): BankrollView | null {
   const id = `${input.gameId}:${input.bandKey}:${input.selections.join("|")}`;
-  const entry = readLedger({ includeLive: true }).find((e) => e.id === id);
+  const entry = readLedger().find((e) => e.id === id);
   if (!entry) return null;
   const rowId = newId("bk");
   getDb().prepare("INSERT INTO bankroll_entries (id,userId,source,ledgerId,title,matchup,combinedDecimal,stake,createdAt) VALUES (?,?,?,?,?,?,?,?,?)")

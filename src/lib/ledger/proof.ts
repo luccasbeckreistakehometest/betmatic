@@ -12,6 +12,45 @@ export interface ProofStats {
   byMarket: { key: string; settled: number; won: number; roi: number }[];
   bySport: { key: string; settled: number; won: number; roi: number }[];
   byBand: { key: string; settled: number; won: number; roi: number }[];
+  /** Pre-game tickets against live reads: both count, and the reader can see which carried what. */
+  byScope: { key: "pregame" | "live"; settled: number; won: number; roi: number }[];
+  /** The balance per Brasília day, newest first: what a flat unit on every decided ticket did that day. */
+  byDay: DayBalance[];
+}
+
+export interface DayBalance {
+  /** YYYY-MM-DD in America/Sao_Paulo, the day the tickets were decided (or, pending, their kickoff). */
+  day: string;
+  generated: number; settled: number; won: number; lost: number; pending: number;
+  unitsStaked: number; unitsReturned: number; roi: number;
+  live: { settled: number; won: number; unitsReturned: number };
+}
+
+/** The Brasília calendar day of an instant, the way the app counts a "day" everywhere else. */
+export function brasiliaDay(iso: string | undefined, fallback = ""): string {
+  if (!iso || !Number.isFinite(Date.parse(iso))) return fallback;
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
+}
+
+export function dayBalances(entries: LedgerEntry[]): DayBalance[] {
+  const days = new Map<string, LedgerEntry[]>();
+  for (const e of entries) {
+    const day = brasiliaDay(decided(e) || e.outcome !== "pending" ? e.settledAt ?? e.startsAt ?? e.createdAt : e.startsAt ?? e.createdAt);
+    if (!day) continue;
+    days.set(day, [...(days.get(day) ?? []), e]);
+  }
+  return [...days.entries()].sort((a, b) => b[0].localeCompare(a[0])).map(([day, rows]) => {
+    const d = rows.filter(decided);
+    const won = d.filter((e) => e.outcome === "won");
+    const pnl = d.reduce((a, e) => a + unitResult(e), 0);
+    const live = d.filter((e) => e.scope === "live");
+    return {
+      day, generated: rows.length, settled: rows.filter((e) => e.outcome !== "pending").length, won: won.length, lost: d.length - won.length,
+      pending: rows.filter((e) => e.outcome === "pending").length,
+      unitsStaked: d.length, unitsReturned: d.length + pnl, roi: d.length ? pnl / d.length : 0,
+      live: { settled: live.length, won: live.filter((e) => e.outcome === "won").length, unitsReturned: live.length + live.reduce((a, e) => a + unitResult(e), 0) },
+    };
+  });
 }
 
 const unitResult = (e: LedgerEntry) => (e.outcome === "won" ? e.combinedDecimal - 1 : e.outcome === "lost" ? -1 : 0);
@@ -39,6 +78,8 @@ export function proofStats(entries: LedgerEntry[]): ProofStats {
     byMarket: slice(entries, (e) => (e.kind === "single" ? e.legs[0]?.market ?? "other" : "parlay")),
     bySport: slice(entries, (e) => e.sportKey),
     byBand: slice(entries, (e) => e.bandKey),
+    byScope: slice(entries, (e) => (e.scope === "live" ? "live" : "pregame")) as ProofStats["byScope"],
+    byDay: dayBalances(entries),
   };
 }
 

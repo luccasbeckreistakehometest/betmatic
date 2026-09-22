@@ -59,7 +59,7 @@ export async function liveTracker(user: PublicUser, sportKey: string, gameId: st
     const legs = await track(sportKey, s.legs, snapshot, lang, game);
     tickets.push({ id: s.id, title: s.title, source: "served", preChance: s.modelledProbability, chanceNow: chance(legs), legs });
   }
-  const ledger = new Map(readLedger().filter((e) => e.gameId === gameId).map((e) => [e.id, e]));
+  const ledger = new Map(readLedger({ excludeLive: true }).filter((e) => e.gameId === gameId).map((e) => [e.id, e]));
   const saved = getDb().prepare("SELECT id, title, ledgerId FROM bankroll_entries WHERE userId=? AND outcome='pending' ORDER BY createdAt DESC LIMIT 50").all(user.id) as { id: string; title: string; ledgerId: string | null }[];
   for (const row of saved) {
     const entry = row.ledgerId ? ledger.get(row.ledgerId) : undefined;

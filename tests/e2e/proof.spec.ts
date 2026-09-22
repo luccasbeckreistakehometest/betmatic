@@ -7,7 +7,11 @@ test("public track record shows every ticket, and each has a shareable permalink
   await expect(stats).toContainText("5"); // generated, including the two that are still private
   await expect(stats).toContainText(/50,0\s*%/); // 1 won / 2 decided, in pt-BR numerals
   const list = page.getByTestId("proof-list");
-  await expect(list.locator("tbody tr")).toHaveCount(3); // the record is a table now, one row per ticket
+  // Three seeded pre-game tickets are public, plus whatever live read an earlier spec took on the
+  // game under way: live tickets count in the record since 22/09/2026, tagged as such.
+  const liveRows = await list.getByTestId("proof-live-tag").count();
+  await expect(list.locator("tbody tr")).toHaveCount(3 + liveRows);
+  if (liveRows) await expect(list.getByTestId("proof-live-tag").first()).toContainText("ao vivo");
   await expect(list).toContainText(/ganhou/);
   await expect(list).toContainText(/perdeu/);
   await expect(list).toContainText(/pendente/); // the game under way
@@ -76,7 +80,11 @@ test("the whole record downloads as a whitelabelled CSV", async ({ page }) => {
   const r = await page.request.get("/api/public/ledger?lang=pt");
   expect(r.headers()["content-type"]).toContain("text/csv");
   const csv = await r.text();
-  expect(csv.split("\n")).toHaveLength(4); // header + 3 seeded tickets
+  const lines = csv.split("\n");
+  // header + 3 seeded pre-game tickets + the live reads taken by earlier specs, each marked in the scope column
+  const liveLines = lines.filter((l) => /,"live( q\d+)?",/.test(l)).length;
+  expect(lines).toHaveLength(4 + liveLines);
+  expect(lines[0]).toContain("scope");
   expect(csv).toContain("Sevilha vence em casa");
   expect(csv).toContain("/p/");
   expect(csv).not.toMatch(/Betano|ESPN/);
