@@ -181,6 +181,17 @@ describe("Sportingbet (Entain CDS)", () => {
     expect(find(rows, { market: "total", side: "over", line: 158.5 })?.decimal).toBe(1.91);
   });
 
+  it("leaves a period market alone even when its template category is the generic 'Vencedor'", () => {
+    const [f] = selectCdsFixtures(payload, "wnba", WINDOW.from, WINDOW.to);
+    const event = cdsEvent(f, "basketball")!;
+    // Read live on 22/09/2026: the quarter winner rides under the same template category as the moneyline.
+    const quarter = { id: 1560413307, name: { value: "Vencedor - 1º quarto" }, templateCategory: { name: { value: "Vencedor" } }, results: [{ id: 2301883654, odds: 1.28, name: { value: "Washington Mystics" } }, { id: 2301883655, odds: 3.6, name: { value: "Connecticut Sun" } }] };
+    const full = { id: 1560413399, name: { value: "Vencedor" }, templateCategory: { name: { value: "Vencedor" } }, results: [{ id: 2301883700, odds: 1.05, name: { value: "Washington Mystics" } }, { id: 2301883701, odds: 9, name: { value: "Connecticut Sun" } }] };
+    const rows = parseCdsFixture({ ...f, games: [...(f.games ?? []), quarter, full] }, event, AT);
+    expect(rows.filter((r) => r.market === "moneyline").map((r) => [r.side, r.decimal])).toEqual([["home", 1.05], ["away", 9]]);
+    expect(find(rows, { market: "moneyline", side: "home" })?.ref).toEqual({ eventId: "19919149", marketId: "1560413399", outcomeId: "2301883700" });
+  });
+
   it("reads a football 1X2 and total", () => {
     const [f] = selectCdsFixtures(payload, "soccer-bra", "2026-10-07T00:00:00Z", "2026-10-08T00:00:00Z");
     const event = cdsEvent(f, "soccer")!;

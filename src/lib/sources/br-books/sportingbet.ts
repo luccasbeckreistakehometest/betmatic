@@ -62,7 +62,10 @@ export function selectCdsFixtures(payload: CdsFixtures, sportKey: string, from: 
   });
 }
 
-/** The gridable markets that ride on the fixture list: handicap, totals, match result. */
+/** A game whose own name names a period: "Vencedor - 1º quarto" sits under the template category "Vencedor". */
+const PERIOD = /quarter|quarto|half|tempo|per[íi]odo|\b[1-4](?:st|nd|rd|th|º)\b|intervalo/i;
+
+/** The gridable markets that ride on the fixture list: handicap, totals, match result — full game only. */
 export function parseCdsFixture(f: CdsFixture, event: BookEvent, fetchedAt: string): BookPrice[] {
   const out: BookPrice[] = [];
   const base = { book: "Sportingbet", platform: "sportingbet", sport: event.sport, event, fetchedAt } as const;
@@ -74,6 +77,8 @@ export function parseCdsFixture(f: CdsFixture, event: BookEvent, fetchedAt: stri
   for (const g of f.games ?? []) {
     if (g.visibility && g.visibility !== "Visible") continue;
     const category = g.templateCategory?.name?.value ?? g.name?.value ?? "";
+    // The template category is generic ("Vencedor"); the period, when there is one, is in the game's own name.
+    if (PERIOD.test(g.name?.value ?? "")) continue;
     const results = (g.results ?? []).filter((r) => !r.visibility || r.visibility === "Visible");
     // fixture-game-result is the triplet Entain's betslip deep link takes (deeplinks.ts).
     const ref = (r: CdsResult) => ({ eventId: f.id, marketId: String(g.id), outcomeId: String(r.id) });
