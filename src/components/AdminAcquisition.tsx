@@ -48,14 +48,16 @@ export function AdminAcquisition() {
               </svg>
             ) : <p className="text-fg-dim">Nenhuma visita registrada no período.</p>}
           </div>
+          {/* Six columns never fit a phone: below 768px the rows become definition lists (§11.1),
+              the column label coming back on each cell through data-label. */}
           <div className="overflow-x-auto">
-            <table className="w-full text-left" data-testid="acq-funnel">
+            <table className="w-full text-left" data-testid="acq-funnel" data-collapse="true">
               <thead><tr className="text-micro u-label text-fg-dim"><th className="pb-1">Origem</th><th>Visitantes</th><th>Cadastros</th><th>Abriu jogo</th><th>Salvou</th><th>Pagou</th></tr></thead>
               <tbody>
                 {data.funnel.map((f) => (
                   <tr key={f.source} className="nums text-fg">
-                    <td className="py-1 text-fg">{f.source}</td><td>{f.visitors}</td><td>{f.signups} <span className="text-fg-dim">({pct(f.signups, f.visitors)})</span></td>
-                    <td>{f.firstGame}</td><td>{f.saved}</td><td>{f.paid}</td>
+                    <td className="py-1 text-fg" data-label="Origem">{f.source}</td><td data-label="Visitantes">{f.visitors}</td><td data-label="Cadastros">{f.signups} <span className="text-fg-dim">({pct(f.signups, f.visitors)})</span></td>
+                    <td data-label="Abriu jogo">{f.firstGame}</td><td data-label="Salvou">{f.saved}</td><td data-label="Pagou">{f.paid}</td>
                   </tr>
                 ))}
               </tbody>

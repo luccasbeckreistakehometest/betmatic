@@ -411,10 +411,13 @@
     inset-inline: min(0px, calc((100% - 44px) / 2));
   }
 }
-/* A row of chips a thumb can swipe: one line, snapping, no scrollbar, the page never scrolls with it. */
+/* A row of chips a thumb can swipe: one line, snapping, no scrollbar, the page never scrolls with it.
+   Its width comes from the layout, never from its content (contain), so a long strip can never
+   size the panel it sits in. */
 @utility u-swipe {
   display: flex;
   overflow-x: auto;
+  contain: inline-size;
   overscroll-behavior-x: contain;
   scroll-snap-type: x proximity;
   scrollbar-width: none;
@@ -542,6 +545,16 @@
  * <table>: only the boxes change, so the header still exists for a screen reader and the column
  * label comes back as the row label through data-label.
  */
+/* A grid that only declares its columns from a breakpoint up ("grid gap-4 lg:grid-cols-2") has one
+   implicit column below it, and an implicit column is sized `auto`: its floor is the widest thing
+   inside, which is how a single unbreakable value can push a whole page past a phone's edge. On a
+   phone the implicit column fills the container and nothing more. Explicit columns are untouched. */
+@media (max-width: 767px) {
+  .grid {
+    grid-auto-columns: minmax(0, 1fr);
+  }
+}
+
 @media (max-width: 767px) {
   table[data-collapse="true"] thead {
     position: absolute;

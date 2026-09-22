@@ -69,7 +69,7 @@ export function AdminDashboard() {
 
   if (data?.error) {
     return (
-      <div className="mx-auto max-w-lg px-5 py-24 text-center">
+      <div className="mx-auto w-full max-w-lg px-5 py-24 text-center">
         <Logo size={32} />
         <p className="mt-6 text-base text-fg-muted">{data.error}</p>
         <Link href="/login" className="mt-4 inline-block text-sm text-fg underline underline-offset-2">
@@ -82,7 +82,9 @@ export function AdminDashboard() {
   const revenueTotal = (data?.revenue ?? []).reduce((acc, r) => acc + r.total, 0);
 
   return (
-    <div className="mx-auto flex max-w-shell flex-col gap-5 px-4 py-6 sm:px-6">
+    // w-full matters: as a flex item of the body with auto side margins, this column would otherwise
+    // shrink to fit its content, and one wide table would set the width of the whole page.
+    <div className="mx-auto flex w-full max-w-shell flex-col gap-5 px-4 py-6 sm:px-6">
       <PageHead
         kicker="Operação"
         title={<span className="flex items-center gap-3"><Logo size={22} /> <span className="text-fg-dim">admin</span></span>}
