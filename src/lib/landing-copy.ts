@@ -106,13 +106,15 @@ const PT: LandingCopy = {
     {
       title: "A chance real vem junto",
       body:
-        "Toda múltipla mostra a probabilidade implícita e a estimada. Se o preço da casa for pior que a chance, o número aparece negativo. A gente não esconde bilhete ruim.",
+        "No basquete, a chance de cada linha é calculada — produção por minuto vezes os minutos projetados pra hoje — e a contagem de acertos fica do lado. Toda múltipla mostra a probabilidade implícita e a estimada; se o preço da casa for pior que a chance, o número aparece negativo. A gente não esconde bilhete ruim.",
     },
   ],
 
   edgeTitle: "O que só o Betmatic tem",
   edgeSub: "Quem vende palpite esconde o histórico e some quando erra. A gente construiu o contrário: cada bilhete conferido, vigiado e comparado com o mercado.",
   edges: [
+    { title: "Em qual casa o seu bilhete paga mais", body: "A cada 15 minutos a gente lê as odds abertas de oito casas brasileiras. Em cada perna aparece quem paga mais e quanto a mais que a pior; embaixo do bilhete, onde ele inteiro rende mais — e as linhas de jogador em que uma casa está fora do passo das outras.", href: "/signup" },
+    { title: "Leitura no intervalo, com histórico separado", body: "Com o jogo rolando, uma leitura nova é montada só em cima do que já aconteceu em quadra: placar, minutos que faltam e o ritmo de cada jogador hoje. Cada leitura fica registrada e é conferida como qualquer bilhete, numa conta à parte da pré-jogo.", href: "/prova" },
     { title: "Se a escalação mudar, seu bilhete avisa", body: "Uma hora antes do jogo a gente confere quem entrou em campo. Jogador no banco? A perna fica marcada em vermelho e, quando existe, a alternativa sem ele aparece do lado.", href: "/futebol" },
     { title: "Plano B embaixo do bilhete", body: "Quando os dados sustentam, o bilhete vem com até duas alternativas que mantêm a mesma ideia. Mudou a linha ou caiu um titular, você já sabe pra onde ir.", href: "/signup" },
     { title: "Manda o print, a gente confere", body: "Fez o bilhete na casa? Manda o print. Ele entra na sua banca e é liquidado sozinho quando o jogo acaba. A imagem não fica guardada.", href: "/signup" },
@@ -159,7 +161,7 @@ const PT: LandingCopy = {
       n: "03",
       title: "Até o apito final, a gente vigia",
       body:
-        "Uma hora antes, a escalação: se alguém da sua perna ficar no banco, você fica sabendo. Com a bola rolando, cada perna mostra se já bateu, se caiu ou quanto de chance ainda tem.",
+        "Uma hora antes, a escalação: se alguém da sua perna ficar no banco, você fica sabendo. Com a bola rolando, cada perna mostra se já bateu, se caiu ou quanto de chance ainda tem. No intervalo, quem é Pro ou Max pede uma leitura nova, feita só com o que já aconteceu em quadra.",
     },
     {
       n: "04",
@@ -177,7 +179,7 @@ const PT: LandingCopy = {
       name: "Basquete",
       hook: "NBA e WNBA, temporada inteira",
       detail:
-        "Jogo a jogo, a gente mede quanto cada jogador produz, com a minutagem e o papel no time, e cruza com lesões. Perna de jogador só entra quando a casa publicou a linha e o preço.",
+        "Jogo a jogo, a gente mede quanto cada jogador produz, com a minutagem e o papel no time, e cruza com lesões. Perna de jogador só entra quando a casa publicou a linha e o preço. Pra cada linha, a chance calculada e a casa brasileira que paga mais.",
       markets: "No bilhete: Resultado · Total de pontos · Pontos, rebotes, assistências e bolas de 3 com odd publicada — Na análise: o \"com e sem\" o companheiro",
     },
     {
@@ -210,6 +212,10 @@ const PT: LandingCopy = {
     {
       q: "De onde vêm os números?",
       a: "Do boletim de cada partida, das linhas publicadas pelas casas e do quadro de lesões. O histórico de cada jogador é calculado jogo a jogo, não estimado.",
+    },
+    {
+      q: "As odds são de quais casas?",
+      a: "Das casas brasileiras que publicam odds abertas: Superbet, KTO, EstrelaBet, Aposta Ganha, BetPix365, LotoGreen, Vaidebet e Betnacional, lidas a cada 15 minutos. Em cada perna a gente mostra a melhor e a pior. Casa que bloqueia leitura automática fica de fora — a gente não contorna bloqueio.",
     },
     {
       q: "Preciso apostar valores altos?",
@@ -278,13 +284,15 @@ const EN: LandingCopy = {
     {
       title: "The real chance ships with it",
       body:
-        "Every parlay shows implied and modelled probability. When the price is worse than the chance, the number reads negative. We do not hide a bad ticket.",
+        "In basketball the chance of every line is computed — production per minute times the minutes we project for tonight — with the hit count beside it. Every parlay shows implied and modelled probability; when the price is worse than the chance, the number reads negative. We do not hide a bad ticket.",
     },
   ],
 
   edgeTitle: "What only Betmatic does",
   edgeSub: "Pick sellers hide their record and vanish when they miss. We built the opposite: every ticket graded, watched and held up against the market.",
   edges: [
+    { title: "Which book pays the most for your ticket", body: "Every 15 minutes we read the open odds of eight Brazilian books. Each leg shows who pays the most and by how much over the worst; under the ticket, where the whole thing pays best — and the player lines where one book is out of step with the rest.", href: "/signup" },
+    { title: "A half-time read, on its own record", body: "While the game runs, a fresh read is built only on what has already happened on the floor: the score, the minutes left and each player's pace tonight. Every read is logged and graded like any ticket, on a record kept apart from the pre-game one.", href: "/prova" },
     { title: "Your slip watches the lineup for you", body: "An hour before kickoff we check who actually starts. A player on the bench? That leg turns red and, when there is one, the backup without him shows up right beside it.", href: "/soccer" },
     { title: "A plan B under the ticket", body: "When the data supports it, a ticket ships with up to two alternatives that keep the same idea. If a line moves or a starter drops out, you already know where to go.", href: "/signup" },
     { title: "Snap your slip, we grade it", body: "Placed a bet at the book? Send the screenshot. It lands in your bankroll and grades itself when the game ends. The image is never kept.", href: "/signup" },
@@ -331,7 +339,7 @@ const EN: LandingCopy = {
       n: "03",
       title: "Until the final whistle, we keep watch",
       body:
-        "An hour out, the lineup: if a player on your leg is benched, you hear about it. Once the game is on, every leg shows whether it has landed, busted, or how much chance it still has.",
+        "An hour out, the lineup: if a player on your leg is benched, you hear about it. Once the game is on, every leg shows whether it has landed, busted, or how much chance it still has. At half-time, Pro and Max can ask for a fresh read built only on what has already happened on the floor.",
     },
     {
       n: "04",
@@ -349,7 +357,7 @@ const EN: LandingCopy = {
       name: "Basketball",
       hook: "NBA and WNBA, all season",
       detail:
-        "Game by game, we measure what each player produces, with minutes and role, and cross it with injuries. A player leg only makes a ticket when the book has posted the line and the price.",
+        "Game by game, we measure what each player produces, with minutes and role, and cross it with injuries. A player leg only makes a ticket when the book has posted the line and the price. For every line, the computed chance and the Brazilian book that pays the most.",
       markets: "On the ticket: Moneyline · Totals · Points, rebounds, assists and threes at posted prices — In the analysis: with and without a teammate",
     },
     {
@@ -382,6 +390,10 @@ const EN: LandingCopy = {
     {
       q: "Where do the numbers come from?",
       a: "Box scores, the lines sportsbooks publish, and injury reports. Each player's history is computed game by game, not estimated.",
+    },
+    {
+      q: "Which books do the odds come from?",
+      a: "The Brazilian books that publish open odds: Superbet, KTO, EstrelaBet, Aposta Ganha, BetPix365, LotoGreen, Vaidebet and Betnacional, read every 15 minutes. Each leg shows the best and the worst. A book that blocks automated reading stays out — we do not work around a block.",
     },
     {
       q: "Do I need to bet big?",

@@ -43,7 +43,8 @@ test("the differentiators section and the sport funnels carry the proof strip", 
   await page.goto("/?lang=pt");
   const edge = page.getByTestId("edge");
   await expect(edge).toContainText("Prova pública");
-  await expect(edge.getByRole("link")).toHaveCount(6);
+  // Eight differentiators since 22/09/2026: the Brazilian books' prices and the half-time read joined the six.
+  await expect(edge.getByRole("link")).toHaveCount(8);
   await page.goto("/futebol");
   await expect(page.getByTestId("proof-strip")).toBeVisible();
   await expect(page.getByTestId("proof-strip")).toContainText("bilhetes gerados");

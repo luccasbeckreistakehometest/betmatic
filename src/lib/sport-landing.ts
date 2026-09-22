@@ -62,6 +62,10 @@ export const SPORT_LANDINGS: SportLanding[] = [
           title: "Com e sem o companheiro",
           body: "Escolha um companheiro de time e veja como o jogador rende quando ele joga e quando não joga, com o tamanho da amostra do lado. Amostra pequena vem avisada.",
         },
+        {
+          title: "A chance de cada linha, calculada",
+          body: "Produção por minuto vezes os minutos que a gente projeta pra hoje — com desfalques, tendência e risco de blowout — vira a chance de cada linha da escada, ao lado da contagem de acertos. Quando as duas discordam, isso é informação.",
+        },
       ],
       en: [
         {
@@ -75,6 +79,10 @@ export const SPORT_LANDINGS: SportLanding[] = [
         {
           title: "With and without a teammate",
           body: "Pick a teammate and see how the player does when he plays and when he sits, with the sample size beside it. Small samples are flagged as such.",
+        },
+        {
+          title: "Every line's chance, computed",
+          body: "Production per minute times the minutes we project for tonight — absences, trend and blowout risk included — becomes the chance of every rung on the ladder, next to the hit count. When the two disagree, that is information.",
         },
       ],
     },
@@ -122,9 +130,15 @@ export const SPORT_LANDINGS: SportLanding[] = [
         },
         {
           title: "Com o jogo rolando",
-          body: "Cada perna mostra se já bateu, se caiu ou quanta chance ainda tem, misturando o ritmo da partida com o histórico do jogador. É estimativa, e vem escrito que é. Nos planos Pro e Max entra também a leitura do analista ao vivo.",
+          body: "Cada perna mostra se já bateu, se caiu ou quanta chance ainda tem, misturando o ritmo da partida com o histórico do jogador. É estimativa, e vem escrito que é. Nos planos Pro e Max entra também a leitura no intervalo: bilhetes novos, montados só com o que já aconteceu, registrados e conferidos numa conta separada.",
           href: "/planos",
           cta: "Ver os planos",
+        },
+        {
+          title: "Em qual casa paga mais",
+          body: "Oito casas brasileiras lidas a cada 15 minutos. Em cada perna, quem paga mais e quanto a mais que a pior; no bilhete, onde ele inteiro rende mais; e as linhas de jogador em que uma casa está fora do passo das outras.",
+          href: "/signup",
+          cta: "Ver num jogo",
         },
         {
           title: "Raio-x do jogador",
@@ -172,9 +186,15 @@ export const SPORT_LANDINGS: SportLanding[] = [
         },
         {
           title: "While the game runs",
-          body: "Every leg shows whether it has cleared, busted or how much chance is left, blending the game's pace with the player's own rate. It is an estimate and says so. Pro and Max also get the analyst's live read.",
+          body: "Every leg shows whether it has cleared, busted or how much chance is left, blending the game's pace with the player's own rate. It is an estimate and says so. Pro and Max also get the half-time read: fresh tickets built only on what has already happened, logged and graded on a record of their own.",
           href: "/planos",
           cta: "See the plans",
+        },
+        {
+          title: "Which book pays the most",
+          body: "Eight Brazilian books read every 15 minutes. On every leg, who pays the most and by how much over the worst; on the ticket, where the whole thing pays best; and the player lines where one book is out of step with the rest.",
+          href: "/signup",
+          cta: "See it on a game",
         },
         {
           title: "Player deep dive",
@@ -291,9 +311,15 @@ export const SPORT_LANDINGS: SportLanding[] = [
         },
         {
           title: "Com a bola rolando",
-          body: "Cada perna mostra se já bateu, se caiu ou quanta chance ainda tem no tempo que falta. É estimativa, e vem escrito que é. Nos planos Pro e Max entra também a leitura do analista ao vivo.",
+          body: "Cada perna mostra se já bateu, se caiu ou quanta chance ainda tem no tempo que falta. É estimativa, e vem escrito que é. Nos planos Pro e Max entra também a leitura no intervalo: bilhetes novos, montados só com o que já aconteceu, registrados e conferidos numa conta separada.",
           href: "/planos",
           cta: "Ver os planos",
+        },
+        {
+          title: "Em qual casa paga mais",
+          body: "As casas brasileiras que publicam odds abertas são lidas a cada 15 minutos. Em cada perna, quem paga mais e quanto a mais que a pior; no bilhete, onde ele inteiro rende mais.",
+          href: "/signup",
+          cta: "Ver num jogo",
         },
         {
           title: "Raio-x do jogador",
@@ -341,9 +367,15 @@ export const SPORT_LANDINGS: SportLanding[] = [
         },
         {
           title: "While the match runs",
-          body: "Every leg shows whether it has landed, busted or how much chance is left in the time remaining. It is an estimate and says so. Pro and Max also get the analyst's live read.",
+          body: "Every leg shows whether it has landed, busted or how much chance is left in the time remaining. It is an estimate and says so. Pro and Max also get the half-time read: fresh tickets built only on what has already happened, logged and graded on a record of their own.",
           href: "/planos",
           cta: "See the plans",
+        },
+        {
+          title: "Which book pays the most",
+          body: "The Brazilian books that publish open odds are read every 15 minutes. On every leg, who pays the most and by how much over the worst; on the ticket, where the whole thing pays best.",
+          href: "/signup",
+          cta: "See it on a game",
         },
         {
           title: "Player deep dive",
