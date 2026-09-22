@@ -38,6 +38,9 @@ export async function generateGame(args: { sportKey: string; dateKey: string; de
   const props = candidates?.props ?? [];
   const lines = await getGameLines(sportKey, detail.game.id).catch(() => []);
   if (candidates?.dropped.length) info.push(`role gate dropped: ${candidates.dropped.join(", ")}`);
+  // The guard only ever fires on a game already under way; saying so in the run note makes a stale
+  // feed visible in the ops log instead of silently thinning the candidates.
+  if (candidates?.staleDropped.length) info.push(`stale line guard dropped: ${candidates.staleDropped.join(" | ")}`);
   const consensus = consensusFromFeeds(props, sportDefinition.group === "soccer" ? lines : [], { home: detail.game.home.displayName, away: detail.game.away.displayName });
   const referee = sportDefinition.group === "soccer"
     ? await refereeForMatch(detail.game.home.displayName, detail.game.away.displayName, dateKey).catch(() => null)
