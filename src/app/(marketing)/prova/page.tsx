@@ -5,6 +5,7 @@ import { langFrom, langPaths, pageMetadata, type SearchProps } from "@/lib/seo";
 import { formatDate, formatPercent } from "@/lib/format";
 import { KPI, LinkButton, Notice, Panel, PrintButton, PrintHeader, Table, Td, Th, Tr } from "@/components/ui";
 import { readLedger } from "@/lib/ledger/store";
+import { liveRecord } from "@/lib/ledger/live-record";
 import { mainTickets, proofMinDecided, proofPublishable, proofStats, publicTickets, recentTickets, ticketSlug } from "@/lib/ledger/proof";
 import { scrubText } from "@/lib/server/whitelabel";
 import { EquityChart } from "@/components/EquityChart";
@@ -29,11 +30,16 @@ export async function generateMetadata({ searchParams }: SearchProps): Promise<M
 const C = {
   pt: { eyebrow: "Prova pública", title: "Todos os bilhetes. Nenhum escondido.", sub: "Cada bilhete que o Betmatic gera fica registrado no momento em que nasce, aparece aqui quando o jogo começa e é liquidado sozinho contra o placar real. Sem seleção, sem editar depois. Se um dia ficar feio, vai ficar feio aqui também.",
     generated: "gerados", settled: "liquidados", hit: "acerto", roi: "ROI a 1 unidade", pending: "aguardando jogo", byMarket: "Por mercado", bySport: "Por esporte", byBand: "Por faixa de odd", recent: "Últimos bilhetes", none: "Ainda não há bilhete liquidado. O primeiro aparece assim que um jogo com bilhete terminar.",
-    won: "ganhou", lost: "perdeu", push: "push", void: "anulado", pend: "pendente", cta: "Ver os bilhetes de hoje", csv: "Baixar tudo em CSV", legs: "pernas", small: "Amostra pequena: menos de 30 bilhetes decididos ainda não diz nada sobre o longo prazo.", unit: "u", method: "Os números agregados (acerto, ROI, curva) aparecem quando houver pelo menos {n} bilhetes decididos. Até lá, a lista abaixo mostra cada bilhete e o seu resultado, sem filtro.", withAlts: "Incluir as alternativas", mainOnly: "Só os bilhetes principais", methodTitle: "Como medimos", methodBody: "Todo bilhete é salvo no momento em que é gerado, com as odds e a chance estimada, e fica visível para todo mundo assim que a bola rola. Quando o jogo termina, cada perna é conferida contra o placar e as estatísticas oficiais: se não dá para conferir com certeza, a perna é anulada — nunca chutada. O ROI considera 1 unidade apostada em cada bilhete decidido." },
+    won: "ganhou", lost: "perdeu", push: "push", void: "anulado", pend: "pendente", cta: "Ver os bilhetes de hoje", csv: "Baixar tudo em CSV", legs: "pernas", small: "Amostra pequena: menos de 30 bilhetes decididos ainda não diz nada sobre o longo prazo.", unit: "u", method: "Os números agregados (acerto, ROI, curva) aparecem quando houver pelo menos {n} bilhetes decididos. Até lá, a lista abaixo mostra cada bilhete e o seu resultado, sem filtro.", withAlts: "Incluir as alternativas", mainOnly: "Só os bilhetes principais",
+    liveTitle: "Leituras ao vivo", liveBody: "Bilhete montado com o jogo em andamento, em cima do que já tinha acontecido em quadra. É liquidado contra o placar como qualquer outro, mas fica fora do ROI acima: o preço de uma leitura ao vivo é o da tabela de antes do jogo, e a casa já tinha mexido nele. Por isso aqui a conta é só de acerto — o retorno de referência aparece com esse nome porque ninguém teria recebido esse valor.", liveDecided: "decididas", liveHit: "acerto", liveLegs: "pernas certas", liveRef: "retorno de referência", liveModelled: "chance média estimada", livePending: "em jogo ou aguardando", methodTitle: "Como medimos", methodBody: "Todo bilhete é salvo no momento em que é gerado, com as odds e a chance estimada, e fica visível para todo mundo assim que a bola rola. Quando o jogo termina, cada perna é conferida contra o placar e as estatísticas oficiais: se não dá para conferir com certeza, a perna é anulada — nunca chutada. O ROI considera 1 unidade apostada em cada bilhete decidido." },
   en: { eyebrow: "Public track record", title: "Every ticket. None hidden.", sub: "Every ticket Betmatic generates is logged the moment it is born, shows up here once its game kicks off, and is graded automatically against the real score. No curation, no edits after the fact. If it ever looks bad, it looks bad here too.",
     generated: "generated", settled: "settled", hit: "hit rate", roi: "ROI at 1 unit", pending: "awaiting kickoff", byMarket: "By market", bySport: "By sport", byBand: "By odds band", recent: "Latest tickets", none: "No settled ticket yet. The first one appears once a game with a ticket ends.",
-    won: "won", lost: "lost", push: "push", void: "void", pend: "pending", cta: "See today's tickets", csv: "Download everything as CSV", legs: "legs", small: "Small sample: fewer than 30 decided tickets says nothing about the long run.", unit: "u", method: "Aggregate numbers (hit rate, ROI, curve) appear once at least {n} tickets are decided. Until then, the list below shows every ticket and its result, unfiltered.", withAlts: "Include the alternatives", mainOnly: "Main tickets only", methodTitle: "How we measure", methodBody: "Every ticket is saved the moment it is generated, with its odds and modelled probability, and becomes visible to everyone at kickoff. When the game ends, each leg is checked against the official score and stats: if it cannot be graded with certainty, the leg is voided — never guessed. ROI assumes 1 unit staked on every decided ticket." },
+    won: "won", lost: "lost", push: "push", void: "void", pend: "pending", cta: "See today's tickets", csv: "Download everything as CSV", legs: "legs", small: "Small sample: fewer than 30 decided tickets says nothing about the long run.", unit: "u", method: "Aggregate numbers (hit rate, ROI, curve) appear once at least {n} tickets are decided. Until then, the list below shows every ticket and its result, unfiltered.", withAlts: "Include the alternatives", mainOnly: "Main tickets only",
+    liveTitle: "Live reads", liveBody: "A ticket built while the game was in play, on top of what had already happened on the floor. It is graded against the score like any other, but stays out of the ROI above: a live read carries the pre-game board's prices, and the book had already moved them. So the count here is hit rate only — the reference return is named that way because nobody could have collected it.", liveDecided: "decided", liveHit: "hit rate", liveLegs: "legs landed", liveRef: "reference return", liveModelled: "average modelled chance", livePending: "in play or awaiting", methodTitle: "How we measure", methodBody: "Every ticket is saved the moment it is generated, with its odds and modelled probability, and becomes visible to everyone at kickoff. When the game ends, each leg is checked against the official score and stats: if it cannot be graded with certainty, the leg is voided — never guessed. ROI assumes 1 unit staked on every decided ticket." },
 };
+
+/** Fewer decided live reads than this and the panel says nothing worth reading. */
+const LIVE_RECORD_MIN = 5;
 
 export default async function ProofPage({ searchParams }: SearchProps) {
   const q = await searchParams;
@@ -42,6 +48,9 @@ export default async function ProofPage({ searchParams }: SearchProps) {
   const withAlternatives = q.alts === "1";
   const entries = mainTickets(readLedger(), withAlternatives);
   const s = proofStats(entries);
+  // The live reads keep their own count, hit rate only, and appear once a handful have been decided.
+  const live = liveRecord();
+  const showLive = live.decided >= LIVE_RECORD_MIN;
   // Counts cover everything; a ticket's content appears only once its game has started.
   const visible = publicTickets(entries);
   const recent = recentTickets(visible, 40);
@@ -92,6 +101,20 @@ export default async function ProofPage({ searchParams }: SearchProps) {
               </div>
             ))}
           </div>
+        )}
+
+        {showLive && (
+          <Panel title={c.liveTitle} className="mt-10" data-testid="proof-live">
+            <p className="max-w-measure text-sm leading-relaxed text-fg-muted">{c.liveBody}</p>
+            <div className="mt-5 grid grid-cols-2 gap-x-8 gap-y-5 border-t border-line pt-5 sm:grid-cols-5">
+              <KPI label={c.liveDecided} value={String(live.decided)} />
+              <KPI label={c.liveHit} value={pct(live.hitRate)} tone={live.hitRate >= live.modelledAverage ? "pos" : undefined} />
+              <KPI label={c.liveLegs} value={`${live.legsWon}/${live.legs}`} />
+              <KPI label={c.liveModelled} value={pct(live.modelledAverage)} />
+              <KPI label={c.liveRef} value={`${formatDecimal(live.referenceReturn, lang)}${c.unit} / ${live.decided}${c.unit}`} />
+            </div>
+            {live.pending > 0 && <p className="mt-3 text-label text-fg-dim">{live.pending} {c.livePending}</p>}
+          </Panel>
         )}
 
         <h2 className="u-title mt-14 text-lead text-fg">{c.recent}</h2>
