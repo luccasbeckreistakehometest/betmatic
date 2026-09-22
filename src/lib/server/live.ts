@@ -1,7 +1,6 @@
-import { cached } from "@/lib/cache";
-import { espnJson } from "@/lib/sources/espn-http";
 import { getGameDetail } from "@/lib/sources/espn";
-import { parseLiveSnapshot, type LiveSnapshot } from "@/lib/live/snapshot";
+import { getLiveSnapshot } from "@/lib/server/live-snapshot";
+import { type LiveSnapshot } from "@/lib/live/snapshot";
 import { ticketChance, trackLeg, type LegTrack, type PreMatch } from "@/lib/live/tracker";
 import { historyFor } from "@/lib/props/candidates";
 import { measureProp, resolveStatLabels } from "@/lib/props/history";
@@ -9,25 +8,12 @@ import { servedGameFor } from "@/lib/server/entitlement";
 import { getDb } from "@/lib/server/db";
 import { readLedger } from "@/lib/ledger/store";
 import { normaliseName } from "@/lib/resolve/names";
-import { getSport } from "@/lib/sports";
 import type { PublicUser } from "@/lib/server/users";
 import type { Settlement } from "@/lib/types";
 import type { Lang } from "@/lib/i18n";
 
-/** ESPN's summary, re-read at most every 45 seconds per game whatever the number of viewers. */
-export async function getLiveSnapshot(sportKey: string, gameId: string): Promise<LiveSnapshot | null> {
-  const sport = getSport(sportKey);
-  if (sport.group !== "basketball" && sport.group !== "soccer") return null;
-  const group = sport.group;
-  return cached(`live-${sport.key}-${gameId}`, 45_000, async () => {
-    try {
-      const summary = await espnJson(`https://site.api.espn.com/apis/site/v2/sports/${sport.espnSport}/${sport.espnLeague}/summary?event=${gameId}`, { timeoutMs: 6000 });
-      return parseLiveSnapshot(summary, gameId, group, sport.key === "wnba" ? 10 : 12);
-    } catch {
-      return null;
-    }
-  });
-}
+/** Re-exported so the live panel's callers keep one import for the whole live read. */
+export { getLiveSnapshot };
 
 export interface TrackedLeg { selection: string; state: LegTrack["state"]; probability: number | null; reason: string; flags: LegTrack["flags"] }
 export interface TrackedTicket { id: string; title: string; source: "served" | "saved"; preChance: number | null; chanceNow: number | null; legs: TrackedLeg[] }
