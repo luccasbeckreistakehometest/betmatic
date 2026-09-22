@@ -15,8 +15,8 @@ export interface AbsentTeammate {
   status: string;
   /** The absentee's own minutes per game when a log was fetched for them; null when unknown. */
   minutesPerGame: number | null;
-  /** This player's minutes in the games the absentee missed, when the logs give a sample. */
-  without?: { games: number; meanMinutes: number } | null;
+  /** This player's minutes in the games the absentee missed and in the games she played, when both have a sample. */
+  without?: { games: number; meanMinutes: number; withGames: number; withMinutes: number; recentMissed?: number } | null;
 }
 
 export interface MinutesAdjustment {
@@ -114,10 +114,20 @@ export function projectMinutes(args: MinutesArgs): MinutesProjection | null {
   let absenceTotal = 0;
   for (const mate of args.absentTeammates ?? []) {
     if (listingAvailability(mate.status) !== "listed_out") continue;
-    if (mate.without && mate.without.games >= 3) {
-      const shift = clamp(0.5 * (mate.without.meanMinutes - w.mean), -3, 5);
+    if (mate.without && mate.without.games >= 3 && mate.without.withGames >= 3) {
+      // An absentee already missing from most of the last five games is in the recency-weighted
+      // baseline: counting the split again would double the same minutes.
+      if ((mate.without.recentMissed ?? 0) >= 3) {
+        adjustments.push({ kind: "absence", minutes: 0, note: `${mate.name} out: already in the last five (${mate.without.meanMinutes.toFixed(0)} min without her vs ${mate.without.withMinutes.toFixed(0)} with)` });
+        continue;
+      }
+      // Half the measured with/without gap: the games without her were also a different stretch of the season.
+      const shift = clamp(0.5 * (mate.without.meanMinutes - mate.without.withMinutes), -3, 5);
+      if (Math.abs(shift) < 0.3) continue;
       absenceTotal += shift;
-      adjustments.push({ kind: "absence", minutes: round1(shift), note: `${mate.name} out: ${mate.without.meanMinutes.toFixed(0)} min in the ${mate.without.games} games without her (half-weighted)` });
+      adjustments.push({ kind: "absence", minutes: round1(shift), note: `${mate.name} out: ${mate.without.meanMinutes.toFixed(0)} min in the ${mate.without.games} games without her vs ${mate.without.withMinutes.toFixed(0)} in ${mate.without.withGames} with (half-weighted)` });
+    } else if (mate.without === null && mate.minutesPerGame !== null && mate.minutesPerGame < 15) {
+      continue; // a deep-bench absentee frees nothing worth a line
     } else if (mate.minutesPerGame === null || mate.minutesPerGame >= 15) {
       absenceTotal += 0.8;
       adjustments.push({ kind: "absence", minutes: 0.8, note: `${mate.name} out${mate.minutesPerGame !== null ? ` (${mate.minutesPerGame.toFixed(0)} min/game)` : ""}: minutes freed, share unmeasured` });

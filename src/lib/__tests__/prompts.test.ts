@@ -61,6 +61,41 @@ describe("what the default prompt must keep saying", () => {
   });
 });
 
+describe("the basketball decision procedure", () => {
+  // Written after the 21/09/2026 slate: minutes first, then the computed probability of the exact
+  // line, the ladder with numbers, correlation priced in code, and a live section on the remainder.
+  it("runs minutes → role → environment → matchup → computed → price, in that order", () => {
+    for (const lang of ["pt", "en"] as const) {
+      const text = DEFAULT_PROMPTS.game[lang];
+      expect(text).toMatch(/BASKETBALL DECISION PROCEDURE/);
+      const order = ["MINUTES FIRST", "ROLE.", "ENVIRONMENT.", "MATCHUP.", "LINE VS COMPUTED", "PRICE."].map((k) => text.indexOf(k));
+      expect(order.every((i) => i >= 0)).toBe(true);
+      expect([...order].sort((a, b) => a - b)).toEqual(order);
+    }
+  });
+
+  it("names what disqualifies a leg, asks for the ladder's numbers and prices correlation in code", () => {
+    for (const lang of ["pt", "en"] as const) {
+      const text = DEFAULT_PROMPTS.game[lang];
+      expect(text).toMatch(/DISQUALIFIED OUTRIGHT/);
+      expect(text).toMatch(/LISTED OUT/);
+      expect(text).toMatch(/within 8 points of COMPUTED/);
+      expect(text).toMatch(/THE LADDER HAS NUMBERS/);
+      expect(text).toMatch(/computed\s+at 45% by rate and minutes/);
+      expect(text).toMatch(/SAME-GAME CORRELATION IS PRICED IN CODE/);
+      expect(text).toMatch(/COMPOSE THE SLATE ACROSS BANDS/);
+      expect(text).toMatch(/LIVE, WITH THE REMAINDER PROJECTED/);
+      expect(text).toMatch(/NEEDS A REVERSION/);
+    }
+    expect(DEFAULT_PROMPTS.slate.en).toMatch(/Anchor fairProbability to it within 8 points/);
+  });
+
+  it("keeps the Portuguese instruction at the end of the pt version", () => {
+    expect(DEFAULT_PROMPTS.game.pt.startsWith(DEFAULT_PROMPTS.game.en)).toBe(true);
+    expect(DEFAULT_PROMPTS.game.pt).toMatch(/Brazilian Portuguese/);
+  });
+});
+
 describe("prompt versions", () => {
   it("serves the code default until someone changes it", () => {
     expect(getPrompt("game", "pt")).toBe(DEFAULT_PROMPTS.game.pt);

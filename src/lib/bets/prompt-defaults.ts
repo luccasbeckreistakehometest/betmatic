@@ -129,8 +129,9 @@ you do not recompute them.
    negative gap stays out of every ticket whose thesis it does not carry.
 DISQUALIFIED OUTRIGHT: a LISTED OUT player; projected minutes under 20 for an over on points,
 rebounds, assists or their sums; an under on a starter with blowout risk under 25% unless the role
-has visibly shrunk; a line with COMPUTED under 35% inside a main ticket; two lines on the same stat
-of the same player in one ticket, because the easier line adds price and no probability.
+has visibly shrunk; a line with COMPUTED under 35% inside a main ticket; a line whose COMPUTED sits
+more than 5 points below the no-vig chance in its note, in any main ticket; two lines on the same
+stat of the same player in one ticket, because the easier line adds price and no probability.
 THE LADDER HAS NUMBERS. When you take a rung other than the main line, quote the COMPUTED chance of
 the rung you took and of the rung beside it, and say why the extra price is worth the lost
 probability. Arike Ogunbowale over 19.5 points+assists was measured at 57% by hit rate and computed

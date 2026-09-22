@@ -196,8 +196,11 @@ export function ticketCorrelation(legs: CorrLeg[], ctx: CorrContext = {}): Corre
   const weakest = legs.length ? Math.min(...legs.map((l) => l.probability)) : 1;
   const probability = Math.min(independent * factor, weakest);
   const applied = legs.length ? probability / Math.max(independent, 1e-12) : 1;
+  // The note names the pairs that moved the number; a long ticket has many pairs near 1.
+  const moving = pairs.filter((p) => Math.abs(p.lift - 1) >= 0.05).sort((x, y) => Math.abs(y.lift - 1) - Math.abs(x.lift - 1));
+  const quiet = pairs.length - moving.length;
   const note = pairs.length
-    ? `correlation ×${round2(applied)}: ${pairs.map((p) => `${p.basis} ×${p.lift} (${p.note})`).join("; ")}`
+    ? `correlation ×${round2(applied)}: ${moving.slice(0, 6).map((p) => `${p.basis} ×${p.lift} (${p.note})`).join("; ")}${moving.length > 6 ? `; +${moving.length - 6} more` : ""}${quiet ? `; ${quiet} pair${quiet === 1 ? "" : "s"} within 5% of independent` : ""}`
     : "legs priced as independent";
   return { factor: round2(applied), pairs, probability, independent, note };
 }

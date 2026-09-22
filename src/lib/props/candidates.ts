@@ -131,15 +131,22 @@ export function minutesOf(history: PlayerHistory | null): number[] {
 }
 
 /**
- * This player's minutes in the games an absent teammate did not play: the log of the absentee lists
- * only the games she played, so every game of the player's that is missing from it is a game
- * without her. Needs three such games to count.
+ * This player's minutes with and without an absent teammate. The absentee's log lists only the
+ * games she played, so every game of the player's missing from it is a game without her. Both
+ * sides need three games: a teammate out all season is already in every number and says nothing,
+ * and one who never missed a game cannot be measured either.
  */
-export function minutesWithout(player: PlayerHistory, absentee: PlayerHistory): { games: number; meanMinutes: number } | null {
+export function minutesWithout(player: PlayerHistory, absentee: PlayerHistory): { games: number; meanMinutes: number; withGames: number; withMinutes: number; recentMissed: number } | null {
   const playedByAbsentee = new Set(absentee.games.filter((g) => minutesOf({ ...absentee, games: [g] })[0] > 0).map((g) => g.eventId));
-  const mins = player.games.filter((g) => !playedByAbsentee.has(g.eventId)).map((g) => minutesOf({ ...player, games: [g] })[0]).filter((m) => Number.isFinite(m) && m >= 4);
-  if (mins.length < 3) return null;
-  return { games: mins.length, meanMinutes: mins.reduce((a, b) => a + b, 0) / mins.length };
+  const mins = (predicate: (id: string) => boolean) =>
+    player.games.filter((g) => predicate(g.eventId)).map((g) => minutesOf({ ...player, games: [g] })[0]).filter((m) => Number.isFinite(m) && m >= 4);
+  const without = mins((id) => !playedByAbsentee.has(id));
+  const withHer = mins((id) => playedByAbsentee.has(id));
+  if (without.length < 3 || withHer.length < 3) return null;
+  const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
+  // How many of the player's last five games the absentee already missed: an absence that old is in the recent minutes.
+  const recentMissed = player.games.slice(0, 5).filter((g) => !playedByAbsentee.has(g.eventId)).length;
+  return { games: without.length, meanMinutes: mean(without), withGames: withHer.length, withMinutes: mean(withHer), recentMissed };
 }
 
 const MAX_ABSENTEES_PER_TEAM = 3;
