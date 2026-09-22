@@ -27,6 +27,12 @@ export function validSecret(raw: string | undefined, minLength = 16): boolean {
  * What a production server must refuse to start with (`fatal`) and what it should shout about
  * (`warnings`). Pure, so the rules are unit-tested.
  */
+/** Every configured base URL is a plain-http localhost address, and at least one is configured. */
+function localhostOnly(env: Env): boolean {
+  const urls = [envValue("APP_URL", env), envValue("NEXT_PUBLIC_BASE_URL", env)].filter(Boolean);
+  return urls.length > 0 && urls.every((u) => /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/.test(u));
+}
+
 export function startupProblems(env: Env): { fatal: string[]; warnings: string[] } {
   const fatal: string[] = [];
   const warnings: string[] = [];
@@ -39,8 +45,12 @@ export function startupProblems(env: Env): { fatal: string[]; warnings: string[]
     }
   }
   // Test switches must never reach a real server: they replace the model and ESPN with fixtures.
+  // The one exception is the e2e suite run against a production build (playwright.prod.config.ts),
+  // which has to say so AND can only be pointing at localhost — the flag beside a public URL is
+  // still a refusal, so a copied .env cannot open the door on a real server.
+  const e2eBuild = envValue("E2E_PRODUCTION_BUILD", env) === "1" && localhostOnly(env);
   for (const key of ["AI_MOCK", "ESPN_FIXTURES", "ANALYTICS_ALLOW_HEADLESS"]) {
-    if ((env[key] ?? "").trim()) fatal.push(`${key} is a test switch and must not be set in production.`);
+    if ((env[key] ?? "").trim() && !e2eBuild) fatal.push(`${key} is a test switch and must not be set in production.`);
   }
   const password = envValue("ADMIN_PASSWORD", env);
   if (password && password.length < 12) warnings.push("ADMIN_PASSWORD is shorter than 12 characters.");
