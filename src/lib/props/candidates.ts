@@ -1,5 +1,7 @@
 import { getGameDetail, getPlayerHistory, getSeasonRole } from "@/lib/sources/espn";
 import { getPropPrices, PROP_BOOK, type PostedProp, type PropFeed } from "@/lib/sources/espn-props";
+import { getLiveBoxScore, type LiveBoxScore } from "@/lib/props/box-score";
+import { describeDropped, guardProps, type StaleVerdict } from "@/lib/props/stale";
 import { measureProp } from "@/lib/props/history";
 import { buildRoleFromStarts, buildRoleProfile, volumeSupports, type RoleProfile } from "@/lib/props/role";
 import { getSport, type MarketDef, type SportDef } from "@/lib/sports";
@@ -21,6 +23,10 @@ export interface CandidateSet {
   feed: PropFeed["status"];
   posted: PostedProp[];
   players: PlayerContext[];
+  /** Legs the stale line guard removed because the box score had already decided them. */
+  staleDropped: string[];
+  /** Set while the game is in progress: the box score the guard judged the lines against. */
+  live: LiveBoxScore | null;
 }
 
 /** The fair chance a price implies: the no-vig one for a two-sided market, the raw one otherwise. */
@@ -93,10 +99,14 @@ export async function roleFor(sport: SportDef, player: { athleteId: string; name
   return null;
 }
 
-function pricedRow(sport: SportDef, market: MarketDef, player: PlayerContext, posted: PostedProp): PropRow | null {
+function pricedRow(sport: SportDef, market: MarketDef, player: PlayerContext, posted: PostedProp, live?: { verdict: StaleVerdict; box: LiveBoxScore } | null): PropRow | null {
   if (!player.history || posted.decimal < 1.15 || posted.decimal > 8) return null;
   const measured = measureProp(player.history, market.key, posted.line, posted.side, sport.key);
   if (!measured || measured.season.of < 3) return null;
+  const inPlay = live && live.verdict.state === "alive" && live.verdict.current !== null && live.verdict.remaining !== null
+    ? { current: live.verdict.current, remaining: live.verdict.remaining, minutesLeft: live.box.minutesLeft }
+    : null;
+  const liveNote = inPlay && live?.verdict.reason ? `live: ${live.verdict.reason.en}` : "";
   return {
     player: player.name, team: player.team, athleteId: player.athleteId,
     market: market.label.en, marketKey: market.key, line: posted.line, side: posted.side,
@@ -106,8 +116,10 @@ function pricedRow(sport: SportDef, market: MarketDef, player: PlayerContext, po
       posted.openDecimal && posted.openDecimal !== posted.decimal ? `opened ${posted.openDecimal.toFixed(2)}` : "",
       posted.noVigFair !== null ? `no-vig ${(posted.noVigFair * 100).toFixed(0)}%` : "one-sided ladder, price includes the full margin",
       measured.sampleNote,
+      liveNote,
     ].filter(Boolean).join(" · "),
     measured,
+    live: inPlay,
   };
 }
 
@@ -138,19 +150,30 @@ function unpricedRows(sport: SportDef, player: PlayerContext): PropRow[] {
  */
 export async function buildPropCandidates(
   detail: GameDetail,
-  opts: { maxPlayers?: number; limit?: number; feed?: PropFeed } = {},
+  opts: { maxPlayers?: number; limit?: number; feed?: PropFeed; box?: LiveBoxScore | null } = {},
 ): Promise<CandidateSet> {
   const sport = getSport(detail.game.sportKey);
-  const empty: CandidateSet = { props: [], roles: [], dropped: [], feed: "empty", posted: [], players: [] };
+  const empty: CandidateSet = { props: [], roles: [], dropped: [], feed: "empty", posted: [], players: [], staleDropped: [], live: null };
   if (!sport.hasPlayerGamelog) return empty;
   const feed = opts.feed ?? (await getPropPrices(sport.key, detail.game.id));
   const roster = detail.rosters.flatMap((r) => (r.athletes ?? []).map((a) => ({ ...a, team: r.teamAbbreviation })));
   const byId = new Map(roster.map((a) => [a.id, a]));
 
+  // The stale line guard, applied before anything else sees the feed. ESPN's prop prices are
+  // pre-game and never move once the ball is up, so a game in progress can be carrying lines the
+  // box score has already settled — a leg nobody could have taken. Those are dropped outright; the
+  // survivors carry what they still need. A failed or missing box score decides nothing.
+  const box = opts.box !== undefined ? opts.box : detail.game.status === "live" ? await getLiveBoxScore(sport.key, detail.game.id) : null;
+  const guard = guardProps(feed.props, box?.totals ?? null);
+  const posted = guard.kept.map((k) => k.prop);
+  const verdicts = new Map(guard.kept.map((k) => [k.prop, k.verdict]));
+  const named = (id: string) => byId.get(id)?.name;
+  const staleDropped = describeDropped(guard.dropped.map((d) => ({ ...d, prop: { ...d.prop, player: named(d.prop.athleteId) } })));
+
   let picks: { athleteId: string; name: string; team: string }[];
-  if (feed.props.length) {
+  if (posted.length) {
     const counts = new Map<string, number>();
-    for (const p of feed.props) counts.set(p.athleteId, (counts.get(p.athleteId) ?? 0) + 1);
+    for (const p of posted) counts.set(p.athleteId, (counts.get(p.athleteId) ?? 0) + 1);
     picks = [...counts.entries()]
       .filter(([id]) => byId.has(id))
       .sort((a, b) => b[1] - a[1])
@@ -164,7 +187,7 @@ export async function buildPropCandidates(
       for (const a of (r.athletes ?? []).filter((x) => leaderNames.has(x.name)).slice(0, 3)) picks.push({ athleteId: a.id, name: a.name, team: r.teamAbbreviation });
     }
   }
-  if (!picks.length) return { ...empty, feed: feed.status };
+  if (!picks.length) return { ...empty, feed: feed.status, staleDropped, live: box };
 
   const players: PlayerContext[] = [];
   for (const pick of picks) {
@@ -174,11 +197,14 @@ export async function buildPropCandidates(
 
   const rows: PropRow[] = [];
   for (const player of players) {
-    const posted = feed.props.filter((p) => p.athleteId === player.athleteId);
-    if (!posted.length) { rows.push(...unpricedRows(sport, player)); continue; }
-    for (const p of posted) {
+    const mine = posted.filter((p) => p.athleteId === player.athleteId);
+    // A player whose every line was already decided keeps no fallback: an unpriced candidate in a
+    // game under way is a pre-game median, which is exactly the number the guard exists to refuse.
+    if (!mine.length) { if (!box) rows.push(...unpricedRows(sport, player)); continue; }
+    for (const p of mine) {
       const market = sport.markets.find((m) => m.key === p.marketKey);
-      const row = market ? pricedRow(sport, market, player, p) : null;
+      const verdict = verdicts.get(p);
+      const row = market ? pricedRow(sport, market, player, p, box && verdict ? { verdict, box } : null) : null;
       if (row) rows.push(row);
     }
   }
@@ -190,8 +216,10 @@ export async function buildPropCandidates(
     roles: players.map((p) => p.role).filter((r): r is RoleProfile => r !== null),
     dropped,
     feed: feed.status,
-    posted: feed.props,
+    posted,
     players,
+    staleDropped,
+    live: box,
   };
 }
 

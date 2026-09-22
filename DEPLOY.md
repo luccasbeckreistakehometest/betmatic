@@ -92,6 +92,19 @@ e linhas de jogador do provedor 100). Se a ESPN mudar esse formato, o caminho li
 The Odds API (plano pago com props). Os caminhos de captura da Betano/Sofascore com navegador não são
 usados pelos recursos da rodada 3.
 
+Trava de linha vencida (jogo em andamento): as props da ESPN são **de antes do jogo** e não se mexem
+depois que a bola sobe — num jogo em andamento a linha "mais de 7,5 pontos" continua publicada mesmo com
+a jogadora em 10. Por isso, quando o jogo está ao vivo, o app lê o box score da súmula da ESPN (a mesma
+que o painel ao vivo consulta, cache de 45 s) e, antes de qualquer geração, descarta as pernas já
+decididas — o over que não pode mais perder e o under que não pode mais ganhar, incluindo os mercados
+combinados (P+R, P+A, R+A, P+R+A). As que sobram vão para o modelo com o que ainda falta e quantos
+minutos restam, e o bloco de props avisa que os preços são **referência de antes do jogo**. Sem box
+score (jogo não começou, ESPN fora do ar) nada é descartado: a trava só remove o que consegue provar.
+O painel ao vivo diz a mesma coisa em uma frase para quem está lendo os bilhetes. O que ainda falta para
+um modo ao vivo de verdade é **odd ao vivo** — não existe fonte gratuita para isso: enquanto não entrar um feed
+licenciado (The Odds API, plano com props e in-play), a leitura ao vivo continua descrevendo o que mudou
+e mandando conferir o preço na casa, sem precificar nada sozinha.
+
 Privacidade: prints de bilhete são lidos em memória e descartados (só o tamanho vai para o log); o texto
 colado no raio-x do tipster é descartado depois da extração; a medição de uso não grava IP.
 

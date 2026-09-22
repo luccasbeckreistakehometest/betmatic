@@ -157,6 +157,12 @@ export interface PropRow {
   /** The side's chance with the book margin removed (two-sided markets only). */
   noVigFair?: number | null;
   priced?: boolean;
+  /**
+   * Set only while the game is in progress: what the player already has, what the line still needs
+   * and how much of regulation is left. The price itself stays a pre-game reference — ESPN's prop
+   * feed does not move once the ball is up. Legs the box score has already decided never get here.
+   */
+  live?: { current: number; remaining: number; minutesLeft: number } | null;
 }
 
 export interface PickRow {
