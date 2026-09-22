@@ -18,7 +18,9 @@
      "code": "1",
      "name": "1",
      "marketName": "Vencedor (Inc. prorrogação)",
-     "info": "Washington Mystics (F) vence (Inc. prorrogação)"
+     "info": "Washington Mystics (F) vence (Inc. prorrogação)",
+     "uuid": "cf563fdf-1ecc-5750-8384-97929d21c197",
+     "marketUuid": "d9658422-bb60-56c5-b94b-b50fe89bb3e1"
     },
     {
      "marketId": 759,
@@ -29,7 +31,9 @@
      "code": "2",
      "name": "2",
      "marketName": "Vencedor (Inc. prorrogação)",
-     "info": "Connecticut Sun (F) vence (Inc. prorrogação)"
+     "info": "Connecticut Sun (F) vence (Inc. prorrogação)",
+     "uuid": "d7c993e8-8f63-5f32-be6a-97c1c1cf70d7",
+     "marketUuid": "d9658422-bb60-56c5-b94b-b50fe89bb3e1"
     },
     {
      "marketId": 777,
@@ -40,7 +44,9 @@
      "code": "1",
      "name": "1",
      "marketName": "Resultado Final (Tempo Regulamentar)",
-     "info": "Washington Mystics (F) vence a partida"
+     "info": "Washington Mystics (F) vence a partida",
+     "uuid": "4f939338-0d54-5ae9-a803-a49f545c755d",
+     "marketUuid": "2b98c542-06af-5a9a-a576-e69f1ac5d79e"
     },
     {
      "marketId": 777,
@@ -51,7 +57,9 @@
      "code": "0",
      "name": "X",
      "marketName": "Resultado Final (Tempo Regulamentar)",
-     "info": "A partida termina em um empate"
+     "info": "A partida termina em um empate",
+     "uuid": "56074d62-abfb-5ede-8e10-359ec5865c5e",
+     "marketUuid": "2b98c542-06af-5a9a-a576-e69f1ac5d79e"
     },
     {
      "marketId": 768,
@@ -65,7 +73,9 @@
      "code": "1",
      "name": "Washington Mystics (F) (-21.5)",
      "marketName": "Handicap (Inc. prorrogação)",
-     "info": "Washington Mystics (F) cobre o handicap de (-21.5) (Inc. prorrogação)"
+     "info": "Washington Mystics (F) cobre o handicap de (-21.5) (Inc. prorrogação)",
+     "uuid": "d57a8888-d1b0-5f7a-b5fb-838345363dba",
+     "marketUuid": "9bc3f2aa-8cee-5eb8-acd2-c612557eefdd"
     },
     {
      "marketId": 768,
@@ -79,7 +89,9 @@
      "code": "2",
      "name": "Connecticut Sun (F) (21.5)",
      "marketName": "Handicap (Inc. prorrogação)",
-     "info": "Connecticut Sun (F) cobre o handicap de (21.5) (Inc. prorrogação)"
+     "info": "Connecticut Sun (F) cobre o handicap de (21.5) (Inc. prorrogação)",
+     "uuid": "249c462b-4f24-55cd-9814-9cf3d1a8e447",
+     "marketUuid": "9bc3f2aa-8cee-5eb8-acd2-c612557eefdd"
     },
     {
      "marketId": 768,
@@ -93,7 +105,9 @@
      "code": "1",
      "name": "Washington Mystics (F) (-20.5)",
      "marketName": "Handicap (Inc. prorrogação)",
-     "info": "Washington Mystics (F) cobre o handicap de (-20.5) (Inc. prorrogação)"
+     "info": "Washington Mystics (F) cobre o handicap de (-20.5) (Inc. prorrogação)",
+     "uuid": "f06d9838-09d3-5288-9e0e-7dfb550b5068",
+     "marketUuid": "e7b8c01d-4725-55e2-8ae8-b24e6028c784"
     },
     {
      "marketId": 768,
@@ -107,7 +121,9 @@
      "code": "2",
      "name": "Connecticut Sun (F) (20.5)",
      "marketName": "Handicap (Inc. prorrogação)",
-     "info": "Connecticut Sun (F) cobre o handicap de (20.5) (Inc. prorrogação)"
+     "info": "Connecticut Sun (F) cobre o handicap de (20.5) (Inc. prorrogação)",
+     "uuid": "71772635-c3f6-5950-8f7b-143102c74725",
+     "marketUuid": "e7b8c01d-4725-55e2-8ae8-b24e6028c784"
     },
     {
      "marketId": 753,
@@ -177,7 +193,9 @@
      },
      "name": "Amoore, Georgia - Mais de 7.5",
      "marketName": "Jogador - Total de Pontos (Inc. prorrogação)",
-     "info": "Terá mais de 7.5 pontos (Inc. prorrogação)"
+     "info": "Terá mais de 7.5 pontos (Inc. prorrogação)",
+     "uuid": "9e1ce12e-5805-559c-90f0-0e2ee2d93f52",
+     "marketUuid": "4afdbe20-57a2-524c-8d1d-a61c44790712"
     },
     {
      "marketId": 233565,
@@ -191,7 +209,9 @@
      },
      "name": "Amoore, Georgia - Menos de 7.5",
      "marketName": "Jogador - Total de Pontos (Inc. prorrogação)",
-     "info": "Terá menos de 7.5 pontos (Inc. prorrogação)"
+     "info": "Terá menos de 7.5 pontos (Inc. prorrogação)",
+     "uuid": "a050a251-2e38-5274-9d6c-baa9e6ca4e28",
+     "marketUuid": "4afdbe20-57a2-524c-8d1d-a61c44790712"
     },
     {
      "marketId": 233565,
@@ -205,7 +225,9 @@
      },
      "name": "Austin, Shakira - Mais de 17.5",
      "marketName": "Jogador - Total de Pontos (Inc. prorrogação)",
-     "info": "Terá mais de 17.5 pontos (Inc. prorrogação)"
+     "info": "Terá mais de 17.5 pontos (Inc. prorrogação)",
+     "uuid": "4cf0bc40-0b53-5760-aa3a-dab9e954b367",
+     "marketUuid": "2f78aa51-86c4-555e-b2c7-140edb0dfc20"
     },
     {
      "marketId": 233565,
@@ -219,7 +241,9 @@
      },
      "name": "Austin, Shakira - Menos de 17.5",
      "marketName": "Jogador - Total de Pontos (Inc. prorrogação)",
-     "info": "Terá menos de 17.5 pontos (Inc. prorrogação)"
+     "info": "Terá menos de 17.5 pontos (Inc. prorrogação)",
+     "uuid": "cdb22f6f-7ad0-58c1-a52e-ae7d168c11c9",
+     "marketUuid": "2f78aa51-86c4-555e-b2c7-140edb0dfc20"
     },
     {
      "marketId": 233567,
@@ -233,7 +257,9 @@
      },
      "name": "Austin, Shakira - Mais de 8.5",
      "marketName": "Jogador - Total de Rebotes (Inc. prorrogação)",
-     "info": "Terá mais de 8.5 rebotes (Inc. prorrogação)"
+     "info": "Terá mais de 8.5 rebotes (Inc. prorrogação)",
+     "uuid": "47166622-2f71-557e-9a6a-65dd2ec69124",
+     "marketUuid": "4b951b08-022b-53fb-a1c5-87338b2b365e"
     },
     {
      "marketId": 233567,
@@ -247,7 +273,9 @@
      },
      "name": "Austin, Shakira - Menos de 8.5",
      "marketName": "Jogador - Total de Rebotes (Inc. prorrogação)",
-     "info": "Terá menos de 8.5 rebotes (Inc. prorrogação)"
+     "info": "Terá menos de 8.5 rebotes (Inc. prorrogação)",
+     "uuid": "953d7ab3-3b77-570d-be4d-b33669e9df48",
+     "marketUuid": "4b951b08-022b-53fb-a1c5-87338b2b365e"
     },
     {
      "marketId": 233569,
@@ -289,7 +317,9 @@
      },
      "name": "Amoore, Georgia 10+",
      "marketName": "Jogador - Pontos (Inc. prorrogação)",
-     "info": "Terá 10 ou mais pontos (Inc. prorrogação)"
+     "info": "Terá 10 ou mais pontos (Inc. prorrogação)",
+     "uuid": "2c56edfa-bc63-56b7-84f4-60dbb7a0e397",
+     "marketUuid": "cf6d17da-4aa4-5090-81b9-f749458066e2"
     },
     {
      "marketId": 235315,
@@ -303,7 +333,9 @@
      },
      "name": "Amoore, Georgia 2+",
      "marketName": "Cestas de 3 Pontos Convertidas pelo Jogador (Inc. prorrogação)",
-     "info": "Terá 2 ou mais cestas de 3 pontos convertidas (Inc. prorrogação)"
+     "info": "Terá 2 ou mais cestas de 3 pontos convertidas (Inc. prorrogação)",
+     "uuid": "d85cdd3c-6e31-55ac-b0c7-61236185c376",
+     "marketUuid": "79d70a72-3316-5e28-bccb-33c8f6bdd2cd"
     },
     {
      "marketId": 788,

@@ -163,14 +163,19 @@ const eventIdOf = (p: BookPrice, ext: string): string | undefined => ref(p).even
 
 // ---- per platform -----------------------------------------------------------------------------------
 
-/** Superbet: bets[] = "matchId,oddId,specialBetValue,fix,oddUuid", as its own share builder writes it. */
+/**
+ * Superbet: bets[] = "matchId,oddId,specialBetValue,fix,oddUuid", as its own share builder writes
+ * it — the special-bet value percent-encoded before the comma join (a player line's "Amoore,
+ * Georgia-7.5" carries a comma of its own, and the loader splits the field on commas), the whole
+ * value encoded again by URLSearchParams, exactly the double encoding the site's links carry.
+ */
 function superbetSlip(prices: BookPrice[]): string | null {
   const params = new URLSearchParams();
   for (const p of prices) {
     const r = ref(p);
     const eventId = eventIdOf(p, "superbet");
     if (!eventId || !has(r, "outcomeId", "uuid")) return null;
-    params.append("bets[]", `${eventId},${r.outcomeId},${r.specialBetValue ?? ""},0,${r.uuid}`);
+    params.append("bets[]", `${eventId},${r.outcomeId},${encodeURIComponent(r.specialBetValue ?? "")},0,${r.uuid}`);
   }
   params.set("type", "simple");
   params.set("target_screen", "soccer_event_details");
