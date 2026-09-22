@@ -48,3 +48,17 @@ describe("cron entry point", () => {
     expect(featured).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("the quarters job", () => {
+  it("runs on its own and steps aside when switched off, never touching generation", async () => {
+    process.env.LIVE_QUARTER_READS = "0";
+    try {
+      const res = await call("?job=quarters");
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ job: "quarters", status: "skipped", note: "LIVE_QUARTER_READS=0" });
+    } finally {
+      delete process.env.LIVE_QUARTER_READS;
+    }
+  });
+});
+

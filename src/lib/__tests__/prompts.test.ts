@@ -57,6 +57,8 @@ describe("what the default prompt must keep saying", () => {
       expect(DEFAULT_PROMPTS.game[lang]).toMatch(/DO NOT BET ON A REVERSION/);
       expect(DEFAULT_PROMPTS.game[lang]).toMatch(/CUT, DO NOT HOPE/);
       expect(DEFAULT_PROMPTS.game[lang]).toMatch(/REACH THE LONG BAND LIVE WITH FEWER LEGS/);
+      // The owner's rule: in basketball a read is taken at EVERY quarter break, never only at half-time.
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/A READ IS TAKEN AT EVERY QUARTER BREAK/);
     }
   });
 });

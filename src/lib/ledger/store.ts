@@ -61,7 +61,7 @@ export const ledgerIdFor = (gameId: string, s: Pick<BetSuggestion, "bandKey" | "
  * `startsAt` overrides the game's kickoff (a cross-game ticket goes public when its last game starts).
  * `live` records the tickets of an in-play read under the live scope, at the minute they were built.
  */
-export function recordPredictions(game: Game, suggestions: BetSuggestion[], opts: { startsAt?: string; live?: { minute: number } } = {}): number {
+export function recordPredictions(game: Game, suggestions: BetSuggestion[], opts: { startsAt?: string; live?: { minute: number; period?: number } } = {}): number {
   if (!suggestions.length) return 0;
   const existing = readLedger({ includeLive: true });
   const seen = new Set(existing.map((e) => e.id));
@@ -89,7 +89,7 @@ export function recordPredictions(game: Game, suggestions: BetSuggestion[], opts
       evidenceScore: s.evidenceScore,
       suggestionId: s.id,
       alternativeOf: s.alternativeFor ? ledgerIdOf.get(s.alternativeFor) : undefined,
-      ...(opts.live ? { scope: "live" as const, minute: opts.live.minute } : {}),
+      ...(opts.live ? { scope: "live" as const, minute: opts.live.minute, ...(opts.live.period !== undefined ? { period: opts.live.period } : {}) } : {}),
       outcome: "pending",
       legs: s.legs.map<SettledLeg>((l) => ({
         selection: l.selection,

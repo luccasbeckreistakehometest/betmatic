@@ -37,12 +37,12 @@ describe("the live scope of the ledger", () => {
   it("keeps a live read out of the default read and out of the pre-game ids", () => {
     const shape = ticket("t1", "mid", ["Shepard o13.5 REB", "Bueckers o24.5 PRA"]);
     expect(recordPredictions(game, [shape])).toBe(1);
-    expect(recordPredictions(game, [shape], { live: { minute: 20 } })).toBe(1);
+    expect(recordPredictions(game, [shape], { live: { minute: 20, period: 2 } })).toBe(1);
     expect(readLedger()).toHaveLength(1);
     expect(readLedger({ includeLive: true })).toHaveLength(2);
     const live = readLiveLedger();
     expect(live).toHaveLength(1);
-    expect(live[0]).toMatchObject({ scope: "live", minute: 20, outcome: "pending" });
+    expect(live[0]).toMatchObject({ scope: "live", minute: 20, period: 2, outcome: "pending" });
     expect(live[0].id).toBe(ledgerIdFor("g1", shape, { minute: 20 }));
     expect(live[0].id).not.toBe(ledgerIdFor("g1", shape));
     expect(readLedger()[0].scope).toBeUndefined();
@@ -78,9 +78,9 @@ describe("the live record", () => {
 
   it("counts hit rates and a reference return, ignoring pre-game entries and pending reads", () => {
     const r = liveRecordFrom([
-      entry("a", "mid", "won", 14.65, ["won", "won", "won"], "live"),
-      entry("b", "mid", "lost", 13.06, ["won", "lost", "won", "won"], "live"),
-      entry("c", "long", "lost", 19.11, ["won", "won", "lost", "won"], "live"),
+      { ...entry("a", "mid", "won", 14.65, ["won", "won", "won"], "live"), period: 2 },
+      { ...entry("b", "mid", "lost", 13.06, ["won", "lost", "won", "won"], "live"), period: 2 },
+      { ...entry("c", "long", "lost", 19.11, ["won", "won", "lost", "won"], "live"), period: 3 },
       entry("d", "long", "pending", 20, ["pending"], "live"),
       entry("pre", "safe", "won", 1.38, ["won"]),
     ]);
@@ -89,6 +89,8 @@ describe("the live record", () => {
     expect(r.legHitRate).toBeCloseTo(9 / 11, 6);
     expect(r.modelledAverage).toBeCloseTo(0.25, 6);
     expect(r.bands.map((b) => [b.bandKey, b.tickets, b.won])).toEqual([["mid", 2, 1], ["long", 1, 0]]);
+    // The end of Q1, half-time and the end of Q3 are different bets: the record keeps them apart.
+    expect(r.periods.map((p) => [p.period, p.tickets, p.won])).toEqual([[2, 2, 1], [3, 1, 0]]);
   });
 
   it("reads the live entries from the ledger file", () => {

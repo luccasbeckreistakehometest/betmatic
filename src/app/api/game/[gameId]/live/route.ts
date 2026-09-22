@@ -4,7 +4,7 @@ import { apiError, rateLimited, requestLang } from "@/lib/server/api";
 import { accountKey, hit } from "@/lib/server/rate-limit";
 import { pauseState } from "@/lib/server/settings";
 import { liveTracker } from "@/lib/server/live";
-import { canReadLive, latestLiveRead, LIVE_COOLDOWN_MS, runLiveRead } from "@/lib/server/live-read";
+import { canReadLive, latestLiveRead, liveReadGate, runLiveRead } from "@/lib/server/live-read";
 import { scrubSlate } from "@/lib/server/whitelabel";
 import { SOLD_SPORTS } from "@/lib/sports";
 import type { Lang } from "@/lib/i18n";
@@ -45,7 +45,7 @@ export async function GET(request: Request, ctx: { params: Promise<{ gameId: str
     snapshot, tickets,
     read: read && slate ? { ...read, slate } : null,
     canRead,
-    nextReadAt: read ? new Date(Date.parse(read.generatedAt) + LIVE_COOLDOWN_MS).toISOString() : null,
+    nextReadAt: read ? liveReadGate(read, snapshot?.period ?? read.period).nextAt : null,
   });
 }
 
@@ -63,7 +63,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ gameId: st
   const out = await runLiveRead(user, q.sportKey, gameId, lang);
   if (out.status === "ok") {
     const role = user.role === "admin" ? "admin" : "user";
-    return NextResponse.json({ read: { ...out.read, slate: scrubSlate(out.read.slate, role, lang) }, cached: out.cached, nextReadAt: new Date(Date.parse(out.read.generatedAt) + LIVE_COOLDOWN_MS).toISOString() });
+    return NextResponse.json({ read: { ...out.read, slate: scrubSlate(out.read.slate, role, lang) }, cached: out.cached, nextReadAt: liveReadGate(out.read, out.read.period).nextAt });
   }
   if (out.status === "ai_budget") return apiError("ai_budget", lang, 503);
   if (out.status === "error" || out.status === "ai_off") return apiError("ai_unavailable", lang, out.status === "ai_off" ? 503 : 502);
