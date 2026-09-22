@@ -6,6 +6,20 @@ import { redactKeys, type AiProvider, type ProviderRequest, type ProviderRespons
 /** Haiku 4.5 rejects adaptive thinking; it runs without a thinking block here. */
 export const supportsAdaptiveThinking = (model: string): boolean => !/haiku/i.test(model);
 
+/**
+ * How hard the model may think. Adaptive thinking on Opus 5 spent the whole 16k output budget
+ * thinking about one slate and, at 32k, still cut the JSON short (22/09/2026, six reads, no
+ * ticket); the numbers the read leans on are computed in code, so bounded effort loses little.
+ * ANTHROPIC_EFFORT: low | medium | high | xhigh | max. Unset means high.
+ */
+export function effortOf(env: Record<string, string | undefined> = process.env): "low" | "medium" | "high" | "xhigh" | "max" {
+  const v = (env.ANTHROPIC_EFFORT ?? "").trim().toLowerCase();
+  return v === "low" || v === "medium" || v === "high" || v === "xhigh" || v === "max" ? v : "high";
+}
+
+/** The text of a message, whole or as far as it got. */
+const textOf = (content: { type: string; text?: string }[]) => content.filter((b) => b.type === "text").map((b) => b.text ?? "").join("");
+
 let client: Anthropic | null = null;
 
 /** The SDK reads ANTHROPIC_API_KEY / ANTHROPIC_AUTH_TOKEN itself. */
@@ -60,13 +74,29 @@ export const anthropicProvider: AiProvider = {
       system: request.cacheSystem
         ? [{ type: "text", text: request.system, cache_control: { type: "ephemeral" } }]
         : request.system,
-      ...(supportsAdaptiveThinking(request.model) ? { thinking: { type: "adaptive" as const } } : {}),
-      output_config: { format: zodOutputFormat(request.schema) },
+      ...(supportsAdaptiveThinking(request.model) ? { thinking: { type: "adaptive" as const }, output_config: { format: zodOutputFormat(request.schema), effort: effortOf() } } : { output_config: { format: zodOutputFormat(request.schema) } }),
       messages: [{ role: "user", content: contentOf(request) }],
     });
-    const response = await stream.finalMessage();
+    let response: Anthropic.Message;
+    try {
+      response = await stream.finalMessage();
+    } catch (error) {
+      // The SDK parses the structured output the moment the stream ends, whatever the stop reason,
+      // so a JSON cut by max_tokens surfaces as a parse error and hides both the cause and the bill.
+      // The accumulated message still carries its stop reason and usage: hand those back and let the
+      // caller name the truncation.
+      const snapshot = stream.currentMessage;
+      if (!snapshot?.stop_reason) throw error;
+      return {
+        text: textOf(snapshot.content),
+        parsed: null,
+        stop: stopOf(snapshot.stop_reason),
+        refusal: snapshot.stop_details?.explanation ?? null,
+        usage: usageOf(snapshot.usage),
+      };
+    }
     return {
-      text: response.content.filter((b) => b.type === "text").map((b) => b.text).join(""),
+      text: textOf(response.content),
       parsed: null,
       stop: stopOf(response.stop_reason),
       refusal: response.stop_details?.explanation ?? null,

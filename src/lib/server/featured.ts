@@ -63,6 +63,9 @@ async function runFeaturedOnce(opts: { now?: Date } = {}): Promise<FeaturedResul
     return { runId, ...r };
   };
   if (cfg.perDay === 0) return finish({ status: "skipped", picked: 0, generated: 0, predictions: 0, costUsd: 0, note: "FEATURED_PER_DAY=0" });
+  // A request still "running" after half an hour belongs to a process that died mid-stream; left
+  // alone it would block that game's generation for good.
+  db.prepare("DELETE FROM generation_requests WHERE status='running' AND createdAt < ?").run(new Date(now.getTime() - 30 * 60_000).toISOString());
 
   const candidates: FeaturedCandidate[] = [];
   const today = todayKey();
