@@ -74,7 +74,8 @@ export const SlateSchema = z.object({
 const IN_PLAY_NOTE =
   "IN PLAY — this game has already started. Every price below is a PRE-GAME REFERENCE: the prop feed does not update once the ball is up and no live odds source is configured, so treat the numbers as references and say so. Legs the box score has already decided were removed; each line carries what it still needs and how much of regulation is left.";
 
-function describeProps(props: PropRow[]): string {
+/** Exported for the stale-line tests: the in-play marker has to reach the model, not just exist. */
+export function describeProps(props: PropRow[]): string {
   if (!props.length) return "- none gathered";
   const lines = props
     .map((p) => {
@@ -82,7 +83,9 @@ function describeProps(props: PropRow[]): string {
       const measuredText = measured
         ? ` | MEASURED ${measured.side} ${measured.line} ${measured.stat}: L5 ${measured.last5.hits}/${measured.last5.of}, L10 ${measured.last10.hits}/${measured.last10.of}, season ${measured.season.hits}/${measured.season.of} (${(measured.impliedFair * 100).toFixed(0)}%), avg ${measured.average}, median ${measured.median} [${measured.sampleNote}]`
         : " | MEASURED: none — no game log matched this player/market";
-      const liveText = p.live ? ` | LIVE: ${p.live.current} so far, ${p.live.remaining} to go, ~${p.live.minutesLeft} min of regulation left` : "";
+      const liveText = p.live
+        ? ` | LIVE: ${p.live.current} so far, ${p.side === "under" ? `room for ${p.live.remaining} more` : `${p.live.remaining} to go`}, ~${p.live.minutesLeft} min of regulation left`
+        : "";
       return `- ${p.player} ${p.market} ${p.side ?? ""} ${p.line ?? "?"} @ ${p.odds ?? "no price"} (${p.book ?? "?"})${p.note ? ` [${p.note}]` : ""}${p.projection !== undefined ? ` toolProj ${p.projection}` : ""}${p.edgePct !== undefined ? ` toolEdge ${p.edgePct}%` : ""}${measuredText}${liveText}`;
     });
   return props.some((p) => p.live) ? [IN_PLAY_NOTE, ...lines].join("\n") : lines.join("\n");

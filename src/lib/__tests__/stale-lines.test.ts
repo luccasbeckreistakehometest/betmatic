@@ -193,6 +193,21 @@ describe("the pipeline refuses a decided leg", () => {
   });
 });
 
+describe("what the model is told", () => {
+  it("calls the prices pre-game references and spells out what each survivor needs", async () => {
+    const { describeProps } = await import("@/lib/bets/builder");
+    const row = (line: number, side: "over" | "under", live: { current: number; remaining: number; minutesLeft: number } | null) => ({
+      player: "DeWanna Bonner", market: "Points", marketKey: "points", line, side, odds: "1.86", book: "DraftKings", priced: true, live,
+    });
+    const text = describeProps([row(15.5, "over", { current: 10, remaining: 6, minutesLeft: 20 }), row(19.5, "under", { current: 10, remaining: 9, minutesLeft: 20 })]);
+    expect(text).toContain("PRE-GAME REFERENCE");
+    expect(text).toContain("10 so far, 6 to go, ~20 min of regulation left");
+    expect(text).toContain("10 so far, room for 9 more");
+    // A game that has not started says none of it.
+    expect(describeProps([row(15.5, "over", null)])).not.toContain("PRE-GAME REFERENCE");
+  });
+});
+
 describe("live box-score reader", () => {
   it("returns nothing before the tip-off, and never throws on a failure", async () => {
     const { getLiveSnapshot } = await import("@/lib/server/live-snapshot");
