@@ -79,6 +79,7 @@ export function recordPredictions(game: Game, suggestions: BetSuggestion[], opts
         sourceBasis: l.settlement?.sourceBasis ?? "unattributed",
         settlement: l.settlement,
         predictedProbability: l.fairProbability,
+        computedProbability: l.computedProbability,
         oddsDecimal: l.oddsDecimal,
         outcome: "pending",
         actual: undefined,

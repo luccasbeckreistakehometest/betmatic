@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { describeDropped, guardProps, judgeProp, needed, type LiveTotals } from "@/lib/props/stale";
-import { getLiveBoxScore, totalsFromSnapshot } from "@/lib/props/box-score";
+import { boxFromSnapshot, getLiveBoxScore, totalsFromSnapshot } from "@/lib/props/box-score";
 import { parseLiveSnapshot } from "@/lib/live/snapshot";
 import { buildPropCandidates } from "@/lib/props/candidates";
 import type { PostedProp } from "@/lib/sources/espn-props";
@@ -168,11 +168,7 @@ describe("the pipeline refuses a decided leg", () => {
       { athleteId: "2529120", marketKey: "points", line: 15.5, side: "over" as const, decimal: 2.1, openDecimal: null, openLine: null, otherDecimal: null, noVigFair: null, kind: "total" as const, book: "DraftKings", updatedAt: null },
     ],
   };
-  const box = {
-    state: "in" as const,
-    totals: totalsFromSnapshot(parseLiveSnapshot(snapshot, "401857190", "basketball", 10), "wnba"),
-    minute: 20, minutesLeft: 20, clock: "0:00", period: 2, fetchedAt: new Date().toISOString(),
-  };
+  const box = boxFromSnapshot(parseLiveSnapshot(snapshot, "401857190", "basketball", 10), "wnba");
 
   it("a feed offering over 7.5 points to a player who already has 10 never reaches the model", async () => {
     const set = await buildPropCandidates(detail("live"), { feed, box });

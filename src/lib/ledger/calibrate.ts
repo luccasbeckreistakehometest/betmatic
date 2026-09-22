@@ -40,6 +40,55 @@ function addLeg(buckets: Map<string, Bucket>, key: string, label: string, leg: S
 }
 
 /**
+ * The deterministic model (props/model.ts) against the language model, on the legs where both spoke.
+ * Both numbers are recorded at generation time, so this is a fair race: the same legs, the same
+ * settlement. Brier is the mean squared error of the probability against the 0/1 outcome — lower
+ * is better, 0.25 is a coin flip that says 50%.
+ */
+export interface ModelRace {
+  settled: number;
+  won: number;
+  averageComputed: number;
+  averagePredicted: number;
+  brierComputed: number;
+  brierPredicted: number;
+}
+
+export function modelRace(entries: LedgerEntry[] = readLedger()): ModelRace {
+  let settled = 0, won = 0, computedSum = 0, predictedSum = 0, brierC = 0, brierP = 0;
+  for (const entry of entries) {
+    if (entry.outcome === "pending") continue;
+    for (const leg of entry.legs) {
+      if ((leg.outcome !== "won" && leg.outcome !== "lost") || leg.computedProbability === undefined || !Number.isFinite(leg.computedProbability)) continue;
+      const y = leg.outcome === "won" ? 1 : 0;
+      settled += 1;
+      won += y;
+      computedSum += leg.computedProbability;
+      predictedSum += leg.predictedProbability;
+      brierC += (leg.computedProbability - y) ** 2;
+      brierP += (leg.predictedProbability - y) ** 2;
+    }
+  }
+  return {
+    settled, won,
+    averageComputed: settled ? computedSum / settled : NaN,
+    averagePredicted: settled ? predictedSum / settled : NaN,
+    brierComputed: settled ? brierC / settled : NaN,
+    brierPredicted: settled ? brierP / settled : NaN,
+  };
+}
+
+/** The race as one prompt line; silent until there is a sample worth reading. */
+export function modelRaceLine(race: ModelRace = modelRace()): string {
+  if (race.settled < 10) return "";
+  const pct = (x: number) => `${(x * 100).toFixed(0)}%`;
+  const lead = race.brierComputed < race.brierPredicted - 0.005 ? "the computed number has been the better guide — stay inside its band"
+    : race.brierPredicted < race.brierComputed - 0.005 ? "your own estimates have been the better guide, but only where you named a reason the numbers could not see"
+    : "the two have been equally good";
+  return `COMPUTED MODEL vs YOUR ESTIMATES (${race.settled} settled legs, ${pct(race.won / race.settled)} won): computed averaged ${pct(race.averageComputed)} (Brier ${race.brierComputed.toFixed(3)}), you averaged ${pct(race.averagePredicted)} (Brier ${race.brierPredicted.toFixed(3)}) — ${lead}.`;
+}
+
+/**
  * Grades the model against its own past calls. Legs are the unit, not tickets — a parlay losing
  * tells you little, but the individual legs inside it are clean evidence about each source.
  */
@@ -127,6 +176,7 @@ export function calibrationPrompt(): string {
       : "",
     "",
     safeClvLine(),
+    modelRaceLine(),
     "Apply this honestly: where a source is measured OVERCONFIDENT, lower your fairProbability for legs leaning on it. Where a slice has no sample, say so instead of assuming it is good.",
   ]
     .filter(Boolean)

@@ -21,6 +21,10 @@ import { consensusPrompt, type ConsensusProp } from "@/lib/props/consensus";
 import { livePrompt, type LiveState } from "@/lib/live/state";
 import { rolePrompt, type RoleProfile } from "@/lib/props/role";
 import { anchoredOdds, enrichLeg, type EnrichContext } from "@/lib/bets/enrich";
+import { minutesPrompt, type MinutesProjection } from "@/lib/props/minutes";
+import { environmentPrompt, gameEnvironment, type GameEnvironment } from "@/lib/signals/environment";
+import { ticketCorrelation, type CorrLeg } from "@/lib/signals/correlation";
+import { resolveStatLabels } from "@/lib/props/history";
 import { linkAlternatives, ticketId } from "@/lib/bets/alternatives";
 import type { ProviderLines } from "@/lib/sources/espn-props";
 import { mockGameSlate, mockSlateBets } from "@/lib/ai/mocks";
@@ -74,6 +78,33 @@ export const SlateSchema = z.object({
 const IN_PLAY_NOTE =
   "IN PLAY — this game has already started. Every price below is a PRE-GAME REFERENCE: the prop feed does not update once the ball is up and no live odds source is configured, so treat the numbers as references and say so. Legs the box score has already decided were removed; each line carries what it still needs and how much of regulation is left.";
 
+const pct = (x: number) => `${Math.round(x * 100)}%`;
+
+/**
+ * The computed side of a candidate: the probability the arithmetic gives the line, the ladder
+ * beside it, the minutes it stands on, and in play the requirement per remaining minute against
+ * the rate produced tonight. Every number here was computed in code; the model reads, it does not
+ * recompute.
+ */
+export function describeModel(p: PropRow): string {
+  const m = p.model;
+  if (!m) return "";
+  const side = p.side === "under" ? "under" : "over";
+  const rungs = m.ladder
+    .filter((r) => Math.abs(r.line - (p.line ?? NaN)) > 1e-9)
+    .map((r) => `${side === "over" ? "o" : "u"}${r.line} ${pct(side === "over" ? r.pOver : r.pUnder)}`)
+    .join(", ");
+  const availability = m.minutes.availability === "listed_out" ? " ⚠ LISTED OUT" : m.minutes.availability === "questionable" ? " ⚠ questionable" : "";
+  if (m.live) {
+    const l = m.live;
+    const need = l.needed > 0
+      ? `needs ${l.needed} more in ~${l.remainingMinutes} min = ${Number.isFinite(l.needPerMinute) ? l.needPerMinute.toFixed(2) : "∞"}/min`
+      : "needs nothing more";
+    return ` | COMPUTED ${pct(m.computed)} — ${need}, vs ${l.ratePerMinuteTonight.toFixed(2)}/min tonight (${l.minutesPlayed} min played${l.fouls >= 3 ? `, ${l.fouls} PF` : ""}), ${l.ratePerMinutePreGame.toFixed(2)}/min pre-game, ${l.ratePerMinuteBlended.toFixed(2)}/min blended for the rest; projected final ${m.mean} ± ${m.sd}${rungs ? ` [ladder ${rungs}]` : ""}`;
+  }
+  return ` | COMPUTED ${pct(m.computed)} (distribution ${pct(m.distribution)}; ${m.note}; minutes ${m.minutes.expected} ± ${m.minutes.sd}${availability}; rate ${m.rate}/min, L5 ${m.recentRate}/min)${rungs ? ` [ladder ${rungs}]` : ""}`;
+}
+
 /** Exported for the stale-line tests: the in-play marker has to reach the model, not just exist. */
 export function describeProps(props: PropRow[]): string {
   if (!props.length) return "- none gathered";
@@ -86,7 +117,7 @@ export function describeProps(props: PropRow[]): string {
       const liveText = p.live
         ? ` | LIVE: ${p.live.current} so far, ${p.side === "under" ? `room for ${p.live.remaining} more` : `${p.live.remaining} to go`}, ~${p.live.minutesLeft} min of regulation left`
         : "";
-      return `- ${p.player} ${p.market} ${p.side ?? ""} ${p.line ?? "?"} @ ${p.odds ?? "no price"} (${p.book ?? "?"})${p.note ? ` [${p.note}]` : ""}${p.projection !== undefined ? ` toolProj ${p.projection}` : ""}${p.edgePct !== undefined ? ` toolEdge ${p.edgePct}%` : ""}${measuredText}${liveText}`;
+      return `- ${p.player} ${p.market} ${p.side ?? ""} ${p.line ?? "?"} @ ${p.odds ?? "no price"} (${p.book ?? "?"})${p.note ? ` [${p.note}]` : ""}${p.projection !== undefined ? ` toolProj ${p.projection}` : ""}${p.edgePct !== undefined ? ` toolEdge ${p.edgePct}%` : ""}${measuredText}${liveText}${describeModel(p)}`;
     });
   return props.some((p) => p.live) ? [IN_PLAY_NOTE, ...lines].join("\n") : lines.join("\n");
 }
@@ -114,6 +145,10 @@ export interface BuildArgs {
   model?: string;
   /** In-play context that has no structured slot (the basketball live read). */
   extraContext?: string;
+  /** Pace, blowout risk and rest for the matchup; computed here from the schedules when not supplied. */
+  environment?: GameEnvironment | null;
+  /** One minutes projection per player; derived from the candidate rows when not supplied. */
+  minutes?: MinutesProjection[];
   props: PropRow[];
   picks: PickRow[];
   dimers: PickRow[];
@@ -227,8 +262,53 @@ export function priceSuggestion(
 }
 
 /**
- * Anchors every leg to the posted price, prices each ticket in code, attaches the measured record and
- * orders the result. The model's own odds text is used only where no feed carries the market.
+ * Same-game legs re-priced together. The independent product is what the legs' probabilities give;
+ * the factor (signals/correlation.ts) is what sharing a player, a team or a scoreboard does to it.
+ * Cross-game tickets hold one leg per game and are left alone.
+ */
+export function applyCorrelation(bet: BetSuggestion, ctx: EnrichContext): BetSuggestion {
+  if (bet.legs.length < 2 || independentGames(bet)) return bet;
+  const legs: CorrLeg[] = bet.legs.map((l) => {
+    const prop = matchedProp(l, ctx);
+    const s = l.settlement;
+    return {
+      athleteId: l.athleteId ?? prop?.athleteId,
+      player: s?.player,
+      team: prop?.team ?? s?.teamAbbreviation,
+      type: s?.type ?? "other",
+      labels: s?.type === "player_prop" ? resolveStatLabels(s.stat ?? "", ctx.sportKey) : null,
+      line: s?.line,
+      side: s?.side,
+      probability: l.fairProbability,
+      series: prop?.series,
+    };
+  });
+  const dk = ctx.lines?.find((l) => /draftkings/i.test(l.provider))?.current;
+  const result = ticketCorrelation(legs, { homeAbbr: ctx.game?.home.abbreviation, awayAbbr: ctx.game?.away.abbreviation, spread: dk?.spread ?? ctx.game?.odds?.spread ?? null });
+  if (!result.pairs.length) return bet;
+  const modelled = result.probability;
+  return {
+    ...bet,
+    modelledProbability: modelled,
+    edgePct: Number.isFinite(bet.combinedDecimal) ? (modelled * bet.combinedDecimal - 1) * 100 : NaN,
+    correlation: { factor: result.factor, independentProbability: result.independent, note: result.note },
+  };
+}
+
+/** The candidate row a priced leg came from, by athlete and exact line. */
+function matchedProp(leg: BetLeg, ctx: EnrichContext): PropRow | null {
+  const s = leg.settlement;
+  if (!s || s.type !== "player_prop" || !leg.athleteId || s.line === undefined) return null;
+  const wanted = resolveStatLabels(s.stat ?? "", ctx.sportKey);
+  const markets = getSport(ctx.sportKey).markets;
+  return ctx.props.find((p) => p.athleteId === leg.athleteId && Math.abs((p.line ?? NaN) - s.line!) < 0.01 && (p.side ?? "over") === (s.side ?? "over") &&
+    JSON.stringify(markets.find((m) => m.key === p.marketKey)?.statLabels ?? null) === JSON.stringify(wanted)) ?? null;
+}
+
+/**
+ * Anchors every leg to the posted price, prices each ticket in code, attaches the measured record
+ * and the computed probability, applies same-game correlation and orders the result. The model's
+ * own odds text is used only where no feed carries the market.
  */
 export function priceAll(raws: RawSuggestion[], ctx: EnrichContext, opts: { oneLegPerGame?: boolean } = {}): BetSuggestion[] {
   const items = raws.map((raw) => {
@@ -241,11 +321,17 @@ export function priceAll(raws: RawSuggestion[], ctx: EnrichContext, opts: { oneL
     let priced = priceSuggestion(anchored, band?.key ?? "unbanded");
     // Books discount legs from the same game, so a product of their prices would overstate the payout.
     if (priced && opts.oneLegPerGame && !independentGames(priced)) priced = null;
-    return {
-      alternativeOf: raw.alternativeOf,
-      swapReason: raw.swapReason,
-      priced: priced ? { ...priced, legs: priced.legs.map((leg, j) => enrichLeg(leg, anchored.legs[j], ctx)) } : null,
-    };
+    if (priced) {
+      // The computed probability anchors fairProbability inside enrichLeg, so the ticket's numbers are
+      // recomputed from the anchored legs before correlation is applied.
+      const legs = priced.legs.map((leg, j) => enrichLeg(leg, anchored.legs[j], ctx));
+      const modelled = legs.reduce((acc, l) => acc * l.fairProbability, 1);
+      priced = applyCorrelation({
+        ...priced, legs, modelledProbability: modelled,
+        edgePct: Number.isFinite(priced.combinedDecimal) ? (modelled * priced.combinedDecimal - 1) * 100 : NaN,
+      }, ctx);
+    }
+    return { alternativeOf: raw.alternativeOf, swapReason: raw.swapReason, priced };
   });
   return linkAlternatives(items);
 }
@@ -256,11 +342,37 @@ export function independentGames(bet: Pick<BetSuggestion, "legs">): boolean {
   return ids.every((id) => !!id) && new Set(ids).size === ids.length;
 }
 
+/** One minutes projection per player, from the candidate rows, for the prompt block. */
+export function minutesFromProps(props: PropRow[]): MinutesProjection[] {
+  const seen = new Map<string, MinutesProjection>();
+  for (const p of props) {
+    const m = p.minutesProjection;
+    if (!m || seen.has(m.player)) continue;
+    seen.set(m.player, { player: m.player, expected: m.expected, sd: m.sd, availability: m.availability, note: m.note, baseline: { recent5: NaN, recent10: NaN, season: NaN, trend: 0, games: 0, sd: NaN }, blowoutProbability: NaN, baselineBlowout: NaN, adjustments: [] });
+  }
+  return [...seen.values()];
+}
+
+/** The minutes block: the full projection when the caller supplied it, the per-row note otherwise. */
+function minutesBlock(projections: MinutesProjection[]): string {
+  if (!projections.length) return "";
+  if (projections.some((p) => p.adjustments.length || Number.isFinite(p.baseline.recent5))) return minutesPrompt(projections);
+  return [
+    "MINUTES PROJECTION — computed from the game log, the injury report and the spread; the number every counting-stat leg stands on:",
+    ...projections.slice(0, 14).map((p) => `- ${p.player}: ${p.note}${p.availability === "listed_out" ? " ⚠ LISTED OUT" : p.availability === "questionable" ? " ⚠ questionable" : ""}`),
+    "A leg needs the minutes before it needs anything else. Treat a LISTED OUT player as unplayable until the report changes; a questionable one widens every line on her.",
+  ].join("\n");
+}
+
 export async function buildBets(args: BuildArgs): Promise<BetSlate> {
   const { game, detail, props, picks, dimers, x, bands, lang, duels = [], referee = null, dvp, consensus = [], roles = [], live = null, maxPerBand = 2, lines = [], record = true } = args;
   // Grade anything finished first, so this build reasons over the newest track record.
   await settlePending(10).catch(() => null);
   const targets = bands.map((b) => getBand(b));
+  const isBasketball = getSport(game.sportKey).group === "basketball";
+  // Two cached schedule reads, no model call; a failure leaves the block as "not computed".
+  const environment = args.environment !== undefined ? args.environment : isBasketball ? await gameEnvironment(detail, lines).catch(() => null) : null;
+  const minutes = args.minutes ?? (isBasketball ? minutesFromProps(props) : []);
 
   const marketLines = detail.books.length
     ? detail.books
@@ -289,6 +401,8 @@ export async function buildBets(args: BuildArgs): Promise<BetSlate> {
     "",
     consensusPrompt(consensus),
     "",
+    isBasketball ? environmentPrompt(environment) : "",
+    isBasketball ? minutesBlock(minutes) : "",
     rolePrompt(roles),
     "",
     refereePrompt(referee),
@@ -320,7 +434,12 @@ export async function buildBets(args: BuildArgs): Promise<BetSlate> {
 
   const suggestions = priceAll(result.suggestions, { props, sportKey: game.sportKey, game, lines });
 
-  // Log every ticket at generation time so it can be graded once the game finishes.
+  // Log every ticket at generation time so it can be graded once the game finishes. The ledger keeps
+  // the computed probability beside the model's per leg (SettledLeg.computedProbability), which is
+  // what ledger/calibrate.ts races once the legs settle.
+  // TODO(leg_prices): server/leg-prices.ts is owned by the price-integration work; when it is next
+  // touched, add an additive column `computedProb REAL` to leg_prices (addColumn, idempotent) and
+  // pass leg.computedProbability through recordLegPrices so CLV and the model can be read together.
   if (record) {
     recordPredictions(game, suggestions);
     recordLegPrices(suggestions.flatMap((s) => s.legs.map((leg, legIndex) => ({
