@@ -139,6 +139,8 @@ export interface StructuredArgs<T extends z.ZodType> {
   label?: string;
   /** Vision input, sent before the text. Processed in memory only. */
   images?: StructuredImage[];
+  /** Thinking effort for this call (Anthropic); unset means the configured default. */
+  effort?: "low" | "medium" | "high" | "xhigh" | "max";
   /** The deterministic answer used under AI_MOCK. A call without one fails in mock mode. */
   mock?: () => z.infer<T>;
 }
@@ -186,6 +188,7 @@ async function callModel<T extends z.ZodType>(args: StructuredArgs<T>, model: st
     maxTokens,
     images: args.images,
     cacheSystem: true,
+    effort: args.effort,
   });
   // Recorded before the checks below: a refused or truncated answer was still billed.
   const usage = recordUsage(`${label}[${response.stop}]`, response.usage, model);
