@@ -19,6 +19,18 @@ describe("what the default prompt must keep saying", () => {
       expect(DEFAULT_PROMPTS.game[lang]).toMatch(/every leg priced/);
     }
   });
+
+  // Learned on 21/09/2026 from the first hand-built slate: five nested tickets sharing one cold
+  // scorer (Ogunbowale, 0 points at the half) put four of the five in the same hole at once.
+  it("forbids a nested slate and caps how much one leg can carry", () => {
+    for (const lang of ["pt", "en"] as const) {
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/A SLATE IS NOT ONE BET IN FIVE SIZES/);
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/more than half of the tickets/);
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/WEIGH HOW A LEG DIES/);
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/RECENCY WINS/);
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/STRETCH A LINE ONLY WHERE THE PLAYER HAS BEEN THERE/);
+    }
+  });
 });
 
 describe("prompt versions", () => {
