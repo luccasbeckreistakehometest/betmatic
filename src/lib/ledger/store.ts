@@ -20,18 +20,28 @@ function migrateLegacy(): void {
 /**
  * Append-only JSONL. Predictions are a historical record — rewriting them would let a later run
  * quietly launder a bad call, which would make the whole calibration exercise worthless.
+ *
+ * Live reads live in the same file but are hidden by default: every public surface, the ROI, the
+ * calibration and the CLV read the pre-game record and nothing else. Only the code that must see
+ * the whole file — settling, rewriting, a user's own bankroll — asks for `includeLive`.
  */
-export function readLedger(): LedgerEntry[] {
+export function readLedger(opts: { includeLive?: boolean } = {}): LedgerEntry[] {
   migrateLegacy();
   try {
-    return fs
+    const all = fs
       .readFileSync(FILE, "utf8")
       .split("\n")
       .filter((l) => l.trim())
       .map((l) => JSON.parse(l) as LedgerEntry);
+    return opts.includeLive ? all : all.filter((e) => e.scope !== "live");
   } catch {
     return [];
   }
+}
+
+/** The live reads only: graded like the rest, measured for hit rate, never for money. */
+export function readLiveLedger(): LedgerEntry[] {
+  return readLedger({ includeLive: true }).filter((e) => e.scope === "live");
 }
 
 function writeAll(entries: LedgerEntry[]): void {
@@ -39,19 +49,26 @@ function writeAll(entries: LedgerEntry[]): void {
   fs.writeFileSync(FILE, entries.map((e) => JSON.stringify(e)).join("\n") + "\n", "utf8");
 }
 
-/** The ledger id of a ticket: game + band + the exact leg text (the primary generation language). */
-export const ledgerIdFor = (gameId: string, s: Pick<BetSuggestion, "bandKey" | "legs">): string =>
-  `${gameId}:${s.bandKey}:${s.legs.map((l) => l.selection).join("|")}`;
+/**
+ * The ledger id of a ticket: game + band + the exact leg text (the primary generation language).
+ * A live read carries the minute it was taken at, because the same legs at minute 20 and at minute
+ * 35 are two different bets on two different remainders of the game.
+ */
+export const ledgerIdFor = (gameId: string, s: Pick<BetSuggestion, "bandKey" | "legs">, live?: { minute: number }): string =>
+  `${gameId}:${live ? `live${live.minute}:` : ""}${s.bandKey}:${s.legs.map((l) => l.selection).join("|")}`;
 
-/** `startsAt` overrides the game's kickoff (a cross-game ticket goes public when its last game starts). */
-export function recordPredictions(game: Game, suggestions: BetSuggestion[], opts: { startsAt?: string } = {}): number {
+/**
+ * `startsAt` overrides the game's kickoff (a cross-game ticket goes public when its last game starts).
+ * `live` records the tickets of an in-play read under the live scope, at the minute they were built.
+ */
+export function recordPredictions(game: Game, suggestions: BetSuggestion[], opts: { startsAt?: string; live?: { minute: number } } = {}): number {
   if (!suggestions.length) return 0;
-  const existing = readLedger();
+  const existing = readLedger({ includeLive: true });
   const seen = new Set(existing.map((e) => e.id));
   const matchup = `${game.away.displayName} @ ${game.home.displayName}`;
 
   const fresh: LedgerEntry[] = [];
-  const ledgerIdOf = new Map(suggestions.map((s) => [s.id, ledgerIdFor(game.id, s)]));
+  const ledgerIdOf = new Map(suggestions.map((s) => [s.id, ledgerIdFor(game.id, s, opts.live)]));
   for (const s of suggestions) {
     // Same game + same ticket shape must not be logged twice across re-gathers.
     const id = ledgerIdOf.get(s.id)!;
@@ -72,6 +89,7 @@ export function recordPredictions(game: Game, suggestions: BetSuggestion[], opts
       evidenceScore: s.evidenceScore,
       suggestionId: s.id,
       alternativeOf: s.alternativeFor ? ledgerIdOf.get(s.alternativeFor) : undefined,
+      ...(opts.live ? { scope: "live" as const, minute: opts.live.minute } : {}),
       outcome: "pending",
       legs: s.legs.map<SettledLeg>((l) => ({
         selection: l.selection,
@@ -97,9 +115,12 @@ export function recordPredictions(game: Game, suggestions: BetSuggestion[], opts
 export function updateEntries(updated: LedgerEntry[]): void {
   if (!updated.length) return;
   const byId = new Map(updated.map((e) => [e.id, e]));
-  writeAll(readLedger().map((e) => byId.get(e.id) ?? e));
+  // The whole file is rewritten, so the whole file must be read: dropping the live entries here
+  // would erase the live record on every settle pass.
+  writeAll(readLedger({ includeLive: true }).map((e) => byId.get(e.id) ?? e));
 }
 
+/** Everything still to grade, live reads included: they settle against the same box scores. */
 export function pendingEntries(): LedgerEntry[] {
-  return readLedger().filter((e) => e.outcome === "pending");
+  return readLedger({ includeLive: true }).filter((e) => e.outcome === "pending");
 }

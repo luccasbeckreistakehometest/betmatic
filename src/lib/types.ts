@@ -330,6 +330,14 @@ export interface LedgerEntry {
   suggestionId?: string;
   /** Ledger id of the main ticket this one backs up. The public record counts main tickets by default. */
   alternativeOf?: string;
+  /**
+   * `live` marks a ticket built while the game was in play. Its prices are pre-game references, so it
+   * is graded like any other ticket but kept out of the public ROI: the live record measures how
+   * often the reads land, never what they would have paid. Absent on every pre-game ticket.
+   */
+  scope?: "live";
+  /** Regulation minute the live read was taken at. */
+  minute?: number;
   legs: SettledLeg[];
   outcome: LegOutcome;
 }

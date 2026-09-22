@@ -3,6 +3,7 @@ import { findPrediction, savePrediction } from "@/lib/server/predictions";
 import { getLiveSnapshot, liveTracker } from "@/lib/server/live";
 import { buildBets } from "@/lib/bets/builder";
 import { buildPropCandidates } from "@/lib/props/candidates";
+import { recordPredictions } from "@/lib/ledger/store";
 import { AiBudgetExceededError, brasiliaDayStart } from "@/lib/server/ai-budget";
 import { reportError } from "@/lib/server/ops-log";
 import { aiConfigured, LIVE_MODEL } from "@/lib/ai/client";
@@ -146,7 +147,11 @@ export async function runLiveRead(user: PublicUser, sportKey: string, gameId: st
         bands: LIVE_BANDS, maxPerBand: LIVE_MAX_PER_BAND, lang, record: false, model: LIVE_MODEL,
         live: snap.sportGroup === "soccer" ? soccerState(snap) : null, extraContext,
       });
-      savePrediction({ scope: "live", sportKey, gameId, dateKey, lang, matchup: `${detail.game.away.displayName} @ ${detail.game.home.displayName}`, startsAt: detail.game.startsAt, slate: { ...slate, minute: Math.round(snap.minute) } as BetSlate });
+      const minute = Math.round(snap.minute);
+      savePrediction({ scope: "live", sportKey, gameId, dateKey, lang, matchup: `${detail.game.away.displayName} @ ${detail.game.home.displayName}`, startsAt: detail.game.startsAt, slate: { ...slate, minute } as BetSlate });
+      // Graded like every other ticket, kept out of the public ROI: the live record measures how
+      // often a read lands, and the reference prices say nothing about what it would have paid.
+      recordPredictions(detail.game, slate.suggestions, { live: { minute } });
       getDb().prepare("UPDATE generation_requests SET status='ok', finishedAt=? WHERE id=?").run(nowIso(), reqId);
       return { status: "ok", read: latestLiveRead(sportKey, gameId, dateKey, lang)!, cached: false };
     } catch (error) {
