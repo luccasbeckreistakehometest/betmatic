@@ -25,10 +25,38 @@ describe("what the default prompt must keep saying", () => {
   it("forbids a nested slate and caps how much one leg can carry", () => {
     for (const lang of ["pt", "en"] as const) {
       expect(DEFAULT_PROMPTS.game[lang]).toMatch(/A SLATE IS NOT ONE BET IN FIVE SIZES/);
-      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/more than half of the tickets/);
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/more than half of\s+the tickets/);
       expect(DEFAULT_PROMPTS.game[lang]).toMatch(/WEIGH HOW A LEG DIES/);
       expect(DEFAULT_PROMPTS.game[lang]).toMatch(/RECENCY WINS/);
       expect(DEFAULT_PROMPTS.game[lang]).toMatch(/STRETCH A LINE ONLY WHERE THE PLAYER HAS BEEN THERE/);
+    }
+  });
+
+  // The per-leg cap was not enough: the same slate spread one player over two markets and put her
+  // in five of nine tickets without any single leg breaking the rule. She scored 7. Count players.
+  it("counts concentration by player, across markets, not by leg", () => {
+    for (const lang of ["pt", "en"] as const) {
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/CONCENTRATION IS COUNTED BY PLAYER, NOT BY LEG/);
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/No single player may appear in more than half/);
+    }
+  });
+
+  // Two tickets died on a 67%-measured under because the game finished 87-86 and nobody sat.
+  it("ties an under to the projected margin", () => {
+    for (const lang of ["pt", "en"] as const) {
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/AN UNDER IS A BET ON THE GAME ENDING/);
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/name what widens the margin/);
+    }
+  });
+
+  // The live reads beat the pre-game slate by a distance on 21/09/2026 (84% of legs against 76%,
+  // +425% against -15%), and the reasons are teachable: price the remainder, never buy a reversion.
+  it("carries the live doctrine that the hand-built halftime reads proved", () => {
+    for (const lang of ["pt", "en"] as const) {
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/PRICE THE REMAINDER, NOT THE NIGHT/);
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/DO NOT BET ON A REVERSION/);
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/CUT, DO NOT HOPE/);
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/REACH THE LONG BAND LIVE WITH FEWER LEGS/);
     }
   });
 });
