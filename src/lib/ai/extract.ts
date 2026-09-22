@@ -1,6 +1,8 @@
 import type { z } from "zod";
 import { AiNotConfiguredError, EXTRACTION_MODEL, MODEL, ZERO_USAGE, aiConfigured, aiMockActive, recordUsage } from "@/lib/ai/client";
 import { getProvider } from "@/lib/ai/providers";
+import { logEvent } from "@/lib/server/ops-log";
+import { effortOf } from "@/lib/ai/providers/anthropic";
 import type { ProviderImage } from "@/lib/ai/provider";
 import { assertAiBudget } from "@/lib/server/ai-budget";
 import type { ScrapeCapture } from "@/lib/types";
@@ -164,16 +166,37 @@ export async function generateStructuredWithUsage<T extends z.ZodType>(args: Str
     return { data, costUsd: 0, model };
   }
 
-  try {
-    return await callModel(args, model, label);
-  } catch (error) {
-    // A cheap model that rejects the structured-output format falls back once to the extraction model.
-    if (model !== EXTRACTION_MODEL && error instanceof Error && /output_config|output format|json_schema|response_format|text\.format/i.test(error.message)) {
-      return callModel(args, EXTRACTION_MODEL, `${label}:fallback`);
+  // The auto-adjust policy. A read cut by its output cap is almost always thinking that ate the
+  // budget; it is retried at once with less of it — twice at most — and only then given up. An
+  // operator cannot watch every quarter of every game, and a lost live read is gone for good.
+  let effort = args.effort ?? effortOf();
+  let attempt = 0;
+  for (;;) {
+    try {
+      return await callModel({ ...args, effort }, model, attempt ? `${label}:retry${attempt}` : label);
+    } catch (error) {
+      if (error instanceof Error && TRUNCATED.test(error.message) && attempt < MAX_ADJUSTS) {
+        const next = LOWER_EFFORT[effort];
+        if (next) {
+          logEvent("ai.auto_adjust", { label, model, from: effort, to: next, attempt: attempt + 1 });
+          effort = next;
+          attempt += 1;
+          continue;
+        }
+      }
+      // A cheap model that rejects the structured-output format falls back once to the extraction model.
+      if (model !== EXTRACTION_MODEL && error instanceof Error && /output_config|output format|json_schema|response_format|text\.format/i.test(error.message)) {
+        return callModel({ ...args, effort }, EXTRACTION_MODEL, `${label}:fallback`);
+      }
+      throw error;
     }
-    throw error;
   }
 }
+
+const TRUNCATED = /Output hit the \d+-token cap/;
+const MAX_ADJUSTS = 2;
+type Effort = NonNullable<StructuredArgs<z.ZodType>["effort"]>;
+const LOWER_EFFORT: Record<Effort, Effort | null> = { max: "xhigh", xhigh: "high", high: "medium", medium: "low", low: null };
 
 async function callModel<T extends z.ZodType>(args: StructuredArgs<T>, model: string, label: string): Promise<StructuredResult<z.infer<T>>> {
   const maxTokens = args.maxTokens ?? 16000;

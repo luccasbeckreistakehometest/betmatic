@@ -157,6 +157,8 @@ export interface BuildArgs {
   model?: string;
   /** In-play context that has no structured slot (the basketball live read). */
   extraContext?: string;
+  /** Thinking effort for the judgement call; the live read asks for less, the auto-adjust ladder lowers it further on a cut. */
+  effort?: "low" | "medium" | "high" | "xhigh" | "max";
   /** Pace, blowout risk and rest for the matchup; computed here from the schedules when not supplied. */
   environment?: GameEnvironment | null;
   /** One minutes projection per player; derived from the candidate rows when not supplied. */
@@ -389,7 +391,7 @@ function minutesBlock(projections: MinutesProjection[]): string {
 }
 
 export async function buildBets(args: BuildArgs): Promise<BetSlate> {
-  const { game, detail, props, picks, dimers, x, bands, lang, duels = [], referee = null, dvp, consensus = [], roles = [], live = null, maxPerBand = 2, lines = [], record = true } = args;
+  const { game, detail, props, picks, dimers, x, bands, lang, duels = [], referee = null, dvp, consensus = [], roles = [], live = null, maxPerBand = 2, effort, lines = [], record = true } = args;
   // Grade anything finished first, so this build reasons over the newest track record.
   await settlePending(10).catch(() => null);
   const targets = bands.map((b) => getBand(b));
@@ -451,6 +453,7 @@ export async function buildBets(args: BuildArgs): Promise<BetSlate> {
     system: getPrompt("game", lang),
     prompt,
     maxTokens: JUDGEMENT_MAX_TOKENS,
+    effort,
     label: live ? "live" : "game",
     model: args.model,
     mock: () => mockGameSlate({ game, detail, props, lang, bands, live: !!live }),

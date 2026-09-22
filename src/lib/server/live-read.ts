@@ -34,6 +34,11 @@ export const LIVE_COOLDOWN_MS = 15 * 60_000;
 /** Reaches `long` (20-100x). `moonshot` is left to the pre-game slate: in play it is noise. */
 export const LIVE_BANDS = ["safe", "value", "mid", "long"];
 export const LIVE_MAX_PER_BAND = 2;
+/** The live read thinks less: its numbers are computed in code, and a quarter does not wait. ANTHROPIC_LIVE_EFFORT overrides. */
+export function liveEffortOf(env: Record<string, string | undefined> = process.env): "low" | "medium" | "high" | "xhigh" | "max" {
+  const v = (env.ANTHROPIC_LIVE_EFFORT ?? "").trim().toLowerCase();
+  return v === "low" || v === "medium" || v === "high" || v === "xhigh" || v === "max" ? v : "medium";
+}
 export const liveReadsCap = (env: Record<string, string | undefined> = process.env) => {
   const v = Number(env.LIVE_READS_DAILY_CAP);
   return env.LIVE_READS_DAILY_CAP !== undefined && env.LIVE_READS_DAILY_CAP.trim() !== "" && Number.isFinite(v) ? Math.max(0, Math.floor(v)) : 40;
@@ -177,7 +182,7 @@ export async function runLiveRead(user: LivePrincipal, sportKey: string, gameId:
       const extraContext = liveContext(snap, { leaders, trackerText, projections: projectionLines(candidates?.props ?? []) });
       const slate = await buildBets({
         game: detail.game, detail, props: candidates?.props ?? [], roles: candidates?.roles ?? [], minutes: candidates?.minutes ?? [], picks: [], dimers: [], x: null,
-        bands: LIVE_BANDS, maxPerBand: LIVE_MAX_PER_BAND, lang, record: false, model: LIVE_MODEL,
+        bands: LIVE_BANDS, maxPerBand: LIVE_MAX_PER_BAND, lang, record: false, model: LIVE_MODEL, effort: liveEffortOf(),
         live: snap.sportGroup === "soccer" ? soccerState(snap) : null, extraContext,
       });
       const minute = Math.round(snap.minute);
