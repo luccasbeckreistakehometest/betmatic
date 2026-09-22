@@ -32,7 +32,7 @@ export function LeaderboardPanel() {
         action={
           <div className="flex overflow-hidden rounded-control border border-line-control text-label">
             {(["week", "all"] as const).map((p) => (
-              <button key={p} onClick={() => setPeriod(p)} data-testid={`period-${p}`} className={`px-2.5 py-1 ${period === p ? "bg-surface-3 text-fg" : "text-fg-dim hover:text-fg"}`}>{p === "week" ? t("rankingWeek") : t("rankingAll")}</button>
+              <button key={p} onClick={() => setPeriod(p)} data-testid={`period-${p}`} aria-pressed={period === p} className={`px-2.5 py-1 transition-colors duration-(--dur-1) max-md:min-h-9 max-md:px-3 ${period === p ? "bg-surface-3 text-fg" : "text-fg-dim hover:text-fg"}`}>{p === "week" ? t("rankingWeek") : t("rankingAll")}</button>
             ))}
           </div>
         }>

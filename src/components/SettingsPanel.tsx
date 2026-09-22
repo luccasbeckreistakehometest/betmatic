@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { formatDate } from "@/lib/format";
 import Link from "next/link";
-import { Empty, Panel, Select, buttonClass } from "@/components/ui";
+import { Empty, Field, Input, Panel, Select, buttonClass } from "@/components/ui";
 import { useNavState } from "@/components/Controls";
 import { makeT } from "@/lib/i18n";
 import { formatMoney } from "@/lib/format";
@@ -59,7 +59,6 @@ export function SettingsPanel() {
   if (data?.error) return <Panel className="max-w-[56rem]" title={t("settingsTitle")}><Empty>{t("signInForSettings")}</Empty><Link href="/login" className="mt-2 inline-block text-sm text-fg underline underline-offset-2">{lang === "pt" ? "Entrar" : "Log in"}</Link></Panel>;
   const s = data?.settings;
   const num = (v: string) => (v.trim() === "" ? null : Number(v));
-  const input = "nums w-36 rounded-control border border-line-control bg-surface-1 px-3 py-2 text-sm text-fg";
 
   return (
     <div className="flex flex-col gap-4" data-testid="settings">
@@ -73,11 +72,12 @@ export function SettingsPanel() {
         <p className="text-tiny text-fg-dim">{t("limitsIntro")}</p>
         {/* The inputs appear only once the saved values are in: a late load must never wipe what was typed. */}
         {!data ? <p className="mt-3 text-tiny text-fg-dim">…</p> : (
-        <div className="mt-3 flex flex-wrap items-end gap-3">
-          <label className="flex flex-col gap-1 text-label text-fg-dim">{t("dailyCap")}<input value={daily} onChange={(e) => setDaily(e.target.value)} placeholder={t("noCap")} inputMode="decimal" className={input} data-testid="cap-daily" /></label>
-          <label className="flex flex-col gap-1 text-label text-fg-dim">{t("weeklyCap")}<input value={weekly} onChange={(e) => setWeekly(e.target.value)} placeholder={t("noCap")} inputMode="decimal" className={input} data-testid="cap-weekly" /></label>
-          <button onClick={() => void patch({ dailyStakeCap: num(daily), weeklyStakeCap: num(weekly) })} disabled={saved === "saving" || (daily.trim() !== "" && !(Number(daily) > 0)) || (weekly.trim() !== "" && !(Number(weekly) > 0))} className={buttonClass("primary")} data-testid="limits-save">{t("save")}</button>
-          {saved === "saved" && <span className="text-tiny text-pos" data-testid="limits-saved">{t("savedOk")}</span>}
+        // Money takes the decimal keypad; on a phone the two ceilings share a row and the button takes its own.
+        <div className="mt-3 grid grid-cols-2 items-end gap-3 sm:flex sm:flex-wrap">
+          <Field label={t("dailyCap")} htmlFor="cap-daily" className="sm:w-36"><Input id="cap-daily" numeric value={daily} onChange={(e) => setDaily(e.target.value)} placeholder={t("noCap")} data-testid="cap-daily" /></Field>
+          <Field label={t("weeklyCap")} htmlFor="cap-weekly" className="sm:w-36"><Input id="cap-weekly" numeric value={weekly} onChange={(e) => setWeekly(e.target.value)} placeholder={t("noCap")} data-testid="cap-weekly" /></Field>
+          <button onClick={() => void patch({ dailyStakeCap: num(daily), weeklyStakeCap: num(weekly) })} disabled={saved === "saving" || (daily.trim() !== "" && !(Number(daily) > 0)) || (weekly.trim() !== "" && !(Number(weekly) > 0))} className={buttonClass("primary", "max-sm:col-span-2")} data-testid="limits-save">{t("save")}</button>
+          {saved === "saved" && <span className="text-tiny text-pos max-sm:col-span-2" data-testid="limits-saved">{t("savedOk")}</span>}
         </div>
         )}
       </Panel>
@@ -90,8 +90,8 @@ export function SettingsPanel() {
         </p>
         {data && (
           <div className="mt-3 flex flex-wrap items-end gap-3">
-            <input aria-label={lang === "pt" ? "Banca (R$)" : "Bankroll"} value={bankroll} onChange={(e) => setBankroll(e.target.value)} inputMode="decimal" placeholder={lang === "pt" ? "R$ —" : "—"} className={input} data-testid="bankroll-amount" />
-            <button onClick={() => void patch({ bankrollAmount: num(bankroll) })} disabled={saved === "saving" || (bankroll.trim() !== "" && !(Number(bankroll) > 0))} className="rounded-control border border-line-control px-3 py-2 text-tiny text-fg-muted hover:text-fg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="bankroll-amount-save">{t("save")}</button>
+            <Input aria-label={lang === "pt" ? "Banca (R$)" : "Bankroll"} numeric value={bankroll} onChange={(e) => setBankroll(e.target.value)} placeholder="—" className="max-sm:flex-1 sm:w-36" data-testid="bankroll-amount" />
+            <button onClick={() => void patch({ bankrollAmount: num(bankroll) })} disabled={saved === "saving" || (bankroll.trim() !== "" && !(Number(bankroll) > 0))} className={buttonClass("secondary")} data-testid="bankroll-amount-save">{t("save")}</button>
           </div>
         )}
       </Panel>
@@ -119,10 +119,10 @@ export function SettingsPanel() {
           <p className="mt-3 text-sm text-warn">{t("pausedUntil")} {fmtDate(data.pause.until!)}.</p>
         ) : (
           <div className="mt-3 flex flex-col gap-3">
-            <label className="flex items-center gap-2 text-sm text-fg"><input type="checkbox" checked={confirmPause} onChange={(e) => setConfirmPause(e.target.checked)} className="size-4 appearance-none rounded-control border border-line-control bg-surface-3 checked:border-warn checked:bg-warn" data-testid="pause-confirm" />{t("pauseConfirm")}</label>
-            <div className="flex gap-2">
-              <button onClick={() => void pause(7)} disabled={!confirmPause} className="rounded-control border border-warn px-3.5 py-2 text-sm font-semibold text-warn hover:bg-warn-tint disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="pause-7">{t("pause7")}</button>
-              <button onClick={() => void pause(30)} disabled={!confirmPause} className="rounded-control border border-warn px-3.5 py-2 text-sm font-semibold text-warn hover:bg-warn-tint disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="pause-30">{t("pause30")}</button>
+            <label className="flex items-start gap-2 text-sm text-fg"><input type="checkbox" checked={confirmPause} onChange={(e) => setConfirmPause(e.target.checked)} className="u-hit mt-0.5 size-4 shrink-0 appearance-none rounded-control border border-line-control bg-surface-3 checked:border-warn checked:bg-warn" data-testid="pause-confirm" />{t("pauseConfirm")}</label>
+            <div className="flex gap-2 max-sm:grid max-sm:grid-cols-2">
+              <button onClick={() => void pause(7)} disabled={!confirmPause} className="inline-flex h-(--row-h) items-center justify-center rounded-control border border-warn px-3.5 text-sm font-semibold whitespace-nowrap text-warn transition-colors duration-(--dur-1) hover:bg-warn-tint disabled:cursor-not-allowed disabled:border-line disabled:bg-surface-3 disabled:text-fg-faint" data-testid="pause-7">{t("pause7")}</button>
+              <button onClick={() => void pause(30)} disabled={!confirmPause} className="inline-flex h-(--row-h) items-center justify-center rounded-control border border-warn px-3.5 text-sm font-semibold whitespace-nowrap text-warn transition-colors duration-(--dur-1) hover:bg-warn-tint disabled:cursor-not-allowed disabled:border-line disabled:bg-surface-3 disabled:text-fg-faint" data-testid="pause-30">{t("pause30")}</button>
             </div>
           </div>
         )}
@@ -131,9 +131,9 @@ export function SettingsPanel() {
       <Panel className="max-w-[56rem]" title={t("rankingTitle")}>
         <p className="text-tiny text-fg-dim">{t("rankingOptInIntro")}</p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 text-sm text-fg"><input type="checkbox" checked={optIn} onChange={(e) => { setOptIn(e.target.checked); void patch({ leaderboardOptIn: e.target.checked }); }} className="size-4 appearance-none rounded-control border border-line-control bg-surface-3 checked:border-action checked:bg-action" data-testid="ranking-optin" />{t("rankingOptIn")}</label>
-          <input aria-label={t("handle")} value={handle} onChange={(e) => setHandle(e.target.value)} placeholder={t("handle")} maxLength={16} className={`${input} w-44`} data-testid="ranking-handle" />
-          <button onClick={() => void patch({ handle: handle.trim() || null })} disabled={saved === "saving"} className="rounded-control border border-line-control px-3 py-2 text-tiny text-fg-muted hover:text-fg" data-testid="ranking-handle-save">{t("save")}</button>
+          <label className="flex min-h-(--row-h) items-center gap-2 text-sm text-fg max-sm:basis-full"><input type="checkbox" checked={optIn} onChange={(e) => { setOptIn(e.target.checked); void patch({ leaderboardOptIn: e.target.checked }); }} className="u-hit size-4 appearance-none rounded-control border border-line-control bg-surface-3 checked:border-action checked:bg-action" data-testid="ranking-optin" />{t("rankingOptIn")}</label>
+          <Input aria-label={t("handle")} value={handle} onChange={(e) => setHandle(e.target.value)} placeholder={t("handle")} maxLength={16} autoCapitalize="none" autoCorrect="off" spellCheck={false} className="nums max-sm:flex-1 sm:w-44" data-testid="ranking-handle" />
+          <button onClick={() => void patch({ handle: handle.trim() || null })} disabled={saved === "saving"} className={buttonClass("secondary")} data-testid="ranking-handle-save">{t("save")}</button>
           {handleError && <span className="text-tiny text-warn" data-testid="handle-error">{handleError}</span>}
           {s?.leaderboardOptIn && s.handle && <span className="text-tiny text-fg-dim">{t("shownAs")} <span className="nums text-fg">@{s.handle}</span></span>}
         </div>

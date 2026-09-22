@@ -320,6 +320,20 @@ export function Badge({ tone = "neutral", children, className = "" }: { tone?: T
   );
 }
 
+/**
+ * A chip you press — a market, a league, an odds band — is a toggle (§12.6): pressed is the
+ * achromatic action fill, exactly like the primary button; unpressed is a control edge. On a
+ * phone the chip grows to a fingertip and takes the body size; a desk keeps the dense geometry.
+ * Pair it with aria-pressed on the button.
+ */
+export function chipClass(on: boolean, className = ""): string {
+  return cx(
+    "inline-flex items-center gap-1.5 rounded-control border px-2.5 py-1 text-tiny whitespace-nowrap transition-colors duration-(--dur-1) ease-(--ease-out) max-md:u-hit max-md:min-h-9 max-md:px-3 max-md:text-sm",
+    on ? "border-action bg-action text-action-fg" : "border-line-control text-fg-muted hover:bg-surface-2 hover:text-fg",
+    className,
+  );
+}
+
 const LEGACY_TONE: Record<string, Tone> = { high: "pos", medium: "warn", low: "neutral", pos: "pos", neg: "neg", warn: "warn", info: "info", neutral: "neutral" };
 
 /** Kept for the screens waves 1–4 have not reached yet: `high`/`medium`/`low` map onto the tones. */

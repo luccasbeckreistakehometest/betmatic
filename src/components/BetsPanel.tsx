@@ -4,7 +4,7 @@ import { track } from "@/lib/track";
 import { useState } from "react";
 import Link from "next/link";
 
-import { Badge, Chip, Empty, Odds, buttonClass } from "@/components/ui";
+import { Badge, Chip, Empty, Odds, Skeleton, buttonClass, chipClass, cx } from "@/components/ui";
 import { formatMoney, formatNumber, formatPercent as pctOf } from "@/lib/format";
 import { groupAlternatives, legDiff } from "@/lib/bets/alternatives-view";
 import { kellyFraction, formatDecimal, getBand } from "@/lib/odds";
@@ -59,7 +59,7 @@ function EdgeTag({ edgePct, lang }: { edgePct: number | undefined; lang: Lang })
   );
 }
 
-function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [], prices = null }: { bet: BetSuggestion; lang: Lang; gameId?: string; sportKey?: string; alerts?: LegAlertView[]; alternatives?: BetSuggestion[]; prices?: TicketPricesView | null }) {
+function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [], prices = null, className = "" }: { bet: BetSuggestion; lang: Lang; gameId?: string; sportKey?: string; alerts?: LegAlertView[]; alternatives?: BetSuggestion[]; prices?: TicketPricesView | null; className?: string }) {
   const t = makeT(lang);
   const band = getBand(bet.bandKey);
   const longshot = bet.combinedDecimal >= 20;
@@ -83,10 +83,12 @@ function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [], p
   }
 
   return (
-    <li className="rounded-panel border border-line bg-surface-1">
-      <div className="flex flex-wrap items-center gap-2 border-b border-line px-3.5 py-2.5">
+    <li className={cx("rounded-panel border border-line bg-surface-1", className)} data-testid="ticket" data-band={bet.bandKey}>
+      {/* On a phone the title takes the first line by itself and the facts sit under it; on a desk
+          the row reads chip · title · confidence · price in one line, as before. */}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-line px-3.5 py-2.5">
         <Chip tone={bet.confidence}>{bet.kind === "parlay" ? t("parlay") : t("single")}</Chip>
-        <span className="text-sm font-semibold text-fg">{bet.title}</span>
+        <span className="text-sm font-semibold text-fg max-md:order-first max-md:basis-full max-md:text-base">{bet.title}</span>
         <span title={bet.evidenceNotes.join(" · ")}>
           <Badge tone={bet.evidenceScore >= 70 ? "neutral" : bet.evidenceScore >= 45 ? "warn" : "neg"}>
             {lang === "pt" ? "confiança" : "confidence"} {bet.evidenceScore}
@@ -192,11 +194,12 @@ function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [], p
         <div className="flex flex-wrap items-center gap-3 border-t border-line px-3.5 py-2.5 text-tiny" data-testid="ticket-bankroll">
           {kelly > 0 && <span className="text-fg-muted">{lang === "pt" ? "stake sugerido" : "suggested stake"}: <span className="nums text-fg">{pctOf(kelly, lang)}</span> {lang === "pt" ? "da banca" : "of bankroll"} <span className="text-fg-dim">(¼ Kelly)</span></span>}
           {gameId && (
-            <span className="ml-auto flex items-center gap-2">
+            <span className="ml-auto flex items-center gap-2 max-md:ml-0 max-md:basis-full">
               {saved === "saved" ? <span className="text-pos">✓ {t("saved")}</span> : saved === "error" ? <span className="text-warn">{lang === "pt" ? "entre para salvar" : "sign in to save"}</span> : saved === "limit" ? <span className="text-warn" data-testid="ticket-limit">{limitNote}</span> : saved === "paused" ? <span className="text-warn" data-testid="ticket-paused">{t("pausedHint")}</span> : (
                 <>
-                  <input aria-label={lang === "pt" ? "Valor apostado (R$)" : "Stake (R$)"} value={stake} onChange={(e) => setStake(e.target.value)} placeholder={t("stake")} inputMode="decimal" className={buttonClass("secondary", "w-20")} data-testid="ticket-stake" />
-                  <button onClick={addToBankroll} disabled={!(Number(stake) > 0) || saved === "saving"} className="rounded-control border border-line-control px-2 py-1 text-fg-muted hover:border-line-control hover:text-fg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="ticket-add">{t("addToBankroll")}</button>
+                  {/* The stake is money: the decimal keypad, and on a phone the field and the button share the line. */}
+                  <input aria-label={lang === "pt" ? "Valor apostado (R$)" : "Stake (R$)"} value={stake} onChange={(e) => setStake(e.target.value)} placeholder={t("stake")} inputMode="decimal" enterKeyHint="done" className={buttonClass("secondary", "w-20 nums max-md:w-auto max-md:min-w-0 max-md:flex-1 max-md:text-right")} data-testid="ticket-stake" />
+                  <button onClick={addToBankroll} disabled={!(Number(stake) > 0) || saved === "saving"} className={buttonClass("secondary", "max-md:flex-1")} data-testid="ticket-add">{t("addToBankroll")}</button>
                 </>
               )}
             </span>
@@ -252,8 +255,68 @@ function Alternatives({ main, alternatives, lang, flagged }: { main: BetSuggesti
 
 export interface GamePricesView { tickets: TicketPricesView[]; signals: PropSignal[]; books: string[]; fetchedAt: string | null }
 
+/**
+ * The phone's way through a stack of tickets: one chip per odds band present, swiped sideways,
+ * each a pressed/unpressed toggle (§12.6) that leaves only that band's tickets on screen. A desk
+ * shows every ticket and never sees the strip.
+ */
+function BandChips({ bands, band, onBand, lang }: { bands: string[]; band: string; onBand: (key: string) => void; lang: Lang }) {
+  const t = makeT(lang);
+  if (bands.length < 2) return null;
+  return (
+    <div className="u-swipe -mx-(--panel-p) gap-2 px-(--panel-p) md:hidden" role="group" aria-label={lang === "pt" ? "Faixa de odds" : "Odds band"} data-testid="band-chips">
+      <button type="button" aria-pressed={band === "all"} onClick={() => onBand("all")} className={chipClass(band === "all")}>{t("allBands")}</button>
+      {bands.map((key) => (
+        <button key={key} type="button" aria-pressed={band === key} onClick={() => onBand(key)} className={chipClass(band === key)} data-testid={`band-${key}`}>
+          {getBand(key).label[lang]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Two ticket cards in the final shape — header, legs, the figures — while the real ones arrive. */
+export function TicketSkeleton({ label }: { label: string }) {
+  return (
+    <div aria-busy="true" className="flex flex-col gap-3" data-testid="tickets-loading">
+      <span className="sr-only">{label}</span>
+      {[0, 1].map((i) => (
+        <div key={i} aria-hidden="true" className="rounded-panel border border-line bg-surface-1">
+          <div className="flex items-center gap-2 border-b border-line px-3.5 py-3">
+            <Skeleton width="3.5rem" />
+            <Skeleton width={i ? "9rem" : "11rem"} className="h-4" />
+            <Skeleton width="5rem" className="ml-auto" />
+          </div>
+          <div className="flex flex-col gap-3 px-3.5 py-3">
+            <Skeleton width="100%" />
+            <Skeleton width="86%" />
+            <div className="flex flex-col gap-2 border-t border-line pt-3">
+              {[0, 1, 2].map((leg) => (
+                <div key={leg} className="flex items-center gap-2 py-1.5 u-rule last:shadow-none">
+                  <Skeleton width="1rem" />
+                  <Skeleton width={`${40 + ((leg * 19) % 30)}%`} className="h-3.5" />
+                  <Skeleton width="2.5rem" className="ml-auto" />
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-3 border-y border-line py-2.5 sm:grid-cols-4">
+              {[0, 1, 2, 3].map((k) => (
+                <div key={k} className="flex flex-col gap-1.5">
+                  <Skeleton width="4rem" className="h-2.5" />
+                  <Skeleton width="3rem" className="h-3.5" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function BetsPanel({ slate, lang, gameId, sportKey, alerts = [], prices = null }: { slate: BetSlate | null | undefined; lang: Lang; gameId?: string; sportKey?: string; alerts?: LegAlertView[]; prices?: GamePricesView | null }) {
   const t = makeT(lang);
+  const [band, setBand] = useState("all");
   if (!slate?.suggestions.length) {
     return (
       <>
@@ -263,13 +326,18 @@ export function BetsPanel({ slate, lang, gameId, sportKey, alerts = [], prices =
     );
   }
 
+  const groups = groupAlternatives(slate.suggestions);
+  const bands = [...new Set(groups.map((g) => g.main.bandKey))].sort((a, b) => getBand(a).min - getBand(b).min);
+  const shown = bands.includes(band) ? band : "all";
+
   return (
     <div className="flex flex-col gap-3">
+      <BandChips bands={bands} band={shown} onBand={setBand} lang={lang} />
       {prices && <PricesMeta books={prices.books} fetchedAt={prices.fetchedAt} lang={lang} />}
       {prices?.signals.length && sportKey ? <PropSignalsList signals={prices.signals} sportKey={sportKey} lang={lang} /> : null}
       <ul className="flex flex-col gap-3">
-        {groupAlternatives(slate.suggestions).map(({ main, alternatives }) => (
-          <Ticket key={main.id} bet={main} lang={lang} gameId={gameId} sportKey={sportKey} alerts={alerts.filter((a) => a.suggestionId === main.id)} alternatives={alternatives} prices={prices?.tickets.find((p) => p.suggestionId === main.id) ?? null} />
+        {groups.map(({ main, alternatives }) => (
+          <Ticket key={main.id} bet={main} lang={lang} gameId={gameId} sportKey={sportKey} alerts={alerts.filter((a) => a.suggestionId === main.id)} alternatives={alternatives} prices={prices?.tickets.find((p) => p.suggestionId === main.id) ?? null} className={shown !== "all" && main.bandKey !== shown ? "max-md:hidden" : ""} />
         ))}
       </ul>
       {slate.dataNote && (

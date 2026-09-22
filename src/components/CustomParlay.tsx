@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useNavState } from "@/components/Controls";
-import { Checkbox, Empty, Odds, PageHead, Panel, Select, buttonClass } from "@/components/ui";
+import { Checkbox, Empty, Odds, PageHead, Panel, Select, buttonClass, chipClass } from "@/components/ui";
 import { formatDecimal } from "@/lib/odds";
 import { formatPercent as pctOf } from "@/lib/format";
 import { formatOdds } from "@/lib/format";
@@ -116,14 +116,15 @@ function CustomForm(props: {
     return <Panel title={c.title}><div className="flex flex-col gap-2"><Empty>{c.signIn}</Empty><Link href={`/login?lang=${lang}`} className={buttonClass("primary", "w-fit")}>{lang === "pt" ? "Entrar" : "Log in"}</Link></div></Panel>;
   }
   // Selection is achromatic, exactly like the primary button: a chip is not a hue (§6.2).
-  const chip = (on: boolean) => `rounded-control border px-2.5 py-1 text-tiny transition-colors duration-(--dur-1) ease-(--ease-out) ${on ? "border-action bg-action text-action-fg" : "border-line-control text-fg-muted hover:bg-surface-2 hover:text-fg"}`;
+  const chip = (on: boolean) => chipClass(on);
   return (
     <Panel title={c.target}>
       <div className="flex max-w-[56rem] flex-col gap-5" data-testid="custom-form">
+        {/* Presets, the slider and the exact number: on a phone the slider takes its own full row. */}
         <div className="flex flex-wrap items-center gap-2">
-          {PRESETS.map((p) => <button key={p} type="button" onClick={() => set.setTarget(p)} className={chip(state.target === p)} data-testid={`preset-${p}`}>{p}x</button>)}
-          <input type="range" min={2} max={500} step={1} value={state.target} onChange={(e) => set.setTarget(Number(e.target.value))} aria-label={c.target} className="range min-w-0 flex-1" />
-          <input type="number" min={2} max={500} value={state.target} onChange={(e) => set.setTarget(Math.min(500, Math.max(2, Number(e.target.value) || 2)))} aria-label={c.target} className={buttonClass("secondary", "w-20")} data-testid="target-input" />
+          {PRESETS.map((p) => <button key={p} type="button" onClick={() => set.setTarget(p)} aria-pressed={state.target === p} className={chip(state.target === p)} data-testid={`preset-${p}`}>{p}x</button>)}
+          <input type="range" min={2} max={500} step={1} value={state.target} onChange={(e) => set.setTarget(Number(e.target.value))} aria-label={c.target} className="range min-w-0 flex-1 max-md:order-last max-md:basis-full" />
+          <input type="number" inputMode="numeric" min={2} max={500} value={state.target} onChange={(e) => set.setTarget(Math.min(500, Math.max(2, Number(e.target.value) || 2)))} aria-label={c.target} className={buttonClass("secondary", "w-20 nums max-md:ml-auto")} data-testid="target-input" />
         </div>
         <label className="flex flex-wrap items-center gap-2 text-sm text-fg-muted">
           {c.legs}
@@ -134,20 +135,20 @@ function CustomForm(props: {
         <div>
           <p className="text-label u-label text-fg-dim">{c.markets} <span className="normal-case tracking-normal">({state.markets.length ? state.markets.length : c.allMarkets})</span></p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
-            {(meta?.markets ?? []).map((m) => <button key={m.key} type="button" onClick={() => set.toggleMarket(m.key)} className={chip(state.markets.includes(m.key))}>{m.label[lang]}</button>)}
+            {(meta?.markets ?? []).map((m) => <button key={m.key} type="button" onClick={() => set.toggleMarket(m.key)} aria-pressed={state.markets.includes(m.key)} className={chip(state.markets.includes(m.key))}>{m.label[lang]}</button>)}
           </div>
         </div>
         {games.length > 0 && (
           <div>
             <p className="text-label u-label text-fg-dim">{c.games} <span className="normal-case tracking-normal">({state.gameIds.length ? state.gameIds.length : c.allGames})</span></p>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {games.map((g) => <button key={g.id} type="button" onClick={() => set.toggleGame(g.id)} className={chip(state.gameIds.includes(g.id))}>{g.away.displayName} @ {g.home.displayName}</button>)}
+              {games.map((g) => <button key={g.id} type="button" onClick={() => set.toggleGame(g.id)} aria-pressed={state.gameIds.includes(g.id)} className={chip(state.gameIds.includes(g.id))}>{g.away.displayName} @ {g.home.displayName}</button>)}
             </div>
           </div>
         )}
         <div className="flex flex-wrap items-center gap-4 text-sm text-fg-muted">
           <Checkbox checked={state.measuredOnly} onChange={(e) => set.setMeasuredOnly(e.target.checked)} label={c.measured} />
-          <label className="flex items-center gap-2">{c.minRate} <input type="range" min={40} max={80} value={state.minRate} onChange={(e) => set.setMinRate(Number(e.target.value))} aria-label={c.minRate} className="range w-32" /><span className="nums w-12 text-fg">{pctOf(state.minRate / 100, lang, { digits: 0 })}</span></label>
+          <label className="flex items-center gap-2 max-md:basis-full">{c.minRate} <input type="range" min={40} max={80} value={state.minRate} onChange={(e) => set.setMinRate(Number(e.target.value))} aria-label={c.minRate} className="range w-32 max-md:min-w-0 max-md:flex-1" /><span className="nums w-12 text-right text-fg">{pctOf(state.minRate / 100, lang, { digits: 0 })}</span></label>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <button type="button" onClick={props.onBuild} disabled={props.busy || !props.canAfford} className={buttonClass("primary")} data-testid="custom-build">
@@ -219,8 +220,8 @@ function CustomTicket({ c, lang, ticket, index, slipId }: { c: Copy; lang: Lang;
       <footer className="flex flex-wrap items-center gap-2 border-t border-line px-3.5 py-2.5 text-tiny">
         {state === "saved" ? <span className="text-pos" data-testid="custom-saved">{c.saved}</span> : (
           <>
-            <input value={stake} onChange={(e) => setStake(e.target.value)} placeholder={c.stake} inputMode="decimal" aria-label={c.stake} className={buttonClass("secondary", "w-20")} data-testid="custom-stake" />
-            <button type="button" onClick={() => void save()} disabled={!(Number(stake) > 0) || state === "saving" || !slipId} className="rounded-control border border-line-control px-2 py-1 text-fg-muted hover:text-fg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="custom-save">{c.save}</button>
+            <input value={stake} onChange={(e) => setStake(e.target.value)} placeholder={c.stake} inputMode="decimal" enterKeyHint="done" aria-label={c.stake} className={buttonClass("secondary", "w-20 nums max-md:w-auto max-md:min-w-0 max-md:flex-1 max-md:text-right")} data-testid="custom-stake" />
+            <button type="button" onClick={() => void save()} disabled={!(Number(stake) > 0) || state === "saving" || !slipId} className={buttonClass("secondary", "max-md:flex-1")} data-testid="custom-save">{c.save}</button>
             {state === "limit" && <span className="text-warn">{c.limit}</span>}
             {state === "paused" && <span className="text-warn">{c.paused}</span>}
             {state === "error" && <span className="text-warn">{c.failed}</span>}

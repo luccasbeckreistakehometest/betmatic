@@ -151,8 +151,9 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     }
   }
 
+  // 16px text so iOS never zooms the page into the field; the row height is the touch target on a phone.
   const field =
-    "w-full rounded-control border border-line-control bg-surface-1 px-3 py-2.5 text-base text-fg transition-colors duration-(--dur-1) ease-(--ease-out) placeholder:text-fg-dim";
+    "w-full min-h-(--row-h) rounded-control border border-line-control bg-surface-1 px-3 py-2.5 text-base text-fg transition-colors duration-(--dur-1) ease-(--ease-out) placeholder:text-fg-dim";
 
   const choice = plan
     ? c.chosenPlan.replace("{plan}", plan.name).replace("{period}", PERIOD[period].label[lang]).replace("{price}", formatMoneyBRL(periodPrice(plan.monthlyPrice, period), lang))
@@ -161,11 +162,11 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       : null;
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-5 py-12">
+    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-5 py-12">
       <Link href={lang === "en" ? "/?lang=en" : "/"} className="mb-8 w-fit" aria-label="Betmatic">
         <Logo size={28} />
       </Link>
-      <h1 className="text-[1.7rem] font-semibold tracking-[-0.02em] text-fg">
+      <h1 className="u-title text-h3 text-fg">
         {mode === "login" ? c.loginTitle : c.signupTitle}
       </h1>
       {mode === "signup" && <p className="mt-2 text-sm leading-relaxed text-fg-muted">{c.signupSub}</p>}
@@ -179,12 +180,12 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         {mode === "signup" && (
           <label className="flex flex-col gap-1.5">
             <span className="text-tiny text-fg-muted">{c.name}</span>
-            <input className={field} value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} autoComplete="name" data-testid="auth-name" />
+            <input className={field} value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} autoComplete="name" enterKeyHint="next" data-testid="auth-name" />
           </label>
         )}
         <label className="flex flex-col gap-1.5">
           <span className="text-tiny text-fg-muted">{c.email}</span>
-          <input className={field} type="email" data-testid="auth-email" value={email} onChange={(e) => setEmail(e.target.value)} required maxLength={254} autoComplete="email" />
+          <input className={field} type="email" inputMode="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} enterKeyHint="next" data-testid="auth-email" value={email} onChange={(e) => setEmail(e.target.value)} required maxLength={254} autoComplete="email" />
         </label>
         <label className="flex flex-col gap-1.5">
           <span className="text-tiny text-fg-muted">{c.password}</span>
@@ -198,6 +199,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
             maxLength={200}
             minLength={mode === "signup" ? 8 : undefined}
             autoComplete={mode === "login" ? "current-password" : "new-password"}
+            enterKeyHint={mode === "login" ? "go" : "next"}
           />
           {mode === "signup" && <span className="text-label text-fg-dim">{c.passwordHint}</span>}
         </label>
@@ -209,7 +211,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
               <label>Deixe em branco<input tabIndex={-1} type="text" autoComplete="new-password" data-lpignore="true" data-1p-ignore value={website} onChange={(e) => setWebsite(e.target.value)} name="bm_hp_field" /></label>
             </div>
             <label className="mt-1 flex items-start gap-2.5 text-tiny leading-relaxed text-fg-muted">
-              <input type="checkbox" required checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-[3px] size-4 appearance-none rounded-control border border-line-control bg-surface-3 checked:border-action checked:bg-action" data-testid="auth-consent" />
+              <input type="checkbox" required checked={consent} onChange={(e) => setConsent(e.target.checked)} className="u-hit mt-[3px] size-4 shrink-0 appearance-none rounded-control border border-line-control bg-surface-3 checked:border-action checked:bg-action" data-testid="auth-consent" />
               <span>
                 {c.consentBefore}
                 <Link href={lang === "en" ? "/terms" : "/termos"} target="_blank" className="text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg">{c.terms}</Link>
@@ -235,12 +237,12 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
 
       <Link
         href={`${mode === "login" ? "/signup" : "/login"}?${carry.toString()}`}
-        className="mt-5 text-sm text-fg-muted transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg"
+        className="u-hit mt-5 w-fit text-sm text-fg-muted transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg"
       >
         {mode === "login" ? c.toSignup : c.toLogin}
       </Link>
       {mode === "login" && (
-        <Link href={`/contato?lang=${lang}&topic=account`} className="mt-2 text-tiny text-fg-dim transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg">
+        <Link href={`/contato?lang=${lang}&topic=account`} className="u-hit mt-3 w-fit text-tiny text-fg-dim transition-colors duration-(--dur-1) ease-(--ease-out) hover:text-fg">
           {c.forgot}
         </Link>
       )}

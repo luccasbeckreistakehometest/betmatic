@@ -1131,3 +1131,56 @@ marked inline with `design-guard-allow`.
 - There is no visual-regression harness; screenshots are still taken by hand.
 - The legacy token aliases in `globals.css` still resolve, so the guard catches new names but the
   old ones are not yet deleted.
+
+---
+
+## Appendix F — the phone
+
+Written after building it, on `feat/mobile-app-feel`, so the doc and the code agree. The brief was
+one sentence from the owner: on a phone the product has to read as an app and be obvious. It is the
+same system at 390px — the same ramp, rules, numerals and prohibitions — with these decisions.
+
+**Chrome.** The bottom bar of §12.7 is now fixed, 56px plus the device's own inset (`--safe-b`,
+read once in `globals.css`), and holds Jogos · Múltiplas · Banca · Conta — and, while a game of the
+current sport is being played, that game as a fifth tab with the live dot. The current tab carries
+the selection blue as a 2px rule on its top edge plus ink: §6.1 reserves the hue for focus *and the
+current nav item*, and on a 70px tab a word alone did not read at arm's length. The shell reserves
+the bar's height (`--tabbar-h`, 0 on a desk), so nothing sits under it; the tour card and the
+session reminder anchor to `--float-b` instead of a fixed 20px.
+
+**The slate.** Below 768px the table leaves and each fixture is a card (`GameCard`): kickoff or the
+live clock, both teams with crests and scores, the three market numbers in tabular mono, a chevron.
+The whole card is one real link — a long press, a new tab and a middle click behave as the platform
+expects without a line of script. §11.1's "definition list per row" stays the rule for every other
+dense table; a slate is scanned, not read, and six labelled lines per game was a form.
+
+**The game page.** A compact head (`GameStickyHead`) slides under the topbar once the full team
+block has scrolled away and reads the score the live panel polls, from the same request. The odds
+bands are chips a thumb swipes (`u-swipe`), pressed/unpressed toggles that leave one band's tickets
+on screen. One primary action lives in a bar above the tab bar (`GameActionBar`): the live read, the
+day's pick, generation, sign-up or the plans, offered by the region that owns it and shown only
+while that region's own button is off screen — so a view keeps one primary action (§14) at every
+scroll position.
+
+**Touch.** Below 768px `--row-h` is 44px, so every control drawn at the row height is a target; a
+control drawn smaller keeps its box and gains a transparent 44px hit area (`u-hit`, the mechanism
+§12.1 describes). Selectable chips share one class (`chipClass`): pressed is the action fill on both
+sizes; on a phone they grow to 36px plus the hit area and take the body size. Stakes, lines and
+ceilings open the decimal keypad; e-mail opens the e-mail one.
+
+**Type.** The two smallest steps of §4 — `text-micro` (10) and `text-label` (11) — are 12px below
+768px, on the owner's rule that nothing on a phone is set under 12px. Every other size is fixed, as
+§4 requires; the hand-written table header and the collapsed row label read the token, so the floor
+reaches them too.
+
+**Loading.** `loading.tsx` streams the slate's and the game page's frames — cards on a phone, the
+table's own columns on a desk, two ticket cards in the final shape — and the tickets panel loads
+with the same skeleton instead of a sentence.
+
+**Install.** `manifest.ts` (standalone, portrait, the dark page surface as both colours), the mark
+as 192/512/maskable PNGs rasterised from the favicon's geometry, `viewport-fit=cover` and the
+Apple web-app meta. No service worker, on purpose: nothing behind a login is ever cached, and
+current browsers install without one.
+
+**Not done.** The header still shows the sport picker, not a date picker; a per-viewer density
+choice is still ignored below 768px (comfortable is forced, as §7 says).

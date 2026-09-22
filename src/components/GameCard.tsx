@@ -14,12 +14,10 @@ export function signedLine(value: number | undefined, lang: Lang): string {
 function TeamLine({ team, won, showScore }: { team: TeamRef; won: boolean; showScore: boolean }) {
   return (
     <span className="flex min-w-0 items-center gap-2">
-      {team.logo ? (
+      {team.logo && (
         // ESPN's crest, desaturated and at the size of a glyph (§6.6); a plain img keeps this a server component.
         // eslint-disable-next-line @next/next/no-img-element
         <img src={team.logo} alt="" width={16} height={16} className="size-4 shrink-0 object-contain opacity-80 saturate-50" />
-      ) : (
-        <span aria-hidden="true" className="size-4 shrink-0" />
       )}
       <span className={cx("truncate text-base", won ? "font-medium text-fg" : "text-fg-muted")}>{team.name || team.displayName}</span>
       {showScore && team.score !== undefined && (
