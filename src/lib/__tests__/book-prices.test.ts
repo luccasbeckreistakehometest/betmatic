@@ -75,6 +75,19 @@ describe("book_prices store", () => {
     expect(booksForGame("401857190", later)).toEqual({ books: ["Superbet"], fetchedAt: later.toISOString() });
   });
 
+  it("keeps the selection's ids as JSON, gives them to an unchanged price stored before they existed, and reads them back", () => {
+    const ev = event("sportingbet:sportingbet:19919149", "Washington Mystics", "Connecticut Sun", { sportingbet: "19919149", betradar: "68096448" });
+    const spread = (at: Date, ref?: BookPrice["ref"]) => [{ ...price("Sportingbet", ev, { market: "spread", side: "away", line: 14.5, decimal: 1.95, fetchedAt: at.toISOString(), ref }), platform: "sportingbet" }];
+    const t1 = new Date(NOW.getTime() + 60_000), t2 = new Date(NOW.getTime() + 120_000);
+    persistPrices(spread(t1), "wnba", [GAME], t1);
+    expect(pricesForGame("401857190", t1).find((p) => p.book === "Sportingbet")?.ref).toBeUndefined();
+    // The same price read again, now with its ids: no new row, the ids land on the current one.
+    expect(persistPrices(spread(t2, { eventId: "19919149", marketId: "1560207544", outcomeId: "2301308044" }), "wnba", [GAME], t2)).toMatchObject({ rows: 1, changed: 0 });
+    const row = pricesForGame("401857190", t2).find((p) => p.book === "Sportingbet")!;
+    expect(row.ref).toEqual({ eventId: "19919149", marketId: "1560207544", outcomeId: "2301308044" });
+    expect(getDb().prepare("SELECT COUNT(*) n FROM book_prices WHERE book = 'Sportingbet'").get()).toEqual({ n: 1 });
+  });
+
   it("keys a price by its kind, so an over/under pair and an N+ rung at the same line never churn each other", () => {
     const ev = event("superbet:superbet:1", "Washington Mystics", "Connecticut Sun", { betradar: "68096448", superbet: "1" });
     const both = (at: Date) => [
@@ -119,7 +132,7 @@ describe("book_prices store", () => {
     // A later automatic read never undoes the hand match.
     persistPrices([price("KTO", ev, { market: "moneyline", side: "home", decimal: 1.12 })], "wnba", [LATER], NOW);
     expect(pricesForGame("401857190", NOW).find((p) => p.book === "KTO")?.decimal).toBe(1.12);
-    expect(listCoverage().find((c) => c.gameId === "401857190")?.books).toEqual(["Betfair Exchange", "KTO", "Superbet"]);
+    expect(listCoverage().find((c) => c.gameId === "401857190")?.books).toEqual(["Betfair Exchange", "KTO", "Sportingbet", "Superbet"]);
     expect(booksStats().matched).toBeGreaterThanOrEqual(3);
   });
 

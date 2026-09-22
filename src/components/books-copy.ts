@@ -30,6 +30,15 @@ const COPY = {
   bookOne: { pt: "casa", en: "book" },
   bookMany: { pt: "casas", en: "books" },
   justNow: { pt: "agora", en: "just now" },
+  // "Abrir na casa com o bilhete montado": the outbound links under a leg and under a ticket.
+  openAt: { pt: "Abrir na", en: "Open at" },
+  openTicketAt: { pt: "Abrir bilhete inteiro na", en: "Open the whole ticket at" },
+  alsoAt: { pt: "também na", en: "also at" },
+  slipReady: { pt: "bilhete pronto", en: "slip ready" },
+  gamePage: { pt: "página do jogo", en: "game page" },
+  marketPage: { pt: "página do mercado", en: "market page" },
+  newTab: { pt: "abre em nova aba", en: "opens in a new tab" },
+  unverified: { pt: "link montado pelo esquema público da casa, ainda não testado por nós", en: "link built from the book's public scheme, not yet tested by us" },
   started: { pt: "jogo em andamento: os preços das casas eram os de antes do início", en: "game under way: the books' prices were the pre-game ones" },
 } as const;
 

@@ -1,5 +1,5 @@
 import { bookJson } from "@/lib/sources/br-books/http";
-import { cleanDecimal, milestoneLine, milestoneRung, normalisePlayer, normaliseTeam, parseLineValue, sideFromLabel, sportOf, statFromLabel } from "@/lib/sources/br-books/normalise";
+import { cleanDecimal, milestoneLine, milestoneRung, normalisePlayer, normaliseTeam, parseLineValue, sideFromLabel, sportOf, statFromLabel, stripAccents } from "@/lib/sources/br-books/normalise";
 import type { BookAdapter, BookEvent, BookPrice, BookSport, FetchArgs } from "@/lib/sources/br-books/types";
 
 /**
@@ -31,7 +31,9 @@ export interface SuperbetListEvent {
 }
 export interface SuperbetOdd {
   marketId: number; marketName: string; name: string; price: number; code?: string; status?: string;
-  specialBetValue?: string;
+  /** The odd's own id, market template id and the value its betslip loader resolves a selection by (deeplinks.ts). */
+  uuid?: string; outcomeId?: number;
+  specialBetValue?: string | null;
   specifiers?: { player?: string; total?: string; hcp?: string; milestone?: string };
   info?: string;
 }
@@ -39,6 +41,14 @@ export interface SuperbetEventDetail { data: { eventId: number; matchName: strin
 
 const hourFloor = (iso: string) => { const d = new Date(iso); d.setUTCMinutes(0, 0, 0); return d.toISOString(); };
 const hourCeil = (iso: string) => { const d = new Date(iso); if (d.getUTCMinutes() || d.getUTCSeconds() || d.getUTCMilliseconds()) { d.setUTCHours(d.getUTCHours() + 1); } d.setUTCMinutes(0, 0, 0); return d.toISOString(); };
+
+const SPORT_SLUG: Record<BookSport, string> = { basketball: "basquete", soccer: "futebol" };
+const slug = (s: string) => stripAccents(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+/** The event page as the site's own sitemap lists it: /odds/<sport>/<home>-x-<away>-<eventId> (any slug renders). */
+export function superbetEventUrl(event: BookEvent): string {
+  return `https://superbet.bet.br/odds/${SPORT_SLUG[event.sport]}/${slug(event.home)}-x-${slug(event.away)}-${event.externalIds.superbet}`;
+}
 
 /** "Washington Mystics (F)·Connecticut Sun (F)" → home, away. */
 export function splitEventName(name: string): { home: string; away: string } | null {
@@ -74,11 +84,13 @@ export function parseSuperbetEvent(detail: SuperbetEventDetail, event: BookEvent
   const data = detail.data?.[0];
   const odds = data?.odds ?? [];
   const out: BookPrice[] = [];
-  const base = { book: "Superbet", platform: "superbet", sport: event.sport, event, fetchedAt, url: `https://superbet.bet.br/evento/${event.externalIds.superbet}` } as const;
+  const base = { book: "Superbet", platform: "superbet", sport: event.sport, event, fetchedAt, url: superbetEventUrl(event) } as const;
   for (const o of odds) {
     if (o.status && o.status !== "active") continue;
     const price = cleanDecimal(o.price);
     if (price === null) continue;
+    // What a deep link needs (deeplinks.ts): the event, the outcome and the odd's uuid.
+    const ref = { eventId: String(data?.eventId ?? event.externalIds.superbet), marketId: String(o.marketId), outcomeId: o.outcomeId !== undefined ? String(o.outcomeId) : undefined, uuid: o.uuid, specialBetValue: o.specialBetValue ?? undefined };
     const name = o.marketName ?? "";
     if (PARTIAL.test(name) && !/^Jogador|do Jogador|pelo Jogador/i.test(name)) continue;
 
@@ -91,11 +103,11 @@ export function parseSuperbetEvent(detail: SuperbetEventDetail, event: BookEvent
         const line = parseLineValue(o.specifiers.total);
         const side = sideFromLabel(o.name);
         if (line === null || !side) continue;
-        out.push({ ...base, market: "player_prop", player, stat, line, side, decimal: price, kind: "total" });
+        out.push({ ...base, market: "player_prop", player, stat, line, side, decimal: price, kind: "total", ref });
       } else if (o.specifiers?.milestone !== undefined) {
         const rung = parseLineValue(o.specifiers.milestone) ?? milestoneRung(o.name);
         if (rung === null || rung < 1) continue;
-        out.push({ ...base, market: "player_prop", player, stat, line: milestoneLine(rung), side: "over", decimal: price, kind: "milestone" });
+        out.push({ ...base, market: "player_prop", player, stat, line: milestoneLine(rung), side: "over", decimal: price, kind: "milestone", ref });
       }
       continue;
     }
@@ -106,18 +118,18 @@ export function parseSuperbetEvent(detail: SuperbetEventDetail, event: BookEvent
     if (/^Vencedor\b/i.test(name) || /^Resultado Final\b/i.test(name)) {
       const side = o.code === "1" ? "home" : o.code === "2" ? "away" : o.code === "X" || o.code === "0" ? "draw" : null;
       if (!side) continue;
-      out.push({ ...base, market: "moneyline", side, decimal: price });
+      out.push({ ...base, market: "moneyline", side, decimal: price, ref });
     } else if (/^Handicap\b/i.test(name) && event.sport === "basketball") {
       const hcp = parseLineValue(o.specifiers?.hcp ?? o.specialBetValue);
       if (hcp === null) continue;
       const side = o.code === "1" ? "home" : o.code === "2" ? "away" : null;
       if (!side) continue;
-      out.push({ ...base, market: "spread", side, line: side === "home" ? hcp : -hcp, decimal: price });
+      out.push({ ...base, market: "spread", side, line: side === "home" ? hcp : -hcp, decimal: price, ref });
     } else if (/^Total de (Pontos|Gols)\b/i.test(name)) {
       const line = parseLineValue(o.specifiers?.total ?? o.specialBetValue);
       const side = o.code === "+" ? "over" : o.code === "-" ? "under" : sideFromLabel(o.name);
       if (line === null || !side) continue;
-      out.push({ ...base, market: "total", side, line, decimal: price });
+      out.push({ ...base, market: "total", side, line, decimal: price, ref });
     }
   }
   return out;

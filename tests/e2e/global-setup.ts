@@ -43,6 +43,13 @@ export default async function globalSetup() {
   db.prepare("INSERT INTO predictions (id,scope,sportKey,gameId,dateKey,lang,matchup,startsAt,payload,generatedAt,costUsd) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
     .run("pred_e2e_live", "game", "wnba", "990000102", etKey(liveStart), "pt", "Dunas Divers @ Cedro Comets", liveStart.toISOString(), JSON.stringify(liveSlate), generatedAt, 0);
   db.close();
+  // The books' prices on the pro game (990000101), written through the real store so the "Abrir na
+  // casa" links under its tickets are built by the code that builds them live.
+  // The fake world kicks that game off five hours from the run's clock (tests/e2e/espn-world.ts); the
+  // seconds between the two clocks sit well inside the matcher's 30-minute window.
+  const startsAt = new Date(Date.now() + 5 * 3_600_000).toISOString();
+  const b = spawnSync("npx", ["tsx", "tests/e2e/seed-books.mts", startsAt], { env: { ...process.env, DATA_DIR: "data/e2e", AUTH_SECRET: process.env.AUTH_SECRET ?? "e2e-secret-that-is-long-enough-for-the-guard" }, stdio: "pipe", encoding: "utf8" });
+  if (b.status !== 0) throw new Error(`seed-books failed: ${b.stderr || b.stdout}`);
   // A small settled ledger so the public track record, permalinks and the bankroll have data.
   const ledgerDir = path.join(dir, "ledger");
   fs.mkdirSync(ledgerDir, { recursive: true });

@@ -6,6 +6,8 @@ export const CLIENT_EVENTS = [
   "page_view", "landing_view", "sport_funnel_view", "jogo_view", "prova_view", "tool_used", "signup_view", "first_game_open",
   "ticket_viewed", "alt_expanded", "share_clicked", "plan_view", "telegram_link_started", "live_panel_open", "tipster_funnel_view",
   "referral_landing",
+  // An outbound click on a bookmaker link under a ticket (props: book, gameId, ticketId, legIndex, kind, deep).
+  "book_click",
 ] as const;
 export type ClientEvent = (typeof CLIENT_EVENTS)[number];
 

@@ -99,17 +99,19 @@ export function parseExchangeMarkets(payload: ExchangePayload, event: BookEvent,
         const lay = cleanDecimal(r.exchange?.availableToLay?.[0]?.price) ?? undefined;
         if (back === null || (lay === undefined && back <= EXCHANGE_DUST_BACK)) continue;
         const runnerName = r.description?.runnerName ?? "";
+        // A runner is a selection id plus its handicap; the market id names the page (deeplinks.ts).
+        const ref = { eventId: String(en.eventId), marketId: m.marketId, outcomeId: String(r.selectionId), handicap: typeof r.handicap === "number" ? String(r.handicap) : undefined };
         if (type === "MATCH_ODDS") {
           const side = sideOfRunner(runnerName);
-          if (side) out.push({ ...base, market: "moneyline", side, decimal: back, lay });
+          if (side) out.push({ ...base, market: "moneyline", side, decimal: back, lay, ref });
         } else if (type === "HANDICAP" && event.sport === "basketball") {
           const side = sideOfRunner(runnerName);
           const line = parseLineValue(r.handicap);
-          if (side && side !== "draw" && line !== null) out.push({ ...base, market: "spread", side, line, decimal: back, lay });
+          if (side && side !== "draw" && line !== null) out.push({ ...base, market: "spread", side, line, decimal: back, lay, ref });
         } else if (type === "COMBINED_TOTAL" || type === "OVER_UNDER" || /^OVER_UNDER_\d+/.test(type)) {
           const side = /^(mais|over)/i.test(runnerName) ? "over" : /^(menos|under)/i.test(runnerName) ? "under" : null;
           const line = parseLineValue(r.handicap) ?? parseLineValue(runnerName.replace(/^[^\d]+/, "")) ?? parseLineValue(type.replace("OVER_UNDER_", "").replace(/(\d)5$/, "$1.5"));
-          if (side && line !== null) out.push({ ...base, market: "total", side, line, decimal: back, lay });
+          if (side && line !== null) out.push({ ...base, market: "total", side, line, decimal: back, lay, ref });
         }
       }
     }

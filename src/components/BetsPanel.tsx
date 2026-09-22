@@ -128,7 +128,7 @@ function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [], p
                   {pctOf(leg.fairProbability, lang, { digits: 0 })}
                 </span>
               </div>
-              {prices?.legs[i] && <div className="mt-1"><LegPrices leg={prices.legs[i]} lang={lang} /></div>}
+              {prices?.legs[i] && <div className="mt-1"><LegPrices leg={prices.legs[i]} lang={lang} ctx={{ gameId, ticketId: bet.id, legIndex: i }} /></div>}
               {(leg.measured || leg.openOdds) && (
                 <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
                   {leg.measured && (
@@ -187,7 +187,7 @@ function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [], p
               : `Real chance ${pctOf(bet.modelledProbability, lang, { digits: 2 })}: out of 100 tickets like this, expect to lose ~${expectedLosers(bet.modelledProbability)}.`}
           </p>
         )}
-        {prices && <TicketPrices ticket={prices} lang={lang} />}
+        {prices && <TicketPrices ticket={prices} lang={lang} ctx={{ gameId, ticketId: bet.id }} />}
         {alternatives.length > 0 && <Alternatives main={bet} alternatives={alternatives} lang={lang} gameId={gameId} sportKey={sportKey} flagged={alerts} />}
       </div>
       {(kelly > 0 || gameId) && (

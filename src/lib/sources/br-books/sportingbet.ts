@@ -62,7 +62,10 @@ export function selectCdsFixtures(payload: CdsFixtures, sportKey: string, from: 
   });
 }
 
-/** The gridable markets that ride on the fixture list: handicap, totals, match result. */
+/** A game whose own name names a period: "Vencedor - 1º quarto" sits under the template category "Vencedor". */
+const PERIOD = /quarter|quarto|half|tempo|per[íi]odo|\b[1-4](?:st|nd|rd|th|º)\b|intervalo/i;
+
+/** The gridable markets that ride on the fixture list: handicap, totals, match result — full game only. */
 export function parseCdsFixture(f: CdsFixture, event: BookEvent, fetchedAt: string): BookPrice[] {
   const out: BookPrice[] = [];
   const base = { book: "Sportingbet", platform: "sportingbet", sport: event.sport, event, fetchedAt } as const;
@@ -74,26 +77,30 @@ export function parseCdsFixture(f: CdsFixture, event: BookEvent, fetchedAt: stri
   for (const g of f.games ?? []) {
     if (g.visibility && g.visibility !== "Visible") continue;
     const category = g.templateCategory?.name?.value ?? g.name?.value ?? "";
+    // The template category is generic ("Vencedor"); the period, when there is one, is in the game's own name.
+    if (PERIOD.test(g.name?.value ?? "")) continue;
     const results = (g.results ?? []).filter((r) => !r.visibility || r.visibility === "Visible");
+    // fixture-game-result is the triplet Entain's betslip deep link takes (deeplinks.ts).
+    const ref = (r: CdsResult) => ({ eventId: f.id, marketId: String(g.id), outcomeId: String(r.id) });
     if (/handicap|spread/i.test(category) && event.sport === "basketball") {
       for (const r of results) {
         const p = cleanDecimal(r.odds), line = parseLineValue((r.attr ?? "").replace(",", ".")), side = teamSide(r.name?.value ?? "");
         if (p === null || line === null || !side) continue;
-        out.push({ ...base, market: "spread", side, line, decimal: p });
+        out.push({ ...base, market: "spread", side, line, decimal: p, ref: ref(r) });
       }
     } else if (/^totais$|^totals?$|total de gols|total goals/i.test(category)) {
       for (const r of results) {
         const p = cleanDecimal(r.odds), line = parseLineValue((g.attr ?? r.attr ?? "").replace(",", "."));
         const side = r.totalsPrefix === "Over" ? "over" : r.totalsPrefix === "Under" ? "under" : null;
         if (p === null || line === null || !side) continue;
-        out.push({ ...base, market: "total", side, line, decimal: p });
+        out.push({ ...base, market: "total", side, line, decimal: p, ref: ref(r) });
       }
     } else if (/resultado da partida|money ?line|vencedor|1x2|match result|winner/i.test(category) && !/quarter|half|tempo|período/i.test(category)) {
       for (const r of results) {
         const p = cleanDecimal(r.odds); if (p === null) continue;
         const label = r.name?.value ?? "";
         const side = teamSide(label) ?? (/^(empate|x|draw)$/i.test(label) ? "draw" : null);
-        if (side) out.push({ ...base, market: "moneyline", side, decimal: p });
+        if (side) out.push({ ...base, market: "moneyline", side, decimal: p, ref: ref(r) });
       }
     }
   }
