@@ -2,7 +2,7 @@ import { formatNumber, formatOdds, formatPercent } from "@/lib/format";
 import type { Lang } from "@/lib/i18n";
 import { getSport } from "@/lib/sports";
 import type { LegComparison, PropSignal, TicketComparison } from "@/lib/sources/br-books/compare";
-import { booksCopy } from "@/components/books-copy";
+import { booksCopy, feedsLabel, relativeMinutes, sideLabel } from "@/components/books-copy";
 
 /**
  * The books' verdict on a leg and on a ticket, drawn in the ticket's own type: one dense line per
@@ -36,12 +36,17 @@ export function LegPrices({ leg, lang }: { leg: LegComparison | null; lang: Lang
       )}
       {off && (
         <span className="text-warn" data-testid="leg-dispersion">
-          {t("offConsensus")}: {off.book} {formatOdds(off.decimal, lang)} {pct(off.pct, lang)} {t("median")} {formatOdds(off.othersMedian, lang)}
+          {t("offConsensus")}: {off.book} {formatOdds(off.decimal, lang)} {pct(off.pct, lang)} · {t("median")} {formatOdds(off.othersMedian, lang)} ({feedsLabel(off.others, off.otherBooks, lang)})
         </span>
       )}
-      {alt && (
+      {alt && leg.query.market === "player_prop" && (leg.query.side === "over" || leg.query.side === "under") && (
         <span className="text-warn" data-testid="leg-line-alt">
-          {t("betterLine")}: {leg.query.side === "under" ? t("under") : t("over")} {formatNumber(alt.line, lang, { digits: 1 })} @ {formatOdds(alt.decimal, lang)} {t("at")} {alt.book}
+          {t("betterLine")}: {sideLabel(leg.query.side, lang)} {formatNumber(alt.line, lang, { digits: 1 })} @ {formatOdds(alt.decimal, lang)} {t("at")} {alt.book}
+        </span>
+      )}
+      {alt && leg.query.market !== "player_prop" && (
+        <span className="text-warn" data-testid="leg-line-alt">
+          {t("betterLine")}: {formatNumber(alt.line, lang, { digits: 1 })} @ {formatOdds(alt.decimal, lang)} {t("at")} {alt.book}
         </span>
       )}
     </span>
@@ -107,13 +112,24 @@ export function PropSignalsList({ signals, sportKey, lang }: { signals: PropSign
           const alt = s.comparison.lineAlternatives.find((a) => a.better);
           return (
             <li key={`${s.player}-${s.stat}-${s.side}-${s.line}`} className="nums text-tiny text-fg-muted">
-              <span className="text-fg">{s.player}</span> {label(s.stat)} {s.side === "over" ? t("over") : t("under")} {formatNumber(s.line, lang, { digits: 1 })}
-              {off && <> — {off.book} {formatOdds(off.decimal, lang)} <span className="text-warn">{pct(off.pct, lang)}</span> ({off.others} {t("others")}: {formatOdds(off.othersMedian, lang)})</>}
-              {!off && alt && s.comparison.best && <> — {s.comparison.best.book} {formatOdds(s.comparison.best.decimal, lang)}; {alt.book} {t("over") === "mais de" && s.side === "under" ? t("under") : t("over")} {formatNumber(alt.line, lang, { digits: 1 })} @ {formatOdds(alt.decimal, lang)}</>}
+              <span className="text-fg">{s.player}</span> {label(s.stat)} {sideLabel(s.side, lang)} {formatNumber(s.line, lang, { digits: 1 })}
+              {off && <> — {off.book} {formatOdds(off.decimal, lang)} <span className="text-warn">{pct(off.pct, lang)}</span> ({t("median")} {formatOdds(off.othersMedian, lang)}: {feedsLabel(off.others, off.otherBooks, lang)})</>}
+              {!off && alt && s.comparison.best && <> — {s.comparison.best.book} {formatOdds(s.comparison.best.decimal, lang)}; {alt.book} {sideLabel(s.side, lang)} {formatNumber(alt.line, lang, { digits: 1 })} @ {formatOdds(alt.decimal, lang)}</>}
             </li>
           );
         })}
       </ul>
     </div>
+  );
+}
+
+/** "10 casas lidas · atualizado há 12 min": when the numbers under the tickets were read. */
+export function PricesMeta({ books, fetchedAt, lang, now }: { books: string[]; fetchedAt: string | null; lang: Lang; now?: number }) {
+  const t = booksCopy(lang);
+  if (!books.length || !fetchedAt) return null;
+  return (
+    <p className="mb-2 nums text-micro text-fg-dim" data-testid="prices-meta">
+      {books.length} {t("booksRead")} · {t("updated")} {relativeMinutes(fetchedAt, lang, now)}
+    </p>
   );
 }

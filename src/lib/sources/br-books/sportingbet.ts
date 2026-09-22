@@ -3,7 +3,9 @@ import { cleanDecimal, normaliseTeam, parseLineValue, sportOf } from "@/lib/sour
 import type { BookAdapter, BookEvent, BookPrice, BookSport, FetchArgs } from "@/lib/sources/br-books/types";
 
 /**
- * Sportingbet (Entain's CDS API), with the public access id its own frontend embeds. One call per
+ * Sportingbet (Entain's CDS API), with the public access id its own frontend embeds — captured from
+ * an anonymous headless session of the public sports page (scratchpad/books/api-sportingbet.json);
+ * it identifies the site build, not a user, and every visitor's browser sends it. One call per
  * sport lists the fixtures with their gridable markets: handicap and total for WNBA (the site
  * exposed no moneyline or player ladders for the WNBA on 22/09/2026), 1X2 and totals for football.
  * The fixture carries the Betradar id, which joins it to Superbet and Betnacional exactly.
@@ -102,7 +104,7 @@ export async function fetchSportingbet(args: FetchArgs): Promise<BookPrice[]> {
   const sport = sportOf(args.sportKey);
   if (!sport || !LEAGUES[args.sportKey]) return [];
   const url = `${CDS}?x-bwin-accessid=${SPORTINGBET_ACCESS_ID}&lang=pt-br&country=BR&userCountry=BR&fixtureTypes=Standard&state=Latest&offerMapping=Filtered&offerCategories=Gridable&fixtureCategories=Gridable,NonGridable,Other&sportIds=${SPORT_ID[sport]}&skip=0&take=100&sortBy=Tags`;
-  const list = await bookJson<CdsFixtures>(url);
+  const list = await bookJson<CdsFixtures>(url, { signal: args.signal });
   const fetchedAt = new Date().toISOString();
   const out: BookPrice[] = [];
   for (const f of selectCdsFixtures(list.data, args.sportKey, args.from, args.to)) {
@@ -118,5 +120,6 @@ export const sportingbetAdapter: BookAdapter = {
   platform: "sportingbet",
   sports: Object.keys(LEAGUES),
   coverage: "handicap e total (WNBA); 1X2 e total (futebol); sem props de jogador para um cliente simples",
+  hosts: ["www.sportingbet.bet.br"],
   fetchBookOdds: fetchSportingbet,
 };

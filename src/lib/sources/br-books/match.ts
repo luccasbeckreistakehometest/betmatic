@@ -60,13 +60,16 @@ function nameHits(bookName: string, team: TeamLike): boolean {
 
 /** Matches one book event against a slate. Pure. */
 export function matchEvent(event: BookEvent, games: MatchableGame[], known: Map<string, string> = new Map()): EventMatch | null {
-  // External id learned from another book of the same fixture (betradar is the one they share).
+  // External id learned from another book of the same fixture (betradar is the one they share). It
+  // is trusted only when at least one of the book's names is on that game: a wrong manual pairing
+  // must not propagate to every book sharing the id, and a name that says otherwise wins below.
   for (const [k, v] of Object.entries(event.externalIds)) {
     const gameId = known.get(`${k}:${v}`);
-    if (gameId && games.some((g) => g.id === gameId)) {
-      const g = games.find((x) => x.id === gameId)!;
-      return { gameId, matchedBy: "external", swapped: !nameHits(event.home, g.home) && nameHits(event.home, g.away) };
-    }
+    const g = gameId ? games.find((x) => x.id === gameId) : undefined;
+    if (!g) continue;
+    const straight = nameHits(event.home, g.home) || nameHits(event.away, g.away);
+    const crossed = nameHits(event.home, g.away) || nameHits(event.away, g.home);
+    if (straight || crossed) return { gameId: g.id, matchedBy: "external", swapped: !straight && crossed };
   }
   const t = Date.parse(event.startsAt);
   const candidates = games.filter((g) => Math.abs(Date.parse(g.startsAt) - t) <= KICKOFF_TOLERANCE_MS);

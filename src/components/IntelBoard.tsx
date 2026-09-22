@@ -3,15 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { BetsPanel, type LegAlertView } from "@/components/BetsPanel";
+import { BetsPanel, type GamePricesView, type LegAlertView } from "@/components/BetsPanel";
 import { RefreshBar } from "@/components/RefreshBar";
 import { useNavState } from "@/components/Controls";
 import { Empty, Panel, buttonClass } from "@/components/ui";
 import { makeT, type DictKey } from "@/lib/i18n";
 import { formatDate, formatTime } from "@/lib/format";
 import type { BetSlate } from "@/lib/types";
-import type { TicketPricesView } from "@/components/PriceComparison";
-import type { PropSignal } from "@/lib/sources/br-books/compare";
 
 interface Served {
   gameId: string | null;
@@ -105,19 +103,20 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
     return () => { alive = false; clearTimeout(id); };
   }, [hasTickets, alertDate, gameId, sport.key, lang, generatedAt]);
   // The Brazilian books' prices on these tickets, read the same way as the alerts: only for tickets
-  // the viewer already sees, and never blocking the tickets themselves.
-  const [prices, setPrices] = useState<{ tickets: TicketPricesView[]; signals: PropSignal[] } | null>(null);
+  // the viewer already sees, never blocking the tickets themselves, and not at all once the game is
+  // under way — a pre-game price shown beside a live ticket would read as available.
+  const [prices, setPrices] = useState<GamePricesView | null>(null);
   useEffect(() => {
-    if (!hasTickets || !alertDate) return;
+    if (!hasTickets || !alertDate || started) return;
     let alive = true;
     const id = setTimeout(() => {
       fetch(`/api/game/${gameId}/prices?sport=${sport.key}&lang=${lang}&date=${alertDate}`, { cache: "no-store" })
         .then((r) => (r.ok ? r.json() : null))
-        .then((j) => { if (alive && j && Array.isArray(j.tickets)) setPrices({ tickets: j.tickets, signals: j.signals ?? [] }); })
+        .then((j) => { if (alive && j && Array.isArray(j.tickets)) setPrices({ tickets: j.tickets, signals: j.signals ?? [], books: j.books ?? [], fetchedAt: j.fetchedAt ?? null }); })
         .catch(() => {});
     }, 0);
     return () => { alive = false; clearTimeout(id); };
-  }, [hasTickets, alertDate, gameId, sport.key, lang, generatedAt]);
+  }, [hasTickets, alertDate, gameId, sport.key, lang, generatedAt, started]);
   const delayed = data?.delayedGames?.find((g) => g.gameId === gameId) ?? null;
 
   const generate = useCallback(async () => {

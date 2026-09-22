@@ -93,8 +93,15 @@ export function parseAltenarEvent(detail: AltenarEventDetails, event: BookEvent,
       }
     } else if (event.sport === "basketball" && m.typeId === TYPE.handicap) {
       for (const o of oddsOf(m)) {
-        const p = cleanDecimal(o.price), line = parseLineValue(o.sv), side = sideOfTeam(o);
-        if (p === null || line === null || !side) continue;
+        const p = cleanDecimal(o.price), side = sideOfTeam(o);
+        if (p === null || !side) continue;
+        // `sv` is the market's HOME line on both outcomes ("-7" under "Connecticut Sun (F) (+7)"). The
+        // outcome name carries each side's own handicap, so it wins; without one the away side gets
+        // the home line with its sign flipped.
+        const named = parseLineValue((o.name ?? "").match(/\(([+-]?\d+(?:[.,]\d+)?)\)\s*$/)?.[1]);
+        const sv = parseLineValue(o.sv);
+        const line = named ?? (sv === null ? null : side === "home" ? sv : -sv);
+        if (line === null) continue;
         out.push({ ...base, market: "spread", side, line, decimal: p });
       }
     } else if (m.typeId === TYPE.total || m.typeId === TYPE.soccerTotal) {
@@ -137,19 +144,19 @@ export function makeAltenarAdapter(integration: string, book: string): BookAdapt
   const fetchBookOdds = async (args: FetchArgs): Promise<BookPrice[]> => {
     const sport = sportOf(args.sportKey);
     if (!sport || !LEAGUES[args.sportKey]) return [];
-    const list = await bookJson<AltenarList>(`${ALTENAR_BASE}/GetEvents?${query}&sportId=${SPORT_ID[sport]}&period=0`);
+    const list = await bookJson<AltenarList>(`${ALTENAR_BASE}/GetEvents?${query}&sportId=${SPORT_ID[sport]}&period=0`, { signal: args.signal });
     const competitors = new Map((list.data.competitors ?? []).map((c) => [c.id, c.name]));
     const fetchedAt = new Date().toISOString();
     const out: BookPrice[] = [];
     for (const { ev, league } of selectAltenarEvents(list.data, args.sportKey, args.from, args.to)) {
       const event = altenarEvent(ev, sport, integration, competitors, league);
       if (!event) continue;
-      const detail = await bookJson<AltenarEventDetails>(`${ALTENAR_BASE}/GetEventDetails?${query}&eventId=${ev.id}`);
+      const detail = await bookJson<AltenarEventDetails>(`${ALTENAR_BASE}/GetEventDetails?${query}&eventId=${ev.id}`, { signal: args.signal });
       out.push(...parseAltenarEvent(detail.data, event, book, fetchedAt));
     }
     return out;
   };
-  return { id: `altenar:${integration}`, book, platform: "altenar", sports: Object.keys(LEAGUES), coverage: "vencedor, handicap, total e props de jogador (pares e escadas N+)", fetchBookOdds };
+  return { id: `altenar:${integration}`, book, platform: "altenar", sports: Object.keys(LEAGUES), coverage: "vencedor, handicap, total e props de jogador (pares e escadas N+)", hosts: ["sb2frontend-altenar2.biahosted.com"], fetchBookOdds };
 }
 
 export const altenarAdapters: BookAdapter[] = ALTENAR_TENANTS.map((t) => makeAltenarAdapter(t.integration, t.book));

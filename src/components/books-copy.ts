@@ -24,8 +24,33 @@ const COPY = {
   over: { pt: "mais de", en: "over" },
   under: { pt: "menos de", en: "under" },
   others: { pt: "outras", en: "others" },
-  median: { pt: "mediana", en: "median" },
+  median: { pt: "mediana das outras", en: "others' median" },
+  feedOne: { pt: "feed", en: "feed" },
+  feedMany: { pt: "feeds", en: "feeds" },
+  bookOne: { pt: "casa", en: "book" },
+  bookMany: { pt: "casas", en: "books" },
+  justNow: { pt: "agora", en: "just now" },
+  started: { pt: "jogo em andamento: os preços das casas eram os de antes do início", en: "game under way: the books' prices were the pre-game ones" },
 } as const;
 
 export type BooksCopyKey = keyof typeof COPY;
 export const booksCopy = (lang: Lang) => (key: BooksCopyKey) => COPY[key][lang];
+
+/** "mais de" / "over" for an over, "menos de" / "under" for an under — in either language. */
+export const sideLabel = (side: "over" | "under", lang: Lang): string => COPY[side][lang];
+
+/** "1 feed, 4 casas" / "2 feeds, 6 books": how many independent feeds and books sit behind a median. */
+export function feedsLabel(feeds: number, books: number, lang: Lang): string {
+  return `${feeds} ${COPY[feeds === 1 ? "feedOne" : "feedMany"][lang]}, ${books} ${COPY[books === 1 ? "bookOne" : "bookMany"][lang]}`;
+}
+
+/** "há 12 min" / "12 min ago"; hours past an hour; "agora" under a minute. */
+export function relativeMinutes(iso: string | null | undefined, lang: Lang, now = Date.now()): string {
+  if (!iso) return "";
+  const mins = Math.round((now - Date.parse(iso)) / 60_000);
+  if (!Number.isFinite(mins)) return "";
+  if (mins < 1) return COPY.justNow[lang];
+  if (mins < 60) return lang === "pt" ? `há ${mins} min` : `${mins} min ago`;
+  const hours = Math.round(mins / 60);
+  return lang === "pt" ? `há ${hours} h` : `${hours} h ago`;
+}

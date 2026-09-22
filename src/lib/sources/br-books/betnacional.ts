@@ -75,7 +75,7 @@ export async function fetchBetnacional(args: FetchArgs): Promise<BookPrice[]> {
   const sport = sportOf(args.sportKey);
   if (!sport || !LEAGUES[args.sportKey]) return [];
   const cfg = SPORT[sport];
-  const list = await bookJson<RampPayload>(`${BASE}?sport_id=${cfg.id}&category_id=0&tournament_id=&markets=${cfg.market}&filter_time_event=&provider=ramp`);
+  const list = await bookJson<RampPayload>(`${BASE}?sport_id=${cfg.id}&category_id=0&tournament_id=&markets=${cfg.market}&filter_time_event=&provider=ramp`, { signal: args.signal });
   return parseRampRows(list.data, args.sportKey, sport, args.from, args.to, new Date().toISOString());
 }
 
@@ -85,5 +85,6 @@ export const betnacionalAdapter: BookAdapter = {
   platform: "betnacional",
   sports: Object.keys(LEAGUES),
   coverage: "somente vencedor (1X2 / moneyline) pela lista pública",
+  hosts: ["prod-global-bff-events.bet6.com.br"],
   fetchBookOdds: fetchBetnacional,
 };

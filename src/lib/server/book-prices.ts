@@ -1,6 +1,7 @@
 import { getDb, newId, nowIso } from "@/lib/server/db";
 import { logEvent, reportError } from "@/lib/server/ops-log";
 import { adaptersFor, booksConfig, findAdapter, ALL_ADAPTERS } from "@/lib/sources/br-books/registry";
+import { isAbortError } from "@/lib/sources/br-books/http";
 import { matchEvent, type EventMatch, type MatchableGame } from "@/lib/sources/br-books/match";
 import { teamKey } from "@/lib/sources/br-books/normalise";
 import { BookWallError, RobotsDisallowedError, type BookAdapter, type BookEvent, type BookPrice, type BookSport } from "@/lib/sources/br-books/types";
@@ -64,7 +65,11 @@ export function ensureBooksSchema(d: Db = getDb()): void {
       current INTEGER NOT NULL DEFAULT 1            -- 1 = the book still posts this price
     );
     CREATE INDEX IF NOT EXISTS idx_book_prices_event ON book_prices(eventKey, current);
-    CREATE INDEX IF NOT EXISTS idx_book_prices_key ON book_prices(eventKey, book, market, player, stat, line, side);
+    -- The key includes the kind: an over/under pair and an "N+" rung at the same line are two prices.
+    DROP INDEX IF EXISTS idx_book_prices_key;
+    CREATE INDEX IF NOT EXISTS idx_book_prices_key2 ON book_prices(eventKey, book, market, player, stat, line, side, kind);
+    -- The admin header counts current rows; a partial index keeps that off the history.
+    CREATE INDEX IF NOT EXISTS idx_book_prices_current ON book_prices(market) WHERE current = 1;
 
     CREATE TABLE IF NOT EXISTS book_adapter_status (
       id TEXT PRIMARY KEY,
@@ -185,8 +190,8 @@ export function persistPrices(prices: BookPrice[], sportKey: string, games: Game
     ON CONFLICT(key) DO UPDATE SET lastSeenAt = excluded.lastSeenAt, startsAt = excluded.startsAt, externalIds = excluded.externalIds, url = COALESCE(excluded.url, book_events.url),
       gameId = CASE WHEN book_events.matchedBy = 'manual' THEN book_events.gameId ELSE COALESCE(excluded.gameId, book_events.gameId) END,
       matchedBy = CASE WHEN book_events.matchedBy = 'manual' THEN book_events.matchedBy ELSE COALESCE(excluded.matchedBy, book_events.matchedBy) END,
-      swapped = CASE WHEN book_events.matchedBy = 'manual' THEN book_events.swapped ELSE excluded.swapped END`);
-  const findCurrent = d.prepare(`SELECT id, decimal, lay FROM book_prices WHERE eventKey = ? AND book = ? AND market = ? AND COALESCE(player,'') = ? AND COALESCE(stat,'') = ? AND COALESCE(line, 0) = ? AND COALESCE(side,'') = ? AND current = 1`);
+      swapped = CASE WHEN book_events.matchedBy = 'manual' OR excluded.gameId IS NULL THEN book_events.swapped ELSE excluded.swapped END`);
+  const findCurrent = d.prepare(`SELECT id, decimal, lay FROM book_prices WHERE eventKey = ? AND book = ? AND market = ? AND COALESCE(player,'') = ? AND COALESCE(stat,'') = ? AND COALESCE(line, 0) = ? AND COALESCE(side,'') = ? AND COALESCE(kind,'') = ? AND current = 1`);
   const touch = d.prepare("UPDATE book_prices SET seenAt = ? WHERE id = ?");
   const retire = d.prepare("UPDATE book_prices SET current = 0 WHERE id = ?");
   const insert = d.prepare(`INSERT INTO book_prices (eventKey, book, platform, market, player, stat, line, side, kind, decimal, lay, url, fetchedAt, seenAt, current)
@@ -205,7 +210,7 @@ export function persistPrices(prices: BookPrice[], sportKey: string, games: Game
         seenEvents.set(p.event.key, { book: p.book });
         events += 1;
       }
-      const cur = findCurrent.get(p.event.key, p.book, p.market, p.player ?? "", p.stat ?? "", p.line ?? 0, p.side ?? "") as PriceKeyRow | undefined;
+      const cur = findCurrent.get(p.event.key, p.book, p.market, p.player ?? "", p.stat ?? "", p.line ?? 0, p.side ?? "", p.kind ?? "") as PriceKeyRow | undefined;
       rows += 1;
       if (cur && Math.abs(cur.decimal - p.decimal) < 0.0005 && (cur.lay ?? null) === (p.lay ?? null)) { touch.run(at, cur.id); continue; }
       if (cur) retire.run(cur.id);
@@ -235,10 +240,14 @@ function toPrice(r: PriceRow, ev: EventRow): BookPrice {
   };
 }
 
-/** Every current price the books post on one ESPN game, sides already in ESPN's home/away frame. */
-export function pricesForGame(gameId: string): BookPrice[] {
+/**
+ * Every current price the books post on one ESPN game, sides already in ESPN's home/away frame.
+ * A game that has kicked off has no current price: the books' pre-game numbers are references at
+ * best, and nothing here is read in play.
+ */
+export function pricesForGame(gameId: string, now = new Date()): BookPrice[] {
   const d = db();
-  const events = d.prepare("SELECT * FROM book_events WHERE gameId = ?").all(gameId) as EventRow[];
+  const events = d.prepare("SELECT * FROM book_events WHERE gameId = ? AND startsAt > ?").all(gameId, now.toISOString()) as EventRow[];
   if (!events.length) return [];
   const rows = d.prepare(`SELECT * FROM book_prices WHERE current = 1 AND eventKey IN (${events.map(() => "?").join(",")})`).all(...events.map((e) => e.key)) as PriceRow[];
   const byKey = new Map(events.map((e) => [e.key, e]));
@@ -246,15 +255,15 @@ export function pricesForGame(gameId: string): BookPrice[] {
 }
 
 /** Which books priced a game and when they were last read. */
-export function booksForGame(gameId: string): { books: string[]; fetchedAt: string | null } {
-  const rows = db().prepare(`SELECT p.book, MAX(p.seenAt) AS seenAt FROM book_prices p JOIN book_events e ON e.key = p.eventKey WHERE e.gameId = ? AND p.current = 1 GROUP BY p.book`).all(gameId) as { book: string; seenAt: string }[];
+export function booksForGame(gameId: string, now = new Date()): { books: string[]; fetchedAt: string | null } {
+  const rows = db().prepare(`SELECT p.book, MAX(p.seenAt) AS seenAt FROM book_prices p JOIN book_events e ON e.key = p.eventKey WHERE e.gameId = ? AND e.startsAt > ? AND p.current = 1 GROUP BY p.book`).all(gameId, now.toISOString()) as { book: string; seenAt: string }[];
   return { books: rows.map((r) => r.book).sort(), fetchedAt: rows.length ? rows.map((r) => r.seenAt).sort().pop()! : null };
 }
 
 /** The price trail of one selection at one book: opening first, current last. */
-export function priceHistory(eventKey: string, q: { book: string; market: string; player?: string; stat?: string; line?: number; side?: string }): { decimal: number; lay: number | null; fetchedAt: string; seenAt: string; current: boolean }[] {
-  return (db().prepare(`SELECT decimal, lay, fetchedAt, seenAt, current FROM book_prices WHERE eventKey = ? AND book = ? AND market = ? AND COALESCE(player,'') = ? AND COALESCE(stat,'') = ? AND COALESCE(line,0) = ? AND COALESCE(side,'') = ? ORDER BY fetchedAt`)
-    .all(eventKey, q.book, q.market, q.player ?? "", q.stat ?? "", q.line ?? 0, q.side ?? "") as { decimal: number; lay: number | null; fetchedAt: string; seenAt: string; current: number }[])
+export function priceHistory(eventKey: string, q: { book: string; market: string; player?: string; stat?: string; line?: number; side?: string; kind?: string }): { decimal: number; lay: number | null; fetchedAt: string; seenAt: string; current: boolean }[] {
+  return (db().prepare(`SELECT decimal, lay, fetchedAt, seenAt, current FROM book_prices WHERE eventKey = ? AND book = ? AND market = ? AND COALESCE(player,'') = ? AND COALESCE(stat,'') = ? AND COALESCE(line,0) = ? AND COALESCE(side,'') = ? AND (? = '' OR COALESCE(kind,'') = ?) ORDER BY fetchedAt`)
+    .all(eventKey, q.book, q.market, q.player ?? "", q.stat ?? "", q.line ?? 0, q.side ?? "", q.kind ?? "", q.kind ?? "") as { decimal: number; lay: number | null; fetchedAt: string; seenAt: string; current: number }[])
     .map((r) => ({ ...r, current: r.current === 1 }));
 }
 
@@ -278,24 +287,64 @@ export function listCoverage(limit = 40): MatchedEventSummary[] {
     .map((r) => ({ ...r, books: r.books.split(",").sort() }));
 }
 
-/** Totals for the admin header. */
+/** Totals for the admin header. Counts run over the partial index of current rows, not the history. */
 export function booksStats(): { events: number; matched: number; unmatched: number; prices: number; props: number; lastSeenAt: string | null } {
   const d = db();
   const since = new Date(Date.now() - 6 * 3_600_000).toISOString();
   const ev = d.prepare("SELECT COUNT(*) n, SUM(gameId IS NOT NULL) m FROM book_events WHERE startsAt > ?").get(since) as { n: number; m: number | null };
-  const pr = d.prepare("SELECT COUNT(*) n, SUM(market = 'player_prop') p, MAX(seenAt) t FROM book_prices WHERE current = 1").get() as { n: number; p: number | null; t: string | null };
-  return { events: ev.n, matched: ev.m ?? 0, unmatched: ev.n - (ev.m ?? 0), prices: pr.n, props: pr.p ?? 0, lastSeenAt: pr.t };
+  const pr = d.prepare("SELECT COUNT(*) n FROM book_prices WHERE current = 1").get() as { n: number };
+  const props = d.prepare("SELECT COUNT(*) n FROM book_prices WHERE current = 1 AND market = 'player_prop'").get() as { n: number };
+  const last = d.prepare("SELECT MAX(lastSeenAt) t FROM book_events").get() as { t: string | null };
+  return { events: ev.n, matched: ev.m ?? 0, unmatched: ev.n - (ev.m ?? 0), prices: pr.n, props: props.n, lastSeenAt: last.t };
+}
+
+/**
+ * What the store lets go of, every tick. Kick-off retires a game's prices — from then on nothing is
+ * "current" — and the rows of games older than the retention window are deleted with their events
+ * (the history of a decided game is only worth keeping for the closing-line study, and two weeks
+ * cover that). A fixture no book has posted for a day is gone with it: it was either a league the
+ * adapter stopped selecting or a fixture the book pulled, and either way it was noise in the
+ * unmatched list. ~40 MB a day of WNBA rows is what this bounds.
+ */
+export function cleanupBooks(now = new Date(), retentionDays = 14, unseenHours = 24): { retired: number; events: number; prices: number } {
+  const d = db();
+  const at = now.toISOString();
+  const cutoff = new Date(now.getTime() - retentionDays * 86_400_000).toISOString();
+  const unseen = new Date(now.getTime() - unseenHours * 3_600_000).toISOString();
+  return d.transaction(() => {
+    const retired = d.prepare("UPDATE book_prices SET current = 0 WHERE current = 1 AND eventKey IN (SELECT key FROM book_events WHERE startsAt <= ?)").run(at).changes;
+    const doomed = d.prepare("SELECT key FROM book_events WHERE startsAt < ? OR (gameId IS NULL AND lastSeenAt < ?)").all(cutoff, unseen) as { key: string }[];
+    let prices = 0;
+    const delPrices = d.prepare("DELETE FROM book_prices WHERE eventKey = ?");
+    const delEvent = d.prepare("DELETE FROM book_events WHERE key = ?");
+    for (const { key } of doomed) { prices += delPrices.run(key).changes; delEvent.run(key); }
+    return { retired, events: doomed.length, prices };
+  }).immediate();
 }
 
 // ---- the job ----------------------------------------------------------------------------------------
 
-export interface BooksJobAdapterResult { id: string; book: string; status: "ok" | "empty" | "error" | "wall" | "timeout" | "robots" | "off"; rows: number; events: number; matched: number; ms: number; error?: string }
-export interface BooksJobResult { runId: string; status: "ok" | "error" | "skipped"; adapters: BooksJobAdapterResult[]; rows: number; events: number; matched: number; games: number; ms: number; note: string }
+export interface BooksJobAdapterResult { id: string; book: string; status: "ok" | "empty" | "error" | "wall" | "timeout" | "robots" | "budget" | "off"; rows: number; events: number; matched: number; ms: number; error?: string }
+export interface BooksJobResult { runId: string; status: "ok" | "error" | "skipped"; adapters: BooksJobAdapterResult[]; rows: number; events: number; matched: number; games: number; ms: number; note: string; cleanup?: { retired: number; events: number; prices: number } }
 
-function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+class AdapterTimeout extends Error {
+  constructor(ms: number) { super(`timed out after ${ms} ms`); this.name = "AdapterTimeout"; }
+}
+
+/**
+ * Runs one adapter call against a deadline. The deadline fires the AbortSignal the adapter passed
+ * to every request, so a slow book stops asking (and stops holding its host's politeness slot) the
+ * moment the job gives up on it — a race that merely stops listening would leave it running.
+ */
+async function withDeadline<T>(run: (signal: AbortSignal) => Promise<T>, ms: number): Promise<T> {
+  const controller = new AbortController();
   let timer: NodeJS.Timeout | undefined;
-  const t = new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error(`timed out after ${ms} ms`)), ms); });
-  return Promise.race([p, t]).finally(() => clearTimeout(timer));
+  const deadline = new Promise<never>((_, reject) => { timer = setTimeout(() => { controller.abort(); reject(new AdapterTimeout(ms)); }, ms); });
+  try {
+    return await Promise.race([run(controller.signal), deadline]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /** Upcoming games per sport inside the horizon, from the cached ESPN scoreboards (today, tomorrow, the day after). */
@@ -342,29 +391,48 @@ export async function runBooksJob(opts: { now?: Date; sports?: string[]; adapter
   const gameCount = [...games.values()].reduce((n, g) => n + g.length, 0);
   const from = new Date(now.getTime() - 60 * 60_000).toISOString();
   const to = new Date(now.getTime() + cfg.horizonHours * 3_600_000).toISOString();
+  // A host that answered with a wall once this run is not asked again by the adapters sharing it
+  // (the five Altenar tenants are one host); a second wall in one tick is just another request.
+  const walled = new Set<string>();
 
   for (const adapter of adapters) {
     const t0 = Date.now();
     const r: BooksJobAdapterResult = { id: adapter.id, book: adapter.book, status: "empty", rows: 0, events: 0, matched: 0, ms: 0 };
-    try {
-      for (const [sportKey, list] of games) {
-        if (!adapter.sports.includes(sportKey)) continue;
-        const prices = await withTimeout(adapter.fetchBookOdds({ sportKey, from, to }), cfg.adapterTimeoutMs);
-        // Rows on events that have already started are dropped here: in-play prices are a later round.
-        const pre = prices.filter((p) => Date.parse(p.event.startsAt) > now.getTime());
-        const saved = persistPrices(pre, sportKey, list, now);
-        r.rows += saved.rows; r.events += saved.events; r.matched += saved.matched;
+    const wallHit = (adapter.hosts ?? []).find((h) => walled.has(h));
+    if (wallHit) {
+      r.status = "wall"; r.error = `${wallHit} answered with a wall earlier this run`;
+    } else if (Date.now() - started > cfg.jobBudgetMs) {
+      // The tick is sequential and shared with every other job: past the budget the rest wait for the next one.
+      r.status = "budget"; r.error = `job budget of ${cfg.jobBudgetMs} ms spent before this adapter's turn`;
+    } else {
+      try {
+        // The whole adapter — every sport it lists — shares one deadline, so the run never exceeds
+        // adapters × timeout however many leagues have games.
+        await withDeadline(async (signal) => {
+          for (const [sportKey, list] of games) {
+            if (!adapter.sports.includes(sportKey)) continue;
+            const prices = await adapter.fetchBookOdds({ sportKey, from, to, signal });
+            // Rows on events that have already started are dropped here: in-play prices are a later round.
+            const pre = prices.filter((p) => Date.parse(p.event.startsAt) > now.getTime());
+            const saved = persistPrices(pre, sportKey, list, now);
+            r.rows += saved.rows; r.events += saved.events; r.matched += saved.matched;
+          }
+        }, cfg.adapterTimeoutMs);
+        r.status = r.rows ? "ok" : "empty";
+      } catch (error) {
+        if (error instanceof BookWallError) { r.status = "wall"; walled.add(error.host); }
+        else if (error instanceof RobotsDisallowedError) r.status = "robots";
+        else if (error instanceof AdapterTimeout || isAbortError(error)) r.status = "timeout";
+        else r.status = "error";
+        r.error = reportError(`job.books.${adapter.id}`, error, { adapter: adapter.id }, r.status === "wall" || r.status === "robots" ? "warn" : "error");
       }
-      r.status = r.rows ? "ok" : "empty";
-    } catch (error) {
-      r.status = error instanceof BookWallError ? "wall" : error instanceof RobotsDisallowedError ? "robots" : /timed out/.test(String(error instanceof Error ? error.message : error)) ? "timeout" : "error";
-      r.error = reportError(`job.books.${adapter.id}`, error, { adapter: adapter.id }, r.status === "wall" ? "warn" : "error");
     }
     r.ms = Date.now() - t0;
     recordStatus(adapter, { lastStatus: r.status, lastMs: r.ms, lastRows: r.rows, lastEvents: r.events, lastMatched: r.matched, lastError: r.error ?? "", lastOkAt: r.status === "ok" ? nowIso() : null });
     results.push(r);
   }
 
+  const cleanup = cleanupBooks(now, cfg.retentionDays);
   const rows = results.reduce((n, r) => n + r.rows, 0);
   const events = results.reduce((n, r) => n + r.events, 0);
   const matched = results.reduce((n, r) => n + r.matched, 0);
@@ -372,6 +440,6 @@ export async function runBooksJob(opts: { now?: Date; sports?: string[]; adapter
   const status: BooksJobResult["status"] = failed > 0 && rows === 0 ? "error" : "ok";
   const note = results.map((r) => `${r.id}:${r.status}${r.rows ? ` ${r.rows}` : ""}`).join(" | ");
   const ms = Date.now() - started;
-  logEvent("job.books", { runId, status, games: gameCount, rows, events, matched, failed, ms });
-  return { runId, status, adapters: results, rows, events, matched, games: gameCount, ms, note };
+  logEvent("job.books", { runId, status, games: gameCount, rows, events, matched, failed, ms, cleanup });
+  return { runId, status, adapters: results, rows, events, matched, games: gameCount, ms, note, cleanup };
 }

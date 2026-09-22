@@ -80,9 +80,27 @@ export function compareSuggestionsWith(prices: BookPrice[], suggestions: BetSugg
   return out;
 }
 
-export function gamePrices(gameId: string, suggestions: BetSuggestion[], game: GameTeams, sportKey: string): GamePrices {
-  const prices = pricesForGame(gameId);
-  const { books, fetchedAt } = booksForGame(gameId);
+/**
+ * A page view costs one comparison per (game, latest read, ticket set); the next views inside a
+ * minute — or until the books job reads again — get the same answer from memory. A thousand prop
+ * rows took 1.6 s of CPU per request before this, on a single-core VPS event loop.
+ */
+const memo = new Map<string, { at: number; value: GamePrices }>();
+const MEMO_MS = 60_000;
+const MEMO_ENTRIES = 40;
+
+export function gamePrices(gameId: string, suggestions: BetSuggestion[], game: GameTeams, sportKey: string, now = new Date()): GamePrices {
+  const { books, fetchedAt } = booksForGame(gameId, now);
+  const key = `${gameId}|${fetchedAt ?? "-"}|${suggestions.map((s) => s.id).join(",")}|${game.home.abbreviation}`;
+  const hit = memo.get(key);
+  if (hit && now.getTime() - hit.at < MEMO_MS) return hit.value;
+  const prices = pricesForGame(gameId, now);
   const opts = { dispersionPct: booksConfig().dispersionPct };
-  return { books, fetchedAt, tickets: compareSuggestionsWith(prices, suggestions, game, sportKey, opts), signals: propSignals(prices, opts, 8) };
+  const value: GamePrices = { books, fetchedAt, tickets: compareSuggestionsWith(prices, suggestions, game, sportKey, opts), signals: propSignals(prices, opts, 8) };
+  memo.set(key, { at: now.getTime(), value });
+  while (memo.size > MEMO_ENTRIES) { const oldest = memo.keys().next().value; if (oldest === undefined) break; memo.delete(oldest); }
+  return value;
 }
+
+/** Testing seam. */
+export function resetGamePricesMemo(): void { memo.clear(); }

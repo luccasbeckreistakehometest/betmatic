@@ -124,18 +124,18 @@ export function makeKambiAdapter(operator: string, book: string): BookAdapter {
     const sport = sportOf(args.sportKey);
     const path = LIST_PATHS[args.sportKey];
     if (!sport || !path) return [];
-    const list = await bookJson<KambiListView>(`${KAMBI_BASE}/${operator}/listView/${path}.json?lang=pt_BR&market=BR`);
+    const list = await bookJson<KambiListView>(`${KAMBI_BASE}/${operator}/listView/${path}.json?lang=pt_BR&market=BR`, { signal: args.signal });
     const fetchedAt = new Date().toISOString();
     const out: BookPrice[] = [];
     for (const ev of selectKambiEvents(list.data, args.from, args.to)) {
       const event = kambiEvent(ev, sport, book, operator);
       if (!event) continue;
-      const offers = await bookJson<KambiEventOffers>(`${KAMBI_BASE}/${operator}/betoffer/event/${ev.id}.json?lang=pt_BR&market=BR`);
+      const offers = await bookJson<KambiEventOffers>(`${KAMBI_BASE}/${operator}/betoffer/event/${ev.id}.json?lang=pt_BR&market=BR`, { signal: args.signal });
       out.push(...parseKambiOffers(offers.data, event, book, fetchedAt));
     }
     return out;
   };
-  return { id: `kambi:${operator === "ktobr" ? "kto" : operator}`, book, platform: "kambi", sports: Object.keys(LIST_PATHS), coverage: "vencedor, handicap e total (sem props de jogador na WNBA)", fetchBookOdds };
+  return { id: `kambi:${operator === "ktobr" ? "kto" : operator}`, book, platform: "kambi", sports: Object.keys(LIST_PATHS), coverage: "vencedor, handicap e total (sem props de jogador na WNBA)", hosts: ["us.offering-api.kambicdn.com"], fetchBookOdds };
 }
 
 export const ktoAdapter = makeKambiAdapter("ktobr", "KTO");

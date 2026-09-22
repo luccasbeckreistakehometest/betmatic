@@ -7,10 +7,22 @@ import { superbetAdapter } from "@/lib/sources/br-books/superbet";
 import type { BookAdapter } from "@/lib/sources/br-books/types";
 
 /**
- * Every adapter that answered a plain client on 22/09/2026, and the books that did not. The env
- * decides which run (`BR_BOOKS=superbet,kambi:kto,altenar:estrelabet`); unset means every adapter
- * below, `none` means none, and a test process gets none unless a test names them. The admin
- * panel adds a per-book switch on top of this (server/book-prices.ts).
+ * THE RULE, decided once so the distinction is deliberate: we read an endpoint only when it answers
+ * a plain client — an honest User-Agent, no token of ours, no cookie, no challenge — and the host's
+ * robots.txt does not disallow the path. A challenge anywhere on the path we would have to take
+ * means skip; we never solve, spoof, rotate or impersonate to get past one. KTO (through the Kambi
+ * offering CDN) and the Altenar tenants (through biahosted) meet the test: their HTML front doors
+ * sit behind Cloudflare, but the odds API their pages call has no wall and answers the plain client
+ * directly, so it is read and the front door is never touched. Betano and bet365 do not: their odds
+ * calls refuse the plain client (403 / challenge), so they are out, not worked around. Betfair's
+ * `_ak` and Sportingbet's `x-bwin-accessid` are the site builds' public identifiers, captured from
+ * anonymous headless sessions of their public pages (scratchpad/books/api-betfair-ex.json,
+ * api-sportingbet.json) — every visitor's browser sends them, nobody logged in.
+ *
+ * Every adapter that passed the test on 22/09/2026 is listed below, and so is every book that did
+ * not, with the reason. The env decides which run: `BR_BOOKS=superbet,kambi:kto,altenar:estrelabet`
+ * names them, `all` means every adapter, and unset or `none` means none — a deploy that never
+ * edited its .env reads nobody. The admin panel adds a per-book switch on top (server/book-prices.ts).
  */
 export const ALL_ADAPTERS: BookAdapter[] = [
   superbetAdapter,
@@ -41,12 +53,12 @@ export const SKIPPED_BOOKS: { book: string; reason: string }[] = [
 
 export const ADAPTER_IDS = ALL_ADAPTERS.map((a) => a.id);
 
-/** Adapter ids the env enables. Pure so it is unit-tested; unknown ids are ignored, not fatal. */
+/** Adapter ids the env enables: unset or `none` → none, `all` → all, else the listed ids (unknown ones ignored). */
 export function enabledAdapterIds(env: Record<string, string | undefined>): string[] {
-  const raw = (env.BR_BOOKS ?? "").trim();
-  if (raw.toLowerCase() === "none") return [];
-  if (!raw) return env.VITEST ? [] : ADAPTER_IDS;
-  return raw.split(",").map((s) => s.trim().toLowerCase()).filter((id) => ADAPTER_IDS.includes(id));
+  const raw = (env.BR_BOOKS ?? "").trim().toLowerCase();
+  if (!raw || raw === "none") return [];
+  if (raw === "all") return ADAPTER_IDS;
+  return raw.split(",").map((s) => s.trim()).filter((id) => ADAPTER_IDS.includes(id));
 }
 
 export function adaptersFor(env: Record<string, string | undefined> = process.env): BookAdapter[] {
@@ -66,7 +78,11 @@ export function booksConfig(env: Record<string, string | undefined> = process.en
     dispersionPct: Math.max(1, num(env.BOOKS_DISPERSION_PCT, 7)),
     /** How far ahead the refresh looks for events. */
     horizonHours: Math.max(1, num(env.BOOKS_HORIZON_HOURS, 48)),
-    /** One adapter may not hold the cron longer than this. */
+    /** One adapter may not hold the cron longer than this (its requests are aborted at the deadline). */
     adapterTimeoutMs: Math.max(5_000, num(env.BOOKS_ADAPTER_TIMEOUT_MS, 90_000)),
+    /** The whole tick's budget: adapters whose turn comes after it wait for the next tick. */
+    jobBudgetMs: Math.max(30_000, num(env.BOOKS_JOB_BUDGET_MS, 8 * 60_000)),
+    /** Days of price history kept after kickoff; older games are deleted with their rows. */
+    retentionDays: Math.max(1, Math.min(90, num(env.BOOKS_RETENTION_DAYS, 14))),
   };
 }

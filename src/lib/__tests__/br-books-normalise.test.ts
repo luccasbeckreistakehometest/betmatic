@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { cleanDecimal, milestoneLine, milestoneRung, normalisePlayer, normaliseTeam, parseLineValue, playerKey, sideFromLabel, statFromLabel, teamKey } from "@/lib/sources/br-books/normalise";
-import { ADAPTER_IDS, booksConfig, enabledAdapterIds, SKIPPED_BOOKS } from "@/lib/sources/br-books/registry";
-import { parseRobots, robotsBlocks, networkAllowed } from "@/lib/sources/br-books/http";
+import { ADAPTER_IDS, ALL_ADAPTERS, booksConfig, enabledAdapterIds, SKIPPED_BOOKS } from "@/lib/sources/br-books/registry";
+import { HTTP_POLICY, memoryCacheSize, parseRobots, rememberBody, resetHttpState, robotsBlocks, networkAllowed } from "@/lib/sources/br-books/http";
 
 describe("br-books normalisation", () => {
   it("writes players the way ESPN does, whatever the book printed", () => {
@@ -62,16 +62,23 @@ describe("br-books registry", () => {
     expect(SKIPPED_BOOKS.map((s) => s.book)).toContain("Betsson");
   });
 
-  it("reads BR_BOOKS: unset means all outside tests and none inside them, `none` means none, unknown ids are ignored", () => {
-    expect(enabledAdapterIds({})).toEqual(ADAPTER_IDS);
-    expect(enabledAdapterIds({ VITEST: "true" })).toEqual([]);
+  it("reads BR_BOOKS: unset or `none` means no book at all, `all` means every adapter, unknown ids are ignored", () => {
+    // A deploy that never edited its .env must not start reading seven hosts on the first tick.
+    expect(enabledAdapterIds({})).toEqual([]);
+    expect(enabledAdapterIds({ BR_BOOKS: "" })).toEqual([]);
     expect(enabledAdapterIds({ BR_BOOKS: "none" })).toEqual([]);
+    expect(enabledAdapterIds({ BR_BOOKS: "all" })).toEqual(ADAPTER_IDS);
     expect(enabledAdapterIds({ BR_BOOKS: " superbet, Kambi:KTO ,nope" })).toEqual(["superbet", "kambi:kto"]);
   });
 
   it("keeps the tunables inside sane bounds", () => {
-    expect(booksConfig({})).toEqual({ dispersionPct: 7, horizonHours: 48, adapterTimeoutMs: 90_000 });
-    expect(booksConfig({ BOOKS_DISPERSION_PCT: "0", BOOKS_HORIZON_HOURS: "12", BOOKS_ADAPTER_TIMEOUT_MS: "10" })).toEqual({ dispersionPct: 1, horizonHours: 12, adapterTimeoutMs: 5_000 });
+    expect(booksConfig({})).toEqual({ dispersionPct: 7, horizonHours: 48, adapterTimeoutMs: 90_000, jobBudgetMs: 480_000, retentionDays: 14 });
+    expect(booksConfig({ BOOKS_DISPERSION_PCT: "0", BOOKS_HORIZON_HOURS: "12", BOOKS_ADAPTER_TIMEOUT_MS: "10", BOOKS_JOB_BUDGET_MS: "1", BOOKS_RETENTION_DAYS: "400" })).toEqual({ dispersionPct: 1, horizonHours: 12, adapterTimeoutMs: 5_000, jobBudgetMs: 30_000, retentionDays: 90 });
+  });
+
+  it("declares the hosts every adapter talks to, so a wall on one skips its sharers", () => {
+    expect(ALL_ADAPTERS.every((a) => a.hosts.length > 0)).toBe(true);
+    expect(new Set(ALL_ADAPTERS.filter((a) => a.platform === "altenar").map((a) => a.hosts[0])).size).toBe(1);
   });
 });
 
@@ -80,12 +87,27 @@ describe("br-books http policy", () => {
     expect(networkAllowed()).toBe(false);
   });
 
-  it("honours robots.txt for the anonymous agent only", () => {
+  it("honours robots.txt for the anonymous agent only, with the Crawl-delay", () => {
     const rules = parseRobots("User-agent: Adsbot-Google\nAllow: /promo\nUser-agent: *\nDisallow: /*/api/\nDisallow: /account/\n# comment\nDisallow: /sstp*\nCrawl-delay: 2");
-    expect(rules).toEqual(["/*/api/", "/account/", "/sstp*"]);
-    expect(robotsBlocks(rules, "/pt-br/sports/api/x")).toBe(true);
-    expect(robotsBlocks(rules, "/cds-api/bettingoffer/fixtures")).toBe(false);
-    expect(robotsBlocks(rules, "/sstp-anything")).toBe(true);
-    expect(robotsBlocks(rules, "/offering/v2018/ktobr/listView/basketball/wnba.json")).toBe(false);
+    expect(rules).toEqual({ disallow: ["/*/api/", "/account/", "/sstp*"], crawlDelayMs: 2000 });
+    expect(robotsBlocks(rules.disallow, "/pt-br/sports/api/x")).toBe(true);
+    expect(robotsBlocks(rules.disallow, "/cds-api/bettingoffer/fixtures")).toBe(false);
+    expect(robotsBlocks(rules.disallow, "/sstp-anything")).toBe(true);
+    expect(robotsBlocks(rules.disallow, "/offering/v2018/ktobr/listView/basketball/wnba.json")).toBe(false);
+  });
+
+  it("reads a group that names several agents, and closes it at the next group (RFC 9309)", () => {
+    // `*` followed by another User-agent line is still one group: its rules apply to us.
+    expect(parseRobots("User-agent: *\nUser-agent: Foo\nDisallow: /x\n\nUser-agent: Bar\nDisallow: /y").disallow).toEqual(["/x"]);
+    // A group that never names `*` does not apply, and a crawl-delay is capped at a minute.
+    expect(parseRobots("User-agent: Foo\nDisallow: /x\nCrawl-delay: 5")).toEqual({ disallow: [], crawlDelayMs: null });
+    expect(parseRobots("User-agent: *\nCrawl-delay: 900").crawlDelayMs).toBe(60_000);
+  });
+
+  it("keeps the memory cache bounded", () => {
+    resetHttpState();
+    for (let i = 0; i < HTTP_POLICY.memoryEntries + 50; i += 1) rememberBody(`https://x/${i}`, { at: Date.now(), body: "{}", etag: null, status: 200 });
+    expect(memoryCacheSize()).toBe(HTTP_POLICY.memoryEntries);
+    resetHttpState();
   });
 });

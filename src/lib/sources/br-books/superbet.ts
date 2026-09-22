@@ -16,7 +16,7 @@ const LEAGUES: Record<string, { ids: number[]; name: RegExp }> = {
   wnba: { ids: [2174], name: /\bWNBA\b/i },
   nba: { ids: [], name: /^EUA - NBA$|\bNBA\b(?! ?2K| Cup| Summer| G League)/i },
   "soccer-bra": { ids: [], name: /Brasileir\w* - S[ée]rie A\b|Brasileir[ãa]o\b.*S[ée]rie A\b/i },
-  "soccer-eng": { ids: [], name: /Inglaterra - Premier League/i },
+  "soccer-eng": { ids: [], name: /^Inglaterra - Premier League$/i },
   "soccer-esp": { ids: [], name: /Espanha - La ?Liga\b/i },
   "soccer-ucl": { ids: [], name: /UEFA - Champions League$/i },
   "soccer-lib": { ids: [], name: /Libertadores/i },
@@ -123,16 +123,20 @@ export function parseSuperbetEvent(detail: SuperbetEventDetail, event: BookEvent
   return out;
 }
 
-interface StructNode { id?: number; localNames?: Record<string, string>; [k: string]: unknown }
+interface StructNode { id?: number | string; localNames?: Record<string, string>; [k: string]: unknown }
 
-/** Tournament id → Portuguese name, from the (large, daily-cached) struct file. */
+/**
+ * Tournament id → Portuguese name, from the (large, daily-cached) struct file. The struct prints
+ * its ids as strings ("2174"); the event list prints them as numbers. Both are read as numbers.
+ */
 export function tournamentNames(struct: { data?: unknown }): Map<number, string> {
   const out = new Map<number, string>();
   const walk = (node: unknown): void => {
     if (Array.isArray(node)) { node.forEach(walk); return; }
     if (!node || typeof node !== "object") return;
     const n = node as StructNode;
-    if (typeof n.id === "number" && n.localNames?.["pt-BR"]) out.set(n.id, n.localNames["pt-BR"]);
+    const id = typeof n.id === "number" ? n.id : typeof n.id === "string" && /^\d+$/.test(n.id) ? Number(n.id) : null;
+    if (id !== null && n.localNames?.["pt-BR"]) out.set(id, n.localNames["pt-BR"]);
     for (const v of Object.values(n)) if (v && typeof v === "object") walk(v);
   };
   walk(struct.data);
@@ -157,17 +161,18 @@ export function selectSuperbetEvents(events: SuperbetListEvent[], sportKey: stri
 export async function fetchSuperbet(args: FetchArgs): Promise<BookPrice[]> {
   const sport = sportOf(args.sportKey);
   if (!sport || !LEAGUES[args.sportKey]) return [];
-  const struct = await bookJson<{ data?: unknown }>(`${SUPERBET_BASE}/v2/pt-BR/struct`, { ttlMs: 24 * 60 * 60_000 });
+  const struct = await bookJson<{ data?: unknown }>(`${SUPERBET_BASE}/v2/pt-BR/struct`, { ttlMs: 24 * 60 * 60_000, signal: args.signal });
   const names = tournamentNames(struct.data);
   const list = await bookJson<{ events: SuperbetListEvent[] }>(
     `${SUPERBET_BASE}/v3/pt-BR/events?startDate=${hourFloor(args.from)}&endDate=${hourCeil(args.to)}&index=prematch&sports=${SPORT_ID[sport]}`,
+    { signal: args.signal },
   );
   const fetchedAt = new Date().toISOString();
   const out: BookPrice[] = [];
   for (const { ev, league } of selectSuperbetEvents(list.data.events ?? [], args.sportKey, names, args.from, args.to)) {
     const event = superbetEvent(ev, sport, league);
     if (!event) continue;
-    const detail = await bookJson<SuperbetEventDetail>(`${SUPERBET_BASE}/v2/pt-BR/events/${ev.event_id}`);
+    const detail = await bookJson<SuperbetEventDetail>(`${SUPERBET_BASE}/v2/pt-BR/events/${ev.event_id}`, { signal: args.signal });
     out.push(...parseSuperbetEvent(detail.data, event, fetchedAt));
   }
   return out;
@@ -179,5 +184,6 @@ export const superbetAdapter: BookAdapter = {
   platform: "superbet",
   sports: Object.keys(LEAGUES),
   coverage: "moneyline, handicap, total e props de jogador (linhas e escadas N+)",
+  hosts: ["production-superbet-offer-br.freetls.fastly.net"],
   fetchBookOdds: fetchSuperbet,
 };

@@ -62,6 +62,8 @@ export interface FetchArgs {
   /** ISO window; adapters return only events that start inside it. */
   from: string;
   to: string;
+  /** Fired by the job when the adapter's time is up: every request in flight and every wait stops. */
+  signal?: AbortSignal;
 }
 
 export interface BookAdapter {
@@ -73,6 +75,8 @@ export interface BookAdapter {
   sports: string[];
   /** Human note for the admin panel (what the platform exposes to a plain client). */
   coverage: string;
+  /** Hosts the adapter talks to: a wall on one of them skips every adapter sharing it for the run. */
+  hosts: string[];
   fetchBookOdds(args: FetchArgs): Promise<BookPrice[]>;
 }
 

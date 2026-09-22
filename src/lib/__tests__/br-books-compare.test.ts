@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compareLeg, compareTicket, fairPrice, propSignals } from "@/lib/sources/br-books/compare";
+import { compareLeg, compareTicket, fairPrice, groupBySelection, propSignals } from "@/lib/sources/br-books/compare";
 import type { BookPrice } from "@/lib/sources/br-books/types";
 import { legQuery, statKeyOf, compareSuggestionsWith } from "@/lib/server/book-compare";
 import { rowsFromBooks, consensusWithBooks } from "@/lib/props/consensus";
@@ -33,14 +33,27 @@ describe("compareLeg", () => {
     expect(c.medianDecimal).toBe(1.915);
   });
 
-  it("flags the book that sits ≥ 7% off the median of the others on a player line", () => {
+  it("flags the book that sits ≥ 7% off the median of the other FEEDS on a player line", () => {
     const c = compareLeg(PRICES, { market: "player_prop", player: "Shakira Austin", stat: "points", side: "over", line: 17.5 });
     expect(c.dispersion).toHaveLength(1);
-    expect(c.dispersion[0]).toMatchObject({ book: "Vaidebet", decimal: 2.1, others: 3 });
+    // Three other books on three platforms here (the fixture gives each book its own platform).
+    expect(c.dispersion[0]).toMatchObject({ book: "Vaidebet", decimal: 2.1, others: 3, otherBooks: 3 });
     expect(c.dispersion[0].othersMedian).toBe(1.909);
     expect(c.dispersion[0].pct).toBe(10);
     // The threshold is configurable: at 15% nothing is out of step.
     expect(compareLeg(PRICES, c.query, { dispersionPct: 15 }).dispersion).toHaveLength(0);
+  });
+
+  it("counts one feed's tenants once: four identical Altenar prices are one 'other', not four", () => {
+    const rows = [
+      prop("Superbet", "Kiki Iriafen", "points", "over", 9.5, 2.7),
+      prop("EstrelaBet", "Kiki Iriafen", "points", "over", 9.5, 2.4), prop("LotoGreen", "Kiki Iriafen", "points", "over", 9.5, 2.4),
+      prop("Aposta Ganha", "Kiki Iriafen", "points", "over", 9.5, 2.4), prop("Vaidebet", "Kiki Iriafen", "points", "over", 9.5, 2.4),
+    ].map((r) => ({ ...r, platform: r.book === "Superbet" ? "superbet" : "altenar" }));
+    const c = compareLeg(rows, { market: "player_prop", player: "Kiki Iriafen", stat: "points", side: "over", line: 9.5 });
+    expect(c.dispersion[0]).toMatchObject({ book: "Superbet", pct: 12.5, others: 1, otherBooks: 4, othersMedian: 2.4 });
+    // And an Altenar tenant is measured against Superbet alone, not against its own clones.
+    expect(c.dispersion.find((d) => d.book === "EstrelaBet")).toMatchObject({ others: 1, otherBooks: 1, othersMedian: 2.7, pct: -11.11 });
   });
 
   it("flags the same stat at a friendlier line at another book", () => {
@@ -54,6 +67,23 @@ describe("compareLeg", () => {
     expect(worse.lineAlternatives.find((a) => a.book === "KTO")).toMatchObject({ better: false });
   });
 
+  it("trusts the exchange only with a lay within 10% of the back; a lone back order or a wide gap falls back to no-vig", () => {
+    const books = [row("A", { market: "moneyline", side: "away", decimal: 1.21 }), row("A", { market: "moneyline", side: "home", decimal: 4.3 })];
+    const q = { market: "moneyline" as const, side: "away" as const };
+    // Back-only 1.01 dust on the exchange: not a market. Fair comes from A's own two sides.
+    expect(fairPrice([...books, row("Betfair Exchange", { market: "moneyline", side: "away", decimal: 1.01 })], q)).toMatchObject({ source: "novig" });
+    // Back 1.2 / lay 1.5 is a 25% gap: nobody is trading there.
+    expect(fairPrice([...books, row("Betfair Exchange", { market: "moneyline", side: "away", decimal: 1.2, lay: 1.5 })], q)).toMatchObject({ source: "novig" });
+    // Back 1.2 / lay 1.24 is a market: midpoint 1.22. So is 9.6 / 11 on an underdog (1.3 points of chance apart).
+    expect(fairPrice([...books, row("Betfair Exchange", { market: "moneyline", side: "away", decimal: 1.2, lay: 1.24 })], q)).toMatchObject({ source: "exchange", decimal: 1.22 });
+    expect(fairPrice([...books, row("Betfair Exchange", { market: "moneyline", side: "away", decimal: 9.6, lay: 11 })], q)).toMatchObject({ source: "exchange", decimal: 10.3 });
+    // A lay below the back is a crossed book, not a market either.
+    expect(fairPrice([...books, row("Betfair Exchange", { market: "moneyline", side: "away", decimal: 1.3, lay: 1.2 })], q)).toMatchObject({ source: "novig" });
+    const edge = compareLeg([...books, row("Betfair Exchange", { market: "moneyline", side: "away", decimal: 1.01 })], q);
+    expect(edge.fair?.source).toBe("novig");
+    expect(edge.edgeVsFairPct[0].pct).toBeLessThan(0);
+  });
+
   it("uses the exchange midpoint as the fair price and no-vig pairs when there is none", () => {
     const ml = compareLeg(PRICES, { market: "moneyline", side: "away" });
     expect(ml.exchange).toMatchObject({ book: "Betfair Exchange", decimal: 9.6, lay: 11 });
@@ -65,6 +95,17 @@ describe("compareLeg", () => {
     expect(pts?.books).toBe(4);
     expect(pts!.probability).toBeGreaterThan(0.44);
     expect(pts!.probability).toBeLessThan(0.52);
+  });
+
+  it("treats a book's over/under pair and its N+ rung at the same line as one selection, keeping the better price", () => {
+    const rows = [
+      prop("Superbet", "Kiki Iriafen", "points", "over", 17.5, 2.2, { kind: "milestone" }),
+      prop("Superbet", "Kiki Iriafen", "points", "over", 17.5, 2.05, { kind: "total" }),
+      prop("EstrelaBet", "Kiki Iriafen", "points", "over", 17.5, 2.1, { kind: "total" }),
+    ];
+    const c = compareLeg(rows, { market: "player_prop", player: "Kiki Iriafen", stat: "points", side: "over", line: 17.5 });
+    expect(c.quotes.map((q) => [q.book, q.decimal])).toEqual([["Superbet", 2.2], ["EstrelaBet", 2.1]]);
+    expect(c.quotes).toHaveLength(2);
   });
 
   it("keeps only the newest row per book and ignores lines nobody posts", () => {
@@ -103,6 +144,18 @@ describe("compareTicket", () => {
 });
 
 describe("propSignals", () => {
+  it("groups the game's rows by selection once and answers each query from its own group", () => {
+    const groups = groupBySelection(PRICES);
+    expect(groups.get("prop|shakira austin|points")).toHaveLength(9);
+    expect(groups.get("moneyline")).toHaveLength(7);
+    // The grouped path and the whole-game path agree on every leg.
+    const q = { market: "player_prop" as const, player: "Shakira Austin", stat: "points", side: "over" as const, line: 17.5 };
+    const direct = compareLeg(PRICES, q);
+    const grouped = compareLeg(groups.get("prop|shakira austin|points")!, q);
+    expect(grouped).toEqual(direct);
+    expect(direct.best?.book).toBe("Vaidebet");
+  });
+
   it("ranks the player lines where a book is out of step", () => {
     const s = propSignals(PRICES);
     expect(s[0]).toMatchObject({ player: "Shakira Austin", stat: "points", side: "over", line: 17.5 });

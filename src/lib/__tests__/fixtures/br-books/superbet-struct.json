@@ -1,0 +1,74 @@
+{
+ "data": {
+  "tournaments": [
+   {
+    "id": "14582",
+    "localNames": {
+     "pt-BR": "Tanzânia - Premier League"
+    }
+   },
+   {
+    "id": "1027",
+    "localNames": {
+     "pt-BR": "Rússia - Premier League"
+    }
+   },
+   {
+    "id": "164",
+    "localNames": {
+     "pt-BR": "EUA - NBA"
+    }
+   },
+   {
+    "id": "98093",
+    "localNames": {
+     "pt-BR": "eComp - Premier League"
+    }
+   },
+   {
+    "id": "2174",
+    "localNames": {
+     "pt-BR": "EUA - WNBA (F)"
+    }
+   },
+   {
+    "id": "1698",
+    "localNames": {
+     "pt-BR": "Brasil - Brasileiro - Série A"
+    }
+   },
+   {
+    "id": "106",
+    "localNames": {
+     "pt-BR": "Inglaterra - Premier League"
+    }
+   },
+   {
+    "id": "96715",
+    "localNames": {
+     "pt-BR": "Rodada Inglaterra - Premier League"
+    }
+   },
+   {
+    "id": "1697",
+    "localNames": {
+     "pt-BR": "Brasil - Brasileiro - Série B"
+    }
+   }
+  ],
+  "sports": [
+   {
+    "id": "4",
+    "localNames": {
+     "pt-BR": "Basquete"
+    }
+   },
+   {
+    "id": "5",
+    "localNames": {
+     "pt-BR": "Futebol"
+    }
+   }
+  ]
+ }
+}

@@ -31,12 +31,21 @@ describe("book event → ESPN game", () => {
     expect(matchEvent(ev("Las Vegas Aces", "Phoenix Mercury", "2026-09-23T02:00:00Z"), slate)).toBeNull();
   });
 
-  it("inherits a match through a shared external id, even when the names differ", () => {
+  it("inherits a match through a shared external id when at least one name confirms it", () => {
     const known = new Map([["betradar:68096448", "401857190"]]);
-    expect(matchEvent(ev("W. Mystics", "C. Sun", "2026-09-22T23:30:00Z", { betradar: "68096448" }), slate, known)).toEqual({ gameId: "401857190", matchedBy: "external", swapped: false });
+    // One recognisable side is enough ("W. Mystics" is not, "Connecticut Sun" is).
+    expect(matchEvent(ev("W. Mystics", "Connecticut Sun", "2026-09-22T23:30:00Z", { betradar: "68096448" }), slate, known)).toEqual({ gameId: "401857190", matchedBy: "external", swapped: false });
     expect(matchEvent(ev("Connecticut Sun", "Washington Mystics", "2026-09-22T23:30:00Z", { betradar: "68096448" }), slate, known)).toMatchObject({ matchedBy: "external", swapped: true });
     // An id learned for a game that is not on this slate does not match anything.
     expect(matchEvent(ev("A", "B", "2026-09-22T23:30:00Z", { betradar: "1" }), slate, new Map([["betradar:1", "999"]]))).toBeNull();
+  });
+
+  it("never lets a learned id override the names: a wrong manual pairing cannot spread through the betradar id", () => {
+    // The id says Mystics × Sun; the book's names say Fever × Lynx. The names win.
+    const known = new Map([["betradar:1", "401857190"]]);
+    expect(matchEvent(ev("Indiana Fever", "Minnesota Lynx", "2026-09-23T00:00:00Z", { betradar: "1" }), slate, known)).toEqual({ gameId: "401857191", matchedBy: "names", swapped: false });
+    // Names nobody recognises and an id that points at a game they are not on: unmatched, not guessed.
+    expect(matchEvent(ev("W. Mystics", "C. Sun", "2026-09-22T23:30:00Z", { betradar: "68096448" }), slate, new Map([["betradar:68096448", "401857190"]]))).toBeNull();
   });
 
   it("describes an unmatched event for the admin list", () => {

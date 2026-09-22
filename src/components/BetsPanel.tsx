@@ -10,7 +10,7 @@ import { groupAlternatives, legDiff } from "@/lib/bets/alternatives-view";
 import { kellyFraction, formatDecimal, getBand } from "@/lib/odds";
 import { makeT, type Lang } from "@/lib/i18n";
 import type { BetLeg, BetSlate, BetSuggestion } from "@/lib/types";
-import { LegPrices, PropSignalsList, TicketPrices, type TicketPricesView } from "@/components/PriceComparison";
+import { LegPrices, PricesMeta, PropSignalsList, TicketPrices, type TicketPricesView } from "@/components/PriceComparison";
 import type { PropSignal } from "@/lib/sources/br-books/compare";
 
 /** A leg alert from the lineup watcher, keyed by suggestion id and leg index. */
@@ -250,7 +250,9 @@ function Alternatives({ main, alternatives, lang, flagged }: { main: BetSuggesti
   );
 }
 
-export function BetsPanel({ slate, lang, gameId, sportKey, alerts = [], prices = null }: { slate: BetSlate | null | undefined; lang: Lang; gameId?: string; sportKey?: string; alerts?: LegAlertView[]; prices?: { tickets: TicketPricesView[]; signals: PropSignal[] } | null }) {
+export interface GamePricesView { tickets: TicketPricesView[]; signals: PropSignal[]; books: string[]; fetchedAt: string | null }
+
+export function BetsPanel({ slate, lang, gameId, sportKey, alerts = [], prices = null }: { slate: BetSlate | null | undefined; lang: Lang; gameId?: string; sportKey?: string; alerts?: LegAlertView[]; prices?: GamePricesView | null }) {
   const t = makeT(lang);
   if (!slate?.suggestions.length) {
     return (
@@ -263,6 +265,7 @@ export function BetsPanel({ slate, lang, gameId, sportKey, alerts = [], prices =
 
   return (
     <div className="flex flex-col gap-3">
+      {prices && <PricesMeta books={prices.books} fetchedAt={prices.fetchedAt} lang={lang} />}
       {prices?.signals.length && sportKey ? <PropSignalsList signals={prices.signals} sportKey={sportKey} lang={lang} /> : null}
       <ul className="flex flex-col gap-3">
         {groupAlternatives(slate.suggestions).map(({ main, alternatives }) => (

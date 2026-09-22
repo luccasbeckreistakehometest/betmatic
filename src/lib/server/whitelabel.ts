@@ -27,6 +27,21 @@ const SOURCE_RULES: SourceRule[] = [
   { body: "\\bbetano\\b", flags: "gi", pt: { text: "casa de apostas", gender: "f" }, en: "sportsbook" },
   { body: "\\bbet\\s*365\\b", flags: "gi", pt: { text: "casa de apostas", gender: "f" }, en: "sportsbook" },
   { body: "\\bdraftkings\\b", flags: "gi", pt: { text: "casa de apostas", gender: "f" }, en: "sportsbook" },
+  // The Brazilian books whose prices the product compares (src/lib/sources/br-books). Their names
+  // are shown on purpose in the price comparison — they are prices, and a reader needs to know
+  // where to go — but the model's prose ("best 1.92 at Superbet") also reaches the public game page,
+  // the OG image, /prova, Telegram and the webhook, so there it is a source like any other.
+  { body: "\\bsuperbet\\b", flags: "gi", pt: { text: "casa de apostas", gender: "f" }, en: "sportsbook" },
+  { body: "\\bkto\\b", flags: "gi", pt: { text: "casa de apostas", gender: "f" }, en: "sportsbook" },
+  { body: "\\bestrela\\s*bet\\b", flags: "gi", pt: { text: "casa de apostas", gender: "f" }, en: "sportsbook" },
+  // Case-sensitive: "a aposta ganha se…" is prose, "Aposta Ganha" is the book.
+  { body: "\\bAposta\\s*Ganha\\b", flags: "g", pt: { text: "casa de apostas", gender: "f" }, en: "sportsbook" },
+  { body: "\\bbetpix\\s*365\\b", flags: "gi", pt: { text: "casa de apostas", gender: "f" }, en: "sportsbook" },
+  { body: "\\bloto\\s*green\\b", flags: "gi", pt: { text: "casa de apostas", gender: "f" }, en: "sportsbook" },
+  { body: "\\bvai\\s*de\\s*bet\\b", flags: "gi", pt: { text: "casa de apostas", gender: "f" }, en: "sportsbook" },
+  { body: "\\bbetfair(?:\\s+exchange)?\\b", flags: "gi", pt: { text: "casa de apostas", gender: "f" }, en: "sportsbook" },
+  { body: "\\bsportingbet\\b", flags: "gi", pt: { text: "casa de apostas", gender: "f" }, en: "sportsbook" },
+  { body: "\\bbetnacional\\b", flags: "gi", pt: { text: "casa de apostas", gender: "f" }, en: "sportsbook" },
   { body: "\\bsofascore\\b", flags: "gi", pt: { text: "base de estatísticas", gender: "f" }, en: "stats provider" },
   { body: "\\bESPN\\b", flags: "g", pt: { text: "dados oficiais", gender: "mp" }, en: "official data" },
   // Reporter handles are the most identifying signal of all.
@@ -135,7 +150,7 @@ export function scrubGameDetail<T extends GameDetail>(detail: T, role: Role, lan
   };
 }
 
-const SOURCE_NAME = /espn|draftkings|betano|bet\s*365|fanduel|caesars|betmgm/i;
+const SOURCE_NAME = /espn|draftkings|betano|bet\s*365|fanduel|caesars|betmgm|superbet|kto|estrela\s*bet|aposta\s*ganha|betpix|lotogreen|vaidebet|betfair|sportingbet|betnacional/i;
 
 /** A slate card as a non-admin may see it: no book name on the odds, no source-named channel. */
 export function scrubGame(game: Game, role: Role, lang: "pt" | "en"): Game {

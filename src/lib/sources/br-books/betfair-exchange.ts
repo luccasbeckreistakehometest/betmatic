@@ -4,11 +4,15 @@ import type { BookAdapter, BookEvent, BookPrice, BookSport, FetchArgs } from "@/
 
 /**
  * Betfair Exchange (Brazil), read-only, through the same `_ak` application key its own web page
- * ships to every visitor. An exchange is not a bookmaker: the best back and lay prices bracket the
- * price the crowd is actually trading, which makes it the cleanest reference to measure every
- * other book's margin against. Three calls: the navigation graph lists a competition's events, a
- * `byevent` call names the markets, a `bymarket` call carries the prices. Player props are not
- * traded on the Brazilian exchange, so this adapter covers moneyline, handicap and total.
+ * ships to every visitor (captured from an anonymous headless session of the public event page,
+ * scratchpad/books/api-betfair-ex.json — no login, no token of ours). An exchange is not a
+ * bookmaker: the best back and lay prices bracket the price the crowd is actually trading, which
+ * makes it the cleanest reference to measure every other book's margin against — but only where
+ * both sides exist: a lone 1.01 back order on a 35-point handicap rung is dust, not a price, and is
+ * dropped here so it can never become a "fair" price downstream (compare.ts asks for a lay within
+ * 10% of the back before it trusts the exchange). Three calls: the navigation graph lists a
+ * competition's events, a `byevent` call names the markets, a `bymarket` call carries the prices.
+ * Player props are not traded on the Brazilian exchange, so this covers moneyline, handicap, total.
  */
 export const BETFAIR_APP_KEY = "PksAmrbOikTyDo03";
 const NAV = "https://scan-inbf.betfair.bet.br/www/sports/navigation/v2/graph/bynode";
@@ -64,10 +68,14 @@ export function exchangeEvent(ev: { id: string; name: string; openDate: string }
   return { key: `betfair-exchange:betfair:${ev.id}`, ...names, startsAt: ev.openDate, externalIds: { betfair: ev.id }, league, sport, url: `https://www.betfair.bet.br/exchange/plus/pt/apostas-${ev.id}` };
 }
 
+/** A back offer with no lay behind it and a price this short is an unmatched dust order, not a market. */
+export const EXCHANGE_DUST_BACK = 1.05;
+
 /**
  * Prices of one event's markets. `decimal` is the best back (what a bettor can take right now),
- * `lay` the best lay; a runner with nothing to back is skipped. Handicap runners carry the line on
- * the runner; totals name the side ("Mais"/"Menos") and carry the line as the handicap.
+ * `lay` the best lay; a runner with nothing to back, or with a dust back and no lay, is skipped.
+ * Handicap runners carry the line on the runner; totals name the side ("Mais"/"Menos") and carry
+ * the line as the handicap.
  */
 export function parseExchangeMarkets(payload: ExchangePayload, event: BookEvent, fetchedAt: string): BookPrice[] {
   const out: BookPrice[] = [];
@@ -89,7 +97,7 @@ export function parseExchangeMarkets(payload: ExchangePayload, event: BookEvent,
         if (r.state?.status && r.state.status !== "ACTIVE") continue;
         const back = cleanDecimal(r.exchange?.availableToBack?.[0]?.price);
         const lay = cleanDecimal(r.exchange?.availableToLay?.[0]?.price) ?? undefined;
-        if (back === null) continue;
+        if (back === null || (lay === undefined && back <= EXCHANGE_DUST_BACK)) continue;
         const runnerName = r.description?.runnerName ?? "";
         if (type === "MATCH_ODDS") {
           const side = sideOfRunner(runnerName);
@@ -109,11 +117,11 @@ export function parseExchangeMarkets(payload: ExchangePayload, event: BookEvent,
   return out;
 }
 
-async function competitionId(sport: BookSport, sportKey: string): Promise<string | null> {
+async function competitionId(sport: BookSport, sportKey: string, signal?: AbortSignal): Promise<string | null> {
   const comp = COMPETITIONS[sportKey];
   if (!comp) return null;
   if (comp.id) return comp.id;
-  const nav = await bookJson<NavPayload>(`${NAV}?_ak=${BETFAIR_APP_KEY}&alt=json&attachments=COMPETITION&currencyCode=BRL&locale=pt_BR&maxInDistance=10&maxOutDistance=2&maxResults=1&nodeIds=EVENT_TYPE:${EVENT_TYPE[sport]}&outs=%5BCOMPETITION%5D`, { ttlMs: 12 * 60 * 60_000 });
+  const nav = await bookJson<NavPayload>(`${NAV}?_ak=${BETFAIR_APP_KEY}&alt=json&attachments=COMPETITION&currencyCode=BRL&locale=pt_BR&maxInDistance=10&maxOutDistance=2&maxResults=1&nodeIds=EVENT_TYPE:${EVENT_TYPE[sport]}&outs=%5BCOMPETITION%5D`, { ttlMs: 12 * 60 * 60_000, signal });
   const hit = (nav.data.nodes ?? []).find((n) => n.nodeType === "COMPETITION" && comp.name.test(n.name ?? ""));
   return hit ? hit.nodeId.replace(/^COMP:/, "") : null;
 }
@@ -121,9 +129,9 @@ async function competitionId(sport: BookSport, sportKey: string): Promise<string
 export async function fetchBetfairExchange(args: FetchArgs): Promise<BookPrice[]> {
   const sport = sportOf(args.sportKey);
   if (!sport || !COMPETITIONS[args.sportKey]) return [];
-  const comp = await competitionId(sport, args.sportKey);
+  const comp = await competitionId(sport, args.sportKey, args.signal);
   if (!comp) return [];
-  const nav = await bookJson<NavPayload>(`${NAV}?_ak=${BETFAIR_APP_KEY}&alt=json&attachments=MENU,EVENT&currencyCode=BRL&locale=pt_BR&maxInDistance=10&maxOutDistance=5&maxResults=1&nodeIds=COMP:${comp}&outs=%5BMENU,EVENT%5D`);
+  const nav = await bookJson<NavPayload>(`${NAV}?_ak=${BETFAIR_APP_KEY}&alt=json&attachments=MENU,EVENT&currencyCode=BRL&locale=pt_BR&maxInDistance=10&maxOutDistance=5&maxResults=1&nodeIds=COMP:${comp}&outs=%5BMENU,EVENT%5D`, { signal: args.signal });
   const events = selectNavEvents(nav.data, args.from, args.to);
   if (!events.length) return [];
   const fetchedAt = new Date().toISOString();
@@ -133,13 +141,13 @@ export async function fetchBetfairExchange(args: FetchArgs): Promise<BookPrice[]
   for (const ev of events) {
     const event = exchangeEvent(ev, sport, args.sportKey);
     if (!event) continue;
-    const named = await bookJson<ExchangePayload>(`${ERO}/byevent?_ak=${BETFAIR_APP_KEY}&alt=json&currencyCode=BRL&eventIds=${ev.id}&locale=pt_BR&rollupLimit=50&rollupModel=STAKE&types=MARKET_STATE,EVENT,MARKET_DESCRIPTION`);
+    const named = await bookJson<ExchangePayload>(`${ERO}/byevent?_ak=${BETFAIR_APP_KEY}&alt=json&currencyCode=BRL&eventIds=${ev.id}&locale=pt_BR&rollupLimit=50&rollupModel=STAKE&types=MARKET_STATE,EVENT,MARKET_DESCRIPTION`, { signal: args.signal });
     const marketIds: string[] = [];
     for (const et of named.data.eventTypes ?? []) for (const en of et.eventNodes ?? []) for (const m of en.marketNodes ?? []) {
       if (/^(MATCH_ODDS|HANDICAP|COMBINED_TOTAL|OVER_UNDER_\d+)$/.test(m.description?.marketType ?? "")) marketIds.push(m.marketId);
     }
     if (!marketIds.length) continue;
-    const priced = await bookJson<ExchangePayload>(`${ERO}/bymarket?_ak=${BETFAIR_APP_KEY}&alt=json&currencyCode=BRL&locale=pt_BR&marketIds=${marketIds.slice(0, 8).join(",")}&rollupLimit=50&rollupModel=STAKE&types=${TYPES}`);
+    const priced = await bookJson<ExchangePayload>(`${ERO}/bymarket?_ak=${BETFAIR_APP_KEY}&alt=json&currencyCode=BRL&locale=pt_BR&marketIds=${marketIds.slice(0, 8).join(",")}&rollupLimit=50&rollupModel=STAKE&types=${TYPES}`, { signal: args.signal });
     out.push(...parseExchangeMarkets(priced.data, event, fetchedAt));
   }
   return out;
@@ -151,5 +159,6 @@ export const betfairExchangeAdapter: BookAdapter = {
   platform: "betfair-exchange",
   sports: Object.keys(COMPETITIONS),
   coverage: "exchange: vencedor, handicap e total com back/lay (referência de preço justo)",
+  hosts: ["scan-inbf.betfair.bet.br", "ero.betfair.bet.br"],
   fetchBookOdds: fetchBetfairExchange,
 };

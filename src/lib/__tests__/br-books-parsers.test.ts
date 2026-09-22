@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
-import { parseSuperbetEvent, selectSuperbetEvents, superbetEvent, splitEventName, type SuperbetEventDetail, type SuperbetListEvent } from "@/lib/sources/br-books/superbet";
+import { parseSuperbetEvent, selectSuperbetEvents, superbetEvent, splitEventName, tournamentNames, type SuperbetEventDetail, type SuperbetListEvent } from "@/lib/sources/br-books/superbet";
 import { kambiEvent, parseKambiOffers, selectKambiEvents, type KambiEventOffers, type KambiListView } from "@/lib/sources/br-books/kambi";
 import { altenarEvent, parseAltenarEvent, selectAltenarEvents, type AltenarEventDetails, type AltenarList } from "@/lib/sources/br-books/altenar";
 import { exchangeEvent, parseExchangeMarkets, selectNavEvents, splitExchangeName, type ExchangePayload, type NavPayload } from "@/lib/sources/br-books/betfair-exchange";
@@ -55,6 +55,19 @@ describe("Superbet", () => {
     expect(picked.map((p) => p.ev.event_id)).toEqual([14033464, 14033463]);
     expect(selectSuperbetEvents(list.events, "nba", names, WINDOW.from, WINDOW.to)).toHaveLength(0);
   });
+
+  it("reads the struct's STRING ids, so NBA and the football leagues resolve by name and Série B stays out of Série A", () => {
+    const names = tournamentNames(fixture<{ data?: unknown }>("superbet-struct.json"));
+    expect(names.get(2174)).toBe("EUA - WNBA (F)");
+    expect(names.get(164)).toBe("EUA - NBA");
+    expect(names.get(1698)).toBe("Brasil - Brasileiro - Série A");
+    const at = (id: number, name: string, utc = "2026-10-02T23:00:00Z"): SuperbetListEvent => ({ event_id: id, fixture: { event_name: name, utc_date: utc, tournament_id: id, sport_id: 5 } });
+    const events = [at(1698, "São Paulo·Santos"), at(1697, "Criciúma·Operário PR"), at(106, "Arsenal·Chelsea"), at(96715, "Rodada 7·Rodada 7"), at(14582, "Simba·Yanga"), at(164, "Boston Celtics·Detroit Pistons")];
+    const pick = (sport: string) => selectSuperbetEvents(events, sport, names, "2026-10-01T00:00:00Z", "2026-10-03T00:00:00Z").map((p) => p.ev.fixture.event_name);
+    expect(pick("soccer-bra")).toEqual(["São Paulo·Santos"]);
+    expect(pick("soccer-eng")).toEqual(["Arsenal·Chelsea"]);
+    expect(pick("nba")).toEqual(["Boston Celtics·Detroit Pistons"]);
+  });
 });
 
 describe("Kambi (KTO)", () => {
@@ -92,9 +105,25 @@ describe("Altenar (EstrelaBet and tenants)", () => {
     expect(find(rows, { market: "moneyline", side: "home" })?.decimal).toBe(1.0715);
     expect(find(rows, { market: "moneyline", side: "away" })?.decimal).toBe(9.5);
     expect(find(rows, { market: "spread", side: "home", line: -7.5 })?.decimal).toBe(1.2778);
-    expect(find(rows, { market: "spread", side: "away", line: -7 })?.decimal).toBe(3.7);
+    // `sv` is the home line on both outcomes; the away side's own handicap is +7, as its name says.
+    expect(find(rows, { market: "spread", side: "away", line: 7 })?.decimal).toBe(3.7);
+    expect(find(rows, { market: "spread", side: "away", line: 7.5 })?.decimal).toBe(3.4);
+    expect(find(rows, { market: "spread", side: "away", line: -7 })).toBeUndefined();
+    expect(rows.filter((r) => r.market === "spread").every((r) => (r.side === "home") === (r.line! < 0))).toBe(true);
     expect(find(rows, { market: "total", side: "over", line: 150.5 })?.decimal).toBe(1.4167);
     expect(find(rows, { market: "total", side: "under", line: 150 })?.decimal).toBe(2.85);
+  });
+
+  it("flips the sign of `sv` for an away outcome whose name carries no handicap", () => {
+    const bare: AltenarEventDetails = {
+      id: 1, name: "Washington Mystics (F) vs. Connecticut Sun (F)", startDate: "2026-09-22T23:30:00Z",
+      competitors: [{ id: 1, name: "Washington Mystics (F)" }, { id: 2, name: "Connecticut Sun (F)" }],
+      markets: [{ id: 10, typeId: 223, name: "Handicap (incluindo Prorrogação)", desktopOddIds: [[101], [102]] }],
+      odds: [{ id: 101, typeId: 1714, price: 1.3, sv: "-7", competitorId: 1, name: "Washington Mystics (F)" }, { id: 102, typeId: 1715, price: 3.5, sv: "-7", competitorId: 2, name: "Connecticut Sun (F)" }],
+    };
+    const ev = altenarEvent(bare, "basketball", "estrelabet", new Map([[1, "Washington Mystics (F)"], [2, "Connecticut Sun (F)"]]))!;
+    const out = parseAltenarEvent(bare, ev, "EstrelaBet", AT).filter((r) => r.market === "spread");
+    expect(out.map((r) => [r.side, r.line, r.decimal])).toEqual([["home", -7, 1.3], ["away", 7, 3.5]]);
   });
 
   it("reads child markets: over/under pairs by player and N+ ladders", () => {
@@ -128,8 +157,11 @@ describe("Betfair Exchange", () => {
     const away = find(rows, { market: "moneyline", side: "away" })!;
     expect(away).toMatchObject({ decimal: 9.6, lay: 11, book: "Betfair Exchange", platform: "betfair-exchange" });
     expect(find(rows, { market: "moneyline", side: "home" })).toMatchObject({ decimal: 1.1, lay: 1.12 });
-    expect(find(rows, { market: "spread", side: "away", line: -35.5 })?.decimal).toBe(1.01);
-    expect(find(rows, { market: "total", side: "under", line: 120.5 })?.decimal).toBe(2);
+    // A lone 1.01 back order on a 35-point handicap rung is dust, not a market: dropped, never a fair price.
+    expect(find(rows, { market: "spread", side: "away", line: -35.5 })).toBeUndefined();
+    expect(rows.filter((r) => r.market === "spread")).toHaveLength(0);
+    // A real back with no lay is still a quote (2.0 on the under), just not a reference.
+    expect(find(rows, { market: "total", side: "under", line: 120.5 })).toMatchObject({ decimal: 2, lay: undefined });
     // A runner with nothing to back is not a price.
     expect(find(rows, { market: "total", side: "over", line: 120.5 })).toBeUndefined();
   });
