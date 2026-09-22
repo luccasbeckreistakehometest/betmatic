@@ -26,6 +26,7 @@ const C = {
     title: "Ao vivo", caution: "Ao vivo a casa ajusta rápido; a leitura pode já estar velha. Aposte só o que não faz falta.",
     empty: "Nenhum bilhete deste jogo para acompanhar.", before: "chance antes", now: "chance agora", won: "bateu", lost: "caiu", alive: "vivo", unknown: "sem leitura",
     saved: "seu bilhete", served: "bilhete do jogo", foul: "5 faltas", benched: "no banco", final: "Jogo encerrado — os bilhetes são liquidados em seguida.",
+    pregame: "Estes bilhetes foram montados antes de o jogo começar: os preços são daquele momento, não o que a casa mostra agora.",
     read: "Leitura ao vivo", readBtn: "Pedir leitura ao vivo", readBusy: "Lendo o jogo…", readAt: "leitura do minuto {m} · {t}", readNext: "Nova leitura liberada às {t}.",
     readPlan: "A leitura ao vivo faz parte dos planos Pro e Max.", readFail: "Não deu para ler o jogo agora.", updated: "atualizado {t}",
   },
@@ -33,6 +34,7 @@ const C = {
     title: "Live", caution: "Books adjust fast in play; the read may already be stale. Only bet what you can afford to lose.",
     empty: "No ticket on this game to follow.", before: "chance before", now: "chance now", won: "cleared", lost: "busted", alive: "alive", unknown: "no read",
     saved: "your ticket", served: "game ticket", foul: "5 fouls", benched: "benched", final: "Game over — tickets are graded next.",
+    pregame: "These tickets were built before the game started: the prices are from then, not what the book shows now.",
     read: "Live read", readBtn: "Ask for a live read", readBusy: "Reading the game…", readAt: "read at minute {m} · {t}", readNext: "A new read unlocks at {t}.",
     readPlan: "The live read is part of the Pro and Max plans.", readFail: "Couldn't read the game right now.", updated: "updated {t}",
   },
@@ -103,6 +105,8 @@ export function LivePanel({ gameId, sportKey, dateKey, lang }: { gameId: string;
       </header>
       <div className="flex flex-col gap-3 px-4 py-3">
         <p className="rounded-control border border-warn bg-warn-tint px-3 py-2 text-tiny text-warn" data-testid="live-caution">{c.caution}</p>
+        {/* No live odds source is wired in, so a ticket on screen during a game was priced before it. */}
+        {s.state === "in" && data.tickets.some((t) => t.source === "served") && <p className="text-tiny text-fg-muted" data-testid="live-pregame">{c.pregame}</p>}
         {s.state === "post" && <p className="text-tiny text-fg-muted">{c.final}</p>}
         {data.tickets.length === 0 ? <p className="text-tiny text-fg-dim">{c.empty}</p> : (
           <ul className="flex flex-col gap-2.5">

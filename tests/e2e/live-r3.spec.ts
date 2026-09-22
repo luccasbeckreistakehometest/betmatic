@@ -27,6 +27,8 @@ test("live panel: legs tracked with the chance now, polling only while visible, 
   const panel = page.getByTestId("live-panel");
   await expect(panel).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId("live-caution")).toContainText("Aposte só o que não faz falta");
+  // The tickets on a game under way were priced before it started; the panel has to say so.
+  await expect(page.getByTestId("live-pregame")).toContainText("antes de o jogo começar");
   await expect(page.getByTestId("live-score")).toContainText("DUN 61 × 58 CED");
   const tickets = panel.getByTestId("live-ticket");
   await expect(tickets).toHaveCount(3);
