@@ -134,12 +134,16 @@ export function writeEspnFixtures(dir: string, now = Date.now()) {
   const { games, teams } = buildWorld(now);
   // A game is published on the scoreboard of its declared slate day, not of its kickoff timestamp:
   // see the note in espn-world.ts. The calendar advertises the same days, for the same reason.
-  const dayDate = (d: SlateDay) => new Date(now + d * 24 * HOUR);
+  const dayDate = (d: number) => new Date(now + d * 24 * HOUR);
   for (const league of ["wnba", "bra.1"] as const) {
     const sport = league === "wnba" ? "basketball" : "soccer";
     const played = games.filter((g) => g.league === league);
     const calendar = [...new Set(played.map((g) => dayDate(g.day).toISOString()))];
-    for (const d of [-1, 0, 1] as SlateDay[]) {
+    // Every day a spec can reach gets a scoreboard, empty when the world has no game on it: the
+    // replay only answers URLs it has a file for, and the tipster audit looks a day either side of
+    // a pick posted thirty hours ago — an unanswered day went to the real ESPN, and on 20/09/2026 it
+    // found a real Palmeiras game for the pick the spec expects to stay unverifiable.
+    for (const d of [-4, -3, -2, -1, 0, 1, 2]) {
       const day = etKey(dayDate(d));
       const events = played.filter((g) => g.day === d).map(scoreboardEvent);
       const body = { leagues: [{ calendar }], events };

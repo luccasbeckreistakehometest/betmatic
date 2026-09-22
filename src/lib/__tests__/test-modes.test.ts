@@ -55,4 +55,13 @@ describe("AI mock switch", () => {
     expect(startupProblems({ ...base, ESPN_FIXTURES: "/tmp/x" }).fatal.join(" ")).toMatch(/ESPN_FIXTURES/);
     expect(startupProblems(base).fatal).toEqual([]);
   });
+
+  // The production-build e2e run is the only door, and it only opens onto localhost.
+  it("lets the e2e suite run a production build, on localhost only", () => {
+    const local = { AUTH_SECRET: "a".repeat(64), AI_MOCK: "switch", ESPN_FIXTURES: "/tmp/x", ANALYTICS_ALLOW_HEADLESS: "1", APP_URL: "http://localhost:3300", NEXT_PUBLIC_BASE_URL: "http://localhost:3300" };
+    expect(startupProblems({ ...local, E2E_PRODUCTION_BUILD: "1" }).fatal).toEqual([]);
+    expect(startupProblems(local).fatal.join(" ")).toMatch(/AI_MOCK/);
+    expect(startupProblems({ ...local, E2E_PRODUCTION_BUILD: "1", NEXT_PUBLIC_BASE_URL: "https://betmatic.marqa.online" }).fatal.join(" ")).toMatch(/AI_MOCK/);
+    expect(startupProblems({ ...local, E2E_PRODUCTION_BUILD: "1", APP_URL: "", NEXT_PUBLIC_BASE_URL: "" }).fatal.join(" ")).toMatch(/ESPN_FIXTURES/);
+  });
 });
