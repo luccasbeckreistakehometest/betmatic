@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Badge, Empty, Table, TableSkeleton, Td, Th } from "@/components/ui";
+import { Badge, Empty, Panel, Skeleton, Table, TableSkeleton, Td, Th } from "@/components/ui";
 import { GameCard, GameCardSkeleton } from "@/components/GameCard";
 import { GameRow } from "@/components/GameRow";
 import { formatTime, localizeStatus } from "@/lib/format";
@@ -61,6 +61,29 @@ export function SlateSkeleton({ lang = "pt" }: { lang?: Lang }) {
         </Table>
       </div>
     </>
+  );
+}
+
+/**
+ * The whole slate screen while the day's games are fetched — the head's shape, the date control's
+ * box, then the list — streamed through a Suspense boundary that sits after the page's redirect,
+ * so a visit without a sport still answers with a real 307 rather than a client-side hop.
+ */
+export function SlateFrameSkeleton({ lang = "pt" }: { lang?: Lang }) {
+  return (
+    <div className="flex flex-col gap-4" aria-busy="true">
+      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3 border-b border-line-strong pb-3">
+        <div className="flex flex-col gap-2">
+          <Skeleton width="3rem" />
+          <Skeleton width="12rem" className="h-6" />
+          <Skeleton width="16rem" />
+        </div>
+        <Skeleton width="13rem" className="h-(--row-h)" />
+      </div>
+      <Panel flush>
+        <SlateSkeleton lang={lang} />
+      </Panel>
+    </div>
   );
 }
 

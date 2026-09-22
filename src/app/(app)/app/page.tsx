@@ -1,8 +1,9 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { DateNav } from "@/components/DateNav";
 import { ErrorState, Notice, PageHead, Panel } from "@/components/ui";
-import { SlateTable } from "@/components/SlateTable";
+import { SlateFrameSkeleton, SlateTable } from "@/components/SlateTable";
 import { RememberSport } from "@/components/RememberSport";
 import { WhatsNew } from "@/components/WhatsNew";
 import { getSlateOrNearest, todayKey } from "@/lib/sources/espn";
@@ -32,6 +33,24 @@ export default async function SlatePage({ searchParams }: PageProps<"/app">) {
   }
 
   const sport = getSport(params.sport);
+  const viewer = await currentUser();
+
+  // The games stream in behind the slate's own frame (never a blank screen); the redirect above
+  // has already been decided, so it is still a real 307. A loading.tsx would have flushed the
+  // shell first and turned that redirect into a client-side hop.
+  return (
+    <div className="flex flex-col gap-4" data-density="compact">
+      <RememberSport sportKey={sport.key} />
+      {viewer && <WhatsNew lang={lang} sportKey={sport.key} />}
+      <Suspense fallback={<SlateFrameSkeleton lang={lang} />}>
+        <SlateBody requested={requested} lang={lang} sportKey={sport.key} role={viewer?.role === "admin" ? "admin" : "user"} />
+      </Suspense>
+    </div>
+  );
+}
+
+async function SlateBody({ requested, lang, sportKey, role }: { requested: string; lang: "pt" | "en"; sportKey: string; role: "admin" | "user" }) {
+  const sport = getSport(sportKey);
   const t = makeT(lang);
 
   let slate;
@@ -43,15 +62,10 @@ export default async function SlatePage({ searchParams }: PageProps<"/app">) {
     reportError("data.slate", e, { sport: sport.key, date: requested }, "warn");
   }
 
-  const viewer = await currentUser();
-  const role = viewer?.role === "admin" ? "admin" : "user";
   const games = (slate?.games ?? []).map((g) => scrubGame(g, role, lang));
 
   return (
-    <div className="flex flex-col gap-4" data-density="compact">
-      <RememberSport sportKey={sport.key} />
-      {viewer && <WhatsNew lang={lang} sportKey={sport.key} />}
-
+    <>
       <PageHead
         kicker={lang === "pt" ? "Mesa" : "Desk"}
         title={`${t("slate")} · ${sport.label[lang]}`}
@@ -78,6 +92,6 @@ export default async function SlatePage({ searchParams }: PageProps<"/app">) {
           <SlateTable games={games} lang={lang} sportKey={sport.key} />
         </Panel>
       )}
-    </div>
+    </>
   );
 }

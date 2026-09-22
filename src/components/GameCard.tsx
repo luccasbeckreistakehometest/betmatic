@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Icon } from "@/components/Icon";
+import { LinkPending } from "@/components/LinkPending";
 import { Skeleton, cx } from "@/components/ui";
 import { formatNumber, formatTime, localizeStatus, NOT_PRICED } from "@/lib/format";
 import { makeT, type Lang } from "@/lib/i18n";
@@ -94,7 +94,7 @@ export function GameCard({ game, lang = "pt", sportKey }: { game: Game; lang?: L
             </span>
           )}
         </span>
-        <Icon name="chevron-right" size={20} className="shrink-0 text-fg-dim" />
+        <LinkPending />
       </Link>
     </li>
   );

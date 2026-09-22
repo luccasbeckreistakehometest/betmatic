@@ -1173,9 +1173,13 @@ ceilings open the decimal keypad; e-mail opens the e-mail one.
 §4 requires; the hand-written table header and the collapsed row label read the token, so the floor
 reaches them too.
 
-**Loading.** `loading.tsx` streams the slate's and the game page's frames — cards on a phone, the
-table's own columns on a desk, two ticket cards in the final shape — and the tickets panel loads
-with the same skeleton instead of a sentence.
+**Loading.** The slate streams its own frame — the head's shape, the date control's box, cards on
+a phone and the table's columns on a desk — through a `Suspense` boundary placed *after* the page's
+redirect, not through a `loading.tsx`: a loading file flushes the shell before the page runs, which
+turns `redirect()` and `notFound()` into client-side hops with a 200 (and it raced the e2e's next
+navigation). The game page keeps its real 404 for the same reason; a tapped card answers at once
+(`LinkPending`: the chevron becomes a spinner while the navigation is pending), and the tickets
+panel loads as two ticket cards in the final shape instead of a sentence.
 
 **Install.** `manifest.ts` (standalone, portrait, the dark page surface as both colours), the mark
 as 192/512/maskable PNGs rasterised from the favicon's geometry, `viewport-fit=cover` and the
