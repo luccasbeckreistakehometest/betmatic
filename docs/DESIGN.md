@@ -1182,5 +1182,14 @@ as 192/512/maskable PNGs rasterised from the favicon's geometry, `viewport-fit=c
 Apple web-app meta. No service worker, on purpose: nothing behind a login is ever cached, and
 current browsers install without one.
 
+**Width is never content's to set.** Two mechanisms let one wide thing set the width of a whole
+page on a phone, and both are closed. A column with auto side margins that is a flex item of the
+body (the admin's root) shrinks to fit its content, so it carries `w-full`; and a grid that declares
+its columns only from a breakpoint up has one implicit `auto` column below it, whose floor is the
+widest thing inside — on a phone that column is `minmax(0, 1fr)` (`globals.css`). The sideways
+scroll a table is allowed (§11.1) then stays inside its own wrapper, and the phone e2e measures
+overflow against the device width rather than `innerWidth`, which grows with the page and had
+hidden every case.
+
 **Not done.** The header still shows the sport picker, not a date picker; a per-viewer density
 choice is still ignored below 768px (comfortable is forced, as §7 says).

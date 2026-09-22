@@ -128,17 +128,30 @@ test("the game page: a compact head once the team block scrolls away, and one pr
   await skipTour(page);
   await page.goto("/app/game/990000102?sport=wnba&lang=pt");
   await expect(page.getByTestId("live-panel")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("ticket").first()).toBeVisible({ timeout: 30_000 });
+  // At the top the full team block is on screen, so there is no compact head — and the bar offers
+  // the one action whose own control is off screen: the live read while this reader can still ask
+  // for one (the game's shared read may already have been taken earlier in the run), else the
+  // tickets further down. Either way it is one button, above the tab bar, never on it.
   const head = page.getByTestId("game-sticky-head");
   await expect(head).toHaveAttribute("data-shown", "false");
+  const bar = page.getByTestId("game-action-bar");
+  const primary = bar.getByRole("button");
+  await expect(primary).toBeVisible();
+  const label = (await primary.innerText()).trim();
+  expect(["Pedir leitura ao vivo", "Ver bilhetes"]).toContain(label);
+  const barBox = (await bar.boundingBox())!;
+  expect(barBox.height).toBeGreaterThanOrEqual(44);
+  const tabs = (await page.getByTestId("tab-bar").boundingBox())!;
+  expect(Math.round(barBox.y + barBox.height)).toBeLessThanOrEqual(Math.round(tabs.y) + 1);
+  // Once the team block has scrolled under the topbar, the compact head takes over with the score.
   await page.evaluate(() => window.scrollTo(0, 800));
   await expect(head).toHaveAttribute("data-shown", "true");
   await expect(head).toBeVisible();
   await expect(head.getByTestId("sticky-score")).toHaveText("61 × 58");
-  // The live read is offered in the bar while its inline button is off screen, and only then.
-  const bar = page.getByTestId("game-action-bar");
-  await expect(bar.getByTestId("action-live-read")).toHaveText("Pedir leitura ao vivo");
-  expect((await bar.boundingBox())!.height).toBeGreaterThanOrEqual(44);
-  await page.getByTestId("live-read-btn").scrollIntoViewIfNeeded();
+  // The bar steps aside as soon as the control it stands for is on screen: one primary action at a time.
+  const twin = label === "Ver bilhetes" ? page.locator("#tickets") : page.getByTestId("live-read-btn");
+  await twin.scrollIntoViewIfNeeded();
   await expect(bar).toBeHidden();
   // Odds bands as chips a thumb can swipe: pressing one leaves that band's tickets alone on screen.
   const chips = page.getByTestId("band-chips").getByRole("button");
@@ -167,7 +180,8 @@ test("the tickets panel offers 'Ver bilhetes' from the bottom of the page and sc
   await expect(action).toHaveText("Ver bilhetes");
   await action.click();
   await expect(page.getByTestId("game-action-bar")).toBeHidden();
-  const panel = (await page.getByTestId("tickets").boundingBox())!;
-  expect(panel.y).toBeGreaterThanOrEqual(0);
-  expect(panel.y).toBeLessThan(200);
+  // The scroll is smooth: wait for it to settle with the panel's top just under the sticky chrome.
+  const top = () => page.locator("#tickets").boundingBox().then((b) => b!.y);
+  await expect.poll(top, { timeout: 5_000 }).toBeGreaterThanOrEqual(0);
+  expect(await top()).toBeLessThan(200);
 });

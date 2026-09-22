@@ -4,7 +4,7 @@ import { track } from "@/lib/track";
 import { useState } from "react";
 import Link from "next/link";
 
-import { Badge, Chip, Empty, Odds, Skeleton, buttonClass, chipClass, cx } from "@/components/ui";
+import { Badge, Chip, Empty, Odds, Skeleton, buttonClass, chipClass, cx, useIsPhone } from "@/components/ui";
 import { formatMoney, formatNumber, formatPercent as pctOf } from "@/lib/format";
 import { groupAlternatives, legDiff } from "@/lib/bets/alternatives-view";
 import { kellyFraction, formatDecimal, getBand } from "@/lib/odds";
@@ -258,13 +258,15 @@ export interface GamePricesView { tickets: TicketPricesView[]; signals: PropSign
 /**
  * The phone's way through a stack of tickets: one chip per odds band present, swiped sideways,
  * each a pressed/unpressed toggle (§12.6) that leaves only that band's tickets on screen. A desk
- * shows every ticket and never sees the strip.
+ * shows every ticket and the strip is not in its DOM at all — hidden, its labels ("Longa
+ * (20x–100x)") would still answer a search for a price.
  */
 function BandChips({ bands, band, onBand, lang }: { bands: string[]; band: string; onBand: (key: string) => void; lang: Lang }) {
   const t = makeT(lang);
-  if (bands.length < 2) return null;
+  const phone = useIsPhone();
+  if (!phone || bands.length < 2) return null;
   return (
-    <div className="u-swipe -mx-(--panel-p) gap-2 px-(--panel-p) md:hidden" role="group" aria-label={lang === "pt" ? "Faixa de odds" : "Odds band"} data-testid="band-chips">
+    <div className="u-swipe -mx-(--panel-p) gap-2 px-(--panel-p)" role="group" aria-label={lang === "pt" ? "Faixa de odds" : "Odds band"} data-testid="band-chips">
       <button type="button" aria-pressed={band === "all"} onClick={() => onBand("all")} className={chipClass(band === "all")}>{t("allBands")}</button>
       {bands.map((key) => (
         <button key={key} type="button" aria-pressed={band === key} onClick={() => onBand(key)} className={chipClass(band === key)} data-testid={`band-${key}`}>

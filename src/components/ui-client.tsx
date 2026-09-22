@@ -344,6 +344,23 @@ export function DensitySwitch({ labels }: { labels?: { density: string; compact:
   );
 }
 
+/* ── Viewport ──────────────────────────────────────────────────────────────────────────────────
+ * Whether the page is on a phone, read from the same breakpoint the stylesheet uses. A component
+ * that exists on one side of it only should leave the DOM rather than hide: a hidden control still
+ * answers a text search and still sits in a list of buttons. False while rendering on the server.
+ */
+const PHONE_QUERY = "(max-width: 767px)";
+
+function subscribeToViewport(onChange: () => void) {
+  const query = window.matchMedia(PHONE_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+export function useIsPhone(): boolean {
+  return useSyncExternalStore(subscribeToViewport, () => window.matchMedia(PHONE_QUERY).matches, () => false);
+}
+
 /* ── Print ─────────────────────────────────────────────────────────────────────────────────────
  * The two screens that produce a document — the weekly report and the public record — offer the
  * sheet directly. The print rules in globals.css strip the chrome and leave one column.

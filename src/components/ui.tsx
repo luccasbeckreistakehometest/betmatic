@@ -719,4 +719,4 @@ export function Tooltip({ label, children, className = "" }: { label: string; ch
 
 /* Interactive primitives (hooks, focus traps, keyboard handling) live next door so this module
    stays renderable from a server component. Screens import everything from "@/components/ui". */
-export { DensitySwitch, Dialog, PrintButton, PrintHeader, RangeField, Sheet, Tabs, ThemeSwitch } from "@/components/ui-client";
+export { DensitySwitch, Dialog, PrintButton, PrintHeader, RangeField, Sheet, Tabs, ThemeSwitch, useIsPhone } from "@/components/ui-client";
