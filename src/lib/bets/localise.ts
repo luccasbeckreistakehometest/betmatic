@@ -62,7 +62,10 @@ export async function localiseSlate(slate: BetSlate, from: Lang, to: Lang): Prom
   const texts = await generateStructured({
     schema: TextsSchema,
     model: EXTRACTION_MODEL,
-    maxTokens: 12000,
+    // Fifteen tickets of prose come back as ~10k tokens of JSON, and on Claude the thinking shares the
+    // budget: 12k hit the cap on the first real slate (22/09/2026). Rewriting needs no thinking.
+    maxTokens: 24000,
+    effort: "low",
     system: `You rewrite the prose of betting tickets from ${MARKET[from]} into ${MARKET[to]}
 Rules:
 - Write natively for the target market — same meaning, same claims, same hedges, but the phrasing a local sharp bettor would use. Not a word-for-word translation.

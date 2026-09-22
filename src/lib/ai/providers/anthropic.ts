@@ -74,7 +74,7 @@ export const anthropicProvider: AiProvider = {
       system: request.cacheSystem
         ? [{ type: "text", text: request.system, cache_control: { type: "ephemeral" } }]
         : request.system,
-      ...(supportsAdaptiveThinking(request.model) ? { thinking: { type: "adaptive" as const }, output_config: { format: zodOutputFormat(request.schema), effort: effortOf() } } : { output_config: { format: zodOutputFormat(request.schema) } }),
+      ...(supportsAdaptiveThinking(request.model) ? { thinking: { type: "adaptive" as const }, output_config: { format: zodOutputFormat(request.schema), effort: request.effort ?? effortOf() } } : { output_config: { format: zodOutputFormat(request.schema) } }),
       messages: [{ role: "user", content: contentOf(request) }],
     });
     let response: Anthropic.Message;

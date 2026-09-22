@@ -26,6 +26,8 @@ export interface ProviderRequest {
   images?: ProviderImage[];
   /** Mark the system prompt cacheable. Anthropic needs the hint; OpenAI caches long prefixes itself. */
   cacheSystem?: boolean;
+  /** How hard the model may think on this call; a mechanical pass (localisation) asks for `low`. Anthropic only. */
+  effort?: "low" | "medium" | "high" | "xhigh" | "max";
 }
 
 /**
