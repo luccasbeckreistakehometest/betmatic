@@ -128,20 +128,19 @@ export async function fetchBetfairExchange(args: FetchArgs): Promise<BookPrice[]
   if (!events.length) return [];
   const fetchedAt = new Date().toISOString();
   const out: BookPrice[] = [];
-  // Markets are named per event, then priced in batches of market ids (the page does the same).
-  for (let i = 0; i < events.length; i += 6) {
-    const batch = events.slice(i, i + 6);
-    const named = await bookJson<ExchangePayload>(`${ERO}/byevent?_ak=${BETFAIR_APP_KEY}&alt=json&currencyCode=BRL&eventIds=${batch.map((e) => e.id).join(",")}&locale=pt_BR&rollupLimit=50&rollupModel=STAKE&types=MARKET_STATE,EVENT,MARKET_DESCRIPTION`);
+  // One event per call: the read-only API answers TOO_MUCH_DATA to a batch of six, and one event's
+  // three main markets fit comfortably in a single bymarket call (the page does the same).
+  for (const ev of events) {
+    const event = exchangeEvent(ev, sport, args.sportKey);
+    if (!event) continue;
+    const named = await bookJson<ExchangePayload>(`${ERO}/byevent?_ak=${BETFAIR_APP_KEY}&alt=json&currencyCode=BRL&eventIds=${ev.id}&locale=pt_BR&rollupLimit=50&rollupModel=STAKE&types=MARKET_STATE,EVENT,MARKET_DESCRIPTION`);
     const marketIds: string[] = [];
     for (const et of named.data.eventTypes ?? []) for (const en of et.eventNodes ?? []) for (const m of en.marketNodes ?? []) {
       if (/^(MATCH_ODDS|HANDICAP|COMBINED_TOTAL|OVER_UNDER_\d+)$/.test(m.description?.marketType ?? "")) marketIds.push(m.marketId);
     }
     if (!marketIds.length) continue;
-    const priced = await bookJson<ExchangePayload>(`${ERO}/bymarket?_ak=${BETFAIR_APP_KEY}&alt=json&currencyCode=BRL&locale=pt_BR&marketIds=${marketIds.slice(0, 40).join(",")}&rollupLimit=50&rollupModel=STAKE&types=${TYPES}`);
-    for (const ev of batch) {
-      const event = exchangeEvent(ev, sport, args.sportKey);
-      if (event) out.push(...parseExchangeMarkets(priced.data, event, fetchedAt));
-    }
+    const priced = await bookJson<ExchangePayload>(`${ERO}/bymarket?_ak=${BETFAIR_APP_KEY}&alt=json&currencyCode=BRL&locale=pt_BR&marketIds=${marketIds.slice(0, 8).join(",")}&rollupLimit=50&rollupModel=STAKE&types=${TYPES}`);
+    out.push(...parseExchangeMarkets(priced.data, event, fetchedAt));
   }
   return out;
 }

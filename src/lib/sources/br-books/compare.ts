@@ -267,12 +267,18 @@ export function propSignals(prices: BookPrice[], opts: CompareOptions = {}, limi
   const out: PropSignal[] = [];
   for (const q of keys.values()) {
     const c = compareLeg(prices, q, opts);
+    if (c.quotes.length < 2) continue;
+    const betterLine = c.lineAlternatives.some((a) => a.better);
+    if (!c.dispersion.length && !betterLine) continue;
+    // Deep ladder rungs (30+ points at 20.0) disagree wildly and matter little: the weight falls off
+    // past 2.5, so a main line at 1.9 outranks a 15.0 rung with twice the spread, and anything
+    // priced beyond 10.0 — a lottery rung, not a line a ticket is built on — is left out.
+    const anchor = c.medianDecimal ?? c.best!.decimal;
+    if (anchor > 10) continue;
+    const weight = Math.min(1, (2.5 / anchor) ** 2);
     const disp = c.dispersion[0]?.pct ?? 0;
-    const shop = c.lineAlternatives.some((a) => a.better) ? (opts.dispersionPct ?? 7) : 0;
-    const score = Math.max(Math.abs(disp), shop, c.bestVsWorstPct ?? 0);
-    if (c.quotes.length >= 2 && (c.dispersion.length || c.lineAlternatives.some((a) => a.better))) {
-      out.push({ player: q.player!, stat: q.stat!, side: q.side as "over" | "under", line: q.line!, comparison: c, score });
-    }
+    const score = Number((Math.max(Math.abs(disp), betterLine ? (opts.dispersionPct ?? 7) : 0) * weight).toFixed(2));
+    out.push({ player: q.player!, stat: q.stat!, side: q.side as "over" | "under", line: q.line!, comparison: c, score });
   }
   return out.sort((a, b) => b.score - a.score).slice(0, limit);
 }

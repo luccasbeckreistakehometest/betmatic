@@ -15,7 +15,7 @@ const SPORT_ID: Record<BookSport, number> = { basketball: 4, soccer: 5 };
 const LEAGUES: Record<string, { ids: number[]; name: RegExp }> = {
   wnba: { ids: [2174], name: /\bWNBA\b/i },
   nba: { ids: [], name: /^EUA - NBA$|\bNBA\b(?! ?2K| Cup| Summer| G League)/i },
-  "soccer-bra": { ids: [1697], name: /Brasileir\w* - S[ée]rie A\b|Brasileir[ãa]o\b.*S[ée]rie A\b/i },
+  "soccer-bra": { ids: [], name: /Brasileir\w* - S[ée]rie A\b|Brasileir[ãa]o\b.*S[ée]rie A\b/i },
   "soccer-eng": { ids: [], name: /Inglaterra - Premier League/i },
   "soccer-esp": { ids: [], name: /Espanha - La ?Liga\b/i },
   "soccer-ucl": { ids: [], name: /UEFA - Champions League$/i },

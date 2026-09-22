@@ -302,7 +302,9 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
 export async function upcomingGames(sportKeys: string[], now: Date, horizonHours: number, slate: (dateKey: string, sportKey: string) => Promise<Game[]> = (k, s) => getSlate(k, false, s)): Promise<Map<string, Game[]>> {
   const out = new Map<string, Game[]>();
   const lo = now.getTime(), hi = lo + horizonHours * 3_600_000;
-  const days = [...new Set([espnDateKey(now), shiftKey(espnDateKey(now), 1), shiftKey(espnDateKey(now), 2)])].filter((k) => Date.parse(`${k.slice(0, 4)}-${k.slice(4, 6)}-${k.slice(6, 8)}T00:00:00Z`) <= hi + 86_400_000);
+  // One scoreboard per ESPN day the horizon touches (two days for the default 48 h), at most two weeks.
+  const span = Math.min(14, Math.ceil(horizonHours / 24) + 1);
+  const days = Array.from({ length: span }, (_, i) => shiftKey(espnDateKey(now), i));
   for (const sportKey of sportKeys) {
     const games: Game[] = [];
     for (const day of days) {

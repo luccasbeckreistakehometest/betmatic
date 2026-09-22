@@ -10,7 +10,7 @@ fs.rmSync(DIR, { recursive: true, force: true });
 
 const refresh = vi.fn(async () => ({ status: "ok" }));
 const featured = vi.fn(async () => ({ status: "ok" }));
-const books = vi.fn(async (_opts: unknown) => ({ status: "ok", rows: 0 }));
+const books = vi.fn(async (opts: unknown) => ({ status: "ok", rows: 0, opts }));
 vi.mock("@/lib/server/session", () => ({ requireAdmin: async () => null }));
 vi.mock("@/lib/server/refresh-job", () => ({ runRefresh: () => refresh() }));
 vi.mock("@/lib/server/featured", () => ({ runFeatured: () => featured() }));
