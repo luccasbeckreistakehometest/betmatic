@@ -106,6 +106,7 @@ function pricedRow(sport: SportDef, market: MarketDef, player: PlayerContext, po
   const inPlay = live && live.verdict.state === "alive" && live.verdict.current !== null && live.verdict.remaining !== null
     ? { current: live.verdict.current, remaining: live.verdict.remaining, minutesLeft: live.box.minutesLeft }
     : null;
+  const liveNote = inPlay && live?.verdict.reason ? `live: ${live.verdict.reason.en}` : "";
   return {
     player: player.name, team: player.team, athleteId: player.athleteId,
     market: market.label.en, marketKey: market.key, line: posted.line, side: posted.side,
@@ -115,7 +116,7 @@ function pricedRow(sport: SportDef, market: MarketDef, player: PlayerContext, po
       posted.openDecimal && posted.openDecimal !== posted.decimal ? `opened ${posted.openDecimal.toFixed(2)}` : "",
       posted.noVigFair !== null ? `no-vig ${(posted.noVigFair * 100).toFixed(0)}%` : "one-sided ladder, price includes the full margin",
       measured.sampleNote,
-      inPlay ? `live: ${live!.verdict.reason?.en ?? ""}` : "",
+      liveNote,
     ].filter(Boolean).join(" · "),
     measured,
     live: inPlay,
