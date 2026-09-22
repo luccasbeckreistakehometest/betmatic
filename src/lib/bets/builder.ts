@@ -29,6 +29,17 @@ import { linkAlternatives, ticketId } from "@/lib/bets/alternatives";
 import type { ProviderLines } from "@/lib/sources/espn-props";
 import { mockGameSlate, mockSlateBets } from "@/lib/ai/mocks";
 
+/**
+ * Output room for a slate. A full read is five bands, each main ticket with two alternatives and
+ * five to eight legs carrying an explanation and its evidence — and on Claude the model's own
+ * thinking counts against the same cap. 16k truncated every game on 22/09/2026 (three Opus reads,
+ * US$1.48 for nothing); 32k is the floor, AI_MAX_OUTPUT_TOKENS raises it.
+ */
+export const JUDGEMENT_MAX_TOKENS = (() => {
+  const v = Number(process.env.AI_MAX_OUTPUT_TOKENS);
+  return Number.isFinite(v) && v >= 16000 ? Math.floor(v) : 32000;
+})();
+
 const LegSchema = z.object({
   selection: z.string().describe("The exact bet, including the number. e.g. 'Paolo Banchero over 22.5 points'"),
   market: z.string().describe("moneyline | spread | total | player prop | alternate | other"),
@@ -439,7 +450,7 @@ export async function buildBets(args: BuildArgs): Promise<BetSlate> {
     schema: SlateSchema,
     system: getPrompt("game", lang),
     prompt,
-    maxTokens: 16000,
+    maxTokens: JUDGEMENT_MAX_TOKENS,
     label: live ? "live" : "game",
     model: args.model,
     mock: () => mockGameSlate({ game, detail, props, lang, bands, live: !!live }),
@@ -525,7 +536,7 @@ export async function buildSlateBets(args: SlateBuildArgs): Promise<BetSlate> {
     schema: SlateSchema,
     system: getPrompt("slate", lang),
     prompt,
-    maxTokens: 16000,
+    maxTokens: JUDGEMENT_MAX_TOKENS,
     label: "slate",
     mock: () => mockSlateBets({ games, lang }),
   });
