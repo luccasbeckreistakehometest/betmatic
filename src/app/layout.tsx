@@ -50,6 +50,10 @@ export async function generateMetadata(): Promise<Metadata> {
       images: [DEFAULT_OG_IMAGE],
     },
     twitter: { card: "summary_large_image", title: meta.title, description: meta.description, images: [DEFAULT_OG_IMAGE.url] },
+    // Installed from the home screen the app opens without the browser's chrome; the manifest
+    // (src/app/manifest.ts) says the same to Android and desktop Chrome.
+    appleWebApp: { capable: true, title: SITE_NAME, statusBarStyle: "black-translucent" },
+    formatDetection: { telephone: false },
   };
 }
 
@@ -61,6 +65,8 @@ export const viewport: Viewport = {
     { media: "(prefers-color-scheme: dark)", color: "#0a0c11" },
   ],
   colorScheme: "dark light",
+  // The page runs edge to edge on a phone with a notch; the safe-area insets are read in globals.css.
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

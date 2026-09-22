@@ -21,7 +21,7 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
  */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-dvh flex-col" data-density="default">
+    <div className="flex min-h-dvh flex-col pb-(--tabbar-h)" data-density="default">
       <header className="sticky top-0 z-40 flex h-12 shrink-0 items-center gap-3 border-b border-line bg-surface-1 px-3 md:px-4">
         <Link href="/app" className="flex shrink-0 items-center" aria-label="Betmatic">
           <span className="lg:hidden"><Logo size={22} showWord={false} /></span>

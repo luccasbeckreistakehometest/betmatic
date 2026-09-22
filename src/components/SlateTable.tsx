@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Badge, Empty, Table, Td, Th } from "@/components/ui";
+import { Badge, Empty, Table, TableSkeleton, Td, Th } from "@/components/ui";
+import { GameCard, GameCardSkeleton } from "@/components/GameCard";
 import { GameRow } from "@/components/GameRow";
 import { formatTime, localizeStatus } from "@/lib/format";
 import { makeT, type Lang } from "@/lib/i18n";
@@ -18,8 +19,9 @@ function line(value?: number): string {
 /**
  * The slate is a table, because that is what a slate is: one row per fixture, the same six facts in
  * the same six places, scanned top to bottom in a second. The crest is demoted to 16px after the
- * name (§16) and dropped entirely below the tablet breakpoint, where the row becomes a definition
- * list — the abbreviation carries the team there.
+ * name (§16). Below the tablet breakpoint the table leaves and the same fixtures become cards
+ * (GameCard): a definition list of six labelled lines per game is a form, not a slate, and a thumb
+ * needs one target per game, not six.
  */
 function Side({ team, won, score }: { team: TeamRef; won: boolean; score: boolean }) {
   return (
@@ -37,11 +39,43 @@ function Side({ team, won, score }: { team: TeamRef; won: boolean; score: boolea
   );
 }
 
+/** The slate while it is on its way: cards on a phone, the table's own columns on a desk. */
+export function SlateSkeleton({ lang = "pt" }: { lang?: Lang }) {
+  const t = makeT(lang);
+  return (
+    <>
+      <GameCardSkeleton />
+      <div className="hidden md:block">
+        <Table caption={t("slate")}>
+          <thead>
+            <tr>
+              <Th className="w-20">{lang === "pt" ? "Início" : "Start"}</Th>
+              <Th>{lang === "pt" ? "Visitante" : "Away"}</Th>
+              <Th>{lang === "pt" ? "Casa" : "Home"}</Th>
+              <Th numeric className="w-24">{t("spread")}</Th>
+              <Th numeric className="w-20">{t("total")}</Th>
+              <Th numeric className="w-28">{t("moneyline")}</Th>
+            </tr>
+          </thead>
+          <TableSkeleton rows={6} columns={[{ width: "3rem" }, { width: "9rem" }, { width: "8rem" }, { width: "4rem", numeric: true }, { width: "3rem", numeric: true }, { width: "6rem", numeric: true }]} />
+        </Table>
+      </div>
+    </>
+  );
+}
+
 export function SlateTable({ games, lang = "pt", sportKey }: { games: Game[]; lang?: Lang; sportKey?: string }) {
   const t = makeT(lang);
   if (!games.length) return <div className="p-(--panel-p)"><Empty>{t("noGamesNearby")}</Empty></div>;
 
   return (
+    <>
+    <ul className="md:hidden" data-tour="games" data-testid="game-cards">
+      {games.map((game) => (
+        <GameCard key={game.id} game={game} lang={lang} sportKey={sportKey} />
+      ))}
+    </ul>
+    <div className="hidden md:block">
     <Table caption={t("slate")}>
       <thead>
         <tr>
@@ -104,5 +138,7 @@ export function SlateTable({ games, lang = "pt", sportKey }: { games: Game[]; la
         })}
       </tbody>
     </Table>
+    </div>
+    </>
   );
 }

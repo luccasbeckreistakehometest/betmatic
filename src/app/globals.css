@@ -97,6 +97,14 @@
   --topbar-h: 48px;
   --sticky-top: calc(var(--topbar-h) + var(--s-5));
 
+  /* The phone's chrome. The device's own insets (the home indicator, a notch) are read once here
+     and never in a component; the tab bar exists only below 768px, so its height is 0 on a desk and
+     anything anchored to the bottom of the screen (a floating card, an action bar) offsets by it. */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --tabbar-h: 0px;
+  --float-b: var(--s-7);
+
   /* Density (§7) — default mode; [data-density] overrides below. */
   --row-h: 32px;
   --cell-px: 12px;
@@ -214,11 +222,22 @@
 }
 @media (max-width: 767px) {
   [data-density] {
-    --row-h: 40px;
+    --row-h: 44px;
     --cell-px: 16px;
-    --panel-p: 24px;
+    --panel-p: 20px;
     --stack-gap: 16px;
     --density-text: 0.875rem;
+  }
+  :root {
+    /* 56px of bar plus whatever the device keeps for itself under it. */
+    --tabbar-h: calc(var(--s-11) + var(--safe-b));
+    --float-b: calc(var(--tabbar-h) + var(--s-5));
+    /* Nothing on a phone is set below 12px: the two smallest steps of the scale rise to it, so a
+       column label or a footnote stays readable at arm's length. Every other size is unchanged. */
+    --text-micro: 0.75rem;
+    --text-micro--line-height: 1rem;
+    --text-label: 0.75rem;
+    --text-label--line-height: 1rem;
   }
 }
 
@@ -377,6 +396,37 @@
 @utility u-rule-active {
   box-shadow: inset 0 -2px 0 var(--fg);
 }
+/* The phone's current tab: the selection blue as a 2px rule on the tab's top edge, plus ink (§6.1). */
+@utility u-tab-current {
+  box-shadow: inset 0 2px 0 var(--focus);
+}
+/* A control drawn smaller than a fingertip keeps its box and gains a transparent 44px hit area
+   around it (§12.1): the pseudo-element grows only where the control is under 44px. */
+@utility u-hit {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    inset-block: min(0px, calc((100% - 44px) / 2));
+    inset-inline: min(0px, calc((100% - 44px) / 2));
+  }
+}
+/* A row of chips a thumb can swipe: one line, snapping, no scrollbar, the page never scrolls with it. */
+@utility u-swipe {
+  display: flex;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  & > * {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+  }
+}
 /* The one gradient permitted in the system: the 24px fade marking a clipped scrollable table. */
 @utility u-edge-fade {
   -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
@@ -399,8 +449,8 @@
     text-align: left;
     font-family: var(--font-display);
     font-variation-settings: "wdth" 82, "wght" 500;
-    font-size: 0.6875rem;
-    line-height: 0.875rem;
+    font-size: var(--text-label);
+    line-height: var(--text-label--line-height);
     letter-spacing: 0.06em;
     text-transform: uppercase;
     white-space: nowrap;
@@ -458,9 +508,16 @@
     color: var(--fg-dim);
   }
 
-  /* Anchored sections must clear the sticky header. */
-  section[id] {
-    scroll-margin-top: 64px;
+  /* Anchored sections must clear the sticky header (and, on a phone, the compact game head). */
+  section[id],
+  [data-scroll-target] {
+    scroll-margin-top: calc(var(--topbar-h) + var(--s-6));
+  }
+  @media (max-width: 767px) {
+    section[id],
+    [data-scroll-target] {
+      scroll-margin-top: calc(var(--topbar-h) + var(--s-10) + var(--s-6));
+    }
   }
 }
 
@@ -514,7 +571,7 @@
     font-variation-settings: "wdth" 82, "wght" 500;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    font-size: 0.6875rem;
+    font-size: var(--text-label);
     color: var(--fg-dim);
     text-align: left;
   }

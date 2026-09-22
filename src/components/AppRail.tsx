@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Icon, type IconName } from "@/components/Icon";
 import { useNavState } from "@/components/Controls";
 import { cx } from "@/components/ui";
@@ -56,14 +57,46 @@ export const NAV_GROUPS: { label: { pt: string; en: string }; items: Item[] }[] 
   },
 ];
 
-/** The five a phone gets. Everything else is one tap away in the header menu. */
-const BOTTOM: Item[] = [
+/**
+ * The phone's tabs: the slate, the parlays, the bankroll and the account — and, while a game of
+ * the current sport is being played, that game, so the live panel is one tap away from anywhere.
+ * Everything else is in the header menu, in the rail's own order.
+ */
+const TABS: { href: string; key: DictKey; icon: IconName }[] = [
   { href: "/app", key: "navSlate", icon: "grid" },
   { href: "/app/parlays", key: "navParlays", icon: "layers" },
-  { href: "/app/slip", key: "mySlip", icon: "receipt" },
-  { href: "/app/bankroll", key: "bankroll", icon: "wallet" },
-  { href: "/app/track", key: "navTrack", icon: "list-check" },
+  { href: "/app/bankroll", key: "tabBankroll", icon: "wallet" },
+  { href: "/app/conta", key: "tabAccount", icon: "user" },
 ];
+
+interface LiveGame { id: string; label: string }
+
+/**
+ * The game of the current sport that is under way right now, if there is one. Read from the slate
+ * the phone is already looking at, only on a phone (a desk never draws the bar), only while the tab
+ * is visible, and refreshed every 90 s — a game rarely changes state faster than that.
+ */
+function useLiveGame(sportKey: string, lang: string): LiveGame | null {
+  const [live, setLive] = useState<LiveGame | null>(null);
+  useEffect(() => {
+    if (!window.matchMedia("(max-width: 767px)").matches) return;
+    let alive = true;
+    const tick = async () => {
+      if (document.visibilityState !== "visible") return;
+      const r = await fetch(`/api/slate?sport=${encodeURIComponent(sportKey)}&lang=${lang}`, { cache: "no-store" }).catch(() => null);
+      if (!alive || !r?.ok) return;
+      const j = (await r.json().catch(() => null)) as { games?: { id: string; status: string; home: { abbreviation: string }; away: { abbreviation: string } }[] } | null;
+      const game = (j?.games ?? []).find((g) => g.status === "live");
+      setLive((prev) => (game ? (prev?.id === game.id ? prev : { id: game.id, label: `${game.away.abbreviation} × ${game.home.abbreviation}` }) : null));
+    };
+    const first = setTimeout(() => void tick(), 0);
+    const timer = setInterval(() => void tick(), 90_000);
+    const onVisible = () => { if (document.visibilityState === "visible") void tick(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { alive = false; clearTimeout(first); clearInterval(timer); document.removeEventListener("visibilitychange", onVisible); };
+  }, [sportKey, lang]);
+  return live;
+}
 
 function isCurrent(pathname: string, href: string): boolean {
   if (href === "/app") return pathname === "/app";
@@ -116,33 +149,60 @@ export function AppRail() {
   );
 }
 
-/** Phone navigation. Safe-area padding, 44px targets, the same current-item rule as the rail. */
+/**
+ * Phone navigation: a fixed bar under everything, 56px tall plus the device's own inset, every tab
+ * the full height (a fingertip never misses). The current tab carries the keyboard's blue as a 2px
+ * rule on top and full-contrast ink — the one place besides focus where the hue appears (§6.1) —
+ * so a glance tells where you are without reading. The live tab carries the live dot.
+ */
 export function AppBottomBar() {
   const { lang, sport } = useNavState();
   const pathname = usePathname();
   const t = makeT(lang);
+  const live = useLiveGame(sport.key, lang);
+  const liveHref = live ? `/app/game/${live.id}` : null;
+  const onLiveGame = liveHref !== null && pathname === liveHref;
+
+  const tabs = TABS.flatMap((item) => {
+    const current = item.href === "/app"
+      ? (pathname === "/app" || pathname.startsWith("/app/game/")) && !onLiveGame
+      : isCurrent(pathname, item.href);
+    const tab = { href: item.href, label: t(item.key), icon: item.icon, current, live: false, title: undefined as string | undefined };
+    // The live game sits between the desk and the bankroll: where you are, then what it costs you.
+    return item.href === "/app/parlays" && liveHref
+      ? [tab, { href: liveHref, label: t("tabLive"), icon: "pulse" as IconName, current: onLiveGame, live: true, title: live?.label }]
+      : [tab];
+  });
+
   return (
     <nav
+      data-tabbar
+      data-testid="tab-bar"
       aria-label={lang === "pt" ? "Navegação" : "Navigation"}
-      className="sticky bottom-0 z-30 grid grid-cols-5 border-t border-line bg-surface-1 pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface-1 pb-(--safe-b) md:hidden"
     >
-      {BOTTOM.map((item) => {
-        const current = isCurrent(pathname, item.href);
-        return (
-          <Link
-            key={item.href}
-            href={{ pathname: item.href, query: { sport: sport.key, lang } }}
-            aria-current={current ? "page" : undefined}
-            className={cx(
-              "u-ring-inset flex h-12 flex-col items-center justify-center gap-0.5 text-micro",
-              current ? "text-fg shadow-[inset_0_2px_0_var(--fg)]" : "text-fg-dim",
-            )}
-          >
-            <Icon name={item.icon} size={16} />
-            <span className="max-w-full truncate px-1">{t(item.key)}</span>
-          </Link>
-        );
-      })}
+      <ul className={cx("grid h-14", tabs.length === 5 ? "grid-cols-5" : "grid-cols-4")}>
+        {tabs.map((tab) => (
+          <li key={tab.href} className="min-w-0">
+            <Link
+              href={{ pathname: tab.href, query: { sport: sport.key, lang } }}
+              aria-current={tab.current ? "page" : undefined}
+              title={tab.title}
+              data-testid={tab.live ? "tab-live" : undefined}
+              className={cx(
+                "u-ring-inset flex h-14 flex-col items-center justify-center gap-1 text-label transition-colors duration-(--dur-1) ease-(--ease-out)",
+                tab.current ? "u-tab-current text-fg" : "text-fg-dim active:bg-surface-2",
+              )}
+            >
+              <span className="relative">
+                <Icon name={tab.icon} size={20} />
+                {tab.live && <span aria-hidden="true" className="live-dot absolute -top-0.5 -right-1 size-1.5 rounded-full bg-neg" />}
+              </span>
+              <span className="max-w-full truncate px-1">{tab.label}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
     </nav>
   );
 }

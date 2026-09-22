@@ -52,11 +52,13 @@ export function Tour({ telegram = false, ai = false }: { telegram?: boolean; ai?
   }, [save, stepCount]);
 
   const measure = useCallback(() => {
-    const el = document.querySelector<HTMLElement>(`[data-tour="${STEPS[step].anchor}"]`);
+    // The same anchor can exist twice — the slate is a table on a desk and a list of cards on a
+    // phone — so the spotlight goes on the one that is actually drawn at this width.
+    const candidates = Array.from(document.querySelectorAll<HTMLElement>(`[data-tour="${STEPS[step].anchor}"]`));
+    const el = candidates.find((c) => { const r = c.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
+    // Anchors inside the phone menu are hidden: show the card without a spotlight.
     if (!el) return setRect(null);
     const r = el.getBoundingClientRect();
-    // Anchors inside the phone menu are hidden: show the card without a spotlight.
-    if (r.width === 0 && r.height === 0) return setRect(null);
     setRect({ top: r.top - 8, left: r.left - 8, width: r.width + 16, height: r.height + 16 });
   }, [step, STEPS]);
 
@@ -72,7 +74,7 @@ export function Tour({ telegram = false, ai = false }: { telegram?: boolean; ai?
 
   if (state === "welcome") {
     return (
-      <div className="fixed bottom-5 left-5 z-[85] w-[min(92vw,340px)] rounded-panel border border-line-strong bg-surface-1 p-4 shadow-dialog" data-testid="tour-welcome">
+      <div className="fixed bottom-(--float-b) left-5 z-[85] w-[min(92vw,340px)] rounded-panel border border-line-strong bg-surface-1 p-4 shadow-dialog" data-testid="tour-welcome">
         <p className="text-label u-label text-fg-dim">Betmatic</p>
         <p className="u-title mt-1.5 text-base text-fg">{t("Primeira vez aqui? Um tour de 30 segundos.", "First time here? A 30-second tour.")}</p>
         <div className="mt-3 flex gap-2">
@@ -86,7 +88,9 @@ export function Tour({ telegram = false, ai = false }: { telegram?: boolean; ai?
   const s = STEPS[step];
   const [title, body] = s[lang];
   const last = step === STEPS.length - 1;
-  const style = rect ? { top: Math.min(window.innerHeight - 200, rect.top + rect.height + 12), left: Math.max(12, Math.min(rect.left, window.innerWidth - 352)) } : { bottom: 20, left: 20 };
+  // The card never lands on the phone's tab bar: the bar's height is subtracted from the room below.
+  const barHeight = document.querySelector<HTMLElement>("[data-tabbar]")?.getBoundingClientRect().height ?? 0;
+  const style = rect ? { top: Math.min(window.innerHeight - barHeight - 200, rect.top + rect.height + 12), left: Math.max(12, Math.min(rect.left, window.innerWidth - 352)) } : { bottom: "var(--float-b)", left: 20 };
   return (
     <>
       <div className="pointer-events-none fixed inset-0 z-[90]">

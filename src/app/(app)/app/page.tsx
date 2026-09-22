@@ -57,8 +57,8 @@ export default async function SlatePage({ searchParams }: PageProps<"/app">) {
         title={`${t("slate")} · ${sport.label[lang]}`}
         meta={
           <>
-            {games.length ? `${games.length} ${games.length === 1 ? t("game") : t("games")} · ` : ""}
-            {t("slateHint")}
+            {games.length ? <>{games.length} {games.length === 1 ? t("game") : t("games")}<span className="max-md:hidden"> · </span></> : ""}
+            <span className={games.length ? "max-md:hidden" : undefined}>{t("slateHint")}</span>
           </>
         }
         actions={<DateNav dateKey={slate?.dateKey ?? requested} label={formatDayKey(slate?.dateKey ?? requested, lang)} />}
