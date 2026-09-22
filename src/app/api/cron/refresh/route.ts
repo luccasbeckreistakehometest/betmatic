@@ -9,6 +9,7 @@ import { safeEqual } from "@/lib/server/auth";
 import { logEvent, reportError } from "@/lib/server/ops-log";
 import { runFeatured } from "@/lib/server/featured";
 import { runQuarterReads } from "@/lib/server/live-read";
+import { runLocaliseBackfill } from "@/lib/server/localise-backfill";
 import { settleBankrollLegs } from "@/lib/server/bankroll";
 import { runLineupWatch } from "@/lib/server/lineups";
 import { runCloseJob } from "@/lib/server/leg-prices";
@@ -92,6 +93,10 @@ export async function POST(request: Request) {
     }
     if (job === "quarters") {
       const result = await runQuarterReads();
+      return NextResponse.json({ job, ...result }, { status: result.status === "error" ? 500 : 200 });
+    }
+    if (job === "localise") {
+      const result = await runLocaliseBackfill();
       return NextResponse.json({ job, ...result }, { status: result.status === "error" ? 500 : 200 });
     }
     // A mistyped job name must never fall through to generation.
