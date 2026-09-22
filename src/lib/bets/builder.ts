@@ -24,7 +24,7 @@ import { anchoredOdds, enrichLeg, type EnrichContext } from "@/lib/bets/enrich";
 import { minutesPrompt, type MinutesProjection } from "@/lib/props/minutes";
 import { environmentPrompt, gameEnvironment, type GameEnvironment } from "@/lib/signals/environment";
 import { ticketCorrelation, type CorrLeg } from "@/lib/signals/correlation";
-import { resolveStatLabels } from "@/lib/props/history";
+import { matchAthlete, resolveStatLabels } from "@/lib/props/history";
 import { linkAlternatives, ticketId } from "@/lib/bets/alternatives";
 import type { ProviderLines } from "@/lib/sources/espn-props";
 import { mockGameSlate, mockSlateBets } from "@/lib/ai/mocks";
@@ -97,9 +97,10 @@ export function describeModel(p: PropRow): string {
   const availability = m.minutes.availability === "listed_out" ? " ⚠ LISTED OUT" : m.minutes.availability === "questionable" ? " ⚠ questionable" : "";
   if (m.live) {
     const l = m.live;
+    const verb = side === "under" ? "room for" : "needs";
     const need = l.needed > 0
-      ? `needs ${l.needed} more in ~${l.remainingMinutes} min = ${Number.isFinite(l.needPerMinute) ? l.needPerMinute.toFixed(2) : "∞"}/min`
-      : "needs nothing more";
+      ? `${verb} ${l.needed} more in ~${l.remainingMinutes} min = ${l.needPerMinute >= 99 ? "∞" : l.needPerMinute.toFixed(2)}/min`
+      : side === "under" ? "no room left: the next one busts it" : "needs nothing more";
     return ` | COMPUTED ${pct(m.computed)} — ${need}, vs ${l.ratePerMinuteTonight.toFixed(2)}/min tonight (${l.minutesPlayed} min played${l.fouls >= 3 ? `, ${l.fouls} PF` : ""}), ${l.ratePerMinutePreGame.toFixed(2)}/min pre-game (the rate used for the rest); projected final ${m.mean} ± ${m.sd}${rungs ? ` [ladder ${rungs}]` : ""}`;
   }
   return ` | COMPUTED ${pct(m.computed)} (distribution ${pct(m.distribution)}; ${m.note}; minutes ${m.minutes.expected} ± ${m.minutes.sd}${availability}; rate ${m.rate}/min, L5 ${m.recentRate}/min)${rungs ? ` [ladder ${rungs}]` : ""}`;
@@ -264,17 +265,28 @@ export function priceSuggestion(
 /**
  * Same-game legs re-priced together. The independent product is what the legs' probabilities give;
  * the factor (signals/correlation.ts) is what sharing a player, a team or a scoreboard does to it.
- * Cross-game tickets hold one leg per game and are left alone.
+ * Cross-game tickets hold one leg per game and are left alone. A ticket with two rungs of the same
+ * stat on one player is dropped (null), like a ticket with an unpriced leg: the second rung adds
+ * price and no probability, no book pays that product, and the prompt forbids the pair — pricing
+ * it would show an edge that does not exist. An impossible pair (over 25.5 and under 20.5) is
+ * dropped the same way.
+ *
+ * A leg the feed did not carry (priced from the model's own text) has no athlete id of its own; the
+ * player is resolved by name against the candidate rows so two legs on one player are never priced
+ * as strangers.
  */
-export function applyCorrelation(bet: BetSuggestion, ctx: EnrichContext): BetSuggestion {
+export function applyCorrelation(bet: BetSuggestion, ctx: EnrichContext): BetSuggestion | null {
   if (bet.legs.length < 2 || independentGames(bet)) return bet;
+  const people = [...new Map(ctx.props.filter((p) => p.athleteId).map((p) => [p.athleteId!, { id: p.athleteId!, name: p.player, team: p.team }])).values()];
   const legs: CorrLeg[] = bet.legs.map((l) => {
     const prop = matchedProp(l, ctx);
     const s = l.settlement;
+    const resolved = s?.type === "player_prop" && s.player ? matchAthlete(s.player, people) : null;
+    const person = resolved ? people.find((x) => x.id === resolved.id) : undefined;
     return {
-      athleteId: l.athleteId ?? prop?.athleteId,
+      athleteId: l.athleteId ?? prop?.athleteId ?? resolved?.id,
       player: s?.player,
-      team: prop?.team ?? s?.teamAbbreviation,
+      team: prop?.team ?? person?.team ?? s?.teamAbbreviation,
       type: s?.type ?? "other",
       labels: s?.type === "player_prop" ? resolveStatLabels(s.stat ?? "", ctx.sportKey) : null,
       line: s?.line,
@@ -285,6 +297,7 @@ export function applyCorrelation(bet: BetSuggestion, ctx: EnrichContext): BetSug
   });
   const dk = ctx.lines?.find((l) => /draftkings/i.test(l.provider))?.current;
   const result = ticketCorrelation(legs, { homeAbbr: ctx.game?.home.abbreviation, awayAbbr: ctx.game?.away.abbreviation, spread: dk?.spread ?? ctx.game?.odds?.spread ?? null });
+  if (result.redundant || result.impossible) return null;
   if (!result.pairs.length) return bet;
   const modelled = result.probability;
   return {
@@ -440,6 +453,8 @@ export async function buildBets(args: BuildArgs): Promise<BetSlate> {
   // TODO(leg_prices): server/leg-prices.ts is owned by the price-integration work; when it is next
   // touched, add an additive column `computedProb REAL` to leg_prices (addColumn, idempotent) and
   // pass leg.computedProbability through recordLegPrices so CLV and the model can be read together.
+  // TODO(ui): BetSuggestion.correlation (factor, independent probability, note) is carried on every
+  // same-game ticket and nothing renders it yet; the ticket card should print it beside the chance.
   if (record) {
     recordPredictions(game, suggestions);
     recordLegPrices(suggestions.flatMap((s) => s.legs.map((leg, legIndex) => ({

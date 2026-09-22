@@ -80,6 +80,7 @@ export function recordPredictions(game: Game, suggestions: BetSuggestion[], opts
         settlement: l.settlement,
         predictedProbability: l.fairProbability,
         computedProbability: l.computedProbability,
+        rawProbability: l.rawProbability,
         oddsDecimal: l.oddsDecimal,
         outcome: "pending",
         actual: undefined,

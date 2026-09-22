@@ -36,6 +36,8 @@ export interface MinutesProjection {
   availability: Availability;
   /** In play: minutes already played and the share of the elapsed clock they represent. */
   live?: { played: number; elapsedShare: number; fouls: number; minutesLeft: number };
+  /** In play: the minutes left on the clock, the hard ceiling of the estimate (props/model.ts caps its mixture at it). */
+  max?: number;
   note: string;
 }
 
@@ -59,8 +61,15 @@ const CAMEO = 4;
 /** Minutes a starter typically loses to a decided fourth quarter, per 40 regulation minutes. */
 const SIT_MINUTES_PER_40 = 4.5;
 const MIN_SD = 2.5;
-/** Width multiplier of the in-play remaining-minutes estimate, set by the half-time walk-forward. */
-const REMAINING_SD_SCALE = 1.5;
+/**
+ * Width multiplier of the in-play remaining-minutes estimate. The half-time walk-forward cited in
+ * props/model.ts (liveRate), with the minutes mixture capped at the clock, scored widths of
+ * 1 / 1.5 / 2 / 2.5 / 3 at 0.4553 / 0.4522 / 0.4545 / 0.4581 / 0.4618 log loss; 1.5 was calibrated
+ * within four points in every decile.
+ */
+export const REMAINING_SD_SCALE = 1.5;
+/** Minutes taken off a player listed day-to-day or questionable: a cap on her return is the usual shape of it. */
+export const QUESTIONABLE_HAIRCUT = 1.5;
 
 const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x));
 const round1 = (x: number) => Number(x.toFixed(1));
@@ -83,9 +92,10 @@ export function listingAvailability(status: string | undefined | null): Availabi
 
 /**
  * Before tip-off. The baseline is the recency-weighted mean of the logged minutes with a nudge
- * toward the last five (a role that just changed is visible there first); the walk-forward test
- * measured that baseline at a 4.7-minute mean absolute error with a spread that covered 67% of
- * outcomes at one standard deviation, and a 0.7-minute low bias that the trend term absorbs.
+ * toward the last five (a role that just changed is visible there first). In the walk-forward run
+ * cited in props/model.ts (scripts/research/walkforward-props.mts, 1,043 player-games) this
+ * projection, with no absence or spread inputs, had a 4.42-minute mean absolute error, a spread
+ * that covered 73% of outcomes at one standard deviation, and a 0.39-minute low bias.
  */
 export function projectMinutes(args: MinutesArgs): MinutesProjection | null {
   const logged = args.minutes.filter((m) => Number.isFinite(m) && m >= 0);
@@ -151,8 +161,9 @@ export function projectMinutes(args: MinutesArgs): MinutesProjection | null {
 
   const availability = listingAvailability(args.listing?.status);
   if (availability === "questionable") {
+    expected -= QUESTIONABLE_HAIRCUT;
     variance += 9;
-    adjustments.push({ kind: "listing", minutes: 0, note: `listed ${args.listing?.status}: a minutes cap or a scratch is possible` });
+    adjustments.push({ kind: "listing", minutes: -QUESTIONABLE_HAIRCUT, note: `listed ${args.listing?.status}: ${QUESTIONABLE_HAIRCUT} min off for a possible cap, spread widened; a scratch voids every line on her` });
   } else if (availability === "listed_out") {
     adjustments.push({ kind: "listing", minutes: 0, note: `listed ${args.listing?.status}${args.listing?.updatedAt ? ` (${args.listing.updatedAt.slice(0, 10)})` : ""}: confirm before any leg; if she sits every line on her is void` });
   }
@@ -185,6 +196,8 @@ export interface RemainingArgs {
   expectedMargin?: number | null;
   /** Fouls that disqualify a player in this league (6 in the NBA and WNBA). */
   foulLimit?: number;
+  /** Width multiplier of the estimate; the research scripts sweep it, production uses REMAINING_SD_SCALE. */
+  sdScale?: number;
 }
 
 /**
@@ -236,9 +249,11 @@ export function projectRemainingMinutes(args: RemainingArgs): MinutesProjection 
   }
 
   expected = clamp(expected, 0, left);
-  // The spread of the remainder: the walk-forward on 190 half-time states (props/model.ts) was best
-  // calibrated in every decile with this width; a tighter one over-stated the sure things.
-  const sd = left > 0 ? Math.max(1.5, REMAINING_SD_SCALE * (0.12 * left + Math.sqrt(risk * (1 - risk)) * sit)) : 0;
+  // The spread of the remainder. Its floor shrinks with the clock — a minute and a half of doubt
+  // means nothing with a minute left — and its width is REMAINING_SD_SCALE, set by the half-time
+  // walk-forward with the minutes mixture capped at the clock, as in production.
+  const floor = Math.min(1.5, 0.25 * left);
+  const sd = left > 0 ? Math.max(floor, (args.sdScale ?? REMAINING_SD_SCALE) * (0.12 * left + Math.sqrt(risk * (1 - risk)) * sit)) : 0;
   const pre = args.preGame;
   return {
     player: args.player,
@@ -250,6 +265,7 @@ export function projectRemainingMinutes(args: RemainingArgs): MinutesProjection 
     adjustments,
     availability: "ok",
     live: { played: args.minutesPlayed, elapsedShare: Number((Number.isFinite(shareTonight) ? shareTonight : 0).toFixed(2)), fouls: args.fouls, minutesLeft: left },
+    max: left,
     note: `${args.minutesPlayed} played of ${Math.round(elapsed)}; ~${expected.toFixed(0)} ± ${sd.toFixed(0)} of the ${Math.round(left)} left${adjustments.filter((a) => a.minutes !== 0).length ? ` (${adjustments.filter((a) => a.minutes !== 0).map((a) => `${a.minutes > 0 ? "+" : ""}${a.minutes} ${a.kind}`).join(", ")})` : ""}`,
   };
 }

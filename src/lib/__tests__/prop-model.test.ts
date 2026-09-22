@@ -77,6 +77,31 @@ describe("projection of a line", () => {
     expect(live.note).toMatch(/^12 \+ 0\.65\/min/);
   });
 
+  it("in play the minutes mixture never exceeds the clock", () => {
+    // Half a minute left, 18 on the board, needs 2 more at 0.65/min: even playing every second she
+    // cannot beat the Poisson bound, however wide the minutes estimate.
+    const bound = nbAtLeast(2, 0.65 * 0.5, 0.1);
+    const capped = projectLeg(fit, { expected: 0.5, sd: 1.5 }, 19.5, "over", { current: 18, maxMinutes: 0.5 });
+    expect(capped.pOver).toBeLessThanOrEqual(bound + 1e-9);
+    expect(capped.mean).toBeLessThanOrEqual(18 + 0.65 * 0.5 + 1e-9);
+    const uncapped = projectLeg(fit, { expected: 0.5, sd: 1.5 }, 19.5, "over", { current: 18 });
+    expect(uncapped.pOver).toBeGreaterThan(capped.pOver);
+    // The estimate carries the clock itself: no explicit cap needed for a caller that passes it through.
+    const carried = projectLeg(fit, { expected: 0.5, sd: 1.5, max: 0.5 }, 19.5, "over", { current: 18 });
+    expect(carried.pOver).toBeCloseTo(capped.pOver, 12);
+    // A cap above every node changes nothing.
+    expect(projectLeg(fit, { expected: 10, sd: 2 }, 19.5, "over", { current: 12, maxMinutes: 40 }).pOver).toBeCloseTo(projectLeg(fit, { expected: 10, sd: 2 }, 19.5, "over", { current: 12 }).pOver, 12);
+  });
+
+  it("keeps every probability inside [0, 1] at the terminal states", () => {
+    const done = projectLeg(fit, { expected: 0, sd: 0 }, 19.5, "over", { current: 22 });
+    expect(done.pOver).toBe(1);
+    expect(done.pUnder).toBe(0);
+    const pushed = projectLeg(fit, { expected: 0, sd: 0 }, 20, "over", { current: 20 });
+    expect(pushed.pPush).toBeCloseTo(1, 9);
+    expect(pushed.pOver + pushed.pUnder).toBeLessThanOrEqual(1);
+  });
+
   it("a wider minutes spread fattens the tails", () => {
     const tight = projectLeg(fit, { expected: 30, sd: 1 }, 27.5, "over");
     const wide = projectLeg(fit, { expected: 30, sd: 8 }, 27.5, "over");

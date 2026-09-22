@@ -46,6 +46,10 @@ export interface CorrelationResult {
   /** The probability after the factor and the "no more likely than its weakest leg" cap. */
   probability: number;
   independent: number;
+  /** Two rungs of the same stat, same side, on one player: the ticket is the harder line and no book prices the pair. */
+  redundant: boolean;
+  /** Two lines on one stat that cannot both land (over 25.5 and under 20.5): the ticket is dead on arrival. */
+  impossible: boolean;
   note: string;
 }
 
@@ -153,12 +157,17 @@ export function ruleFor(a: CorrLeg, b: CorrLeg, ctx: CorrContext): Rule | null {
 
 /**
  * The factor for a ticket. Pairs on the same player, same stat and same side are nested: the ticket
- * is the harder line and the easier one adds nothing, which is stated rather than priced.
+ * is the harder line and the easier one adds nothing, which is stated (and flagged for the builder
+ * to drop) rather than priced. Nested lifts are exact and never clamped; the floor and cap apply
+ * to the rule-and-measurement lifts only, and an impossible pair makes the whole ticket zero.
  */
 export function ticketCorrelation(legs: CorrLeg[], ctx: CorrContext = {}): CorrelationResult {
   const independent = legs.reduce((acc, l) => acc * l.probability, 1);
   const pairs: PairLift[] = [];
-  let factor = 1;
+  let ruleFactor = 1;
+  let nestedFactor = 1;
+  let redundant = false;
+  let impossible = false;
   for (let i = 0; i < legs.length; i += 1) {
     for (let j = i + 1; j < legs.length; j += 1) {
       const a = legs[i], b = legs[j];
@@ -170,13 +179,21 @@ export function ticketCorrelation(legs: CorrLeg[], ctx: CorrContext = {}): Corre
           const easier = isOver(a) ? (a.line < b.line ? a : b) : (a.line > b.line ? a : b);
           const lift = easier.probability > 0 ? 1 / easier.probability : 1;
           pairs.push({ a: i, b: j, lift: round2(lift), basis: "redundant", note: `${a.player}: ${a.side} ${a.line} and ${b.side} ${b.line} on the same stat are one bet — the easier line adds price and no probability` });
-          factor *= lift;
+          nestedFactor *= lift;
+          redundant = true;
         } else {
-          // Over 19.5 and under 23.5: the total must land between. P = P(A) + P(B) − 1, floored.
+          // Over 19.5 and under 23.5: the total must land between. P = P(A) + P(B) − 1, floored at zero.
           const joint = Math.max(0, a.probability + b.probability - 1);
-          const lift = a.probability * b.probability > 0 ? joint / (a.probability * b.probability) : 0;
-          pairs.push({ a: i, b: j, lift: round2(lift), basis: "nested", note: `${a.player}: between ${Math.min(a.line, b.line)} and ${Math.max(a.line, b.line)} on the same stat` });
-          factor *= lift;
+          const lo = Math.min(a.line, b.line), hi = Math.max(a.line, b.line);
+          const overLine = isOver(a) ? a.line : b.line, underLine = isOver(a) ? b.line : a.line;
+          if (joint <= 0 || overLine >= underLine) {
+            impossible = true;
+            pairs.push({ a: i, b: j, lift: 0, basis: "nested", note: `${a.player}: over ${overLine} and under ${underLine} on the same stat cannot both land` });
+          } else {
+            const lift = joint / (a.probability * b.probability);
+            pairs.push({ a: i, b: j, lift: round2(lift), basis: "nested", note: `${a.player}: between ${lo} and ${hi} on the same stat` });
+            nestedFactor *= lift;
+          }
         }
         continue;
       }
@@ -186,22 +203,24 @@ export function ticketCorrelation(legs: CorrLeg[], ctx: CorrContext = {}): Corre
       if (measured) {
         const who = a.player === b.player ? `${a.player} (${(a.labels ?? []).join("+")} & ${(b.labels ?? []).join("+")})` : `${a.player} & ${b.player}`;
         pairs.push({ a: i, b: j, lift: round2(measured.lift), basis: "measured", note: `${who}: co-occurrence over ${measured.games} shared games (rule ${rule.lift})` });
-        factor *= measured.lift;
+        ruleFactor *= measured.lift;
       } else if (Math.abs(rule.lift - 1) > 1e-9) {
         pairs.push({ a: i, b: j, lift: rule.lift, basis: "rule", note: rule.note });
-        factor *= rule.lift;
+        ruleFactor *= rule.lift;
       }
     }
   }
-  factor = clamp(factor, FACTOR_FLOOR, FACTOR_CAP);
+  const factor = clamp(ruleFactor, FACTOR_FLOOR, FACTOR_CAP) * nestedFactor;
   const weakest = legs.length ? Math.min(...legs.map((l) => l.probability)) : 1;
-  const probability = Math.min(independent * factor, weakest);
-  const applied = legs.length ? probability / Math.max(independent, 1e-12) : 1;
+  const probability = impossible ? 0 : Math.min(independent * factor, weakest);
+  const applied = impossible ? 0 : legs.length ? probability / Math.max(independent, 1e-12) : 1;
   // The note names the pairs that moved the number; a long ticket has many pairs near 1.
   const moving = pairs.filter((p) => Math.abs(p.lift - 1) >= 0.05).sort((x, y) => Math.abs(y.lift - 1) - Math.abs(x.lift - 1));
   const quiet = pairs.length - moving.length;
-  const note = pairs.length
-    ? `correlation ×${round2(applied)}: ${moving.slice(0, 6).map((p) => `${p.basis} ×${p.lift} (${p.note})`).join("; ")}${moving.length > 6 ? `; +${moving.length - 6} more` : ""}${quiet ? `; ${quiet} pair${quiet === 1 ? "" : "s"} within 5% of independent` : ""}`
-    : "legs priced as independent";
-  return { factor: round2(applied), pairs, probability, independent, note };
+  const note = impossible
+    ? `impossible: ${pairs.filter((p) => p.lift === 0).map((p) => p.note).join("; ")}`
+    : pairs.length
+      ? `correlation ×${round2(applied)}: ${moving.slice(0, 6).map((p) => `${p.basis} ×${p.lift} (${p.note})`).join("; ")}${moving.length > 6 ? `; +${moving.length - 6} more` : ""}${quiet ? `; ${quiet} pair${quiet === 1 ? "" : "s"} within 5% of independent` : ""}`
+      : "legs priced as independent";
+  return { factor: round2(applied), pairs, probability, independent, redundant, impossible, note };
 }

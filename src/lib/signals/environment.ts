@@ -30,13 +30,17 @@ export function marginSd(regulationMinutes: number, minutesAtStake = regulationM
 }
 
 /**
- * P(the final margin, either way, reaches the blowout mark). Before tip-off the expected margin is
- * the spread and every minute is at stake; in play `currentMargin` is the scoreboard and only the
- * minutes left add variance. Sign conventions do not matter: both tails count.
+ * P(the final margin, either way, reaches the blowout mark). `spread` is the HOME handicap as the
+ * book prints it (negative when the home side is favoured: "DAL -5.5" with Dallas away is +5.5),
+ * and `currentMargin` is home minus away on the scoreboard. Before tip-off every minute is at stake
+ * and the sign cannot matter, both tails count; in play the expected drift of the margin over the
+ * minutes left is MINUS the spread times the share of the game left — a home favourite at -12
+ * leading by 12 at half-time is expected to win by 18, not to give the lead back — and only those
+ * minutes add variance.
  */
-export function blowoutProbability(expectedMargin: number, regulationMinutes: number, minutesLeft = regulationMinutes, currentMargin = 0): number {
+export function blowoutProbability(spread: number, regulationMinutes: number, minutesLeft = regulationMinutes, currentMargin = 0): number {
   const share = regulationMinutes > 0 ? Math.max(0, Math.min(1, minutesLeft / regulationMinutes)) : 0;
-  const mean = currentMargin + expectedMargin * share;
+  const mean = currentMargin - spread * share;
   const sd = marginSd(regulationMinutes, minutesLeft);
   if (sd <= 0) return Math.abs(mean) >= BLOWOUT_MARGIN ? 1 : 0;
   const upper = 1 - normalCdf((BLOWOUT_MARGIN - mean) / sd);
@@ -146,7 +150,9 @@ export function bookLine(detail: GameDetail, lines: ProviderLines[] = []): { spr
     const value = Number(m[2]);
     return m[1] === detail.game.home.abbreviation ? value : -value;
   };
-  const spread = dk?.spread ?? spreadFromDetails() ?? (book?.spread !== undefined ? -Math.abs(book.spread) : null);
+  // ESPN's `spread` is already the home handicap; it is only a last resort because the scoreboard
+  // copy sometimes drops the sign while `details` never does.
+  const spread = dk?.spread ?? spreadFromDetails() ?? (book?.spread !== undefined ? book.spread : null);
   const total = dk?.total ?? book?.overUnder ?? detail.game.odds?.overUnder ?? null;
   return { spread: spread !== null && Number.isFinite(spread) ? spread : null, total: total !== null && Number.isFinite(total) ? total : null };
 }

@@ -41,39 +41,50 @@ function addLeg(buckets: Map<string, Bucket>, key: string, label: string, leg: S
 
 /**
  * The deterministic model (props/model.ts) against the language model, on the legs where both spoke.
- * Both numbers are recorded at generation time, so this is a fair race: the same legs, the same
- * settlement. Brier is the mean squared error of the probability against the 0/1 outcome — lower
- * is better, 0.25 is a coin flip that says 50%.
+ * Three numbers are recorded at generation time — the computed probability, the model's RAW estimate
+ * and the anchored one the ticket was served with — so this is a fair race: the same legs, the same
+ * settlement, and the raw number is what the language model would have said on its own. Brier is
+ * the mean squared error of the probability against the 0/1 outcome — lower is better, 0.25 is a
+ * coin flip that says 50%.
  */
 export interface ModelRace {
   settled: number;
   won: number;
   averageComputed: number;
+  /** The model's unaided estimate (rawProbability; the anchored number where a leg predates it). */
+  averageRaw: number;
+  /** The anchored number the ticket was served with. */
   averagePredicted: number;
   brierComputed: number;
+  brierRaw: number;
   brierPredicted: number;
 }
 
 export function modelRace(entries: LedgerEntry[] = readLedger()): ModelRace {
-  let settled = 0, won = 0, computedSum = 0, predictedSum = 0, brierC = 0, brierP = 0;
+  let settled = 0, won = 0, computedSum = 0, rawSum = 0, predictedSum = 0, brierC = 0, brierR = 0, brierP = 0;
   for (const entry of entries) {
     if (entry.outcome === "pending") continue;
     for (const leg of entry.legs) {
       if ((leg.outcome !== "won" && leg.outcome !== "lost") || leg.computedProbability === undefined || !Number.isFinite(leg.computedProbability)) continue;
       const y = leg.outcome === "won" ? 1 : 0;
+      const raw = leg.rawProbability !== undefined && Number.isFinite(leg.rawProbability) ? leg.rawProbability : leg.predictedProbability;
       settled += 1;
       won += y;
       computedSum += leg.computedProbability;
+      rawSum += raw;
       predictedSum += leg.predictedProbability;
       brierC += (leg.computedProbability - y) ** 2;
+      brierR += (raw - y) ** 2;
       brierP += (leg.predictedProbability - y) ** 2;
     }
   }
   return {
     settled, won,
     averageComputed: settled ? computedSum / settled : NaN,
+    averageRaw: settled ? rawSum / settled : NaN,
     averagePredicted: settled ? predictedSum / settled : NaN,
     brierComputed: settled ? brierC / settled : NaN,
+    brierRaw: settled ? brierR / settled : NaN,
     brierPredicted: settled ? brierP / settled : NaN,
   };
 }
@@ -82,10 +93,10 @@ export function modelRace(entries: LedgerEntry[] = readLedger()): ModelRace {
 export function modelRaceLine(race: ModelRace = modelRace()): string {
   if (race.settled < 10) return "";
   const pct = (x: number) => `${(x * 100).toFixed(0)}%`;
-  const lead = race.brierComputed < race.brierPredicted - 0.005 ? "the computed number has been the better guide — stay inside its band"
-    : race.brierPredicted < race.brierComputed - 0.005 ? "your own estimates have been the better guide, but only where you named a reason the numbers could not see"
+  const lead = race.brierComputed < race.brierRaw - 0.005 ? "the computed number has been the better guide — stay inside its band"
+    : race.brierRaw < race.brierComputed - 0.005 ? "your own unaided estimates have been the better guide, but only where you named a reason the numbers could not see"
     : "the two have been equally good";
-  return `COMPUTED MODEL vs YOUR ESTIMATES (${race.settled} settled legs, ${pct(race.won / race.settled)} won): computed averaged ${pct(race.averageComputed)} (Brier ${race.brierComputed.toFixed(3)}), you averaged ${pct(race.averagePredicted)} (Brier ${race.brierPredicted.toFixed(3)}) — ${lead}.`;
+  return `COMPUTED MODEL vs YOUR ESTIMATES (${race.settled} settled legs, ${pct(race.won / race.settled)} won): computed averaged ${pct(race.averageComputed)} (Brier ${race.brierComputed.toFixed(3)}), your unaided estimates averaged ${pct(race.averageRaw)} (Brier ${race.brierRaw.toFixed(3)}), the anchored numbers served ${pct(race.averagePredicted)} (Brier ${race.brierPredicted.toFixed(3)}) — ${lead}.`;
 }
 
 /**

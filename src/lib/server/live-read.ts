@@ -72,7 +72,7 @@ export const CONTESTED_MARGIN = 6;
  * requirement tonight's rate already covers are the shape the live read exists to find; the ones
  * that need a reversion are named so they are not bought.
  */
-export function projectionLines(props: PropRow[], lang: "pt" | "en" = "en"): string {
+export function projectionLines(props: PropRow[]): string {
   const rows = props.filter((p) => p.model?.live && p.line !== undefined);
   if (!rows.length) return "";
   const sorted = [...rows].sort((a, b) => (b.model?.computed ?? 0) - (a.model?.computed ?? 0));
@@ -85,10 +85,13 @@ export function projectionLines(props: PropRow[], lang: "pt" | "en" = "en"): str
     const met = under ? l.needed >= 0 && l.needPerMinute >= l.ratePerMinuteTonight && l.needPerMinute >= l.ratePerMinuteBlended : Number.isFinite(l.needPerMinute) && l.needPerMinute <= l.ratePerMinuteTonight;
     const reversion = !under && Number.isFinite(l.needPerMinute) && l.needPerMinute > 1.5 * Math.max(l.ratePerMinuteBlended, 0.001);
     const slowdown = under && l.needPerMinute < 0.7 * l.ratePerMinuteTonight;
-    const tag = met ? (lang === "pt" ? "RITMO DE HOJE JÁ COBRE" : "TONIGHT'S RATE ALREADY COVERS IT")
-      : reversion ? (lang === "pt" ? "PRECISA DE REVERSÃO — não comprar" : "NEEDS A REVERSION — do not buy")
-      : slowdown ? (lang === "pt" ? "PRECISA QUE ELA DESACELERE — não comprar" : "NEEDS A SLOWDOWN — do not buy") : "";
-    return `- ${p.player} ${p.market} ${p.side} ${p.line} @ ${p.odds ?? "?"} (pre-game reference): ${l.needed > 0 ? `needs ${l.needed} more in ~${l.remainingMinutes} min = ${Number.isFinite(l.needPerMinute) ? l.needPerMinute.toFixed(2) : "∞"}/min` : "needs nothing more"} vs ${l.ratePerMinuteTonight.toFixed(2)}/min tonight (${l.minutesPlayed} min${l.fouls >= 3 ? `, ${l.fouls} PF` : ""}), ${l.ratePerMinutePreGame.toFixed(2)}/min pre-game → COMPUTED ${pct(p.model!.computed)}${tag ? ` — ${tag}` : ""}`;
+    // The tags are machine labels the prompt names in English for both languages (the pt prompt is
+    // the English text plus a writing instruction); the model writes its own strings in the reader's language.
+    const tag = met ? "TONIGHT'S RATE ALREADY COVERS IT" : reversion ? "NEEDS A REVERSION — do not buy" : slowdown ? "NEEDS A SLOWDOWN — do not buy" : "";
+    const requirement = l.needed > 0
+      ? `${under ? "room for" : "needs"} ${l.needed} more in ~${l.remainingMinutes} min = ${l.needPerMinute >= 99 ? "∞" : l.needPerMinute.toFixed(2)}/min`
+      : under ? "no room left: the next one busts it" : "needs nothing more";
+    return `- ${p.player} ${p.market} ${p.side} ${p.line} @ ${p.odds ?? "?"} (pre-game reference): ${requirement} vs ${l.ratePerMinuteTonight.toFixed(2)}/min tonight (${l.minutesPlayed} min${l.fouls >= 3 ? `, ${l.fouls} PF` : ""}), ${l.ratePerMinutePreGame.toFixed(2)}/min pre-game → COMPUTED ${pct(p.model!.computed)}${tag ? ` — ${tag}` : ""}`;
   }).join("\n");
 }
 
@@ -137,9 +140,9 @@ export async function runLiveRead(user: PublicUser, sportKey: string, gameId: st
       const trackerText = tracked.tickets.slice(0, 4).map((t) => `- ${t.title}: ${t.legs.map((l) => `${l.selection} → ${l.state}${l.probability !== null ? ` ${Math.round(l.probability * 100)}%` : ""} (${l.reason})`).join("; ")}`).join("\n");
       const leaders = snap.players.filter((p) => (p.stats.PTS ?? p.stats.SHOT ?? 0) > 0).slice(0, 10)
         .map((p) => `${p.name} (${p.team}): ${Object.entries(p.stats).filter(([k]) => ["MIN", "PTS", "REB", "AST", "PF", "SHOT", "SOG", "FC", "YC"].includes(k)).map(([k, v]) => `${k} ${v}`).join(", ")}`).join("\n");
-      const extraContext = liveContext(snap, { leaders, trackerText, projections: projectionLines(candidates?.props ?? [], lang) });
+      const extraContext = liveContext(snap, { leaders, trackerText, projections: projectionLines(candidates?.props ?? []) });
       const slate = await buildBets({
-        game: detail.game, detail, props: candidates?.props ?? [], roles: candidates?.roles ?? [], picks: [], dimers: [], x: null,
+        game: detail.game, detail, props: candidates?.props ?? [], roles: candidates?.roles ?? [], minutes: candidates?.minutes ?? [], picks: [], dimers: [], x: null,
         bands: LIVE_BANDS, maxPerBand: LIVE_MAX_PER_BAND, lang, record: false, model: LIVE_MODEL,
         live: snap.sportGroup === "soccer" ? soccerState(snap) : null, extraContext,
       });

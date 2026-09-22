@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { listingAvailability, minutesPrompt, projectMinutes, projectRemainingMinutes } from "@/lib/props/minutes";
+import { listingAvailability, minutesPrompt, projectMinutes, projectRemainingMinutes, QUESTIONABLE_HAIRCUT, REMAINING_SD_SCALE } from "@/lib/props/minutes";
 
 const steady = (n: number, m: number) => Array.from({ length: n }, () => m);
 
@@ -60,6 +60,9 @@ describe("minutes projection before tip-off", () => {
     const gtd = projectMinutes({ player: "x", minutes: steady(10, 30), regulationMinutes: 40, listing: { status: "Questionable" } })!;
     expect(gtd.availability).toBe("questionable");
     expect(gtd.sd).toBeGreaterThan(out.sd);
+    // A questionable listing costs a modest, stated haircut as well as the wider spread.
+    expect(gtd.expected).toBeCloseTo(30 - QUESTIONABLE_HAIRCUT, 1);
+    expect(gtd.adjustments.find((a) => a.kind === "listing")!.note).toMatch(/1\.5 min off for a possible cap/);
     expect(listingAvailability("Day-To-Day")).toBe("questionable");
     expect(listingAvailability("Injured Reserve")).toBe("listed_out");
     expect(listingAvailability(undefined)).toBe("ok");
@@ -84,6 +87,20 @@ describe("remaining minutes in play", () => {
     const end = projectRemainingMinutes({ player: "x", preGame: pre, minutesPlayed: 35, minutesElapsed: 40, minutesLeft: 0, regulationMinutes: 40, fouls: 0, currentMargin: 0 });
     expect(end.expected).toBe(0);
     expect(end.sd).toBe(0);
+  });
+
+  it("narrows its spread with the clock instead of holding a fixed floor", () => {
+    const at = (left: number) => projectRemainingMinutes({ player: "x", preGame: pre, minutesPlayed: 40 - left - 2, minutesElapsed: 40 - left, minutesLeft: left, regulationMinutes: 40, fouls: 0, currentMargin: 2, expectedMargin: 0 });
+    expect(at(20).sd).toBeGreaterThanOrEqual(1.5);
+    expect(at(2).sd).toBeLessThanOrEqual(0.5);
+    expect(at(0.5).sd).toBeLessThanOrEqual(0.15);
+    for (const left of [20, 10, 5, 2, 1]) expect(at(left).expected).toBeLessThanOrEqual(left);
+    // The width multiplier is the production constant unless a research run sweeps it.
+    const args = { player: "x", preGame: pre, minutesPlayed: 18, minutesElapsed: 20, minutesLeft: 20, regulationMinutes: 40, fouls: 0, currentMargin: 2, expectedMargin: 0 };
+    const wide = projectRemainingMinutes({ ...args, sdScale: REMAINING_SD_SCALE * 2 });
+    expect(wide.sd).toBeCloseTo(projectRemainingMinutes(args).sd * 2, 1);
+    // The clock travels with the estimate, so a direct caller of projectLeg is capped too.
+    expect(at(2).max).toBe(2);
   });
 
   it("prints the block with every input the model is asked to read", () => {

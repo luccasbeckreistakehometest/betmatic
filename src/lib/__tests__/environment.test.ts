@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { baselineBlowout, blowoutProbability, bookLine, currentSeasonParam, environmentFrom, environmentPrompt, formFromSchedule, regulationMinutes } from "@/lib/signals/environment";
+import { projectRemainingMinutes } from "@/lib/props/minutes";
 import type { GameDetail } from "@/lib/types";
 
 const detail = (books: GameDetail["books"], odds?: GameDetail["game"]["odds"]): GameDetail => ({
@@ -26,6 +27,28 @@ describe("blowout probability", () => {
     expect(blowoutProbability(0, 40, 0, 16)).toBe(1);
     expect(regulationMinutes("wnba")).toBe(40);
     expect(regulationMinutes("nba")).toBe(48);
+  });
+});
+
+describe("blowout probability in play", () => {
+  // The spread is the home handicap and the margin is home minus away: a home favourite at -12
+  // leading by 12 at half-time is expected to win by 18. The first version added the spread with
+  // the wrong sign and read that game as a 15% blowout — a starter gaining fourth-quarter minutes.
+  it("drifts the margin toward the favourite over the minutes left", () => {
+    expect(blowoutProbability(-12, 40, 20, 12)).toBeCloseTo(0.64, 2);
+    expect(blowoutProbability(12, 40, 20, 12)).toBeCloseTo(0.148, 2);
+    // Dallas @ Phoenix at half-time: home underdog +5.5 trailing by 4 is expected to lose by more.
+    expect(blowoutProbability(5.5, 40, 20, -4)).toBeGreaterThan(blowoutProbability(-5.5, 40, 20, -4));
+    // Before tip-off the sign cannot matter.
+    expect(blowoutProbability(-7, 40)).toBeCloseTo(blowoutProbability(7, 40), 9);
+  });
+
+  it("takes minutes off a favourite's starter who is already up big, not a dog's", () => {
+    const pre = { player: "s", expected: 34, sd: 3, baseline: { recent5: 34, recent10: 34, season: 34, trend: 0, games: 20, sd: 1 }, blowoutProbability: 0.2, baselineBlowout: 0.2, adjustments: [], availability: "ok" as const, note: "" };
+    const favourite = projectRemainingMinutes({ player: "s", preGame: pre, minutesPlayed: 17, minutesElapsed: 20, minutesLeft: 20, regulationMinutes: 40, fouls: 0, currentMargin: 12, expectedMargin: -12 });
+    const underdog = projectRemainingMinutes({ player: "s", preGame: pre, minutesPlayed: 17, minutesElapsed: 20, minutesLeft: 20, regulationMinutes: 40, fouls: 0, currentMargin: 12, expectedMargin: 12 });
+    expect(favourite.expected).toBeLessThan(underdog.expected - 1);
+    expect(favourite.adjustments.find((a) => a.kind === "margin")!.minutes).toBeLessThan(0);
   });
 });
 
@@ -70,6 +93,9 @@ describe("the book line", () => {
     const lines = [{ provider: "DraftKings", open: null, close: null, current: { homeMl: 2.85, awayMl: 1.44, draw: null, total: 174.5, over: 1.86, under: 1.95, spread: 6.5, homeSpread: 1.95, awaySpread: 1.86 } }];
     expect(bookLine(d, lines)).toEqual({ spread: 6.5, total: 174.5 });
     expect(bookLine(detail([], { overUnder: 165 }))).toEqual({ spread: null, total: 165 });
+    // Without `details`, ESPN's spread is already the home handicap and keeps its sign.
+    expect(bookLine(detail([{ provider: "DraftKings", spread: -3, overUnder: 160 }])).spread).toBe(-3);
+    expect(bookLine(detail([{ provider: "DraftKings", spread: 5.5, overUnder: 173.5 }])).spread).toBe(5.5);
   });
 });
 

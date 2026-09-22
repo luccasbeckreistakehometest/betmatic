@@ -56,6 +56,19 @@ describe("a ticket's factor", () => {
     expect(between.probability).toBeCloseTo(0.3, 6);
   });
 
+  it("an impossible pair makes the ticket zero, and a nested lift is never clamped", () => {
+    const dead = ticketCorrelation([prop({ player: "a", probability: 0.4, line: 25.5 }), prop({ player: "a", probability: 0.4, line: 20.5, side: "under" })]);
+    expect(dead.impossible).toBe(true);
+    expect(dead.probability).toBe(0);
+    expect(dead.factor).toBe(0);
+    expect(dead.note).toMatch(/^impossible: a: over 25\.5 and under 20\.5 on the same stat cannot both land/);
+    // Two rungs where the easier leg is 20%: the ticket is the harder line at 10%, not 8% from a capped lift.
+    const rungs = ticketCorrelation([prop({ player: "a", probability: 0.2, line: 19.5 }), prop({ player: "a", probability: 0.1, line: 24.5 })]);
+    expect(rungs.redundant).toBe(true);
+    expect(rungs.probability).toBeCloseTo(0.1, 9);
+    expect(ticketCorrelation([prop({ player: "a", probability: 0.6 }), prop({ player: "b", probability: 0.6, team: "PHX" })]).redundant).toBe(false);
+  });
+
   it("multiplies the pairwise lifts, caps the total, and never beats the weakest leg", () => {
     const legs = [prop({ player: "a", probability: 0.9 }), prop({ player: "a", probability: 0.9, labels: ["PTS", "REB"], line: 25.5 }), prop({ player: "a", probability: 0.9, labels: ["PTS", "AST"], line: 23.5 })];
     const r = ticketCorrelation(legs);

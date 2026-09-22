@@ -285,6 +285,8 @@ export interface BetLeg {
   computedProbability?: number;
   /** The arithmetic behind computedProbability, for the reader. */
   modelNote?: string;
+  /** The model's own estimate before it was anchored to computedProbability; the ledger races the two. */
+  rawProbability?: number;
 }
 
 export type LegOutcome = "won" | "lost" | "push" | "void" | "pending";
@@ -298,6 +300,8 @@ export interface SettledLeg {
   predictedProbability: number;
   /** What the deterministic model said at generation time, kept beside the model's own number so the two can be compared once settled. */
   computedProbability?: number;
+  /** The language model's estimate before anchoring; predictedProbability is the anchored number the ticket was served with. */
+  rawProbability?: number;
   oddsDecimal: number;
   outcome: LegOutcome;
   actual?: string;

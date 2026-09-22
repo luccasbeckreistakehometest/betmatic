@@ -138,7 +138,7 @@ probability. Arike Ogunbowale over 19.5 points+assists was measured at 57% by hi
 near 45% by rate and minutes; the hit rate was the memory of a role that had shrunk, and the
 computed number said so before she scored seven.
 SAME-GAME CORRELATION IS PRICED IN CODE. The ticket's real probability is adjusted for legs that
-share a player, a team or a scoreboard, and the adjustment is printed with the ticket. Build for
+share a player, a team or a scoreboard, and the adjustment is carried on the ticket. Build for
 positive correlation on purpose — one story — and say so in the background; never pair a big
 favourite's cover with its star's heavy over, and never two rungs of the same stat on one player.
 COMPOSE THE SLATE ACROSS BANDS. Short band: the single highest-COMPUTED leg, or two legs on different

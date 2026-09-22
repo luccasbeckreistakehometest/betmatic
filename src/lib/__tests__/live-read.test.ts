@@ -83,11 +83,26 @@ describe("the remaining-game projections the live read prints", () => {
       row("Alyssa Thomas", "under", 8.5, 0.46, { needed: 3, needPerMinute: 0.189, ratePerMinuteTonight: 0.313, ratePerMinuteBlended: 0.249 }),
     ]);
     const lines = text.split("\n");
-    expect(lines[0]).toMatch(/Alyssa Thomas Rebounds under 8\.5 .*COMPUTED 46% — NEEDS A SLOWDOWN — do not buy/);
+    expect(lines[0]).toMatch(/Alyssa Thomas Rebounds under 8\.5 .*room for 3 more in ~16 min = 0\.19\/min.*COMPUTED 46% — NEEDS A SLOWDOWN — do not buy/);
     expect(lines[1]).toMatch(/Jessica Shepard Rebounds over 13\.5 .*needs 7 more in ~16 min = 0\.44\/min vs 0\.44\/min tonight \(16 min\), 0\.34\/min pre-game → COMPUTED 34% — TONIGHT'S RATE ALREADY COVERS IT/);
     expect(lines[2]).toMatch(/Arike Ogunbowale .*COMPUTED 7% — NEEDS A REVERSION — do not buy/);
     expect(projectionLines([])).toBe("");
-    expect(projectionLines([row("x", "over", 1.5, 0.5, { needed: 1, needPerMinute: 0.1, ratePerMinuteTonight: 0.2, ratePerMinuteBlended: 0.2 })], "pt")).toMatch(/RITMO DE HOJE JÁ COBRE/);
+  });
+
+  it("keeps the tags in English for a Portuguese read: they are the labels the prompt names", async () => {
+    const { DEFAULT_PROMPTS } = await import("@/lib/bets/prompt-defaults");
+    const text = projectionLines([
+      row("Arike Ogunbowale", "over", 3.5, 0.07, { needed: 4, needPerMinute: 0.27, ratePerMinuteTonight: 0, ratePerMinuteBlended: 0.101 }),
+      row("Alyssa Thomas", "under", 8.5, 0.46, { needed: 3, needPerMinute: 0.189, ratePerMinuteTonight: 0.313, ratePerMinuteBlended: 0.249 }),
+      row("Jessica Shepard", "over", 13.5, 0.34, { needed: 7, needPerMinute: 0.438, ratePerMinuteTonight: 0.438, ratePerMinuteBlended: 0.344 }),
+    ]);
+    for (const tag of ["NEEDS A REVERSION", "NEEDS A SLOWDOWN", "TONIGHT'S RATE ALREADY COVERS IT"]) expect(text).toContain(tag);
+    // The prompt (the pt version is the English text) names the two tags that forbid a leg.
+    for (const tag of ["NEEDS A REVERSION", "NEEDS A SLOWDOWN"]) expect(DEFAULT_PROMPTS.game.pt).toContain(tag);
+    expect(text).not.toMatch(/PRECISA|RITMO/);
+    // No clock left: the requirement prints as infinite, never as a JSON null.
+    const out = projectionLines([row("x", "over", 5.5, 0.01, { needed: 2, needPerMinute: 99, ratePerMinuteTonight: 0.2, ratePerMinuteBlended: 0.2 })]);
+    expect(out).toMatch(/needs 2 more in ~16 min = ∞\/min/);
   });
 
   it("puts the projections block into the live context with its instruction", () => {

@@ -93,18 +93,31 @@ export function anchoredProbability(fair: number, computed: number | undefined |
   return Math.min(Math.max(fair, computed - ANCHOR_BAND), computed + ANCHOR_BAND);
 }
 
-/** Adds athlete id, opening price, the measured record and the computed probability to a priced leg. */
+/**
+ * Adds athlete id, opening price, the measured record and the computed probability to a priced leg,
+ * and anchors fairProbability to the computed number. The model's own estimate is kept as
+ * rawProbability so the ledger can race the two once the leg settles. A player LISTED OUT keeps
+ * the model's own number: her computed probability assumes she plays, and pulling a 20% up to 70%
+ * on a player the report says is out would be the anchor working against the evidence — the flag
+ * stays on the row and the prompt treats her as unplayable until the report changes.
+ */
 export function enrichLeg(leg: BetLeg, key: LegKey, ctx: EnrichContext): BetLeg {
   const prop = matchCandidate(key, ctx);
   if (prop) {
     const m = prop.measured;
     const model = prop.model ?? null;
+    const listedOut = model?.minutes.availability === "listed_out";
     return {
       ...leg,
       athleteId: prop.athleteId,
       openOdds: prop.openDecimal ?? undefined,
       measured: m ? { last5: frac(m.last5), last10: frac(m.last10), season: frac(m.season), rate: m.impliedFair } : undefined,
-      ...(model ? { computedProbability: Number(model.computed.toFixed(3)), modelNote: model.note, fairProbability: anchoredProbability(leg.fairProbability, model.computed) } : {}),
+      ...(model ? {
+        computedProbability: Number(model.computed.toFixed(3)),
+        modelNote: model.note,
+        rawProbability: leg.fairProbability,
+        fairProbability: listedOut ? leg.fairProbability : anchoredProbability(leg.fairProbability, model.computed),
+      } : {}),
     };
   }
   const line = matchGameLine(key, ctx);

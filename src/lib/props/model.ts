@@ -12,21 +12,26 @@ import type { PlayerHistory } from "@/lib/types";
  * Tonight's total is then a negative binomial with the projected minutes as exposure — a Poisson
  * count whose rate is drawn from a gamma with the fitted dispersion — mixed over the minutes
  * distribution. P(over line) and P(under line) come from its tail, for the posted line and for the
- * ladder rungs beside it.
+ * ladder rungs beside it; props/candidates.ts blends every rung with the season hit rate at that
+ * rung, so the number printed as COMPUTED and the ladder beside it are one scale.
  *
- * Why parametric rather than a bootstrap of the game log. A walk-forward test on 51 WNBA game logs
- * (2026 season, 1,138 player-games, 31,290 line predictions at six rungs around each player's
- * median; scratchpad/walkforward*.ts on the branch) gave, in log loss: season hit rate 0.525, this
- * model with PROJECTED minutes 0.520, the same model with the game's ACTUAL minutes 0.427, a
- * minutes-adjusted empirical rate 0.534. Blending 70% model with 30% season hit rate scored best
- * (0.516) and was the best calibrated across every decile, so that blend is what `computed`
- * carries. The rest of the argument:
+ * In play the same distribution prices the REMAINDER: what is on the board plus the pre-game rate
+ * over the minutes left (props/minutes.ts projects them from the clock, the fouls and the
+ * scoreboard), with the minutes mixture capped at the clock. Tonight's rate is printed for the
+ * record and not used — see `liveRate` for the measurement behind that.
+ *
+ * Why parametric rather than a bootstrap of the game log — one run, scripts/research/walkforward-props.mts
+ * on the 51 WNBA 2026 game logs fetched 22/09/2026 (43 players with 15+ games, 1,043 player-games,
+ * 50,064 line predictions at six rungs around each player's median over eight markets), log loss:
+ * season hit rate 0.5104, this model with PROJECTED minutes 0.4972, the same model with the game's
+ * ACTUAL minutes 0.4255, a minutes-adjusted empirical rate 0.5290, and the production number — 70%
+ * model + 30% season hit rate — 0.4956, the best of the variants and calibrated within three points
+ * in every decile, so that blend is what COMPUTED carries. The rest of the argument:
  *  - a game in the log is one draw of the whole night, so re-scaling those draws to tonight's
  *    minutes and adding fresh count noise double-counts the noise, while using them unchanged
  *    ignores the minutes projection entirely — the one input this product has learned matters most;
- *  - the same fitted rate and dispersion price the REMAINDER of a game in play, with the rate
- *    updated by what the player has done tonight (a gamma-Poisson posterior) and the dispersion
- *    shrinking as the night reveals itself, which a bootstrap of whole games cannot do;
+ *  - the same fitted rate and dispersion price the remainder of a game in play, which a bootstrap
+ *    of whole games cannot do;
  *  - a ladder rung the player has cleared twice in forty games is 5% by hit rate whether the misses
  *    were by one or by ten; the fitted distribution knows the difference.
  * The measured hit rates stay beside the computed number in every prompt line, so a reader can see
@@ -56,7 +61,12 @@ export interface RateFit {
   sdValue: number;
 }
 
-export interface MinutesEstimate { expected: number; sd: number }
+export interface MinutesEstimate {
+  expected: number;
+  sd: number;
+  /** The clock in play: no node of the minutes mixture may exceed it. Set by props/minutes.ts projectRemainingMinutes. */
+  max?: number;
+}
 
 export interface LadderRung { line: number; pOver: number; pUnder: number }
 
@@ -85,13 +95,19 @@ export interface LegProjection {
 /** Games shorter than this say little about a rate: a two-minute cameo is noise, not production. */
 export const MIN_RATE_MINUTES = 6;
 /**
- * Recency half-life in games for the rate fit. The walk-forward test preferred a long memory for the
- * RATE (20 games beat 5 and 10): production per minute is stable, it is the minutes that move.
+ * Recency half-life in games for the rate fit. The same walk-forward run preferred a long memory for
+ * the RATE (half-lives 5 / 10 / 20 / 40 games scored 0.5020 / 0.4984 / 0.4972 / 0.4969): production
+ * per minute is stable, it is the minutes that move.
  */
 export const RATE_HALFLIFE = 20;
 /** Weight of the dispersion prior, in games; a short log leans on the market's typical spread. */
 const DISPERSION_PRIOR_GAMES = 6;
-/** Fallback dispersion by stat: the median fitted value across 38 WNBA players with 20+ games (22/09/2026). */
+/**
+ * Fallback dispersion by stat, weighed against a short log. The same walk-forward run measured the
+ * median fitted value across the 38 players with 20+ games at 0.096 points, 0.008 rebounds, 0.013
+ * assists, 0.013 threes; the rebound, assist and three priors sit above their medians on purpose,
+ * because the failure mode of a short log is a tail that is too thin.
+ */
 const DISPERSION_PRIOR: Record<string, number> = { PTS: 0.09, REB: 0.03, AST: 0.04, "3PT": 0.05, STL: 0.06, BLK: 0.08, TO: 0.06 };
 const DEFAULT_PRIOR = 0.06;
 /** Share of the computed probability that comes from the fitted distribution; the rest is the season hit rate. */
@@ -199,16 +215,20 @@ interface TailModel { atLeast: (needed: number) => number; exactly: (value: numb
 
 /**
  * The distribution of what the player still adds tonight: a negative binomial with the rate as
- * intensity and the (uncertain) minutes as exposure, mixed over the minutes nodes.
+ * intensity and the (uncertain) minutes as exposure, mixed over the minutes nodes. `maxMinutes`
+ * is the clock: in play no node may exceed the minutes left, however wide the estimate.
  */
-function remainderModel(rate: number, dispersion: number, minutes: MinutesEstimate): TailModel {
-  const nodes = MINUTES_NODES.map((n) => ({ w: n.w, m: Math.max(0, minutes.expected + n.z * minutes.sd) }));
-  const atLeast = (needed: number) => nodes.reduce((acc, n) => acc + n.w * nbAtLeast(needed, rate * n.m, dispersion), 0);
-  const exactly = (value: number) => nodes.reduce((acc, n) => acc + n.w * nbExactly(value, rate * n.m, dispersion), 0);
-  const mean = rate * Math.max(0, minutes.expected);
-  // Var = E[Var(T|M)] + Var(E[T|M]) with Var(T|M) = μ + φμ² and E[T|M] = rate·M.
-  const m2 = minutes.expected ** 2 + minutes.sd ** 2;
-  const variance = mean + dispersion * rate * rate * m2 + rate * rate * minutes.sd ** 2;
+function remainderModel(rate: number, dispersion: number, minutes: MinutesEstimate, maxMinutes?: number): TailModel {
+  const cap = maxMinutes !== undefined && Number.isFinite(maxMinutes) ? Math.max(0, maxMinutes) : Infinity;
+  const nodes = MINUTES_NODES.map((n) => ({ w: n.w, m: Math.min(cap, Math.max(0, minutes.expected + n.z * minutes.sd)) }));
+  const atLeast = (needed: number) => clamp(nodes.reduce((acc, n) => acc + n.w * nbAtLeast(needed, rate * n.m, dispersion), 0), 0, 1);
+  const exactly = (value: number) => clamp(nodes.reduce((acc, n) => acc + n.w * nbExactly(value, rate * n.m, dispersion), 0), 0, 1);
+  // Moments of the mixture itself, so a capped node is counted as it is priced.
+  const mean = nodes.reduce((acc, n) => acc + n.w * rate * n.m, 0);
+  const variance = nodes.reduce((acc, n) => {
+    const mu = rate * n.m;
+    return acc + n.w * (mu + dispersion * mu * mu) + n.w * (mu - mean) ** 2;
+  }, 0);
   return { atLeast, exactly, mean, sd: Math.sqrt(Math.max(variance, 0)) };
 }
 
@@ -217,44 +237,43 @@ const fmt = (x: number, d = 1) => (Number.isFinite(x) ? x.toFixed(d) : "?");
 /**
  * P(over) and P(under) of a line for a player whose rate and minutes are known, with the ladder
  * rungs beside it. `current` is what is already on the board in play (0 before tip-off): the
- * projection covers the remainder and the line is judged against current + remainder.
+ * projection covers the remainder and the line is judged against current + remainder. Every rung,
+ * the posted one included, is normalised the same way: a push on a whole line is excluded from both
+ * sides, so pOver + pUnder = 1 on every rung and the ladder is monotone in the line.
  */
 export function projectLeg(
   fit: Pick<RateFit, "rate" | "dispersion">,
   minutes: MinutesEstimate,
   line: number,
   side: "over" | "under",
-  opts: { current?: number; ladderStep?: number; ladderRungs?: number } = {},
+  opts: { current?: number; ladderStep?: number; ladderRungs?: number; maxMinutes?: number } = {},
 ): LegProjection {
   const current = opts.current ?? 0;
-  const model = remainderModel(fit.rate, fit.dispersion, minutes);
-  const at = (l: number): LadderRung => {
+  const model = remainderModel(fit.rate, fit.dispersion, minutes, opts.maxMinutes ?? minutes.max);
+  const at = (l: number): LadderRung & { pPush: number } => {
     // Over needs the total strictly above the line: floor(line)+1. A whole line can push.
-    const overNeeds = Math.floor(l) + 1 - current;
-    const pOver = model.atLeast(overNeeds);
+    const over = model.atLeast(Math.floor(l) + 1 - current);
     const push = Number.isInteger(l) && l - current >= 0 ? model.exactly(l - current) : 0;
-    const pUnder = clamp(1 - pOver - push, 0, 1);
-    return { line: l, pOver, pUnder };
+    const decided = 1 - push;
+    const pOver = decided > 1e-12 ? clamp(over / decided, 0, 1) : 0;
+    return { line: l, pOver, pUnder: clamp(1 - pOver, 0, 1), pPush: clamp(push, 0, 1) };
   };
   const posted = at(line);
-  const push = Number.isInteger(line) && line - current >= 0 ? model.exactly(line - current) : 0;
   const step = opts.ladderStep ?? 1;
   const rungs = opts.ladderRungs ?? 2;
   const ladder: LadderRung[] = [];
   for (let i = -rungs; i <= rungs; i += 1) {
     const l = line + i * step;
     if (l < 0.5) continue;
-    ladder.push(at(l));
+    const r = i === 0 ? posted : at(l);
+    ladder.push({ line: r.line, pOver: r.pOver, pUnder: r.pUnder });
   }
-  const decided = 1 - push;
-  const pOver = decided > 0 ? posted.pOver / decided : posted.pOver;
-  const pUnder = decided > 0 ? posted.pUnder / decided : posted.pUnder;
   const mean = current + model.mean;
   const note = current > 0
     ? `${current} + ${fmt(fit.rate, 2)}/min × ${fmt(minutes.expected, 0)} min → ${fmt(mean)} ± ${fmt(model.sd)}`
     : `${fmt(fit.rate, 2)}/min × ${fmt(minutes.expected, 0)} ± ${fmt(minutes.sd, 0)} min → ${fmt(mean)} ± ${fmt(model.sd)}`;
   return {
-    line, side, computed: side === "over" ? pOver : pUnder, pOver, pUnder, pPush: push,
+    line, side, computed: side === "over" ? posted.pOver : posted.pUnder, pOver: posted.pOver, pUnder: posted.pUnder, pPush: posted.pPush,
     mean, sd: model.sd, ladder, minutes, rate: fit.rate, dispersion: fit.dispersion, current, note,
   };
 }
@@ -263,7 +282,8 @@ export function projectLeg(
  * The number the prompt shows as computed and fairProbability anchors to: the fitted distribution
  * blended with the Laplace-smoothed season hit rate at the same line. The hit rate carries the
  * nights the distribution is too thin for — the ejection, the hot 35 — and the blend was the
- * best-calibrated variant in the walk-forward test. Falls back to the model alone without a sample.
+ * best-calibrated variant in the walk-forward run cited above. Falls back to the model alone
+ * without a sample. props/candidates.ts applies it to every rung of the ladder.
  */
 export function blendedProbability(model: number, hits: number, of: number, weight = MODEL_WEIGHT): number {
   if (!(of > 0)) return clamp(model, 0.005, 0.995);
@@ -272,14 +292,18 @@ export function blendedProbability(model: number, hits: number, of: number, weig
 }
 
 /**
- * The rate for the rest of a game in play. It is the PRE-GAME rate, unchanged by tonight's count —
- * a deliberate choice, measured: at half-time of 190 WNBA games this season (19,015 line
- * predictions; scratchpad/walkforward-live.ts), the remainder priced from the pre-game rate scored
- * 0.460 in log loss, a gamma-Poisson posterior that moved the rate toward tonight's production
- * 0.477, and a 70/30 pre-game/tonight blend 0.474. A cold half does not forecast a cold second half
- * and a hot half does not forecast a hot one; what the first half does carry is the count on the
- * board and the minutes and fouls that shape what is left, and those enter through `current` and
- * the remaining-minutes projection. `priorWeight` stays at 1 so the reader can see that.
+ * The rate for the rest of a game in play: the PRE-GAME rate, unchanged by tonight's count. That is
+ * a measurement, not an assumption — one run, scripts/research/walkforward-live.mts at half-time of
+ * the 194 WNBA 2026 games with play-by-play fetched 22/09/2026 (19,465 line predictions), with the
+ * minutes mixture capped at the clock and the production width, log loss: the pre-game rate over the
+ * remaining minutes 0.4522, a gamma-Poisson posterior moved toward tonight's production 0.4644, a
+ * 70/30 pre-game/tonight blend 0.4638, tonight's rate alone 0.6831. A cold half does not forecast a
+ * cold second half and a hot half does not forecast a hot one; what the first half does carry is the
+ * count on the board and the minutes and fouls that shape what is left, and those enter through
+ * `current` and the remaining-minutes projection. The same run measured second-half production
+ * against the pre-game rate over the second-half minutes actually played at 1.04 for points, 0.98
+ * rebounds, 0.98 assists — no uniform uplift, so none is applied. `tonightRate` is returned so it
+ * can be printed beside the requirement; `priorWeight` stays at 1 so the reader can see nothing moved.
  */
 export function liveRate(fit: Pick<RateFit, "rate" | "dispersion">, tonight: { value: number; minutes: number }): { rate: number; dispersion: number; priorWeight: number; tonightRate: number } {
   const played = Math.max(0, tonight.minutes);
