@@ -9,6 +9,18 @@ fs.rmSync(DIR, { recursive: true, force: true });
 const { getPrompt, savePrompt, revertPrompt, resetToDefault, applyFeedback, listPromptVersions } = await import("@/lib/server/prompts");
 const { DEFAULT_PROMPTS } = await import("@/lib/bets/prompt-defaults");
 
+describe("what the default prompt must keep saying", () => {
+  // The owner's rule: a game must always offer a long ticket, reached honestly — more legs, or
+  // fewer legs on a stretched line the player has actually hit.
+  it("asks every game for a ticket of 30x or longer, by either route", () => {
+    for (const lang of ["pt", "en"] as const) {
+      expect(DEFAULT_PROMPTS.game[lang]).toContain("30x");
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/TWO WAYS TO REACH A LONG PRICE/);
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/every leg priced/);
+    }
+  });
+});
+
 describe("prompt versions", () => {
   it("serves the code default until someone changes it", () => {
     expect(getPrompt("game", "pt")).toBe(DEFAULT_PROMPTS.game.pt);
