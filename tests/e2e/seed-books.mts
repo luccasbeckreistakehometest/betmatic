@@ -28,6 +28,10 @@ const prices: BookPrice[] = [
   row("Superbet", "superbet", sb, { market: "player_prop", player: "Ana Lima", stat: "points", line: 17.5, side: "over", decimal: 1.95, kind: "total", ref: { eventId: "99000101", marketId: "233565", outcomeId: "5788", uuid: "e2e0aaaa-0000-5000-8000-000000000003", specialBetValue: "Lima, Ana-17.5" } }),
   row("Superbet", "superbet", sb, { market: "player_prop", player: "Ana Lima", stat: "points", line: 17.5, side: "under", decimal: 1.8, kind: "total", ref: { eventId: "99000101", marketId: "233565", outcomeId: "5789", uuid: "e2e0aaaa-0000-5000-8000-000000000004", specialBetValue: "Lima, Ana-17.5" } }),
   row("Superbet", "superbet", sb, { market: "player_prop", player: "Bia Souza", stat: "rebounds", line: 6.5, side: "over", decimal: 1.88, kind: "total", ref: { eventId: "99000101", marketId: "233566", outcomeId: "5788", uuid: "e2e0aaaa-0000-5000-8000-000000000005", specialBetValue: "Souza, Bia-6.5" } }),
+  // The mock model's first prop on this game (its double is Eva Nunes + Bia Souza): priced here so the
+  // whole double has one book — and one link — behind it.
+  row("Superbet", "superbet", sb, { market: "player_prop", player: "Eva Nunes", stat: "rebounds", line: 7.5, side: "over", decimal: 1.9, kind: "total", ref: { eventId: "99000101", marketId: "233566", outcomeId: "5788", uuid: "e2e0aaaa-0000-5000-8000-000000000006", specialBetValue: "Nunes, Eva-7.5" } }),
+  row("Superbet", "superbet", sb, { market: "player_prop", player: "Eva Nunes", stat: "rebounds", line: 7.5, side: "under", decimal: 1.85, kind: "total", ref: { eventId: "99000101", marketId: "233566", outcomeId: "5787", uuid: "e2e0aaaa-0000-5000-8000-000000000007", specialBetValue: "Nunes, Eva-7.5" } }),
   // KTO prices the moneyline only (as it does the WNBA live), with Kambi-shaped ids.
   row("KTO", "kambi", kambi, { side: "home", decimal: 1.6, ref: { eventId: "1029000101", marketId: "2694000101", outcomeId: "4345000101" } }),
   row("KTO", "kambi", kambi, { side: "away", decimal: 2.35, ref: { eventId: "1029000101", marketId: "2694000101", outcomeId: "4345000102" } }),

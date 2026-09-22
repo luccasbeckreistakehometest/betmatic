@@ -37,6 +37,11 @@ test("a paid user gets priced player legs, line movement and two alternatives un
   const ticketLink = page.getByTestId("ticket-open-book").first();
   await expect(ticketLink).toContainText("Abrir bilhete inteiro na Superbet");
   await expect(ticketLink).toHaveAttribute("href", /superbet\.bet\.br\/betslip\?bets%5B%5D=/);
+  // The player double is priced whole by Superbet alone: its link carries both legs into one slip.
+  const double = page.getByTestId("ticket-link").filter({ hasText: "2 pernas" }).first();
+  await expect(double).toBeVisible();
+  const doubleHref = await double.getByTestId("ticket-open-book").getAttribute("href");
+  expect(new URL(doubleHref!).searchParams.getAll("bets[]")).toHaveLength(2);
   // The outbound click is counted (the beacon is a 204, the page stays put: the link opens a new tab).
   // The book's site is stubbed in this context: a test never loads a bookmaker for real.
   await page.context().route(/^https:\/\/superbet\.bet\.br\//, (route) => route.fulfill({ status: 200, contentType: "text/html", body: "<title>stub</title>" }));
