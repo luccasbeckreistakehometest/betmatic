@@ -105,11 +105,33 @@ function mapGame(event: Json, sport: SportDef): Game | null {
           details: rawOdds.details,
           spread: rawOdds.spread != null ? Number(rawOdds.spread) : undefined,
           overUnder: rawOdds.overUnder != null ? Number(rawOdds.overUnder) : undefined,
-          homeMoneyline: rawOdds.homeTeamOdds?.moneyLine,
-          awayMoneyline: rawOdds.awayTeamOdds?.moneyLine,
+          homeMoneyline: moneylineOf(rawOdds, "home"),
+          awayMoneyline: moneylineOf(rawOdds, "away"),
         }
       : undefined,
   };
+}
+
+/**
+ * The moneyline, wherever ESPN put it this month. The scoreboard used to carry it as
+ * `homeTeamOdds.moneyLine`; since September 2026 that field is gone from the scoreboard and the
+ * price lives under `moneyline.home.close.odds` (a string, "-1650"), with `open` beside it. The
+ * summary's pickcenter still has the old field. Read all of them, newest first; NaN and 0 are
+ * "not posted".
+ */
+export function moneylineOf(odds: Json | undefined, side: "home" | "away"): number | undefined {
+  if (!odds) return undefined;
+  const candidates = [
+    odds[`${side}TeamOdds`]?.moneyLine,
+    odds.moneyline?.[side]?.close?.odds,
+    odds.moneyline?.[side]?.open?.odds,
+  ];
+  for (const c of candidates) {
+    if (c === undefined || c === null || c === "") continue;
+    const n = typeof c === "number" ? c : Number(String(c).replace(/[^\d.+-]/g, ""));
+    if (Number.isFinite(n) && n !== 0) return n;
+  }
+  return undefined;
 }
 
 function mapTennisCompetitor(competitor: Json): TeamRef {
@@ -290,8 +312,8 @@ export async function getGameDetail(
     details: p.details,
     spread: p.spread != null ? Number(p.spread) : undefined,
     overUnder: p.overUnder != null ? Number(p.overUnder) : undefined,
-    homeMoneyline: p.homeTeamOdds?.moneyLine,
-    awayMoneyline: p.awayTeamOdds?.moneyLine,
+    homeMoneyline: moneylineOf(p, "home"),
+    awayMoneyline: moneylineOf(p, "away"),
     homeSpreadOdds: p.homeTeamOdds?.spreadOdds,
     awaySpreadOdds: p.awayTeamOdds?.spreadOdds,
     overOdds: p.overOdds,

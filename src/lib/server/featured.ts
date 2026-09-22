@@ -36,7 +36,20 @@ export interface FeaturedResult { runId: string; status: "ok" | "error" | "skipp
  * and generates the rest — outside every user's allowance, inside the AI budget. A rerun on the same
  * day writes nothing new. With AI off it records an error, never an "ok".
  */
-export async function runFeatured(opts: { now?: Date } = {}): Promise<FeaturedResult> {
+/**
+ * One run at a time. The cron's first tick after a deploy and a manual trigger used to land within a
+ * minute of each other and both generate the same game on Opus — two bills, one slate. A run that
+ * finds another in flight steps aside and says so.
+ */
+let inflight: Promise<FeaturedResult> | null = null;
+
+export function runFeatured(opts: { now?: Date } = {}): Promise<FeaturedResult> {
+  if (inflight) return inflight.then((r) => ({ ...r, status: "skipped", generated: 0, predictions: 0, costUsd: 0, note: "already running" }));
+  inflight = runFeaturedOnce(opts).finally(() => { inflight = null; });
+  return inflight;
+}
+
+async function runFeaturedOnce(opts: { now?: Date } = {}): Promise<FeaturedResult> {
   const now = opts.now ?? new Date();
   const db = getDb();
   const runId = newId("job");
@@ -82,6 +95,8 @@ export async function runFeatured(opts: { now?: Date } = {}): Promise<FeaturedRe
     if (budgetState(now).exhausted) { notes.push("ai_budget"); break; }
     if (featuredGeneratedToday(now) >= cfg.perDay) { notes.push("daily featured cap"); break; }
     if (!detail) { failures += 1; notes.push(`${pick.gameId}: no detail`); continue; }
+    // Someone may be generating this game right now (on demand, or the tick before this one).
+    if (db.prepare("SELECT 1 FROM generation_requests WHERE gameId=? AND status='running' LIMIT 1").get(pick.gameId)) { notes.push(`${pick.gameId}: in flight`); continue; }
 
     const reqId = newId("gr");
     db.prepare("INSERT INTO generation_requests (id,userId,sportKey,gameId,dateKey,status,createdAt,scope) VALUES (?,?,?,?,?,?,?,?)")
