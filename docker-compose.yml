@@ -33,6 +33,8 @@ services:
           # Mondays), the analytics cleanup daily. Their JSON summaries go to the log.
           curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=lineups"; echo
           curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=close"; echo
+          # Brazilian books: prices for every game in the next 48 h, every tick (pre-game only).
+          curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=books"; echo
           [ $$((t % 4)) -eq 1 ]  && { curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=weekly"; echo; }
           [ $$((t % 96)) -eq 50 ] && { curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=cleanup"; echo; }
           t=$$((t + 1)); sleep 900

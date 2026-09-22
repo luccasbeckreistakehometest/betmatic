@@ -74,7 +74,7 @@ compra real de valor baixo e confira em `/admin → Pagamentos`.
 
 ## 6b. Jobs da rodada 3 (sidecar)
 O sidecar chama `POST /api/cron/refresh?job=…` com `x-cron-secret`. Todos são idempotentes e escrevem uma
-linha JSON no log (`job.lineups`, `job.close`, `job.weekly`, `job.cleanup`, `job.featured`):
+linha JSON no log (`job.lineups`, `job.close`, `job.weekly`, `job.cleanup`, `job.featured`, `job.books`):
 
 | job | quando | o que faz |
 |---|---|---|
@@ -83,6 +83,7 @@ linha JSON no log (`job.lineups`, `job.close`, `job.weekly`, `job.cleanup`, `job
 | `weekly` | de hora em hora | relatório semanal; só escreve na segunda a partir das 12:00 UTC (`force=1` para rodar agora) |
 | `cleanup` | 1 vez por dia | apaga eventos de medição com mais de 180 dias |
 | `featured` | junto do refresh (a cada 4 h) | destaques do dia; roda mesmo com `CRON_ENABLED=0` |
+| `books` | a cada tick | preços das casas brasileiras (Superbet, KTO, EstrelaBet e as outras da Altenar, Betfair Exchange, Sportingbet, Betnacional) para todo jogo das próximas 48 h, só pré-jogo. **Desligado até `BR_BOOKS` ser definido** (`all` ou a lista de ids em `.env.example`); cada casa tem timeout com cancelamento e erro isolados, o tick inteiro respeita `BOOKS_JOB_BUDGET_MS`, o histórico é apagado depois de `BOOKS_RETENTION_DAYS`; o painel admin liga/desliga cada casa; `pnpm tsx scripts/books-run.mts wnba` roda o mesmo job no shell |
 
 No stack de produção (`/srv/apps/stack/docker-compose.yml`, serviço `betmatic-cron`) acrescente as mesmas
 linhas do `docker-compose.yml` deste repositório.

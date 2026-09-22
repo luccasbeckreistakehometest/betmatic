@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { BetsPanel, type LegAlertView } from "@/components/BetsPanel";
+import { BetsPanel, type GamePricesView, type LegAlertView } from "@/components/BetsPanel";
 import { RefreshBar } from "@/components/RefreshBar";
 import { useNavState } from "@/components/Controls";
 import { Empty, Panel, buttonClass } from "@/components/ui";
@@ -102,6 +102,21 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
     }, 0);
     return () => { alive = false; clearTimeout(id); };
   }, [hasTickets, alertDate, gameId, sport.key, lang, generatedAt]);
+  // The Brazilian books' prices on these tickets, read the same way as the alerts: only for tickets
+  // the viewer already sees, never blocking the tickets themselves, and not at all once the game is
+  // under way — a pre-game price shown beside a live ticket would read as available.
+  const [prices, setPrices] = useState<GamePricesView | null>(null);
+  useEffect(() => {
+    if (!hasTickets || !alertDate || started) return;
+    let alive = true;
+    const id = setTimeout(() => {
+      fetch(`/api/game/${gameId}/prices?sport=${sport.key}&lang=${lang}&date=${alertDate}`, { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j) => { if (alive && j && Array.isArray(j.tickets)) setPrices({ tickets: j.tickets, signals: j.signals ?? [], books: j.books ?? [], fetchedAt: j.fetchedAt ?? null }); })
+        .catch(() => {});
+    }, 0);
+    return () => { alive = false; clearTimeout(id); };
+  }, [hasTickets, alertDate, gameId, sport.key, lang, generatedAt, started]);
   const delayed = data?.delayedGames?.find((g) => g.gameId === gameId) ?? null;
 
   const generate = useCallback(async () => {
@@ -161,7 +176,7 @@ export function IntelBoard({ gameId, dateKey, started = false }: { gameId: strin
         )}
         {data?.plan.id === "max" && !started && <RefreshBar gameId={gameId} sportKey={sport.key} lang={lang} onRefreshed={() => void load()} />}
         {alerts.length > 0 && <LineupBanner alerts={alerts} lang={lang} />}
-        <BetsPanel slate={mine.slate} lang={lang} gameId={gameId} sportKey={sport.key} alerts={alerts} />
+        <BetsPanel slate={mine.slate} lang={lang} gameId={gameId} sportKey={sport.key} alerts={alerts} prices={prices} />
       </>
     );
   } else if (delayed) {

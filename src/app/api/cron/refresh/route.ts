@@ -13,6 +13,7 @@ import { runLineupWatch } from "@/lib/server/lineups";
 import { runCloseJob } from "@/lib/server/leg-prices";
 import { runWeeklyReports } from "@/lib/server/weekly-report";
 import { cleanupEvents } from "@/lib/server/analytics-report";
+import { runBooksJob } from "@/lib/server/book-prices";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,6 +29,7 @@ export const dynamic = "force-dynamic";
  *   close   — CLV: the closing price of every pending leg whose game starts within 30 min; every tick
  *   weekly  — relatório semanal de disciplina; safe every tick, writes on Mondays from 12:00 UTC (force=1 to run now)
  *   cleanup — deletes analytics events older than 180 days; daily
+ *   books   — Brazilian books' prices for every game in the next 48 h (pre-game only); every tick
  *   refresh — background generation (off unless CRON_ENABLED=1); every 4h
  * Protected by the x-cron-secret header (constant-time compare), or by an admin session for manual
  * runs from the panel. Every run logs one JSON summary line for `docker compose logs`.
@@ -77,6 +79,11 @@ export async function POST(request: Request) {
       const deleted = cleanupEvents();
       logEvent("job.cleanup", { deleted, ms: Date.now() - started });
       return NextResponse.json({ job, deleted });
+    }
+    if (job === "books") {
+      const sports = (url.searchParams.get("sports") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+      const result = await runBooksJob({ sports });
+      return NextResponse.json({ job, ...result }, { status: result.status === "error" ? 500 : 200 });
     }
     if (job === "featured") {
       const result = await runFeatured();

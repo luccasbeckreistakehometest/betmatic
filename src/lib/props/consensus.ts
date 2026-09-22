@@ -196,3 +196,49 @@ export function consensusFromFeeds(
   }
   return buildConsensus(rows);
 }
+
+/* ── Brazilian books ──────────────────────────────────────────────────────────────────────────────
+ * The licensed books' posted prices (src/lib/sources/br-books) join the same cross-reference as the
+ * free feed: a player line becomes one SourcedProp per book, a moneyline one per side, so the model
+ * sees "best 1.92 at Superbet (worst 1.80)" and can say where the price is.
+ */
+import type { BookPrice } from "@/lib/sources/br-books/types";
+import { marketLabelFor } from "@/lib/sources/br-books/normalise";
+
+export function rowsFromBooks(prices: BookPrice[], sportKey: string, teams: { home: string; away: string }): SourcedProp[] {
+  const rows: SourcedProp[] = [];
+  for (const p of prices) {
+    if (p.platform === "betfair-exchange") continue; // the exchange is a reference, not a shop window
+    if (p.market === "player_prop" && p.player && p.stat && p.line !== undefined && (p.side === "over" || p.side === "under")) {
+      const market = marketLabelFor(sportKey, p.stat);
+      if (!market) continue;
+      rows.push({ player: p.player, market, marketKey: p.stat, line: p.line, side: p.side, odds: p.decimal.toFixed(2), decimal: p.decimal, book: p.book, source: p.book, priced: true });
+    } else if (p.market === "moneyline" && p.side) {
+      const who = p.side === "home" ? teams.home : p.side === "away" ? teams.away : "Draw";
+      rows.push({ player: who, market: "moneyline", line: 0, side: "unknown", odds: p.decimal.toFixed(2), decimal: p.decimal, book: p.book, source: p.book, priced: true });
+    }
+  }
+  return rows;
+}
+
+/** consensusFromFeeds plus every Brazilian book's row on the same props and moneylines. */
+export function consensusWithBooks(
+  props: PropRow[],
+  lines: Parameters<typeof consensusFromFeeds>[1],
+  teams: { home: string; away: string },
+  books: BookPrice[],
+  sportKey: string,
+): ConsensusProp[] {
+  const rows: SourcedProp[] = props.filter((p) => p.priced).map((p) => ({ ...p, source: p.book ?? "book" }));
+  for (const l of lines) {
+    if (!l.current) continue;
+    const add = (who: string, price: number | null) => {
+      if (price && price > 1) rows.push({ player: who, market: "moneyline", line: 0, side: "unknown", odds: price.toFixed(2), book: l.provider, source: l.provider });
+    };
+    add(teams.home, l.current.homeMl);
+    add(teams.away, l.current.awayMl);
+    add("Draw", l.current.draw);
+  }
+  rows.push(...rowsFromBooks(books, sportKey, teams));
+  return buildConsensus(rows);
+}

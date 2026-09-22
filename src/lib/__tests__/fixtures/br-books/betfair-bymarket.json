@@ -1,0 +1,286 @@
+{
+ "eventTypes": [
+  {
+   "eventTypeId": 7522,
+   "eventNodes": [
+    {
+     "eventId": 36094852,
+     "event": {
+      "eventName": "Connecticut Sun @ Washington Mystics",
+      "countryCode": "GB",
+      "timezone": "GMT",
+      "openDate": "2026-09-22T23:30:00.000Z"
+     },
+     "marketNodes": [
+      {
+       "marketId": "1.262696224",
+       "description": {
+        "marketName": "Moneyline",
+        "marketType": "MATCH_ODDS"
+       },
+       "state": {
+        "status": "OPEN",
+        "inplay": false,
+        "totalMatched": 5093.450536336573
+       },
+       "runners": [
+        {
+         "selectionId": 1519948,
+         "handicap": 0,
+         "description": {
+          "runnerName": "Connecticut Sun"
+         },
+         "state": {
+          "status": "ACTIVE",
+          "lastPriceTraded": 10.5
+         },
+         "exchange": {
+          "availableToBack": [
+           {
+            "price": 9.6,
+            "size": 140.98
+           }
+          ],
+          "availableToLay": [
+           {
+            "price": 11,
+            "size": 387.09
+           }
+          ]
+         }
+        },
+        {
+         "selectionId": 1519950,
+         "handicap": 0,
+         "description": {
+          "runnerName": "Washington Mystics"
+         },
+         "state": {
+          "status": "ACTIVE",
+          "lastPriceTraded": 1.11
+         },
+         "exchange": {
+          "availableToBack": [
+           {
+            "price": 1.1,
+            "size": 3870.86
+           }
+          ],
+          "availableToLay": [
+           {
+            "price": 1.12,
+            "size": 6682.49
+           }
+          ]
+         }
+        }
+       ]
+      },
+      {
+       "marketId": "1.262696225",
+       "description": {
+        "marketName": "Handicap",
+        "marketType": "HANDICAP"
+       },
+       "state": {
+        "status": "OPEN",
+        "inplay": false,
+        "totalMatched": 2091.257319117551
+       },
+       "runners": [
+        {
+         "selectionId": 1519948,
+         "handicap": -35.5,
+         "description": {
+          "runnerName": "Connecticut Sun"
+         },
+         "state": {
+          "status": "ACTIVE"
+         },
+         "exchange": {
+          "availableToBack": [
+           {
+            "price": 1.01,
+            "size": 21.84
+           }
+          ]
+         }
+        },
+        {
+         "selectionId": 1519950,
+         "handicap": 35.5,
+         "description": {
+          "runnerName": "Washington Mystics"
+         },
+         "state": {
+          "status": "ACTIVE"
+         },
+         "exchange": {}
+        },
+        {
+         "selectionId": 1519948,
+         "handicap": -34.5,
+         "description": {
+          "runnerName": "Connecticut Sun"
+         },
+         "state": {
+          "status": "ACTIVE"
+         },
+         "exchange": {
+          "availableToBack": [
+           {
+            "price": 1.01,
+            "size": 21.84
+           }
+          ]
+         }
+        },
+        {
+         "selectionId": 1519950,
+         "handicap": 34.5,
+         "description": {
+          "runnerName": "Washington Mystics"
+         },
+         "state": {
+          "status": "ACTIVE"
+         },
+         "exchange": {}
+        },
+        {
+         "selectionId": 1519948,
+         "handicap": -33.5,
+         "description": {
+          "runnerName": "Connecticut Sun"
+         },
+         "state": {
+          "status": "ACTIVE"
+         },
+         "exchange": {
+          "availableToBack": [
+           {
+            "price": 1.01,
+            "size": 21.84
+           }
+          ]
+         }
+        },
+        {
+         "selectionId": 1519950,
+         "handicap": 33.5,
+         "description": {
+          "runnerName": "Washington Mystics"
+         },
+         "state": {
+          "status": "ACTIVE"
+         },
+         "exchange": {}
+        }
+       ]
+      },
+      {
+       "marketId": "1.262696298",
+       "description": {
+        "marketName": "Total de Pontos",
+        "marketType": "COMBINED_TOTAL"
+       },
+       "state": {
+        "status": "OPEN",
+        "inplay": false,
+        "totalMatched": 1704.9431831307586
+       },
+       "runners": [
+        {
+         "selectionId": 7017824,
+         "handicap": 120.5,
+         "description": {
+          "runnerName": "Menos"
+         },
+         "state": {
+          "status": "ACTIVE"
+         },
+         "exchange": {
+          "availableToBack": [
+           {
+            "price": 2,
+            "size": 727.37
+           }
+          ]
+         }
+        },
+        {
+         "selectionId": 7017823,
+         "handicap": 120.5,
+         "description": {
+          "runnerName": "Mais"
+         },
+         "state": {
+          "status": "ACTIVE"
+         },
+         "exchange": {}
+        },
+        {
+         "selectionId": 7017824,
+         "handicap": 121.5,
+         "description": {
+          "runnerName": "Menos"
+         },
+         "state": {
+          "status": "ACTIVE"
+         },
+         "exchange": {
+          "availableToBack": [
+           {
+            "price": 1.01,
+            "size": 95.54
+           }
+          ]
+         }
+        },
+        {
+         "selectionId": 7017823,
+         "handicap": 121.5,
+         "description": {
+          "runnerName": "Mais"
+         },
+         "state": {
+          "status": "ACTIVE"
+         },
+         "exchange": {}
+        },
+        {
+         "selectionId": 7017824,
+         "handicap": 122.5,
+         "description": {
+          "runnerName": "Menos"
+         },
+         "state": {
+          "status": "ACTIVE"
+         },
+         "exchange": {
+          "availableToBack": [
+           {
+            "price": 1.01,
+            "size": 95.54
+           }
+          ]
+         }
+        },
+        {
+         "selectionId": 7017823,
+         "handicap": 122.5,
+         "description": {
+          "runnerName": "Mais"
+         },
+         "state": {
+          "status": "ACTIVE"
+         },
+         "exchange": {}
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

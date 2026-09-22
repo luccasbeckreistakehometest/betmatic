@@ -3,7 +3,8 @@ import { buildBets } from "@/lib/bets/builder";
 import { localiseSlate } from "@/lib/bets/localise";
 import { getGameDetail } from "@/lib/sources/espn";
 import { buildPropCandidates } from "@/lib/props/candidates";
-import { consensusFromFeeds } from "@/lib/props/consensus";
+import { consensusWithBooks } from "@/lib/props/consensus";
+import { pricesForGame } from "@/lib/server/book-prices";
 import { getGameLines } from "@/lib/sources/espn-props";
 import { refereeForMatch } from "@/lib/signals/referee";
 import { computeDvp } from "@/lib/signals/dvp";
@@ -41,7 +42,11 @@ export async function generateGame(args: { sportKey: string; dateKey: string; de
   // The guard only ever fires on a game already under way; saying so in the run note makes a stale
   // feed visible in the ops log instead of silently thinning the candidates.
   if (candidates?.staleDropped.length) info.push(`stale line guard dropped: ${candidates.staleDropped.join(" | ")}`);
-  const consensus = consensusFromFeeds(props, sportDefinition.group === "soccer" ? lines : [], { home: detail.game.home.displayName, away: detail.game.away.displayName });
+  // The Brazilian books' current prices on this game (stored by the books job), so the model can
+  // shop the line and name the book that pays most; an empty store changes nothing.
+  const bookPrices = (() => { try { return pricesForGame(detail.game.id); } catch { return []; } })();
+  const consensus = consensusWithBooks(props, sportDefinition.group === "soccer" ? lines : [], { home: detail.game.home.displayName, away: detail.game.away.displayName }, bookPrices, sportKey);
+  if (bookPrices.length) info.push(`book prices: ${bookPrices.length} rows from ${new Set(bookPrices.map((p) => p.book)).size} books`);
   const referee = sportDefinition.group === "soccer"
     ? await refereeForMatch(detail.game.home.displayName, detail.game.away.displayName, dateKey).catch(() => null)
     : null;

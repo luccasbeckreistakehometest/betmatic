@@ -1,0 +1,265 @@
+{
+ "events": [
+  {
+   "marketIds": [
+    1744347226,
+    1744347291,
+    1744347236
+   ],
+   "isBooked": true,
+   "isParlay": false,
+   "variant": 2,
+   "offers": [
+    {
+     "type": 6
+    }
+   ],
+   "code": 703,
+   "hasStream": false,
+   "extId": "fp32_ar:match:652957",
+   "sc": 1270,
+   "mc": 56,
+   "rc": false,
+   "pId": 32,
+   "et": 0,
+   "hasStats": false,
+   "competitorIds": [
+    78842,
+    78843
+   ],
+   "sportId": 67,
+   "catId": 522,
+   "champId": 5519,
+   "status": 0,
+   "startDate": "2026-09-22T23:30:00Z",
+   "id": 16614649,
+   "name": "Washington Mystics (F) vs. Connecticut Sun (F)"
+  },
+  {
+   "marketIds": [
+    1744348702,
+    1744348842,
+    1744348730
+   ],
+   "isBooked": true,
+   "isParlay": false,
+   "variant": 2,
+   "offers": [
+    {
+     "type": 6
+    }
+   ],
+   "code": 724,
+   "hasStream": false,
+   "extId": "fp32_ar:match:652990",
+   "sc": 1021,
+   "mc": 42,
+   "rc": false,
+   "pId": 32,
+   "et": 0,
+   "hasStats": false,
+   "competitorIds": [
+    78844,
+    2835061
+   ],
+   "sportId": 67,
+   "catId": 522,
+   "champId": 5519,
+   "status": 0,
+   "startDate": "2026-09-23T00:00:00Z",
+   "id": 16614764,
+   "name": "Chicago Sky (F) vs. Toronto Tempo (F)"
+  },
+  {
+   "marketIds": [
+    1743410163,
+    1743410241,
+    1743410188
+   ],
+   "isBooked": true,
+   "isParlay": false,
+   "variant": 2,
+   "offers": [
+    {
+     "type": 6
+    }
+   ],
+   "code": 2685,
+   "hasStream": false,
+   "extId": "fp32_ar:match:652989",
+   "sc": 1676,
+   "mc": 61,
+   "rc": false,
+   "pId": 32,
+   "et": 0,
+   "hasStats": false,
+   "competitorIds": [
+    78841,
+    78846
+   ],
+   "sportId": 67,
+   "catId": 522,
+   "champId": 5519,
+   "status": 0,
+   "startDate": "2026-09-23T00:00:00Z",
+   "id": 16614765,
+   "name": "Indiana Fever (F) vs. Minnesota Lynx (F)"
+  },
+  {
+   "id": 17357716,
+   "name": "Detroit Pistons vs. Boston Celtics",
+   "startDate": "2026-10-20T19:00:00Z",
+   "champId": 2980,
+   "competitorIds": [
+    44351,
+    44358
+   ],
+   "extId": "fp62_ls:match:19766758",
+   "mc": 3
+  }
+ ],
+ "champs": [
+  {
+   "id": 2978,
+   "name": "LKL"
+  },
+  {
+   "id": 2980,
+   "name": "NBA"
+  },
+  {
+   "id": 2982,
+   "name": "GBL"
+  },
+  {
+   "id": 2995,
+   "name": "Euroliga"
+  },
+  {
+   "id": 3015,
+   "name": "NBL"
+  },
+  {
+   "id": 3017,
+   "name": "Basketligaen"
+  },
+  {
+   "id": 3047,
+   "name": "Liga Nacional"
+  },
+  {
+   "id": 3068,
+   "name": "NBL"
+  },
+  {
+   "id": 3321,
+   "name": "D1"
+  },
+  {
+   "id": 3417,
+   "name": "1. A SKL"
+  },
+  {
+   "id": 4258,
+   "name": "Taça Intercontinental"
+  },
+  {
+   "id": 5141,
+   "name": "Liga Mayor de Baloncesto"
+  },
+  {
+   "id": 5289,
+   "name": "Nacional 1"
+  },
+  {
+   "id": 5519,
+   "name": "WNBA"
+  },
+  {
+   "id": 7145,
+   "name": "Jogos Asiáticos Femininos"
+  },
+  {
+   "id": 7417,
+   "name": "EuroCup"
+  },
+  {
+   "id": 7430,
+   "name": "VTB United League"
+  },
+  {
+   "id": 7443,
+   "name": "Jogos Amistosos de Clube"
+  },
+  {
+   "id": 7748,
+   "name": "Liga Paulista"
+  },
+  {
+   "id": 7972,
+   "name": "Suomen Cup"
+  },
+  {
+   "id": 8039,
+   "name": "Taça da Liga"
+  },
+  {
+   "id": 8560,
+   "name": "Supertaça"
+  },
+  {
+   "id": 8586,
+   "name": "Liga de Ascenso"
+  },
+  {
+   "id": 8587,
+   "name": "Liga Feminina"
+  },
+  {
+   "id": 33268,
+   "name": "BSNF, Women"
+  },
+  {
+   "id": 33581,
+   "name": "European North Basketball League"
+  },
+  {
+   "id": 36032,
+   "name": "NCAA, Seniores"
+  }
+ ],
+ "competitors": [
+  {
+   "id": 78842,
+   "name": "Washington Mystics (F)"
+  },
+  {
+   "id": 78843,
+   "name": "Connecticut Sun (F)"
+  },
+  {
+   "id": 44351,
+   "name": "Detroit Pistons"
+  },
+  {
+   "id": 44358,
+   "name": "Boston Celtics"
+  },
+  {
+   "id": 78844,
+   "name": "Chicago Sky (F)"
+  },
+  {
+   "id": 2835061,
+   "name": "Toronto Tempo (F)"
+  },
+  {
+   "id": 78841,
+   "name": "Indiana Fever (F)"
+  },
+  {
+   "id": 78846,
+   "name": "Minnesota Lynx (F)"
+  }
+ ]
+}

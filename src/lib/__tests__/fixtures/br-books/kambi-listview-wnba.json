@@ -1,0 +1,59 @@
+{
+ "events": [
+  {
+   "id": 1027216026,
+   "name": "Washington Mystics (F) - Connecticut Sun (F)",
+   "homeName": "Washington Mystics (F)",
+   "awayName": "Connecticut Sun (F)",
+   "start": "2026-09-22T23:30:00Z",
+   "group": "WNBA",
+   "sport": "BASKETBALL",
+   "state": "NOT_STARTED",
+   "nonLiveBoCount": 23
+  },
+  {
+   "id": 1027216013,
+   "name": "Indiana Fever (F) - Minnesota Lynx (F)",
+   "homeName": "Indiana Fever (F)",
+   "awayName": "Minnesota Lynx (F)",
+   "start": "2026-09-23T00:00:00Z",
+   "group": "WNBA",
+   "sport": "BASKETBALL",
+   "state": "NOT_STARTED",
+   "nonLiveBoCount": 26
+  },
+  {
+   "id": 1027216018,
+   "name": "Chicago Sky (F) - Toronto Tempo (F)",
+   "homeName": "Chicago Sky (F)",
+   "awayName": "Toronto Tempo (F)",
+   "start": "2026-09-23T00:00:00Z",
+   "group": "WNBA",
+   "sport": "BASKETBALL",
+   "state": "NOT_STARTED",
+   "nonLiveBoCount": 26
+  },
+  {
+   "id": 1027216012,
+   "name": "Portland Fire (F) - Golden State Valkyries (F)",
+   "homeName": "Portland Fire (F)",
+   "awayName": "Golden State Valkyries (F)",
+   "start": "2026-09-23T02:00:00Z",
+   "group": "WNBA",
+   "sport": "BASKETBALL",
+   "state": "NOT_STARTED",
+   "nonLiveBoCount": 24
+  },
+  {
+   "id": 1027216023,
+   "name": "Las Vegas Aces (F) - Los Angeles Sparks (F)",
+   "homeName": "Las Vegas Aces (F)",
+   "awayName": "Los Angeles Sparks (F)",
+   "start": "2026-09-23T02:00:00Z",
+   "group": "WNBA",
+   "sport": "BASKETBALL",
+   "state": "NOT_STARTED",
+   "nonLiveBoCount": 25
+  }
+ ]
+}

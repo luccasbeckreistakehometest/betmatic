@@ -1,0 +1,474 @@
+{
+ "id": 16614649,
+ "feedEventId": 23651266,
+ "name": "Washington Mystics (F) vs. Connecticut Sun (F)",
+ "startDate": "2026-09-22T23:30:00Z",
+ "competitors": [
+  {
+   "abbreviation": "WAS",
+   "id": 78842,
+   "name": "Washington Mystics (F)"
+  },
+  {
+   "abbreviation": "CON",
+   "id": 78843,
+   "name": "Connecticut Sun (F)"
+  }
+ ],
+ "markets": [
+  {
+   "shortName": "Vencedor (incluindo Prorrogação)",
+   "desktopOddIds": [
+    [
+     4538886470
+    ],
+    [
+     4538886471
+    ]
+   ],
+   "isBB": false,
+   "so": 4,
+   "typeId": 219,
+   "sportMarketId": 70792,
+   "id": 1744347226,
+   "name": "Vencedor (incluindo Prorrogação)"
+  },
+  {
+   "shortName": "Handicap (incluindo Prorrogação)",
+   "desktopOddIds": [
+    [
+     4538886753,
+     4538886619
+    ],
+    [
+     4538886754,
+     4538886620
+    ]
+   ],
+   "isBB": false,
+   "variant": 1,
+   "so": 6,
+   "typeId": 223,
+   "sportMarketId": 70798,
+   "sv": "-14.5",
+   "id": 1744347291,
+   "name": "Handicap (incluindo Prorrogação)"
+  },
+  {
+   "shortName": "Total  (incluindo Prorrogação)",
+   "desktopOddIds": [
+    [
+     4538886723,
+     4538886505
+    ],
+    [
+     4538886724,
+     4538886506
+    ]
+   ],
+   "isBB": false,
+   "variant": 1,
+   "so": 7,
+   "typeId": 225,
+   "sportMarketId": 70802,
+   "sv": "151.5",
+   "id": 1744347231,
+   "name": "Total  (incluindo Prorrogação)"
+  }
+ ],
+ "childMarkets": [
+  {
+   "shortName": "Shakira Austin (WAS)",
+   "childName": "Shakira Austin",
+   "desktopOddIds": [
+    [
+     4539842113
+    ],
+    [
+     4539842114
+    ]
+   ],
+   "isBB": false,
+   "variant": 18,
+   "competitorId": 78842,
+   "so": 0,
+   "typeId": 768,
+   "sportMarketId": 72173,
+   "sv": "17.5|WAS|dst:player:427780",
+   "id": 1744642177,
+   "name": "Pontos Mais de/Menos de (incluindo Prorrogação)"
+  },
+  {
+   "shortName": "Kiki Iriafen (WAS)",
+   "childName": "Kiki Iriafen",
+   "desktopOddIds": [
+    [
+     4539842121
+    ],
+    [
+     4539842122
+    ]
+   ],
+   "isBB": false,
+   "variant": 18,
+   "competitorId": 78842,
+   "so": 0,
+   "typeId": 772,
+   "sportMarketId": 72176,
+   "sv": "9.5|WAS|dst:player:482382",
+   "id": 1744642181,
+   "name": "Rebotes Mais de/Menos de (incluindo Prorrogação)"
+  },
+  {
+   "shortName": "Kiki Iriafen (WAS)",
+   "childName": "Kiki Iriafen",
+   "desktopOddIds": [
+    [
+     4539842047,
+     4539842038,
+     4539842039
+    ]
+   ],
+   "isBB": false,
+   "variant": 12,
+   "competitorId": 78842,
+   "so": 0,
+   "typeId": 2105,
+   "sportMarketId": 72542,
+   "sv": "WAS|dst:player:482382",
+   "id": 1744642168,
+   "name": "Pontos - Kiki Iriafen (WAS) (Incl.Prorrogação)"
+  },
+  {
+   "shortName": "Georgia Amoore (WAS)",
+   "childName": "Georgia Amoore",
+   "desktopOddIds": [
+    [
+     4539842226,
+     4539842215,
+     4539842216
+    ]
+   ],
+   "isBB": false,
+   "variant": 12,
+   "competitorId": 78842,
+   "so": 0,
+   "typeId": 2110,
+   "sportMarketId": 72547,
+   "sv": "WAS|dst:player:482385",
+   "id": 1744642209,
+   "name": "Pts-Reb-Ast - Georgia Amoore (WAS) (Incl.Prorrogação)"
+  }
+ ],
+ "odds": [
+  {
+   "typeId": 1,
+   "price": 1.0715,
+   "isMB": false,
+   "oddStatus": 0,
+   "competitorId": 78842,
+   "isDBB": true,
+   "id": 4538886470,
+   "name": "Washington Mystics (F)"
+  },
+  {
+   "typeId": 3,
+   "price": 9.5,
+   "isMB": false,
+   "oddStatus": 0,
+   "competitorId": 78843,
+   "isDBB": true,
+   "id": 4538886471,
+   "name": "Connecticut Sun (F)"
+  },
+  {
+   "typeId": 1714,
+   "price": 1.2353,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "-7",
+   "competitorId": 78842,
+   "id": 4538886753,
+   "name": "Washington Mystics (F) (-7)"
+  },
+  {
+   "typeId": 1714,
+   "price": 1.2778,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "-7.5",
+   "competitorId": 78842,
+   "isDBB": true,
+   "id": 4538886619,
+   "name": "Washington Mystics (F) (-7.5)"
+  },
+  {
+   "typeId": 1715,
+   "price": 3.7,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "-7",
+   "competitorId": 78843,
+   "id": 4538886754,
+   "name": "Connecticut Sun (F) (+7)"
+  },
+  {
+   "typeId": 1715,
+   "price": 3.4,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "-7.5",
+   "competitorId": 78843,
+   "isDBB": true,
+   "id": 4538886620,
+   "name": "Connecticut Sun (F) (+7.5)"
+  },
+  {
+   "typeId": 12,
+   "price": 1.3704,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "150",
+   "id": 4538886723,
+   "name": "Mais de 150"
+  },
+  {
+   "typeId": 12,
+   "price": 1.4167,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "150.5",
+   "isDBB": true,
+   "id": 4538886505,
+   "name": "Mais de 150.5"
+  },
+  {
+   "typeId": 13,
+   "price": 2.85,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "150",
+   "id": 4538886724,
+   "name": "Menos de 150"
+  },
+  {
+   "typeId": 13,
+   "price": 2.7,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "150.5",
+   "isDBB": true,
+   "id": 4538886506,
+   "name": "Menos de 150.5"
+  },
+  {
+   "typeId": 1,
+   "price": 1.0715,
+   "isMB": false,
+   "oddStatus": 0,
+   "isBB": true,
+   "competitorId": 78842,
+   "isDBB": true,
+   "id": 4538886470,
+   "name": "Washington Mystics (F)"
+  },
+  {
+   "typeId": 3,
+   "price": 9.5,
+   "isMB": false,
+   "oddStatus": 0,
+   "isBB": true,
+   "competitorId": 78843,
+   "isDBB": true,
+   "id": 4538886471,
+   "name": "Connecticut Sun (F)"
+  },
+  {
+   "typeId": 1714,
+   "price": 1.2778,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "-7.5",
+   "isBB": true,
+   "competitorId": 78842,
+   "isDBB": true,
+   "id": 4538886619,
+   "name": "Washington Mystics (F) (-7.5)"
+  },
+  {
+   "typeId": 1715,
+   "price": 3.4,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "-7.5",
+   "isBB": true,
+   "competitorId": 78843,
+   "isDBB": true,
+   "id": 4538886620,
+   "name": "Connecticut Sun (F) (+7.5)"
+  },
+  {
+   "typeId": 12,
+   "price": 1.4167,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "150.5",
+   "isBB": true,
+   "isDBB": true,
+   "id": 4538886505,
+   "name": "Mais de 150.5"
+  },
+  {
+   "typeId": 13,
+   "price": 2.7,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "150.5",
+   "isBB": true,
+   "isDBB": true,
+   "id": 4538886506,
+   "name": "Menos de 150.5"
+  },
+  {
+   "typeId": 2502,
+   "price": 1.8334,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "17.5",
+   "isDBB": true,
+   "id": 4539842114,
+   "name": "Shakira Austin (WAS) menos 17.5"
+  },
+  {
+   "typeId": 2501,
+   "price": 1.9091,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "17.5",
+   "isDBB": true,
+   "id": 4539842113,
+   "name": "Shakira Austin (WAS) mais 17.5"
+  },
+  {
+   "typeId": 2501,
+   "price": 1.8696,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "9.5",
+   "isDBB": true,
+   "id": 4539842121,
+   "name": "Kiki Iriafen (WAS) mais 9.5"
+  },
+  {
+   "typeId": 2502,
+   "price": 1.9091,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "9.5",
+   "isDBB": true,
+   "id": 4539842122,
+   "name": "Kiki Iriafen (WAS) menos 9.5"
+  },
+  {
+   "typeId": 2414,
+   "price": 1.3572,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "WAS|dst:player:482382",
+   "isDBB": true,
+   "id": 4539842047,
+   "name": "14+"
+  },
+  {
+   "typeId": 2416,
+   "price": 1.7693,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "WAS|dst:player:482382",
+   "isDBB": true,
+   "id": 4539842038,
+   "name": "16+"
+  },
+  {
+   "typeId": 2418,
+   "price": 2.2,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "WAS|dst:player:482382",
+   "isDBB": true,
+   "id": 4539842039,
+   "name": "18+"
+  },
+  {
+   "typeId": 2502,
+   "price": 1.8334,
+   "isMB": true,
+   "oddStatus": 0,
+   "sv": "17.5",
+   "isBB": true,
+   "isDBB": true,
+   "id": 4539842114,
+   "name": "Shakira Austin (WAS) menos 17.5"
+  },
+  {
+   "typeId": 2501,
+   "price": 1.9091,
+   "isMB": true,
+   "oddStatus": 0,
+   "sv": "17.5",
+   "isBB": true,
+   "isDBB": true,
+   "id": 4539842113,
+   "name": "Shakira Austin (WAS) mais 17.5"
+  },
+  {
+   "typeId": 2501,
+   "price": 1.8696,
+   "isMB": true,
+   "oddStatus": 0,
+   "sv": "9.5",
+   "isBB": true,
+   "isDBB": true,
+   "id": 4539842121,
+   "name": "Kiki Iriafen (WAS) mais 9.5"
+  },
+  {
+   "typeId": 2502,
+   "price": 1.9091,
+   "isMB": true,
+   "oddStatus": 0,
+   "sv": "9.5",
+   "isBB": true,
+   "isDBB": true,
+   "id": 4539842122,
+   "name": "Kiki Iriafen (WAS) menos 9.5"
+  },
+  {
+   "typeId": 2411,
+   "price": 1.3449,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "WAS|dst:player:482385",
+   "id": 4539842226,
+   "name": "11+"
+  },
+  {
+   "typeId": 2413,
+   "price": 1.7693,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "WAS|dst:player:482385",
+   "id": 4539842215,
+   "name": "13+"
+  },
+  {
+   "typeId": 2415,
+   "price": 2.15,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "WAS|dst:player:482385",
+   "id": 4539842216,
+   "name": "15+"
+  }
+ ]
+}
