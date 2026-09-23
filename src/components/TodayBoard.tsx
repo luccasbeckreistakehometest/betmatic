@@ -20,17 +20,21 @@ import type { TodayView } from "@/app/api/today/route";
  * that produce the sample that calibrates the three.
  */
 export function TodayBoard() {
-  const { lang, sport } = useNavState();
+  const { lang, sport, params } = useNavState();
   const t = makeT(lang);
   const [data, setData] = useState<TodayView | null>(null);
   const [failed, setFailed] = useState(false);
+  // A Brasília day in the URL opens that day's answer instead of today's — the same escape hatch
+  // /app has had all along, and the only way to look at a list after the night is over.
+  const day = /^\d{4}-\d{2}-\d{2}$/.test(params.get("day") ?? "") ? params.get("day")! : "";
 
   const load = useCallback(async () => {
     setFailed(false);
-    const response = await fetch(`/api/today?sport=${encodeURIComponent(sport.key)}&lang=${lang}`, { cache: "no-store" }).catch(() => null);
+    const query = `sport=${encodeURIComponent(sport.key)}&lang=${lang}${day ? `&day=${day}` : ""}`;
+    const response = await fetch(`/api/today?${query}`, { cache: "no-store" }).catch(() => null);
     if (!response?.ok) { setFailed(true); return; }
     setData((await response.json().catch(() => null)) as TodayView | null);
-  }, [sport.key, lang]);
+  }, [sport.key, lang, day]);
 
   useEffect(() => { const id = setTimeout(() => void load(), 0); return () => clearTimeout(id); }, [load]);
 
