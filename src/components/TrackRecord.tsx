@@ -178,8 +178,8 @@ export function TrackRecord() {
                   {formatDecimal(entry.combinedDecimal, lang)} · {entry.legs.length}{" "}
                   {lang === "pt"
                     ? entry.legs.length === 1
-                      ? "perna"
-                      : "pernas"
+                      ? "linha"
+                      : "linhas"
                     : entry.legs.length === 1
                       ? "leg"
                       : "legs"}

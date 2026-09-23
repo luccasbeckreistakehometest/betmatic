@@ -29,7 +29,7 @@ const schema = z.object({
   sport: z.string().max(20).optional(),
   legs: z
     .array(z.object({ selection: z.string().trim().min(1).max(160), market: z.string().trim().max(60).default(""), odds: z.string().trim().max(12) }))
-    .min(2, "Adicione ao menos duas pernas")
+    .min(2, "Adicione ao menos duas linhas")
     .max(12),
 });
 

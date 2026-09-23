@@ -62,14 +62,17 @@ export const ledgerIdFor = (gameId: string, s: Pick<BetSuggestion, "bandKey" | "
 
 /**
  * `startsAt` overrides the game's kickoff (a cross-game ticket goes public when its last game starts).
- * `live` records the tickets of an in-play read under the live scope, at the minute they were built.
+ * `live` records the tickets of an in-play read under the live scope, at the minute they were built,
+ * with the clock that was left when they were built: a read at 30 minutes with nothing on the clock
+ * and a read at 30 minutes with five minutes left are not the same bet, and the ledger used to be
+ * unable to tell them apart.
  */
 export function recordPredictions(
   game: Game,
   suggestions: BetSuggestion[],
   opts: {
     startsAt?: string;
-    live?: { minute: number; period?: number };
+    live?: { minute: number; period?: number; clockLeft?: number };
     /** The game's own context at generation time — the same for every leg, copied onto each. */
     environment?: { blowoutProbability?: number | null; paceDelta?: number | null } | null;
     /**
@@ -106,8 +109,18 @@ export function recordPredictions(
       modelledProbability: s.modelledProbability,
       evidenceScore: s.evidenceScore,
       suggestionId: s.id,
+      // Recorded so a ticket's price can be rebuilt from its legs — which is what re-pricing a
+      // ticket over its surviving legs, after one is voided, needs.
+      correlationFactor: s.correlation?.factor,
       alternativeOf: s.alternativeFor ? ledgerIdOf.get(s.alternativeFor) : undefined,
-      ...(opts.live ? { scope: "live" as const, minute: opts.live.minute, ...(opts.live.period !== undefined ? { period: opts.live.period } : {}) } : {}),
+      ...(opts.live
+        ? {
+            scope: "live" as const,
+            minute: opts.live.minute,
+            ...(opts.live.period !== undefined ? { period: opts.live.period } : {}),
+            ...(opts.live.clockLeft !== undefined && Number.isFinite(opts.live.clockLeft) ? { clockLeft: opts.live.clockLeft } : {}),
+          }
+        : {}),
       ...(opts.provenance?.promptVersion ? { promptVersion: opts.provenance.promptVersion } : {}),
       ...(opts.provenance?.modelId ? { modelId: opts.provenance.modelId } : {}),
       ...(opts.provenance?.generatedBy ? { generatedBy: opts.provenance.generatedBy } : {}),

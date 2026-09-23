@@ -56,7 +56,7 @@ export type Lesson = z.infer<typeof LessonSchema>;
 const PostMortemSchema = z.object({
   summary: z.string().describe("Em português, 2 a 4 frases: o resultado do período e a causa dominante dos erros."),
   wentRight: z.array(z.string()).describe("O que funcionou e por quê (com números)."),
-  wentWrong: z.array(z.string()).describe("O que falhou, ligando cada item às pernas perdidas e à causa real (não 'azar')."),
+  wentWrong: z.array(z.string()).describe("O que falhou, ligando cada item às linhas perdidas do bilhete e à causa real (não 'azar')."),
   lessons: z.array(LessonSchema).describe("Regras concretas que o gerador deveria seguir daqui em diante, cada uma testável e cada uma citando um factorStatId da lista."),
   promptFeedback: z.string().describe("Feedback pronto pra aplicar no prompt do gerador, em português, direto e específico. Vazio quando o período não justifica mudar nada."),
   promptFeedbackFactorStatId: z.string().describe("O factorStatId que sustenta o promptFeedback. Vazio quando não há proposta."),

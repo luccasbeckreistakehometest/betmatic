@@ -136,7 +136,7 @@ export const PLANS: Plan[] = [
     highlights: {
       pt: [
         "Tudo do Pro",
-        "Análise profunda do seu bilhete pelo preço normal: cada perna conferida com linha, odd e minutagem",
+        "Análise profunda do seu bilhete pelo preço normal: cada linha conferida com o número publicado, odd e minutagem",
         "Atualizar os bilhetes de um jogo quando a escalação ou a linha muda (até 3 por dia)",
         "Prioridade para gerar bilhetes em dia cheio",
         "400 coins por período (50 análises do seu bilhete)",

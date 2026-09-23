@@ -290,27 +290,29 @@ export function priceHistory(eventKey: string, q: { book: string; market: string
 export interface UnmatchedEvent { key: string; book: string; platform: string; sportKey: string | null; home: string; away: string; startsAt: string; league: string | null; externalIds: Record<string, string>; lastSeenAt: string; prices: number }
 
 /** Book fixtures the matcher could not tie to a game, newest kickoff first — the admin's to-do list. */
-export function listUnmatchedEvents(limit = 60): UnmatchedEvent[] {
+export function listUnmatchedEvents(limit = 60, now = new Date()): UnmatchedEvent[] {
+  // `now` is a parameter, not Date.now() inline, because the window is six hours wide: a test with
+  // a fixed fixture clock was green in the morning and red in the afternoon of the same day.
   return (db().prepare(`SELECT e.*, (SELECT COUNT(*) FROM book_prices p WHERE p.eventKey = e.key AND p.current = 1) AS prices
-    FROM book_events e WHERE e.gameId IS NULL AND e.startsAt > ? ORDER BY e.startsAt ASC LIMIT ?`).all(new Date(Date.now() - 6 * 3_600_000).toISOString(), limit) as (EventRow & { prices: number })[])
+    FROM book_events e WHERE e.gameId IS NULL AND e.startsAt > ? ORDER BY e.startsAt ASC LIMIT ?`).all(new Date(now.getTime() - 6 * 3_600_000).toISOString(), limit) as (EventRow & { prices: number })[])
     .map((e) => ({ key: e.key, book: e.book, platform: e.platform, sportKey: e.sportKey, home: e.home, away: e.away, startsAt: e.startsAt, league: e.league, externalIds: JSON.parse(e.externalIds || "{}"), lastSeenAt: e.lastSeenAt, prices: e.prices }));
 }
 
 export interface MatchedEventSummary { gameId: string; sportKey: string | null; startsAt: string; books: string[]; prices: number; props: number }
 
 /** Matched games with how many books and prop rows they carry: the admin's coverage table. */
-export function listCoverage(limit = 40): MatchedEventSummary[] {
+export function listCoverage(limit = 40, now = new Date()): MatchedEventSummary[] {
   return (db().prepare(`SELECT e.gameId, e.sportKey, MIN(e.startsAt) AS startsAt, GROUP_CONCAT(DISTINCT e.book) AS books,
       (SELECT COUNT(*) FROM book_prices p JOIN book_events x ON x.key = p.eventKey WHERE x.gameId = e.gameId AND p.current = 1) AS prices,
       (SELECT COUNT(*) FROM book_prices p JOIN book_events x ON x.key = p.eventKey WHERE x.gameId = e.gameId AND p.current = 1 AND p.market = 'player_prop') AS props
-    FROM book_events e WHERE e.gameId IS NOT NULL AND e.startsAt > ? GROUP BY e.gameId ORDER BY startsAt ASC LIMIT ?`).all(new Date(Date.now() - 6 * 3_600_000).toISOString(), limit) as { gameId: string; sportKey: string | null; startsAt: string; books: string; prices: number; props: number }[])
+    FROM book_events e WHERE e.gameId IS NOT NULL AND e.startsAt > ? GROUP BY e.gameId ORDER BY startsAt ASC LIMIT ?`).all(new Date(now.getTime() - 6 * 3_600_000).toISOString(), limit) as { gameId: string; sportKey: string | null; startsAt: string; books: string; prices: number; props: number }[])
     .map((r) => ({ ...r, books: r.books.split(",").sort() }));
 }
 
 /** Totals for the admin header. Counts run over the partial index of current rows, not the history. */
-export function booksStats(): { events: number; matched: number; unmatched: number; prices: number; props: number; lastSeenAt: string | null } {
+export function booksStats(now = new Date()): { events: number; matched: number; unmatched: number; prices: number; props: number; lastSeenAt: string | null } {
   const d = db();
-  const since = new Date(Date.now() - 6 * 3_600_000).toISOString();
+  const since = new Date(now.getTime() - 6 * 3_600_000).toISOString();
   const ev = d.prepare("SELECT COUNT(*) n, SUM(gameId IS NOT NULL) m FROM book_events WHERE startsAt > ?").get(since) as { n: number; m: number | null };
   const pr = d.prepare("SELECT COUNT(*) n FROM book_prices WHERE current = 1").get() as { n: number };
   const props = d.prepare("SELECT COUNT(*) n FROM book_prices WHERE current = 1 AND market = 'player_prop'").get() as { n: number };

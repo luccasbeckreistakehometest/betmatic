@@ -161,8 +161,8 @@ export async function priceTickets(tickets: { name: string; legs: Leg[] }[]) {
       const product = odds.length === t.legs.length ? odds.reduce((a, b) => a * b, 1) : null;
       out.push({ name: t.name, price: slip.price, legs: clicked, product });
       console.log(`\n${t.name}`);
-      console.log(`  pernas: ${clicked.join("  |  ") || "(nenhuma clicada)"}`);
-      console.log(`  produto das pernas: ${product ? product.toFixed(2) : "—"}  |  PREÇO REAL DO CRIAR APOSTA: ${slip.price ?? "—"}`);
+      console.log(`  linhas: ${clicked.join("  |  ") || "(nenhuma clicada)"}`);
+      console.log(`  produto das linhas: ${product ? product.toFixed(2) : "—"}  |  PREÇO REAL DO CRIAR APOSTA: ${slip.price ?? "—"}`);
       if (product && slip.price) console.log(`  diferença: ${(((slip.price / product) - 1) * 100).toFixed(0)}%`);
     }
     return out;

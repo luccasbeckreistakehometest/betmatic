@@ -49,7 +49,7 @@ test("lineup watcher: a benched player flags the leg, the backup without him, th
   await expect(alts.getByTestId("alt-avoids").first()).toContainText("alternativa sem ele");
 
   await page.goto("/app/bankroll?lang=pt");
-  await expect(page.getByTestId("entry-alert").first()).toContainText("escalação: 1 perna em risco");
+  await expect(page.getByTestId("entry-alert").first()).toContainText("escalação: 1 linha em risco");
 
   const mine = await page.request.get("/api/alerts").then((r) => r.json());
   const lineup = mine.notifications.filter((n: { kind: string }) => n.kind === "lineup");

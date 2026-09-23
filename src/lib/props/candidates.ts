@@ -3,7 +3,7 @@ import { getPropPrices, PROP_BOOK, type PostedProp, type PropFeed } from "@/lib/
 import { getLiveBoxScore, type LiveBoxScore } from "@/lib/props/box-score";
 import { describeDropped, guardProps, type StaleVerdict } from "@/lib/props/stale";
 import { measureProp } from "@/lib/props/history";
-import { blendedProbability, fitRate, liveRate, projectLeg, seriesFor, type LadderRung, type RateFit, type RateSample } from "@/lib/props/model";
+import { blendedProbability, clampProbability, fitRate, liveRate, projectLeg, seriesFor, type LadderRung, type RateFit, type RateSample } from "@/lib/props/model";
 import { listingAvailability, projectMinutes, projectRemainingMinutes, type AbsentTeammate, type MinutesProjection } from "@/lib/props/minutes";
 import { buildRoleFromStarts, buildRoleProfile, volumeSupports, type RoleProfile } from "@/lib/props/role";
 import { bookLine, regulationMinutes } from "@/lib/signals/environment";
@@ -199,7 +199,9 @@ export function blendedLadder(
   blend: boolean,
 ): LadderRung[] {
   const rows = [...ladder].sort((a, b) => a.line - b.line).map((r) => {
-    if (!blend) return { line: r.line, pOver: r.pOver, pUnder: r.pUnder };
+    // In play there is no blend, but the same floor and ceiling still apply: a leg the clock has
+    // not yet decided is never a certainty, and 1.000 in the ledger is always a bug.
+    if (!blend) return { line: r.line, pOver: clampProbability(r.pOver), pUnder: clampProbability(r.pUnder) };
     const over = hitRate(r.line, "over");
     const pOver = blendedProbability(r.pOver, over?.hits ?? 0, over?.of ?? 0);
     return { line: r.line, pOver, pUnder: 1 - pOver };
@@ -218,7 +220,8 @@ const perMinute = (needed: number, minutes: number): number => (needed <= 0 ? 0 
  * minutes and every rung of the ladder — the posted line included — is blended with the season hit
  * rate at that rung; in play the rate is the pre-game one, the remaining minutes come from the
  * clock, the fouls and the margin, the minutes mixture is capped at the clock, and there is no
- * blend — half the distribution is already on the board (see model.ts liveRate).
+ * blend — half the distribution is already on the board (see model.ts liveRate). Either way the
+ * published chance passes through the same floor and ceiling: nothing in play is 0 or 1.
  */
 function modelFor(
   inputs: ModelInputs,

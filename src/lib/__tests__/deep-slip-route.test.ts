@@ -13,7 +13,7 @@ vi.mock("@/lib/server/session", () => ({ currentUser: async () => sessionUser })
 const verdict = vi.fn();
 vi.mock("@/lib/bets/analyse", () => ({ analyseSlip: (...a: unknown[]) => verdict(...a) }));
 vi.mock("@/lib/server/deep-slip", () => ({
-  buildDeepContext: async () => ({ legs: [{ index: 0, kind: "unknown", selection: "x" }], flags: ["Pernas 1 e 2: …"], resolved: 0, parsed: 0 }),
+  buildDeepContext: async () => ({ legs: [{ index: 0, kind: "unknown", selection: "x" }], flags: ["Linhas 1 e 2: …"], resolved: 0, parsed: 0 }),
   deepPrompt: () => "VERIFIED",
 }));
 

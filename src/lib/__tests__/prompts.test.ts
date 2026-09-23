@@ -7,7 +7,8 @@ process.env.DATA_DIR = DIR; process.env.AUTH_SECRET = "test-secret-that-is-long-
 fs.rmSync(DIR, { recursive: true, force: true });
 
 const { getPrompt, savePrompt, revertPrompt, resetToDefault, applyFeedback, listPromptVersions } = await import("@/lib/server/prompts");
-const { DEFAULT_PROMPTS } = await import("@/lib/bets/prompt-defaults");
+const { upgradeGlossaryRule } = await import("@/lib/server/prompts");
+const { DEFAULT_PROMPTS, GLOSSARY_RULE } = await import("@/lib/bets/prompt-defaults");
 
 describe("what the default prompt must keep saying", () => {
   // The owner's rule: a game must always offer a long ticket, reached honestly — more legs, or
@@ -96,6 +97,37 @@ describe("the basketball decision procedure", () => {
     expect(DEFAULT_PROMPTS.game.pt.startsWith(DEFAULT_PROMPTS.game.en)).toBe(true);
     expect(DEFAULT_PROMPTS.game.pt).toMatch(/Brazilian Portuguese/);
   });
+
+  /**
+   * The prompt is in English and used to say "leg"; a Brazilian model translates that as "perna" on
+   * its own, and it did — "O jogo inteiro de Dallas, seis pernas" is a real title in the ledger.
+   * The product calls a ticket's selection "uma linha", which collides with the market line, so the
+   * rule has to carry both the word and the disambiguation.
+   */
+  it("bans 'perna' in Portuguese and says how to keep the two senses of 'linha' apart", () => {
+    for (const kind of ["game", "slate"] as const) {
+      expect(DEFAULT_PROMPTS[kind].pt).toContain(GLOSSARY_RULE);
+      expect(DEFAULT_PROMPTS[kind].pt).toMatch(/PORTUGUESE GLOSSARY, AND IT IS NOT NEGOTIABLE/);
+      expect(DEFAULT_PROMPTS[kind].pt).toMatch(/the word "perna" is banned/);
+      expect(DEFAULT_PROMPTS[kind].pt).toMatch(/"uma linha do\n  bilhete"/);
+      expect(DEFAULT_PROMPTS[kind].pt).toMatch(/"a linha publicada" or "o número publicado"/);
+      // English is untouched: a leg is a leg there.
+      expect(DEFAULT_PROMPTS[kind].en).not.toContain("PORTUGUESE GLOSSARY");
+      expect(DEFAULT_PROMPTS[kind].en).toMatch(/\bleg\b/);
+    }
+  });
+});
+
+describe("the glossary rule reaches prompts an admin already saved", () => {
+  it("appends itself to an active Portuguese version that lacks it, and to nothing else", () => {
+    const stored = "prompt salvo pelo admin, sem a regra";
+    const upgraded = upgradeGlossaryRule(stored, "pt")!;
+    expect(upgraded).toContain(stored);
+    expect(upgraded).toContain(GLOSSARY_RULE);
+    // Idempotent, and never touches the English version.
+    expect(upgradeGlossaryRule(upgraded, "pt")).toBeNull();
+    expect(upgradeGlossaryRule(stored, "en")).toBeNull();
+  });
 });
 
 describe("prompt versions", () => {
@@ -106,13 +138,13 @@ describe("prompt versions", () => {
 
   it("feedback rewrites both languages in one batch and activates them", async () => {
     const seen: string[] = [];
-    const out = await applyFeedback({ kind: "game", feedback: "no máximo 4 pernas", createdBy: "admin" }, async ({ current, feedback }) => {
+    const out = await applyFeedback({ kind: "game", feedback: "no máximo 4 linhas", createdBy: "admin" }, async ({ current, feedback }) => {
       seen.push(feedback);
-      return { pt: current.pt + "\n- No máximo 4 pernas por bilhete.", en: current.en + "\n- At most 4 legs per ticket.", rationale: "Acrescentei o limite de pernas." };
+      return { pt: current.pt + "\n- No máximo 4 linhas por bilhete.", en: current.en + "\n- At most 4 legs per ticket.", rationale: "Acrescentei o limite de linhas." };
     });
-    expect(seen).toEqual(["no máximo 4 pernas"]);
+    expect(seen).toEqual(["no máximo 4 linhas"]);
     expect(out.versions.map((v) => `${v.lang}v${v.version}`)).toEqual(["ptv1", "env1"]);
-    expect(getPrompt("game", "pt")).toContain("No máximo 4 pernas");
+    expect(getPrompt("game", "pt")).toContain("No máximo 4 linhas");
     expect(getPrompt("game", "en")).toContain("At most 4 legs");
     expect(getPrompt("slate", "pt")).toBe(DEFAULT_PROMPTS.slate.pt); // other kind untouched
     expect(listPromptVersions("game").every((v) => v.batch === out.batch)).toBe(true);
@@ -132,7 +164,7 @@ describe("prompt versions", () => {
     const v1 = listPromptVersions("game").find((v) => v.lang === "pt" && v.version === 1)!;
     const reverted = revertPrompt(v1.id, "admin")!;
     expect(reverted.version).toBeGreaterThan(manual.version);
-    expect(getPrompt("game", "pt")).toContain("No máximo 4 pernas");
+    expect(getPrompt("game", "pt")).toContain("No máximo 4 linhas");
     resetToDefault("game", "admin");
     expect(getPrompt("game", "pt")).toBe(DEFAULT_PROMPTS.game.pt);
     expect(listPromptVersions("game").filter((v) => v.active).map((v) => v.lang).sort()).toEqual(["en", "pt"]);

@@ -13,6 +13,15 @@ export interface LiveSnapshot {
   elapsed: number;
   /** Soccer: the match minute; basketball: game minutes played. */
   minute: number;
+  /**
+   * Basketball: minutes of the current period still to play, read off the clock. `null` when ESPN's
+   * payload carries no clock this tick — which is NOT the same as zero, and used to be treated as
+   * zero: a fourth quarter with `clockLeft` 0 makes every under that is ahead a certainty, and 59
+   * live legs went into the ledger at a computed chance of exactly 1.000 because of it.
+   */
+  clockLeft: number | null;
+  /** True when neither `clock` nor `displayClock` converted: nothing may be priced off the remainder. */
+  clockUnknown: boolean;
   regulationMinutes: number;
   home: { abbr: string; score: number; stats: Record<string, number> };
   away: { abbr: string; score: number; stats: Record<string, number> };
@@ -39,6 +48,23 @@ const SOCCER_STATS: Record<string, string> = {
   totalGoals: "G", goalAssists: "A", offsides: "OF", wonCorners: "CORNERS", saves: "SV",
 };
 
+/**
+ * ESPN publishes the period clock as seconds (`status.clock: 323`) on most payloads, as "M:SS" on
+ * others, and on a handful of ticks neither field is there at all. Seconds first, then "M:SS" in
+ * either field, then nothing: a missing clock is NOT a clock that has run out, and reading it as
+ * zero is what put 59 live legs in the ledger at a computed chance of exactly 1.000.
+ */
+const mmss = (v: unknown): number | null => {
+  const m = String(v ?? "").trim().match(/^(\d+):(\d{1,2})(?:\.\d+)?$/);
+  return m ? Number(m[1]) + Number(m[2]) / 60 : null;
+};
+
+export function clockMinutes(clock: unknown, displayClock: unknown): number | null {
+  const seconds = Number(clock);
+  if (clock !== null && clock !== undefined && String(clock).trim() !== "" && Number.isFinite(seconds)) return seconds / 60;
+  return mmss(clock) ?? mmss(displayClock);
+}
+
 export function soccerMinute(display: string): number {
   const m = String(display ?? "").match(/(\d+)(?:'\s*\+\s*(\d+))?/);
   return m ? Math.min(90, Number(m[1])) : 0;
@@ -53,11 +79,18 @@ export function parseLiveSnapshot(summary: Json, gameId: string, sportGroup: "ba
   const period = n(status.period);
   const regulation = sportGroup === "soccer" ? 90 : periodMinutes * 4;
   let minute: number;
+  let clockLeft: number | null = null;
+  let clockUnknown = false;
   if (sportGroup === "soccer") {
     minute = state === "post" ? 90 : soccerMinute(status.displayClock ?? "");
   } else {
-    const clockLeft = Number.isFinite(Number(status.clock)) ? Number(status.clock) / 60 : 0;
-    minute = state === "post" ? regulation : Math.min(regulation, Math.max(0, (Math.min(period, 4) - 1) * periodMinutes + (periodMinutes - clockLeft)));
+    clockLeft = clockMinutes(status.clock, status.displayClock);
+    // A finished game has no clock left to read and does not need one; in play, an unreadable clock
+    // is reported as unknown so the caller refuses the read instead of pricing a remainder of zero.
+    clockUnknown = clockLeft === null && state !== "post";
+    if (state === "post") clockLeft = 0;
+    const left = clockLeft ?? periodMinutes;
+    minute = state === "post" ? regulation : Math.min(regulation, Math.max(0, (Math.min(period, 4) - 1) * periodMinutes + (periodMinutes - left)));
   }
   const teamStats = (abbr: string): Record<string, number> => {
     const block = ((summary?.boxscore?.teams ?? []) as Json[]).find((t) => t.team?.abbreviation === abbr);
@@ -109,6 +142,8 @@ export function parseLiveSnapshot(summary: Json, gameId: string, sportGroup: "ba
     period,
     elapsed: regulation ? Math.min(1, minute / regulation) : 0,
     minute: Math.round(minute * 10) / 10,
+    clockLeft: clockLeft === null ? null : Math.round(clockLeft * 10) / 10,
+    clockUnknown,
     regulationMinutes: regulation,
     home: { abbr: homeAbbr, score: n(home.score), stats: teamStats(homeAbbr) },
     away: { abbr: awayAbbr, score: n(away.score), stats: teamStats(awayAbbr) },

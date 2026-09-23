@@ -35,9 +35,9 @@ test("landing, funnels and plans speak about what exists now", async ({ page }) 
   await expect(soccerStack.getByRole("link", { name: /Ver a banca/ })).toHaveAttribute("href", /\/signup\?lang=pt&next=%2Fapp%2Fbankroll/);
 
   await page.goto("/basquete");
-  await expect(page.locator("h1")).toContainText("Odd e minutagem em cada perna de jogador");
+  await expect(page.locator("h1")).toContainText("Odd e minutagem em cada linha de jogador");
   const hoopsStack = page.getByTestId("sport-stack");
-  await expect(hoopsStack).toContainText("Vigia de lesão nas suas pernas");
+  await expect(hoopsStack).toContainText("Vigia de lesão nas suas linhas");
   await expect(hoopsStack).toContainText("Destaques do dia");
   await expect(hoopsStack).toContainText("Raio-x do jogador");
 

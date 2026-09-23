@@ -57,7 +57,7 @@ describe("correlation flags", () => {
       { kind: "same_team", legs: [1, 2] },
       { kind: "fights", legs: [4, 5] },
     ]);
-    expect(flagText(flags[0], "pt")).toContain("Pernas 1 e 2");
+    expect(flagText(flags[0], "pt")).toContain("Linhas 1 e 2");
     // The underdog with the under does not fight.
     expect(correlationFlags(legs, { g2: "SAO" }).some((f) => f.kind === "fights")).toBe(false);
   });

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { generateStructured } from "@/lib/ai/extract";
+import { GLOSSARY_RULE } from "@/lib/bets/prompt-defaults";
 import { EXTRACTION_MODEL } from "@/lib/ai/client";
 import type { BetSlate } from "@/lib/types";
 import type { Lang } from "@/lib/i18n";
@@ -25,7 +26,7 @@ const TextsSchema = z.object({
 export type SlateTexts = z.infer<typeof TextsSchema>;
 
 const MARKET: Record<Lang, string> = {
-  pt: "Brazilian Portuguese, written for a Brazilian bettor: direct, colloquial, decimal odds, 'bilhete', 'perna', 'múltipla'.",
+  pt: `Brazilian Portuguese, written for a Brazilian bettor: direct, colloquial, decimal odds, 'bilhete', 'linha do bilhete', 'múltipla'.\n${GLOSSARY_RULE}`,
   en: "American English, written for a US bettor: American odds vocabulary where natural ('+150', 'the favorite'), 'ticket', 'leg', 'parlay'.",
 };
 

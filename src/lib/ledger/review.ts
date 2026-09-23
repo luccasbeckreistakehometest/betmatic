@@ -4,6 +4,7 @@ import { findGamePrediction } from "@/lib/server/predictions";
 import { refreshConfig } from "@/lib/server/refresh-policy";
 import { scrubText } from "@/lib/server/whitelabel";
 import { generateStructured, lastUsage } from "@/lib/ai/extract";
+import { GLOSSARY_RULE } from "@/lib/bets/prompt-defaults";
 import { EXTRACTION_MODEL } from "@/lib/ai/client";
 import { SPORTS } from "@/lib/sports";
 import type { Lang } from "@/lib/i18n";
@@ -71,7 +72,9 @@ export function settledLegLines(entry: LedgerEntry, lang: Lang): string[] {
 }
 
 export function reviewPrompt(entry: LedgerEntry, evidence: ReviewEvidence | null, lang: Lang): { system: string; prompt: string } {
-  const language = lang === "pt" ? "Brazilian Portuguese, for a Brazilian bettor: direct and colloquial, no consolation clichés." : "American English, for a US bettor: direct, no consolation clichés.";
+  const language = lang === "pt"
+    ? `Brazilian Portuguese, for a Brazilian bettor: direct and colloquial, no consolation clichés.\n${GLOSSARY_RULE}`
+    : "American English, for a US bettor: direct, no consolation clichés.";
   const system = `You explain to the bettor who followed it why one settled ticket lost.
 You get the ticket's legs with the model's predicted probability and the actual result of each, plus the reasoning the generator wrote before the game.
 Rules:

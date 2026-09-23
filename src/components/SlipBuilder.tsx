@@ -186,7 +186,7 @@ export function SlipBuilder() {
           {deep && (
             <p className="text-tiny leading-relaxed text-fg-dim">
               {lang === "pt"
-                ? "Na análise profunda cada perna é conferida antes do veredito: jogo e jogador encontrados, quantas vezes passou da linha, odd publicada sem a margem, papel no time, lesão e pernas que andam juntas."
+                ? "Na análise profunda cada linha é conferida antes do veredito: jogo e jogador encontrados, quantas vezes passou do número publicado, odd publicada sem a margem, papel no time, lesão e linhas que andam juntas."
                 : "In the deep analysis each leg is checked before the verdict: game and player found, how often the line was cleared, the posted price without the margin, role, injuries and legs that move together."}
             </p>
           )}

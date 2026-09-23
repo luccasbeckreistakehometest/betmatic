@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { generateStructured } from "@/lib/ai/extract";
+import { GLOSSARY_RULE } from "@/lib/bets/prompt-defaults";
 import { CHEAP_MODEL } from "@/lib/ai/client";
 import { formatAmerican, formatDecimal, impliedProbability } from "@/lib/odds";
 import type { SolvedTicket } from "@/lib/bets/custom-parlay";
@@ -33,7 +34,7 @@ const WriteupSchema = z.object({
 
 const SYSTEM = {
   en: `You write short notes for betting tickets that a program already built. Never change or add a number, never promise a result, never suggest a stake. Ground every line in the evidence given. A long price means a low chance — say so plainly. Write in American English.`,
-  pt: `Você escreve notas curtas para bilhetes que um programa já montou. Nunca mude ou invente números, nunca prometa resultado, nunca sugira valor de aposta. Cada linha se apoia na evidência dada. Odd alta é chance baixa — diga isso sem rodeio. Escreva em português do Brasil, com o vocabulário do apostador (bilhete, perna, múltipla).`,
+  pt: `Você escreve notas curtas para bilhetes que um programa já montou. Nunca mude ou invente números, nunca prometa resultado, nunca sugira valor de aposta. Cada linha se apoia na evidência dada. Odd alta é chance baixa — diga isso sem rodeio. Escreva em português do Brasil, com o vocabulário do apostador (bilhete, linha, múltipla).\n\n${GLOSSARY_RULE}`,
 };
 
 function view(t: SolvedTicket, words: { title: string; background: string; riskNote: string; legNotes: string[] }): CustomTicketView {
@@ -49,12 +50,12 @@ function view(t: SolvedTicket, words: { title: string; background: string; riskN
 
 export function templateCustomTickets(tickets: SolvedTicket[], lang: Lang): CustomTicketView[] {
   return tickets.map((t, n) => view(t, {
-    title: lang === "pt" ? `Opção ${n + 1}: ${t.legs.length} pernas` : `Option ${n + 1}: ${t.legs.length} legs`,
+    title: lang === "pt" ? `Opção ${n + 1}: ${t.legs.length} linhas` : `Option ${n + 1}: ${t.legs.length} legs`,
     background: lang === "pt"
-      ? `Montada pelas pernas com melhor chance medida que chegam em ${formatDecimal(t.decimal)}, uma por jogo.`
+      ? `Montada pelas linhas com melhor chance medida que chegam em ${formatDecimal(t.decimal)}, uma por jogo.`
       : `Built from the best-measured legs that reach ${formatDecimal(t.decimal)}, one per game.`,
     riskNote: lang === "pt"
-      ? `Chance estimada de ${(t.fairProbability * 100).toFixed(1)}%: na maioria das vezes, uma perna cai.`
+      ? `Chance estimada de ${(t.fairProbability * 100).toFixed(1)}%: na maioria das vezes, uma linha cai.`
       : `Estimated chance ${(t.fairProbability * 100).toFixed(1)}%: most of the time, one leg breaks.`,
     legNotes: t.legs.map((l) => l.evidence),
   }));

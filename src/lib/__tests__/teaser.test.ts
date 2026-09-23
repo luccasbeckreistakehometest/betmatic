@@ -8,13 +8,13 @@ const bet = (bandKey: string, legs: number, evidenceScore: number, title = "Agou
 describe("ticket teaser", () => {
   it("describes the ticket's shape, never its title or selections", () => {
     expect(teaserHeadline(bet("safe", 1, 90), "pt")).toBe("Aposta simples · faixa Baixa");
-    expect(teaserHeadline(bet("value", 3, 90), "pt")).toBe("Múltipla de 3 pernas · faixa Valor");
+    expect(teaserHeadline(bet("value", 3, 90), "pt")).toBe("Múltipla de 3 linhas · faixa Valor");
     expect(teaserHeadline(bet("mid", 2, 90), "en")).toBe("2-leg parlay · Mid band");
     expect(teaserHeadline(bet("value", 1, 90), "pt")).not.toMatch(/Agoumé/);
   });
   it("pluralises legs", () => {
-    expect(legsLabel(1, "pt")).toBe("1 perna");
-    expect(legsLabel(2, "pt")).toBe("2 pernas");
+    expect(legsLabel(1, "pt")).toBe("1 linha");
+    expect(legsLabel(2, "pt")).toBe("2 linhas");
     expect(legsLabel(1, "en")).toBe("1 leg");
   });
   it("prefers a ticket a free account can open, and flags a paid one", () => {

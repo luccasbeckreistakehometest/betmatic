@@ -28,7 +28,7 @@ test("deep slip analysis: Max pays the normal price and sees every leg checked; 
   await expect(table).toBeVisible({ timeout: 60_000 });
   await expect(table.getByTestId("deep-leg")).toHaveCount(2);
   await expect(table.getByTestId("deep-measured").first()).toContainText("L5");
-  await expect(page.getByTestId("deep-flags")).toContainText("Pernas 1 e 2");
+  await expect(page.getByTestId("deep-flags")).toContainText("Linhas 1 e 2");
   await expect(page.getByText("Análise de teste")).toBeVisible();
   expect(await coins(page)).toBe(12);
 

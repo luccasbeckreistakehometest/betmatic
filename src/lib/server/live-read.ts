@@ -160,7 +160,9 @@ export async function runLiveRead(user: LivePrincipal, sportKey: string, gameId:
   if (!canReadLive(user)) return { status: "not_allowed" };
   const detail = await getGameDetail(gameId, false, sportKey).catch(() => null);
   const snap = await getLiveSnapshot(sportKey, gameId);
-  if (!detail || !snap || snap.state !== "in") return { status: "not_live" };
+  // A snapshot whose clock will not parse prices the remainder of the game at zero minutes left,
+  // which turns every under that is ahead into a certainty. Refuse the read rather than emit them.
+  if (!detail || !snap || snap.state !== "in" || snap.clockUnknown) return { status: "not_live" };
   const dateKey = espnDateKey(new Date(detail.game.startsAt));
   const existing = latestLiveRead(sportKey, gameId, dateKey, lang);
   if (existing && !liveReadGate(existing, snap.period).allowed) return { status: "ok", read: existing, cached: true };
@@ -190,11 +192,12 @@ export async function runLiveRead(user: LivePrincipal, sportKey: string, gameId:
         live: snap.sportGroup === "soccer" ? soccerState(snap) : null, extraContext,
       });
       const minute = Math.round(snap.minute);
+      const clockLeft = snap.clockLeft ?? undefined;
       savePrediction({ scope: "live", sportKey, gameId, dateKey, lang, matchup: `${detail.game.away.displayName} @ ${detail.game.home.displayName}`, startsAt: detail.game.startsAt, slate: { ...slate, minute, period: snap.period } as BetSlate });
       // Graded like every other ticket, kept out of the public ROI: the live record measures how
       // often a read lands, and the reference prices say nothing about what it would have paid.
       recordPredictions(detail.game, slate.suggestions, {
-        live: { minute, period: snap.period },
+        live: { minute, period: snap.period, clockLeft },
         provenance: { promptVersion: getPromptVersion("game", "pt").id, modelId: MODEL, generatedBy: "quarters" },
       });
       // The price each live leg was written with, recorded as what it is: the pre-game board, not an
