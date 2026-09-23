@@ -24,7 +24,7 @@ import { booksCopy, candidateLabel, feedsLabel, reachNote, relativeMinutes, side
  * product never places a bet: the link is the book's own public URL, opened in a new tab.
  */
 export type LegPricesView = LegComparison & { links?: DeepLink[] };
-export type TicketPricesView = Omit<TicketComparison, "legs"> & { suggestionId: string; legs: (LegPricesView | null)[]; slip?: TicketSlip | null };
+export type TicketPricesView = Omit<TicketComparison, "legs"> & { suggestionId: string; legs: (LegPricesView | null)[]; slip?: TicketSlip | null; crossGame?: boolean };
 
 /** Where a click goes, for the outbound event: which ticket, which leg (or the whole ticket). */
 export interface LinkContext { gameId?: string; ticketId?: string; legIndex?: number }
@@ -237,6 +237,11 @@ export function TicketPrices({ ticket, lang, ctx = {}, legNames = [], booksRead 
             </span>
           </div>
           {reach && <p className="nums mt-1 text-micro leading-relaxed text-fg-muted" data-testid="ticket-link-reach">{reach}</p>}
+          {/* Said only where a product is actually printed and actually spans matches: one carried
+              leg has no combination to discount, and a page has no price of its own. */}
+          {ticket.crossGame && best.carried.length > 1 && best.carriedDecimal !== null && (
+            <p className="mt-1 text-micro leading-relaxed text-fg-muted" data-testid="ticket-cross-game">{t("crossGameProduct")}</p>
+          )}
           {best.missing.length > 0 && (
             <p className="mt-1 text-micro leading-relaxed text-fg-muted" data-testid="ticket-missing">{missingLabel(best, legNames, lang, t)}</p>
           )}

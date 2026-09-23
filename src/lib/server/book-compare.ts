@@ -1,5 +1,6 @@
 import { resolveStatLabels } from "@/lib/props/history";
-import { booksForGame, pricesForGame } from "@/lib/server/book-prices";
+import { independentGames } from "@/lib/bets/builder";
+import { booksForGame, booksForGames, pricesForGame, pricesForGames } from "@/lib/server/book-prices";
 import { compareTicket, groupBySelection, propSignals, selectionKey, type LegComparison, type LegQuery, type PropSignal, type Quote, type TicketComparison } from "@/lib/sources/br-books/compare";
 import { ticketSlip, type TicketSlip } from "@/lib/sources/br-books/coverage";
 import { affiliateTagsFromEnv, deepLinkFor, type DeepLink } from "@/lib/sources/br-books/deeplinks";
@@ -67,6 +68,18 @@ export interface TicketPrices extends Omit<TicketComparison, "legs"> {
   /** One per ticket leg, null where the leg could not be named. */
   legs: (LegPrices | null)[];
   /**
+   * Every leg in a DIFFERENT match (`independentGames`), which changes what the numbers under the
+   * ticket mean. A book prices each match on its own and combines them by multiplying, so for a
+   * cross-game múltipla the product of one book's prices is what that book's slip will actually
+   * show — not an optimistic ceiling. Opened and read on 23/09/2026: Superbet's slip priced two
+   * selections from two WNBA games at 8.17 = 1.72 × 4.75, Sportingbet's at 1.57 × 4.75.
+   *
+   * A same-game ticket is the opposite case and stays as it was: the book reprices legs that share
+   * a scoreboard (its "criar aposta" counter), so the product is an upper bound and is never
+   * announced as the price.
+   */
+  crossGame: boolean;
+  /**
    * The best link this ticket can have anywhere: the whole ticket in one slip where a book carries
    * it, else the most of it one book carries, else a near line, else nothing. See coverage.ts —
    * coverage, the link's own reach and a near line are three separate numbers there and stay
@@ -102,19 +115,45 @@ function rowBehind(rows: BookPrice[], q: LegQuery, quote: Quote): BookPrice | nu
   return best;
 }
 
-/** Pure form, for tests and for the API: the prices are passed in. */
-export function compareSuggestionsWith(prices: BookPrice[], suggestions: BetSuggestion[], game: GameTeams, sportKey: string, opts: CompareSuggestionsOptions = {}): TicketPrices[] {
+/**
+ * Where ONE leg is priced from: the match it belongs to (so "home" and "away" mean the right team)
+ * and that match's own rows. A same-game ticket hands every leg the same scope; a cross-game
+ * múltipla hands each leg its own, which is the whole difference — see `pricesForGames`.
+ */
+export interface LegScope { game: GameTeams; prices: BookPrice[] }
+
+/** A leg whose match is not among the ones read: it can never be covered, and is never guessed at. */
+export type ScopeFor = (leg: BetLeg) => LegScope | null;
+
+/**
+ * Pure form, for tests and for the API: the prices are passed in, per leg.
+ *
+ * Nothing here ever looks at more than one leg's rows at a time, because the vocabulary a leg is
+ * matched with cannot name the match: `selectionKey` is the market name for everything but a player
+ * prop, so a single flat list of two games' rows would let one game's total answer for the other's.
+ */
+export function compareSuggestionsScoped(suggestions: BetSuggestion[], scopeFor: ScopeFor, sportKey: string, opts: CompareSuggestionsOptions = {}): TicketPrices[] {
   const out: TicketPrices[] = [];
-  const groups = groupBySelection(prices);
+  // One grouping per distinct row set, keyed by the array itself: a slate whose legs share a match
+  // groups that match once, and a same-game ticket groups exactly once as it always did.
+  const grouped = new Map<BookPrice[], Map<string, BookPrice[]>>();
+  const groupsOf = (rows: BookPrice[]) => {
+    let g = grouped.get(rows);
+    if (!g) { g = groupBySelection(rows); grouped.set(rows, g); }
+    return g;
+  };
   const linkOpts = { affiliate: opts.affiliate };
   for (const s of suggestions) {
-    const queries = s.legs.map((leg) => legQuery(leg, game, sportKey));
-    const named = s.legs.map((leg, i) => ({ query: queries[i], decimal: leg.oddsDecimal })).filter((x): x is { query: LegQuery; decimal: number } => !!x.query);
+    const scopes = s.legs.map((leg) => scopeFor(leg));
+    const queries = s.legs.map((leg, i) => { const sc = scopes[i]; return sc ? legQuery(leg, sc.game, sportKey) : null; });
+    const named = s.legs
+      .map((leg, i) => ({ query: queries[i], decimal: leg.oddsDecimal, prices: scopes[i]?.prices ?? NO_PRICES }))
+      .filter((x): x is { query: LegQuery; decimal: number; prices: BookPrice[] } => !!x.query);
     if (!named.length) continue;
-    const cmp = compareTicket(prices, named, opts);
+    const cmp = compareTicket(NO_PRICES, named, opts);
     // Each leg's link per book, best price first (the whole ticket's links come from coverage.ts).
-    const withLinks: LegPrices[] = cmp.legs.map((c) => {
-      const rows = groups.get(selectionKey({ market: c.query.market, player: c.query.player, stat: c.query.stat })) ?? [];
+    const withLinks: LegPrices[] = cmp.legs.map((c, i) => {
+      const rows = groupsOf(named[i].prices).get(selectionKey({ market: c.query.market, player: c.query.player, stat: c.query.stat })) ?? [];
       const links: DeepLink[] = [];
       for (const quote of c.quotes) {
         const row = rowBehind(rows, c.query, quote);
@@ -133,10 +172,19 @@ export function compareSuggestionsWith(prices: BookPrice[], suggestions: BetSugg
     const bestSingleBook = complete ? cmp.bestSingleBook : null;
     // Coverage is measured over the ticket's OWN legs, unnamed ones included, so "3 das 4 linhas"
     // counts the four the reader sees.
-    const slip = ticketSlip(prices, s.legs.map((leg, i) => ({ query: queries[i], decimal: leg.oddsDecimal })), linkOpts);
-    out.push({ suggestionId: s.id, legs, bestSingleBook, perBook: complete ? cmp.perBook : [], theoreticalBest: complete ? cmp.theoreticalBest : null, referenceDecimal: cmp.referenceDecimal, bestSingleVsReferencePct: complete ? cmp.bestSingleVsReferencePct : null, theoreticalVsReferencePct: complete ? cmp.theoreticalVsReferencePct : null, books: cmp.books, slip });
+    const slip = ticketSlip(NO_PRICES, s.legs.map((leg, i) => ({ query: queries[i], decimal: leg.oddsDecimal, prices: scopes[i]?.prices ?? NO_PRICES })), linkOpts);
+    out.push({ suggestionId: s.id, legs, crossGame: independentGames(s), bestSingleBook, perBook: complete ? cmp.perBook : [], theoreticalBest: complete ? cmp.theoreticalBest : null, referenceDecimal: cmp.referenceDecimal, bestSingleVsReferencePct: complete ? cmp.bestSingleVsReferencePct : null, theoreticalVsReferencePct: complete ? cmp.theoreticalVsReferencePct : null, books: cmp.books, slip });
   }
   return out;
+}
+
+/** Shared empty scope, so the groupings memo sees one identity instead of a new array per leg. */
+const NO_PRICES: BookPrice[] = [];
+
+/** Pure form for one game: every leg of every ticket belongs to the same match. */
+export function compareSuggestionsWith(prices: BookPrice[], suggestions: BetSuggestion[], game: GameTeams, sportKey: string, opts: CompareSuggestionsOptions = {}): TicketPrices[] {
+  const scope: LegScope = { game, prices };
+  return compareSuggestionsScoped(suggestions, () => scope, sportKey, opts);
 }
 
 /**
@@ -156,6 +204,35 @@ export function gamePrices(gameId: string, suggestions: BetSuggestion[], game: G
   const prices = pricesForGame(gameId, now);
   const opts = { dispersionPct: booksConfig().dispersionPct, affiliate: affiliateTagsFromEnv() };
   const value: GamePrices = { books, fetchedAt, tickets: compareSuggestionsWith(prices, suggestions, game, sportKey, opts), signals: propSignals(prices, opts, 8) };
+  memo.set(key, { at: now.getTime(), value });
+  while (memo.size > MEMO_ENTRIES) { const oldest = memo.keys().next().value; if (oldest === undefined) break; memo.delete(oldest); }
+  return value;
+}
+
+/**
+ * The same, for a cross-game slate: the books' prices on tickets whose legs live in different
+ * matches. `games` is the match behind each leg's `gameId` — a leg naming a game that is not there
+ * is left unpriced rather than read off another game's board.
+ *
+ * No prop signals. The signals block asks "where is a book out of step on THIS event's player
+ * lines", which is a per-game question and, at a thousand prop rows per game, the expensive half of
+ * `gamePrices`; running it over a whole slate would cost that per game for an answer that belongs on
+ * the game page, which already shows it.
+ */
+export function slatePrices(suggestions: BetSuggestion[], games: Map<string, GameTeams>, sportKey: string, now = new Date()): GamePrices {
+  const gameIds = [...new Set(suggestions.flatMap((s) => s.legs.map((l) => l.gameId)).filter((id): id is string => !!id && games.has(id)))].sort();
+  if (!gameIds.length) return { books: [], fetchedAt: null, tickets: [], signals: [] };
+  const { books, fetchedAt } = booksForGames(gameIds, now);
+  const key = `slate|${sportKey}|${fetchedAt ?? "-"}|${gameIds.join(",")}|${suggestions.map((s) => s.id).join(",")}`;
+  const hit = memo.get(key);
+  if (hit && now.getTime() - hit.at < MEMO_MS) return hit.value;
+  const byGame = pricesForGames(gameIds, now);
+  const scopeFor: ScopeFor = (leg) => {
+    const game = leg.gameId ? games.get(leg.gameId) : undefined;
+    return game ? { game, prices: byGame.get(leg.gameId!) ?? NO_PRICES } : null;
+  };
+  const opts = { dispersionPct: booksConfig().dispersionPct, affiliate: affiliateTagsFromEnv() };
+  const value: GamePrices = { books, fetchedAt, tickets: compareSuggestionsScoped(suggestions, scopeFor, sportKey, opts), signals: [] };
   memo.set(key, { at: now.getTime(), value });
   while (memo.size > MEMO_ENTRIES) { const oldest = memo.keys().next().value; if (oldest === undefined) break; memo.delete(oldest); }
   return value;

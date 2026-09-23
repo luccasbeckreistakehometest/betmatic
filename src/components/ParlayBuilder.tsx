@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { BetsPanel } from "@/components/BetsPanel";
+import { BetsPanel, type GamePricesView } from "@/components/BetsPanel";
 import { useNavState } from "@/components/Controls";
 import { Empty, Panel, buttonClass } from "@/components/ui";
 import { makeT } from "@/lib/i18n";
@@ -19,6 +19,8 @@ interface Payload {
   plan: { id: string; name: string; crossGame: boolean };
   authenticated: boolean;
   paused: { until: string | null } | null;
+  /** The slate day the tickets were served for: the books' prices are asked for the same day. */
+  dateKey: string;
 }
 
 type BuildState = "idle" | "running" | "done" | "too_few_games" | "cap_global" | "cap_user" | "cap_admin" | "failed";
@@ -55,6 +57,26 @@ export function ParlayBuilder() {
 
   const slate = data?.predictions[0] ?? null;
   const locked = data && !data.plan.crossGame;
+
+  // The Brazilian books' prices on these tickets, read the same way the game page reads its own:
+  // only for tickets the viewer already sees, after them and never blocking them. This is what puts
+  // a betslip link under a múltipla — until now the cross-game page asked for no prices at all, so
+  // it had no link to give.
+  const [prices, setPrices] = useState<GamePricesView | null>(null);
+  const dateKey = data?.dateKey ?? null;
+  const ticketIds = slate?.slate.suggestions.map((s) => s.id).join(",") ?? "";
+  useEffect(() => {
+    if (!ticketIds || !dateKey) return;
+    let alive = true;
+    // Deferred so the effect itself sets no state synchronously.
+    const id = setTimeout(() => {
+      fetch(`/api/parlays/prices?sport=${sport.key}&lang=${lang}&date=${dateKey}`, { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j) => { if (alive && j && Array.isArray(j.tickets)) setPrices({ tickets: j.tickets, signals: j.signals ?? [], books: j.books ?? [], fetchedAt: j.fetchedAt ?? null }); })
+        .catch(() => {});
+    }, 0);
+    return () => { alive = false; clearTimeout(id); };
+  }, [ticketIds, dateKey, sport.key, lang]);
   const [build, setBuild] = useState<BuildState>("idle");
   const [buildMessage, setBuildMessage] = useState<string | null>(null);
 
@@ -108,7 +130,7 @@ export function ParlayBuilder() {
             </Link>
           </div>
         ) : slate ? (
-          <BetsPanel slate={slate.slate} lang={lang} sportKey={sport.key} />
+          <BetsPanel slate={slate.slate} lang={lang} sportKey={sport.key} prices={prices} />
         ) : build === "running" ? (
           <div className="flex items-center gap-3 rounded-control border border-line-strong bg-surface-2 px-3 py-3 text-sm text-fg-muted" data-testid="generating-slate">
             <span aria-hidden="true" className="live-dot size-1.5 rounded-full bg-fg-dim" />{t("generatingSlate")}
