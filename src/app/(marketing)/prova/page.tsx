@@ -2,11 +2,11 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { MarketingPage } from "@/components/MarketingShell";
 import { langFrom, langPaths, pageMetadata, type SearchProps } from "@/lib/seo";
-import { formatDate, formatPercent, formatNumber } from "@/lib/format";
+import { formatDate, formatPercent, formatNumber, formatDayKey } from "@/lib/format";
 import { KPI, LinkButton, Notice, Panel, PrintButton, PrintHeader, Table, Td, Th, Tr } from "@/components/ui";
 import { readLedger } from "@/lib/ledger/store";
 import { liveRecord } from "@/lib/ledger/live-record";
-import { mainTickets, proofMinDecided, proofPublishable, proofStats, publicTickets, recentTickets, ticketSlug, brasiliaDay } from "@/lib/ledger/proof";
+import { mainTickets, proofMinDecided, proofPublishable, proofStats, publicTickets, recentTickets, ticketSlug, brasiliaDay, withinRecordWindow, recordStartDay } from "@/lib/ledger/proof";
 import { liveCalibrationMinLegs } from "@/lib/ledger/live-calibration";
 import { scrubText } from "@/lib/server/whitelabel";
 import { EquityChart } from "@/components/EquityChart";
@@ -44,7 +44,7 @@ const C = {
     liveFoot: "Não publicamos retorno das leituras ao vivo. O preço que temos é o da tabela de antes do jogo, e no 3º quarto ele já não existe. Publicamos só o que dá para conferir: com que frequência a leitura acerta, contra a chance que ela mesma prometeu.",
     liveSmall: "Amostra pequena: abaixo de {n} linhas decididas não publicamos percentual, só a contagem e o método.",
     livePending: "em jogo ou aguardando",
-    balanceTitle: "Balanço (pré-jogo)", balanceSub: "Uma unidade em cada bilhete de pré-jogo decidido. Leitura ao vivo não entra: o preço dela não é coletável, e o acerto dela fica no bloco ao lado. O dia é o de Brasília.", overall: "Geral", today: "Hoje", dayCol: "Dia", ticketsCol: "Bilhetes", hitsCol: "Acertos", stakedCol: "Apostado", returnedCol: "Retorno", roiCol: "ROI", liveCol: "Ao vivo (acerto · desvio)", noToday: "Nenhum bilhete decidido hoje ainda.", byScope: "Por origem", scopePregame: "Pré-jogo", scopeLive: "Ao vivo", liveTag: "ao vivo", methodTitle: "Como medimos", methodBody: "Todo bilhete é salvo no momento em que é gerado, com as odds e a chance estimada, e fica visível para todo mundo assim que a bola rola. Quando o jogo termina, cada linha é conferida contra o placar e as estatísticas oficiais: se não dá para conferir com certeza, a linha é anulada — nunca chutada. O ROI considera 1 unidade apostada em cada bilhete de pré-jogo decidido; leitura ao vivo não tem ROI." },
+    balanceTitle: "Balanço (pré-jogo)", balanceSub: "Uma unidade em cada bilhete de pré-jogo decidido. Leitura ao vivo não entra: o preço dela não é coletável, e o acerto dela fica no bloco ao lado. O dia é o de Brasília.", overall: "Geral", today: "Hoje", dayCol: "Dia", ticketsCol: "Bilhetes", hitsCol: "Acertos", stakedCol: "Apostado", returnedCol: "Retorno", roiCol: "ROI", liveCol: "Ao vivo (acerto · desvio)", noToday: "Nenhum bilhete decidido hoje ainda.", byScope: "Por origem", scopePregame: "Pré-jogo", scopeLive: "Ao vivo", liveTag: "ao vivo", methodTitle: "Como medimos", methodBody: "Todo bilhete é salvo no momento em que é gerado, com as odds e a chance estimada, e fica visível para todo mundo assim que a bola rola. Quando o jogo termina, cada linha é conferida contra o placar e as estatísticas oficiais: se não dá para conferir com certeza, a linha é anulada — nunca chutada. O ROI considera 1 unidade apostada em cada bilhete de pré-jogo decidido; leitura ao vivo não tem ROI.", window: "O registro conta a partir de {d}, quando a plataforma passou a gerar os bilhetes sozinha. O que veio antes era outro produto, montado à mão e em outro esporte, e misturar os dois descreveria uma coisa que ninguém pode comprar." },
   en: { eyebrow: "Public track record", title: "Every ticket. None hidden.", sub: "Every ticket Betmatic generates is logged the moment it is born, shows up here once its game kicks off, and is graded automatically against the real score. No curation, no edits after the fact. If it ever looks bad, it looks bad here too.",
     generated: "generated", settled: "settled", hit: "hit rate", roi: "ROI at 1 unit", pending: "awaiting kickoff", byMarket: "By market", bySport: "By sport", byBand: "By odds band", recent: "Latest tickets", none: "No settled ticket yet. The first one appears once a game with a ticket ends.",
     won: "won", lost: "lost", push: "push", void: "void", pend: "pending", cta: "See today's tickets", csv: "Download everything as CSV", legs: "legs", small: "Small sample: fewer than 30 decided tickets says nothing about the long run.", unit: "u", method: "Aggregate numbers (hit rate, ROI, curve) appear once at least {n} tickets are decided. Until then, the list below shows every ticket and its result, unfiltered.", withAlts: "Include the alternatives", mainOnly: "Main tickets only",
@@ -60,7 +60,7 @@ const C = {
     liveFoot: "We publish no return for the live reads. The only price we have is the pre-game board's, and by the third quarter it no longer exists. We publish what can be checked: how often a read lands, against the chance it gave itself.",
     liveSmall: "Small sample: below {n} decided legs we publish no percentage, only the count and the method.",
     livePending: "in play or awaiting",
-    balanceTitle: "Balance (pre-game)", balanceSub: "One unit on every decided pre-game ticket. Live reads are out: their price is not collectable, and their hit rate is in the block beside this one. Days are Brasília days.", overall: "Overall", today: "Today", dayCol: "Day", ticketsCol: "Tickets", hitsCol: "Hits", stakedCol: "Staked", returnedCol: "Returned", roiCol: "ROI", liveCol: "Live (hit · gap)", noToday: "No ticket decided today yet.", byScope: "By origin", scopePregame: "Pre-game", scopeLive: "Live", liveTag: "live", methodTitle: "How we measure", methodBody: "Every ticket is saved the moment it is generated, with its odds and modelled probability, and becomes visible to everyone at kickoff. When the game ends, each leg is checked against the official score and stats: if it cannot be graded with certainty, the leg is voided — never guessed. ROI assumes 1 unit staked on every decided pre-game ticket; a live read has no ROI." },
+    balanceTitle: "Balance (pre-game)", balanceSub: "One unit on every decided pre-game ticket. Live reads are out: their price is not collectable, and their hit rate is in the block beside this one. Days are Brasília days.", overall: "Overall", today: "Today", dayCol: "Day", ticketsCol: "Tickets", hitsCol: "Hits", stakedCol: "Staked", returnedCol: "Returned", roiCol: "ROI", liveCol: "Live (hit · gap)", noToday: "No ticket decided today yet.", byScope: "By origin", scopePregame: "Pre-game", scopeLive: "Live", liveTag: "live", methodTitle: "How we measure", methodBody: "Every ticket is saved the moment it is generated, with its odds and modelled probability, and becomes visible to everyone at kickoff. When the game ends, each leg is checked against the official score and stats: if it cannot be graded with certainty, the leg is voided — never guessed. ROI assumes 1 unit staked on every decided pre-game ticket; a live read has no ROI.", window: "The record counts from {d}, when the platform began generating the tickets on its own. What came before was another product, built by hand on another sport, and averaging the two would describe something nobody can buy." },
 };
 
 /** Fewer decided live reads than this and the panel says nothing worth reading. */
@@ -74,7 +74,8 @@ export default async function ProofPage({ searchParams }: SearchProps) {
   const lang = normaliseLang(typeof q.lang === "string" ? q.lang : undefined);
   const c = C[lang];
   const withAlternatives = q.alts === "1";
-  const entries = mainTickets(readLedger(), withAlternatives);
+  // The record speaks for one window, and the page says which — see proof.ts.
+  const entries = mainTickets(withinRecordWindow(readLedger()), withAlternatives);
   const s = proofStats(entries);
   // The live reads keep their own count, hit rate only, and appear once a handful have been decided.
   const live = liveRecord();
@@ -100,6 +101,9 @@ export default async function ProofPage({ searchParams }: SearchProps) {
 
         <Panel title={c.methodTitle} className="mt-10">
           <p className="max-w-measure text-sm leading-relaxed text-fg-muted">{c.methodBody}</p>
+          <p className="mt-2 max-w-measure text-sm leading-relaxed text-fg-muted" data-testid="proof-window">
+            {c.window.replace("{d}", formatDayKey(recordStartDay().replaceAll("-", ""), lang))}
+          </p>
           {!publish && <p className="mt-2 max-w-measure text-sm leading-relaxed text-fg-muted" data-testid="proof-method">{c.method.replace("{n}", String(proofMinDecided()))}</p>}
         </Panel>
 

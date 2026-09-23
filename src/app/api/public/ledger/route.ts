@@ -1,5 +1,5 @@
 import { readLedger } from "@/lib/ledger/store";
-import { publicTickets, ticketSlug } from "@/lib/ledger/proof";
+import { publicTickets, ticketSlug, withinRecordWindow } from "@/lib/ledger/proof";
 import { scrubText } from "@/lib/server/whitelabel";
 import { baseUrlOrEmpty } from "@/lib/base-url";
 
@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   const base = baseUrlOrEmpty();
   const q = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const rows = [["created_at", "settled_at", "sport", "matchup", "title", "kind", "band", "scope", "odds", "modelled_probability", "outcome", "legs", "alternative_of", "link"].join(",")];
-  for (const e of publicTickets(readLedger())) {
+  for (const e of publicTickets(withinRecordWindow(readLedger()))) {
     rows.push([e.createdAt, e.settledAt ?? "", e.sportKey, scrubText(e.matchup, lang), scrubText(e.title, lang), e.kind, e.bandKey, e.scope === "live" ? `live${e.period ? ` q${e.period}` : ""}` : "pregame", e.combinedDecimal.toFixed(2), e.modelledProbability.toFixed(3), e.outcome,
       e.legs.map((l) => `${scrubText(l.selection, lang)} @${l.oddsDecimal.toFixed(2)} [${l.outcome}]`).join(" | "), e.alternativeOf ? `${base}/p/${ticketSlug(e.alternativeOf)}` : "", `${base}/p/${ticketSlug(e.id)}`].map(q).join(","));
   }

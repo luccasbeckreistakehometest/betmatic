@@ -34,7 +34,17 @@ export interface ProofStats {
 export interface DayBalance {
   /** YYYY-MM-DD in America/Sao_Paulo, the day the tickets were decided (or, pending, their kickoff). */
   day: string;
-  generated: number; settled: number; won: number; lost: number; pending: number;
+  /**
+   * The balance is a PRE-GAME table, so `settled`, `won` and `lost` count decided pre-game tickets
+   * and nothing else — the same population the units are staked on. They used to count every scope
+   * and every non-pending outcome, which put more tickets on a single day's row than the Geral row
+   * had in total: on 23/09/2026 the page read "Geral 36 · Hoje 103", because Geral was pre-game
+   * decided and Hoje was pre-game plus live plus voids. The live counts live in `live`, and the
+   * total the day produced lives in `generated`.
+   */
+  settled: number; won: number; lost: number;
+  /** Every ticket the day produced, both scopes, graded or not. */
+  generated: number; pending: number;
   /** Pre-game only: a live read has no collectable price, so it has no units. */
   unitsStaked: number; unitsReturned: number; roi: number;
   live: { settled: number; won: number; predictedAverage: number; expectedWins: number; gapPoints: number };
@@ -48,14 +58,14 @@ export function dayBalances(entries: LedgerEntry[]): DayBalance[] {
     days.set(day, [...(days.get(day) ?? []), e]);
   }
   return [...days.entries()].sort((a, b) => b[0].localeCompare(a[0])).map(([day, rows]) => {
-    const d = rows.filter(decided);
-    const won = d.filter((e) => e.outcome === "won");
-    // The balance is pre-game money. The live column beside it is a hit rate against a promise.
-    const money = d.filter((e) => e.scope !== "live");
+    // The balance is pre-game money, and its counts describe exactly the tickets it stakes a unit
+    // on. The live column beside it is a hit rate against a promise, never a unit.
+    const money = rows.filter((e) => e.scope !== "live" && decided(e));
+    const won = money.filter((e) => e.outcome === "won");
     const pnl = money.reduce((a, e) => a + unitResult(e), 0);
     const live = liveCalibration(rows).tickets;
     return {
-      day, generated: rows.length, settled: rows.filter((e) => e.outcome !== "pending").length, won: won.length, lost: d.length - won.length,
+      day, generated: rows.length, settled: money.length, won: won.length, lost: money.length - won.length,
       pending: rows.filter((e) => e.outcome === "pending").length,
       unitsStaked: money.length, unitsReturned: money.length + pnl, roi: money.length ? pnl / money.length : 0,
       live: { settled: live.n, won: live.won, predictedAverage: live.predictedAverage, expectedWins: live.expectedWins, gapPoints: live.gapPoints },
@@ -110,6 +120,32 @@ export function proofStats(entries: LedgerEntry[]): ProofStats {
     byDay: dayBalances(entries),
     liveCalibration: liveCalibration(entries),
   };
+}
+
+/**
+ * The first Brasília day the public record speaks for. The product before it is not the product
+ * being measured — those tickets were built by hand, on another sport, against another prompt — and
+ * averaging them into today's number would describe something nobody can buy. The window is stated
+ * on the page rather than applied quietly: a record that silently starts where it looks best is not
+ * a record. `RECORD_START_DAY` moves it (YYYY-MM-DD, Brasília).
+ */
+export const DEFAULT_RECORD_START = "2026-09-21";
+
+export function recordStartDay(env: Record<string, string | undefined> = process.env): string {
+  const v = (env.RECORD_START_DAY ?? "").trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : DEFAULT_RECORD_START;
+}
+
+/**
+ * The entries inside the published window. A ticket with no kickoff falls back to when it was
+ * written, so nothing slips in unmeasured.
+ */
+export function withinRecordWindow<T extends Pick<LedgerEntry, "startsAt" | "createdAt">>(
+  entries: T[],
+  env: Record<string, string | undefined> = process.env,
+): T[] {
+  const start = recordStartDay(env);
+  return entries.filter((e) => brasiliaDay(e.startsAt ?? e.createdAt, "") >= start);
 }
 
 /**

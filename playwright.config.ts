@@ -34,6 +34,10 @@ export default defineConfig({
       "ESPN_FIXTURES=data/e2e/espn-fixtures CACHE_DIR=data/e2e/cache AI_MOCK=switch SOFASCORE_DISABLED=1",
       // The live panel polls every 1.5 s in tests instead of once a minute.
       "NEXT_PUBLIC_LIVE_POLL_MS=1500 ANALYTICS_ALLOW_HEADLESS=1 RATE_LIMIT_IP_FACTOR=100 PROOF_MIN_DECIDED=1 LIVE_CALIBRATION_MIN_LEGS=1 LIVE_PERIOD_MIN_LEGS=1 LEGAL_NAME= LEGAL_DOCUMENT= LEGAL_ADDRESS= LEGAL_EMAIL= SUPPORT_EMAIL=ajuda@betmatic.test SUPPORT_WHATSAPP=",
+      // The seeded world predates the real record window (21/09/2026) — its fixtures are older, and
+      // one of them is a football match from another season. The window itself is covered by unit
+      // tests; here it is opened so the specs can measure what they are actually about.
+      "RECORD_START_DAY=2000-01-01",
       "npx next dev -p 3300",
     ].join(" "),
     url: "http://localhost:3300/login",
