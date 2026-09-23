@@ -108,7 +108,9 @@ export interface CompareOptions {
   now?: number;
 }
 
-const EXCHANGE = "betfair-exchange";
+/** The exchange is the reference the margins are measured against, never a competing book. */
+export const EXCHANGE_PLATFORM = "betfair-exchange";
+const EXCHANGE = EXCHANGE_PLATFORM;
 /** The exchange counts as a reference only while a lay sits within this ratio of the back… */
 export const EXCHANGE_MAX_SPREAD = 1.1;
 /** …or, at long odds where the price ladder's own ticks are wide, within this much implied probability. */
@@ -123,7 +125,9 @@ export function exchangeIsMarket(back: number, lay: number | undefined): boolean
   if (!lay || lay < back || back <= 1) return false;
   return lay / back <= EXCHANGE_MAX_SPREAD || 1 / back - 1 / lay <= EXCHANGE_MAX_GAP;
 }
-const same = (a: number | undefined, b: number | undefined) => a !== undefined && b !== undefined && Math.abs(a - b) < 0.011;
+/** Two lines are the same line: the books print 17.5 and 17.50, and one is 0.01 off on a rounding. */
+export const sameLine = (a: number | undefined, b: number | undefined) => a !== undefined && b !== undefined && Math.abs(a - b) < 0.011;
+const same = sameLine;
 
 // playerKey normalises Unicode on every call; a game carries a thousand prop rows and each query
 // scans them, so the key is remembered per spelling (bounded, cleared when it grows).
@@ -164,7 +168,7 @@ function median(values: number[]): number | null {
 const pctOver = (a: number, b: number) => Number(((a / b - 1) * 100).toFixed(2));
 
 /** Rows that describe the same selection as the query, regardless of line. */
-function sameSelection(p: BookPrice, q: LegQuery): boolean {
+export function sameSelection(p: BookPrice, q: LegQuery): boolean {
   if (p.market !== q.market) return false;
   if (q.market === "player_prop") return !!q.player && !!p.player && pkey(p.player) === pkey(q.player) && p.stat === q.stat && p.side === q.side;
   if (q.market === "moneyline") return p.side === q.side;
@@ -174,23 +178,49 @@ function sameSelection(p: BookPrice, q: LegQuery): boolean {
 const toQuote = (p: BookPrice): Quote => ({ book: p.book, platform: p.platform, decimal: p.decimal, line: p.line, lay: p.lay, kind: p.kind, url: p.url, fetchedAt: p.fetchedAt });
 
 /**
- * One row per book for one selection and line. The store keeps history, the reader wants now, so
- * the newest row per (book, kind) wins; and where a book posts the same line twice — an over/under
- * pair at 17.5 and an "18+" rung — the two settle identically, so the better price is the book's.
+ * The newest row per group, then — where a group holds the same bet twice, an over/under pair at
+ * 17.5 and an "18+" rung — the better price, because the two settle identically.
+ *
+ * Both passes matter and both can tie. A fetch run stamps every row it writes with one `fetchedAt`,
+ * so "newest" cannot separate two rows read in the same round: whichever the store returned first
+ * survives, and `pricesForGame` has no ORDER BY. That is only ever harmless while the group really
+ * is one bet — which is what the two keys below are for.
  */
-function latestPerBook(rows: BookPrice[]): BookPrice[] {
-  const byBookKind = new Map<string, BookPrice>();
+function newestPer(rows: BookPrice[], keyOf: (r: BookPrice) => string): BookPrice[] {
+  const byKind = new Map<string, BookPrice>();
   for (const r of rows) {
-    const k = `${r.book}|${r.kind ?? ""}`;
-    const cur = byBookKind.get(k);
-    if (!cur || r.fetchedAt > cur.fetchedAt) byBookKind.set(k, r);
+    const k = `${keyOf(r)}|${r.kind ?? ""}`;
+    const cur = byKind.get(k);
+    if (!cur || r.fetchedAt > cur.fetchedAt) byKind.set(k, r);
   }
-  const byBook = new Map<string, BookPrice>();
-  for (const r of byBookKind.values()) {
-    const cur = byBook.get(r.book);
-    if (!cur || r.decimal > cur.decimal) byBook.set(r.book, r);
+  const out = new Map<string, BookPrice>();
+  for (const r of byKind.values()) {
+    const k = keyOf(r);
+    const cur = out.get(k);
+    if (!cur || r.decimal > cur.decimal) out.set(k, r);
   }
-  return [...byBook.values()];
+  return [...out.values()];
+}
+
+/**
+ * One row per book for ONE selection and ONE line — every caller must filter to a single line
+ * first. Handed a set that spans a book's ladder it returns one arbitrary rung of it (see
+ * `newestPer`: a single fetch round ties on `fetchedAt`, and the second pass then keeps the longest
+ * price, which on a ladder is the rung furthest from the reader's line). A set that spans lines
+ * belongs in `latestPerBookLine`.
+ */
+export function latestPerBook(rows: BookPrice[]): BookPrice[] {
+  return newestPer(rows, (r) => r.book);
+}
+
+/**
+ * One row per book PER LINE: the same rule applied to a set that spans a ladder, so every rung a
+ * book currently posts survives to be compared with the others. This is what a question about
+ * NEIGHBOURING lines needs — "which rung is nearest" cannot be answered by a list that has already
+ * thrown all but one of them away.
+ */
+export function latestPerBookLine(rows: BookPrice[]): BookPrice[] {
+  return newestPer(rows, (r) => `${r.book}|${r.line ?? ""}`);
 }
 
 /** The opposite side of a two-way selection, for no-vig fair prices. */
@@ -263,7 +293,13 @@ export function compareLeg(prices: BookPrice[], q: LegQuery, opts: CompareOption
   // The same stat and side at another line: the owner's "odds desbalanceadas em linha específica".
   const lineAlternatives: LineAlternative[] = [];
   if ((q.market === "player_prop" || q.market === "total" || q.market === "spread") && q.line !== undefined) {
-    const others = latestPerBook(prices.filter((p) => p.platform !== EXCHANGE && sameSelection(p, q) && p.line !== undefined && !same(p.line, q.line)));
+    // Every rung of every book's ladder, not one rung per book: `latestPerBook` collapses to one
+    // row per book and a book publishing 15,5 / 16,5 / 17,5 / 18,5 in one round stamps them all
+    // with the same `fetchedAt`, so the survivor was whichever SQLite happened to return first and
+    // the "número melhor" on screen was arbitrary. With the ladder whole, the sort below decides:
+    // among the friendlier rungs that still clear the price gate, the one paying most is the one
+    // nearest the ticket's own line — the smallest concession that actually helps.
+    const others = latestPerBookLine(prices.filter((p) => p.platform !== EXCHANGE && sameSelection(p, q) && p.line !== undefined && !same(p.line, q.line)));
     // Measured against the consensus at the leg's own line, not against an outlier best price.
     const reference = medianDecimal ?? best?.decimal ?? null;
     for (const p of others) {

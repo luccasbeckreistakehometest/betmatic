@@ -192,16 +192,18 @@ describe("the prices payload", () => {
     expect(ml.links.map((l) => [l.book, l.kind, l.verified])).toEqual([["KTO", "betslip", false], ["Superbet", "betslip", true], ["Betnacional", "event", true]]);
     expect(ml.links.find((l) => l.book === "Superbet")!.url).toMatch(/&btag=e2e$/);
     expect(ml.links.find((l) => l.book === "KTO")!.url).toBe("https://www.kto.bet.br/app/esportes/#?coupon=combination|4345413448|0|replace");
-    // A one-leg ticket's link is the leg's link at the best single book (KTO pays 1.1, Superbet 1.07).
+    // A one-leg ticket's link is the leg's link at the best single book (KTO pays 1.08, Superbet 1.07).
     expect(out[0].bestSingleBook?.book).toBe("KTO");
-    expect(out[0].ticketLink).toMatchObject({ book: "KTO", selections: 1 });
+    expect(out[0].slip).toMatchObject({ kind: "full", best: { book: "KTO", covered: [0], decimal: 1.08 } });
+    expect(out[0].slip.best!.link).toMatchObject({ book: "KTO", selections: 1 });
     // The double is priced whole only by Superbet, whose scheme carries both legs in one slip.
     expect(out[1].bestSingleBook?.book).toBe("Superbet");
-    expect(out[1].ticketLink).toMatchObject({ book: "Superbet", kind: "betslip", selections: 2 });
-    expect(new URL(out[1].ticketLink!.url).searchParams.getAll("bets[]")).toHaveLength(2);
+    expect(out[1].slip.kind).toBe("full");
+    expect(out[1].slip.best!.link).toMatchObject({ book: "Superbet", kind: "betslip", selections: 2 });
+    expect(new URL(out[1].slip.best!.link.url).searchParams.getAll("bets[]")).toHaveLength(2);
   });
 
-  it("has no ticket link when the best single book's scheme takes one selection or a leg cannot be named", () => {
+  it("falls back to the book's own page when its scheme takes one selection, and never counts an unnamed leg as covered", () => {
     const rows = prices.filter((p) => p.book === "Betnacional" || p.book === "Betfair Exchange");
     const out = compareSuggestionsWith(rows, [
       s("both", [{ ...base, selection: "Mystics", oddsDecimal: 1.07, settlement: { type: "moneyline", teamAbbreviation: "WSH", sourceBasis: "" } }, { ...base, selection: "Sun", oddsDecimal: 8, settlement: { type: "moneyline", teamAbbreviation: "CONN", sourceBasis: "" } }]),
@@ -209,8 +211,15 @@ describe("the prices payload", () => {
     ], game, "wnba");
     expect(out[0].bestSingleBook?.book).toBe("Betnacional");
     expect(out[0].legs[0]!.links).toEqual([{ book: "Betnacional", kind: "event", verified: true, selections: 0, url: "https://betnacional.bet.br/event/2/0/916559498" }]);
-    expect(out[0].ticketLink).toBeNull();
-    expect(out[1].ticketLink).toBeNull();
+    // Betnacional prices both sides of the moneyline but its URL scheme carries no selection: the
+    // reader is still sent to the right page, with the coverage said out loud and the link's own
+    // reach (selections 0, "page") said beside it.
+    expect(out[0].slip).toMatchObject({ kind: "full", best: { book: "Betnacional", covered: [0, 1] } });
+    expect(out[0].slip.best!.link).toMatchObject({ kind: "event", selections: 0 });
+    // A leg the settlement descriptor cannot name is missing at every book: the ticket is partial,
+    // never full, because a link that quietly dropped it would build a shorter ticket.
+    expect(out[1].slip.kind).toBe("partial");
+    expect(out[1].slip.best).toMatchObject({ book: "Betnacional", covered: [0], missing: [{ index: 1, reason: "market" }], full: false });
     expect(out[1].legs[1]).toBeNull();
   });
 });

@@ -59,7 +59,7 @@ function EdgeTag({ edgePct, lang }: { edgePct: number | undefined; lang: Lang })
   );
 }
 
-function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [], prices = null, className = "" }: { bet: BetSuggestion; lang: Lang; gameId?: string; sportKey?: string; alerts?: LegAlertView[]; alternatives?: BetSuggestion[]; prices?: TicketPricesView | null; className?: string }) {
+function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [], prices = null, booksRead = 0, className = "" }: { bet: BetSuggestion; lang: Lang; gameId?: string; sportKey?: string; alerts?: LegAlertView[]; alternatives?: BetSuggestion[]; prices?: TicketPricesView | null; booksRead?: number; className?: string }) {
   const t = makeT(lang);
   const band = getBand(bet.bandKey);
   const longshot = bet.combinedDecimal >= 20;
@@ -187,7 +187,7 @@ function Ticket({ bet, lang, gameId, sportKey, alerts = [], alternatives = [], p
               : `Real chance ${pctOf(bet.modelledProbability, lang, { digits: 2 })}: out of 100 tickets like this, expect to lose ~${expectedLosers(bet.modelledProbability)}.`}
           </p>
         )}
-        {prices && <TicketPrices ticket={prices} lang={lang} ctx={{ gameId, ticketId: bet.id }} />}
+        {prices && <TicketPrices ticket={prices} lang={lang} ctx={{ gameId, ticketId: bet.id }} legNames={bet.legs.map((l) => l.selection)} booksRead={booksRead} />}
         {alternatives.length > 0 && <Alternatives main={bet} alternatives={alternatives} lang={lang} gameId={gameId} sportKey={sportKey} flagged={alerts} />}
       </div>
       {(kelly > 0 || gameId) && (
@@ -341,7 +341,7 @@ export function BetsPanel({ slate, lang, gameId, sportKey, alerts = [], prices =
       {prices?.signals.length && sportKey ? <PropSignalsList signals={prices.signals} sportKey={sportKey} lang={lang} /> : null}
       <ul className="flex flex-col gap-3">
         {groups.map(({ main, alternatives }) => (
-          <Ticket key={main.id} bet={main} lang={lang} gameId={gameId} sportKey={sportKey} alerts={alerts.filter((a) => a.suggestionId === main.id)} alternatives={alternatives} prices={prices?.tickets.find((p) => p.suggestionId === main.id) ?? null} className={shown !== "all" && main.bandKey !== shown ? "max-md:hidden" : ""} />
+          <Ticket key={main.id} bet={main} lang={lang} gameId={gameId} sportKey={sportKey} alerts={alerts.filter((a) => a.suggestionId === main.id)} alternatives={alternatives} prices={prices?.tickets.find((p) => p.suggestionId === main.id) ?? null} booksRead={prices?.books.length ?? 0} className={shown !== "all" && main.bandKey !== shown ? "max-md:hidden" : ""} />
         ))}
       </ul>
       {slate.dataNote && (

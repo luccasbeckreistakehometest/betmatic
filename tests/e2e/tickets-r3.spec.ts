@@ -24,8 +24,8 @@ test("a paid user gets priced player legs, line movement and two alternatives un
   await expect(page.getByTestId("leg-player-link").first()).toHaveAttribute("href", /\/app\/player\/\d+\?sport=wnba/);
 
   // "Onde apostar": the best book opens with the leg already in its betslip — a real external link
-  // in a new tab, the book's own URL, never one of ours — and the whole double at the one book that
-  // prices both legs. The seeded books (tests/e2e/seed-books.mts) give Superbet every leg.
+  // in a new tab, the book's own URL, never one of ours. The seeded books (tests/e2e/seed-books.mts)
+  // put the game's three main tickets on the three answers the reader can get.
   const legLink = page.getByTestId("leg-open-book").first();
   await expect(legLink).toBeVisible({ timeout: 30_000 });
   await expect(legLink).toHaveAttribute("href", /^https:\/\/superbet\.bet\.br\/betslip\?bets%5B%5D=99000101%2C\d+%2C.*&type=simple&target_screen=soccer_event_details$/);
@@ -34,19 +34,60 @@ test("a paid user gets priced player legs, line movement and two alternatives un
   await expect(legLink).toHaveAttribute("data-kind", "betslip");
   await expect(legLink).toContainText("Abrir na Superbet");
   await expect(page.getByTestId("leg-links").first()).toContainText("bilhete pronto");
-  const ticketLink = page.getByTestId("ticket-open-book").first();
-  await expect(ticketLink).toContainText("Abrir bilhete inteiro na Superbet");
+
+  // 1. THE WHOLE TICKET. Superbet posts the single's only line: one link, the whole ticket, and the
+  //    price the link itself pays.
+  const full = page.getByTestId("ticket-prices").filter({ has: page.locator('[data-coverage="full"]') }).or(page.locator('[data-testid="ticket-prices"][data-coverage="full"]')).first();
+  await expect(full).toBeVisible();
+  const ticketLink = full.getByTestId("ticket-open-book").first();
+  await expect(ticketLink).toContainText("Abrir o bilhete inteiro na Superbet");
   await expect(ticketLink).toHaveAttribute("href", /superbet\.bet\.br\/betslip\?bets%5B%5D=/);
-  // The player double is priced whole by Superbet alone: its link carries both legs into one slip.
-  const double = page.getByTestId("ticket-link").filter({ hasText: "2 linhas" }).first();
-  await expect(double).toBeVisible();
-  const doubleHref = await double.getByTestId("ticket-open-book").getAttribute("href");
-  expect(new URL(doubleHref!).searchParams.getAll("bets[]")).toHaveLength(2);
-  // The outbound click is counted (the beacon is a 204, the page stays put: the link opens a new tab).
-  // The book's site is stubbed in this context: a test never loads a bookmaker for real.
+  await expect(ticketLink).toHaveAttribute("data-coverage", "full");
+  await expect(ticketLink).toHaveAttribute("data-covered", "1");
+  await expect(full).toContainText("o link paga 1,95x");
+  // The price comparison is one tap away, not in the reader's face: the runner-up book is in there.
+  await full.getByTestId("ticket-other-books").locator("summary").click();
+  await expect(full.getByTestId("ticket-other-open")).toContainText("Abrir o bilhete inteiro na KTO");
+  await expect(full.getByTestId("ticket-best-book")).toContainText("Superbet");
+
+  // 2. PART OF THE TICKET. Superbet has one of the double's two legs: the link says how much it
+  //    carries, names the leg it does not and why, and pays only for what it carries.
+  const partial = page.locator('[data-testid="ticket-prices"][data-coverage="partial"]').first();
+  await expect(partial).toBeVisible();
+  const partialLink = partial.getByTestId("ticket-open-book");
+  await expect(partialLink).toContainText("Abrir na Superbet com 1 das 2 linhas");
+  await expect(partialLink).toHaveAttribute("data-coverage", "partial");
+  await expect(partialLink).toHaveAttribute("data-covered", "1");
+  expect(new URL((await partialLink.getAttribute("href"))!).searchParams.getAll("bets[]")).toHaveLength(1);
+  await expect(partial.getByTestId("ticket-missing")).toContainText("falta: Bia Souza");
+  await expect(partial.getByTestId("ticket-missing")).toContainText("a casa não publica essa linha");
+  // The link's price is the leg it carries (1,95), never the double's 3,51.
+  await expect(partial).toContainText("o link paga 1,95x");
+
+  // 3. THE CLOSEST RUNG, as its own row and as a different bet — never counted into the coverage
+  //    above it and never multiplied into its price.
+  const near = partial.getByTestId("ticket-near-line");
+  await expect(near).toContainText("linha parecida: Bia Souza");
+  await expect(near).toContainText("mais de 7,5 em vez de 6,5");
+  await expect(near).toContainText("paga 2,10 em vez de 1,80");
+  await expect(near).toContainText("é outra aposta, não a do bilhete");
+  await expect(near.getByTestId("ticket-near-open")).toHaveAttribute("data-coverage", "near");
+  await expect(near.getByTestId("ticket-near-open")).toHaveAttribute("data-covered", "0");
+
+  // 4. NOTHING MATCHES. No book row was seeded for the moneyline: the product says so rather than
+  //    sending the reader to a page that does not hold their bet.
+  const none = page.locator('[data-testid="ticket-prices"][data-coverage="none"]').first();
+  await expect(none).toBeVisible();
+  await expect(none.getByTestId("ticket-no-slip")).toContainText("nenhuma casa lida tem essas linhas");
+  await expect(none.getByTestId("ticket-open-book")).toHaveCount(0);
+  await expect(none.getByTestId("ticket-near-line")).toHaveCount(0);
+
+  // The outbound click is counted, with what the reader was actually offered (the beacon is a 204,
+  // the page stays put: the link opens a new tab). The book's site is stubbed in this context: a
+  // test never loads a bookmaker for real.
   await page.context().route(/^https:\/\/superbet\.bet\.br\//, (route) => route.fulfill({ status: 200, contentType: "text/html", body: "<title>stub</title>" }));
   const clicked = page.waitForResponse((r) => r.url().endsWith("/api/e") && r.status() === 204);
-  const [popup] = await Promise.all([page.waitForEvent("popup"), legLink.click()]);
+  const [popup] = await Promise.all([page.waitForEvent("popup"), partialLink.click()]);
   await clicked;
   await popup.close();
   await expect(page).toHaveURL(/\/app\/game\/990000101/);
