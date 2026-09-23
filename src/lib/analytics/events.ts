@@ -8,9 +8,11 @@ export const CLIENT_EVENTS = [
   "referral_landing",
   // An outbound click on a bookmaker link under a ticket. Props: book, gameId, ticketId, legIndex,
   // kind (leg | ticket), deep (the URL pre-fills a betslip), verified, and what the reader was
-  // offered when they clicked — coverage (full | partial | near) and covered, the number of the
-  // ticket's legs that book carries at the exact line. Partial and near clicks are the measurement
-  // the best-effort slip exists for: whether a reader will take most of a ticket in one tap.
+  // offered when they clicked — coverage (full | partial | near), covered, the number of the
+  // ticket's legs that book prices at the exact line, and carried, the number the URL itself
+  // pre-fills (smaller than covered when a covered row has no deep-link ids). Partial and near
+  // clicks are the measurement the best-effort slip exists for: whether a reader will take most of
+  // a ticket in one tap.
   "book_click",
 ] as const;
 export type ClientEvent = (typeof CLIENT_EVENTS)[number];

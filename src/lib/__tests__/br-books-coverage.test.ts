@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { NEAR_MAX_LINE_MOVE, NEAR_MAX_PROBABILITY_GAP, ticketSlip, type SlipLeg } from "@/lib/sources/br-books/coverage";
+import { booksCopy, candidateLabel, reachNote } from "@/components/books-copy";
+import { NEAR_MAX_LINE_MOVE, NEAR_MAX_PROBABILITY_GAP, ticketSlip, type BookCandidate, type SlipLeg } from "@/lib/sources/br-books/coverage";
 import type { LegQuery } from "@/lib/sources/br-books/compare";
 import type { BookEvent, BookPrice } from "@/lib/sources/br-books/types";
 
@@ -200,6 +201,88 @@ describe("the near line", () => {
     expect(ticketSlip(whole, ticket)).toMatchObject({ kind: "full", nearLines: [] });
     // A moneyline has no rung beside it.
     expect(ticketSlip([row("Sportingbet", "sportingbet", SPB, { side: "away", decimal: 2.4 })], legs([q.ml, 1.6])).kind).toBe("none");
+  });
+});
+
+describe("what the link carries", () => {
+  /** The same row with one id missing: rows stored before deep links existed carry none. */
+  const withoutUuid = (p: BookPrice): BookPrice => ({ ...p, ref: { ...p.ref, uuid: undefined } });
+
+  // Superbet prices all three legs, but the third row has no odd uuid, so the whole-slip URL cannot
+  // be built and the link falls back to a single — the same book, the same coverage, ONE bet in the
+  // URL. Coverage and reach are different facts and the candidate carries both.
+  const prices = [
+    row("Superbet", "superbet", SB, { side: "home", decimal: 1.62 }),
+    row("Superbet", "superbet", SB, prop("Ana Lima", "points", 17.5, "over", 1.95)),
+    withoutUuid(row("Superbet", "superbet", SB, prop("Bia Souza", "rebounds", 6.5, "over", 1.88))),
+  ];
+  const three = legs([q.ml, 1.6], [q.lima, 1.9], [q.souza, 1.85]);
+
+  it("keeps the price the book quotes apart from the price the URL pre-fills", () => {
+    const best = ticketSlip(prices, three).best!;
+    // The book covers everything: that is still true, and still what "3 das 3 linhas" counts.
+    expect(best).toMatchObject({ book: "Superbet", covered: [0, 1, 2], full: true, decimal: Number((1.62 * 1.95 * 1.88).toFixed(2)) });
+    // The URL carries the first leg and only it, and its price is the first leg's price alone.
+    expect(best.carried).toEqual([0]);
+    expect(best.carriedDecimal).toBe(1.62);
+    expect(best.link).toMatchObject({ kind: "betslip", selections: 1 });
+    expect(new URL(best.link.url).searchParams.getAll("bets[]")).toHaveLength(1);
+  });
+
+  it("says one das três on the button, and says the coverage in its own words", () => {
+    const best = ticketSlip(prices, three).best!;
+    expect(candidateLabel(best, 3, "pt")).toBe("Abrir na Superbet com 1 das 3 linhas");
+    expect(reachNote(best, 3, "pt")).toBe("a casa cota as 3 linhas, mas o link carrega só 1");
+    expect(candidateLabel(best, 3, "en")).toBe("Open at Superbet with 1 of 3 lines");
+  });
+
+  it("offers a page as a page, with no ticket and no price of its own", () => {
+    const best = ticketSlip([row("Betnacional", "betnacional", BN, { side: "home", decimal: 1.7 })], legs([q.ml, 1.6])).best!;
+    expect(best).toMatchObject({ book: "Betnacional", covered: [0], full: true, carried: [], carriedDecimal: null });
+    expect(best.link).toMatchObject({ kind: "event", selections: 0 });
+    expect(candidateLabel(best, 1, "pt")).toBe("Abrir a página na Betnacional");
+    expect(reachNote(best, 1, "pt")).toBe("a casa cota essa linha, mas o link só abre a página: o bilhete tem que ser montado lá");
+  });
+
+  it("still says o bilhete inteiro when the URL really carries every leg", () => {
+    const whole = [prices[0], prices[1], row("Superbet", "superbet", SB, prop("Bia Souza", "rebounds", 6.5, "over", 1.88))];
+    const best = ticketSlip(whole, three).best!;
+    expect(best.carried).toEqual([0, 1, 2]);
+    expect(best.carriedDecimal).toBe(Number((1.62 * 1.95 * 1.88).toFixed(2)));
+    expect(candidateLabel(best, 3, "pt")).toBe("Abrir o bilhete inteiro na Superbet");
+    expect(reachNote(best, 3, "pt")).toBeNull();
+  });
+
+  /**
+   * The invariant, in one line: whatever the label says, it is never more than the number of
+   * selections the URL pre-fills. "o bilhete inteiro" promises every leg; "com N das M" promises N;
+   * "abrir a página" promises none. A label that promised more than `link.selections` would be a
+   * reader placing a bet they did not read.
+   */
+  const promised = (c: BookCandidate, of: number): number => {
+    const label = candidateLabel(c, of, "pt");
+    if (label.includes(booksCopy("pt")("openTicketAt"))) return of;
+    return Number(label.match(/ (\d+) /)?.[1] ?? 0);
+  };
+
+  it("never promises more than the URL pre-fills, on any book of any ticket", () => {
+    const every = [
+      ...prices,
+      row("Sportingbet", "sportingbet", SPB, { side: "home", decimal: 1.75 }),
+      row("Sportingbet", "sportingbet", SPB, prop("Ana Lima", "points", 17.5, "over", 2.2)),
+      row("Betnacional", "betnacional", BN, { side: "home", decimal: 1.7 }),
+      row("Betnacional", "betnacional", BN, prop("Ana Lima", "points", 17.5, "over", 2.05)),
+    ];
+    const slip = ticketSlip(every, three);
+    const candidates = [slip.best!, ...slip.others];
+    expect(candidates).toHaveLength(3);
+    for (const c of candidates) {
+      expect(c.carried.length).toBe(c.link.selections);
+      expect(c.carried.every((i) => c.covered.includes(i))).toBe(true);
+      expect(promised(c, 3)).toBeLessThanOrEqual(c.link.selections);
+    }
+    // And the three books really do exercise the three shapes: a whole slip, a fallback single, a page.
+    expect(candidates.map((c) => c.link.selections).sort()).toEqual([0, 1, 2]);
   });
 });
 

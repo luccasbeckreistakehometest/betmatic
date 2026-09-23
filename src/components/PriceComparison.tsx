@@ -8,7 +8,7 @@ import type { LegComparison, PropSignal, TicketComparison } from "@/lib/sources/
 import type { BookCandidate, NearLine, TicketSlip } from "@/lib/sources/br-books/coverage";
 import type { DeepLink } from "@/lib/sources/br-books/deeplinks";
 import { track } from "@/lib/track";
-import { booksCopy, feedsLabel, relativeMinutes, sideLabel } from "@/components/books-copy";
+import { booksCopy, candidateLabel, feedsLabel, reachNote, relativeMinutes, sideLabel } from "@/components/books-copy";
 
 /**
  * The books' verdict on a leg and on a ticket, drawn in the ticket's own type: one dense line per
@@ -36,12 +36,15 @@ const kindLabel = (kind: DeepLink["kind"], t: ReturnType<typeof booksCopy>) => (
 /**
  * The outbound event. `coverage` and `covered` are what the reader was actually offered when they
  * clicked — a whole ticket, part of one and how much of it, or a near line — so the question "which
- * books do people place on, and do they accept a partial slip" has an answer in the data.
+ * books do people place on, and do they accept a partial slip" has an answer in the data. `carried`
+ * is what the URL itself pre-filled, which is the smaller number whenever a book prices a leg on a
+ * row with no deep-link ids: without it the data would read as if the reader had been handed a
+ * whole ticket they were never handed.
  */
 type ClickCoverage = "full" | "partial" | "near";
 
 function trackClick(link: DeepLink, ctx: LinkContext, what: "leg" | "ticket", coverage: ClickCoverage, covered: number) {
-  track("book_click", { book: link.book, gameId: ctx.gameId ?? "", ticketId: ctx.ticketId ?? "", legIndex: ctx.legIndex ?? -1, kind: what, deep: link.kind === "betslip", verified: link.verified, coverage, covered });
+  track("book_click", { book: link.book, gameId: ctx.gameId ?? "", ticketId: ctx.ticketId ?? "", legIndex: ctx.legIndex ?? -1, kind: what, deep: link.kind === "betslip", verified: link.verified, coverage, covered, carried: link.selections });
 }
 
 /** The book's own page in a new tab, never in ours: rel="noopener" so it cannot reach back. */
@@ -60,6 +63,7 @@ function BookLink({ link, ctx, what, lang, className, coverage = "full", covered
       data-verified={link.verified ? "1" : "0"}
       data-coverage={coverage}
       data-covered={covered}
+      data-carried={link.selections}
       onClick={() => trackClick(link, ctx, what, coverage, covered)}
     >
       {children}
@@ -136,19 +140,6 @@ function lineLabel(side: NearLine["side"], line: number, lang: Lang): string {
   return side === "over" || side === "under" ? `${sideLabel(side, lang)} ${n}` : n;
 }
 
-/**
- * "Abrir o bilhete inteiro na Superbet" when the book carries every leg AND its URL puts every leg
- * in the slip; "Abrir na Superbet com 3 das 4 linhas" otherwise. The number is never rounded up and
- * never implied: a reader must not be able to read "abrir o bilhete" off a link that carries three
- * quarters of one — nor off a link that only opens the book's game page, where the ticket still has
- * to be built by hand.
- */
-function candidateLabel(c: BookCandidate, of: number, lang: Lang, t: ReturnType<typeof booksCopy>): string {
-  if (c.full && c.link.kind === "betslip") return `${t("openTicketAt")} ${c.book}`;
-  const n = formatNumber(c.covered.length, lang, { digits: 0 });
-  return `${t("openAt")} ${c.book} ${t("withLines")} ${n} ${t("ofTotal")} ${formatNumber(of, lang, { digits: 0 })} ${of === 1 ? t("ofOne") : t("ofLines")}`;
-}
-
 /** "falta: Kiki Iriafen menos de 16,5 pontos — a casa não publica essa linha". */
 function missingLabel(c: BookCandidate, legNames: string[], lang: Lang, t: ReturnType<typeof booksCopy>): string {
   const name = (i: number) => legNames[i] ?? `${lang === "pt" ? "linha" : "leg"} ${i + 1}`;
@@ -195,9 +186,10 @@ function CandidateLink({ c, of, lang, ctx, t }: { c: BookCandidate; of: number; 
     <li className="nums text-micro text-fg-dim">
       <BookLink link={c.link} ctx={ctx} what="ticket" lang={lang} coverage={c.full ? "full" : "partial"} covered={c.covered.length} testId="ticket-other-open"
         className="font-sans font-medium text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg max-md:inline-flex max-md:min-h-11 max-md:items-center">
-        {candidateLabel(c, of, lang, t)}
+        {candidateLabel(c, of, lang)}
       </BookLink>
-      {" "}· {formatOdds(c.decimal, lang)}x · <span className={c.link.kind === "betslip" ? "text-pos" : "text-fg-dim"}>{kindLabel(c.link.kind, t)}</span>
+      {" "}· {c.carriedDecimal !== null ? `${t("linkPays")} ${formatOdds(c.carriedDecimal, lang)}x` : `${t("bookPrices")} ${formatOdds(c.decimal, lang)}x`}
+      {" "}· <span className={c.link.kind === "betslip" ? "text-pos" : "text-fg-dim"}>{kindLabel(c.link.kind, t)}</span>
     </li>
   );
 }
@@ -231,13 +223,20 @@ export function TicketPrices({ ticket, lang, ctx = {}, legNames = [], booksRead 
         <div className="mt-1.5" data-testid="ticket-link">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <BookLink link={best.link} ctx={ctx} what="ticket" lang={lang} coverage={best.full ? "full" : "partial"} covered={best.covered.length} className={buttonClass("secondary", "text-tiny")}>
-              {candidateLabel(best, of, lang, t)}
+              {candidateLabel(best, of, lang)}
               <Icon name="external" size={16} className="text-fg-dim" />
             </BookLink>
             <span className="nums text-micro text-fg-dim">
-              <span className={best.link.kind === "betslip" ? "text-pos" : "text-fg-dim"}>{kindLabel(best.link.kind, t)}</span> · {t("linkPays")} <span className="text-fg">{formatOdds(best.decimal, lang)}x</span>
+              <span className={best.link.kind === "betslip" ? "text-pos" : "text-fg-dim"}>{kindLabel(best.link.kind, t)}</span>
+              {/* The price of what the URL carries, and nothing when it carries nothing: a page has
+                  no price of its own, and the covered legs' product printed beside it would read as
+                  one. */}
+              {best.carriedDecimal !== null && <> · {t("linkPays")} <span className="text-fg">{formatOdds(best.carriedDecimal, lang)}x</span></>}
             </span>
           </div>
+          {reachNote(best, of, lang) && (
+            <p className="nums mt-1 text-micro leading-relaxed text-fg-muted" data-testid="ticket-link-reach">{reachNote(best, of, lang)}</p>
+          )}
           {best.missing.length > 0 && (
             <p className="mt-1 text-micro leading-relaxed text-fg-muted" data-testid="ticket-missing">{missingLabel(best, legNames, lang, t)}</p>
           )}

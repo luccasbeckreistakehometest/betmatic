@@ -1,4 +1,6 @@
+import { formatNumber } from "@/lib/format";
 import type { Lang } from "@/lib/i18n";
+import type { BookCandidate } from "@/lib/sources/br-books/coverage";
 
 /** Copy for the price comparison, written in pt-BR first; en kept in step. */
 const COPY = {
@@ -45,6 +47,14 @@ const COPY = {
   reasonLine: { pt: "a casa não publica essa linha", en: "the book does not post this line" },
   reasonMarket: { pt: "a casa não cota esse mercado", en: "the book does not price this market" },
   linkPays: { pt: "o link paga", en: "the link pays" },
+  // What the link carries, when it is less than what the book prices: the button says the smaller
+  // number and this line says the bigger one, so neither fact has to be guessed from the other.
+  openPageAt: { pt: "Abrir a página na", en: "Open the page at" },
+  bookPrices: { pt: "a casa cota", en: "the book prices" },
+  bookPricesAll: { pt: "a casa cota as", en: "the book prices all" },
+  bookPricesThis: { pt: "a casa cota essa linha", en: "the book prices this line" },
+  butLinkCarries: { pt: "mas o link carrega só", en: "but the link only carries" },
+  butLinkOpensPage: { pt: "mas o link só abre a página: o bilhete tem que ser montado lá", en: "but the link only opens the page: the ticket has to be built there" },
   // The near line: a DIFFERENT bet, offered on its own row and never counted as coverage.
   nearLine: { pt: "linha parecida", en: "close line" },
   insteadOf: { pt: "em vez de", en: "instead of" },
@@ -80,4 +90,40 @@ export function relativeMinutes(iso: string | null | undefined, lang: Lang, now 
   if (mins < 60) return lang === "pt" ? `há ${mins} min` : `${mins} min ago`;
   const hours = Math.round(mins / 60);
   return lang === "pt" ? `há ${hours} h` : `${hours} h ago`;
+}
+
+/**
+ * What the button may promise, counted off the URL and never off the coverage: "Abrir o bilhete
+ * inteiro na Superbet" only when the link itself puts every leg of the ticket in the slip; "Abrir
+ * na Superbet com 3 das 4 linhas" when it puts some of them there; "Abrir a página na Betnacional"
+ * when it puts none, because there is no ticket at the other end of that tap.
+ *
+ * The number is never rounded up and never implied. A book can price every leg and still hand over
+ * a one-selection URL (a covered row without the platform's deep-link ids), and the whole reason
+ * `carried` exists is that a reader must not be able to read "abrir o bilhete" off it.
+ */
+export function candidateLabel(c: BookCandidate, of: number, lang: Lang): string {
+  const t = booksCopy(lang);
+  const n = (x: number) => formatNumber(x, lang, { digits: 0 });
+  if (!c.carried.length) return `${t("openPageAt")} ${c.book}`;
+  if (c.carried.length === of && c.link.kind === "betslip") return `${t("openTicketAt")} ${c.book}`;
+  return `${t("openAt")} ${c.book} ${t("withLines")} ${n(c.carried.length)} ${t("ofTotal")} ${n(of)} ${of === 1 ? t("ofOne") : t("ofLines")}`;
+}
+
+/**
+ * The distance between what the book prices and what its link carries, said out loud whenever the
+ * two differ: "a casa cota 3 das 3 linhas, mas o link carrega só 1", or "…, mas o link só abre a
+ * página: o bilhete tem que ser montado lá". The button is bound to the smaller number, so this is
+ * where the bigger one — the good news about the book — gets to be true as well. Null when the link
+ * carries exactly what the book covers: then the button already said everything there is to say.
+ */
+export function reachNote(c: BookCandidate, of: number, lang: Lang): string | null {
+  if (c.carried.length === c.covered.length) return null;
+  const t = booksCopy(lang);
+  const n = (x: number) => formatNumber(x, lang, { digits: 0 });
+  // "a casa cota as 3 linhas" reads like Portuguese; "a casa cota 3 das 3 linhas" reads like a form.
+  const covers = c.covered.length === of
+    ? of === 1 ? t("bookPricesThis") : `${t("bookPricesAll")} ${n(of)} ${t("ofLines")}`
+    : `${t("bookPrices")} ${n(c.covered.length)} ${t("ofTotal")} ${n(of)} ${t("ofLines")}`;
+  return `${covers}, ${c.carried.length ? `${t("butLinkCarries")} ${n(c.carried.length)}` : t("butLinkOpensPage")}`;
 }

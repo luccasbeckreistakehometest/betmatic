@@ -18,9 +18,11 @@ import type { BookPrice, BookSide } from "@/lib/sources/br-books/types";
  *
  *   1. COVERAGE — the legs a book prices at the exact market, player, line and side. This is the
  *      truth about the book, and it is what "3 das 4 linhas" counts.
- *   2. THE LINK — what the book's own URL scheme can pre-fill (`DeepLink.selections`). A book can
- *      cover three legs and still only be linkable to its event page, because its site has no
- *      betslip URL. Then the reader is told both: three of four lines, and a game page.
+ *   2. THE LINK — what the book's own URL scheme actually pre-fills (`BookCandidate.carried`). A
+ *      book can cover three legs and still only be linkable to its event page, because its site has
+ *      no betslip URL; or cover three and carry one, because a covered row has no deep-link ids and
+ *      the whole-slip URL cannot be built. Then the reader is told both: three of four lines, and
+ *      what the link itself opens. A button never promises more than `carried`.
  *   3. A NEAR LINE — the same player and stat (or the same market) on another rung. It is a
  *      DIFFERENT BET. It never enters the coverage count and never enters the price; it is offered
  *      as its own row, named as a different bet, with the two prices side by side, and only when
@@ -46,11 +48,20 @@ export interface BookCandidate {
   /** Ticket leg indices this book prices at the exact line and side. */
   covered: number[];
   missing: MissingLeg[];
-  /** Product of this book's prices on the COVERED legs — what the link actually pays, not the ticket's price. */
+  /** Product of this book's prices on the COVERED legs: what the BOOK quotes, for comparing books. */
   decimal: number;
+  /**
+   * The ticket legs the URL ITSELF pre-fills — a subset of `covered`, and the only number a button
+   * may promise. It is shorter than `covered` whenever the book prices a leg on a row that has no
+   * deep-link ids: the whole-slip URL cannot be built, the link drops to one selection, and the
+   * coverage count stays what it was.
+   */
+  carried: number[];
+  /** Product of this book's prices on `carried`: what the LINK pays. Null when it carries nothing. */
+  carriedDecimal: number | null;
   /** Every leg of the ticket, this book, this line. */
   full: boolean;
-  /** The betslip with the covered legs, or the book's event / market page where its scheme takes one selection. */
+  /** The betslip with the carried legs, or the book's event / market page where its scheme takes one selection. */
   link: DeepLink;
 }
 
@@ -155,16 +166,17 @@ function chanceAt(rows: BookPrice[], q: LegQuery, line: number): { fair: number 
 
 /**
  * Full coverage first — a reader who wants to place the ticket wants one click, and a whole ticket
- * beats a better price on part of it. Then the most legs. Then a real betslip ahead of a page at
- * the same coverage, because the page still asks the reader to find and tap every selection. Then
- * the price of what the link carries, then a link we have actually opened ahead of one built from a
- * published scheme, then the name, so the order never wobbles between two equal books.
+ * beats a better price on part of it. Then the most legs. Then the legs the URL actually carries,
+ * because a page (and a slip that fell back to one selection) still asks the reader to find and tap
+ * the rest. Then the price of what the link carries, then a link we have actually opened ahead of
+ * one built from a published scheme, then the name, so the order never wobbles between two equal
+ * books.
  */
 function rank(a: BookCandidate, b: BookCandidate): number {
   return Number(b.full) - Number(a.full)
     || b.covered.length - a.covered.length
-    || Number(b.link.selections > 0) - Number(a.link.selections > 0)
-    || b.decimal - a.decimal
+    || b.carried.length - a.carried.length
+    || (b.carriedDecimal ?? b.decimal) - (a.carriedDecimal ?? a.decimal)
     || Number(b.link.verified) - Number(a.link.verified)
     || a.book.localeCompare(b.book);
 }
@@ -276,9 +288,22 @@ export function ticketSlip(prices: BookPrice[], legs: SlipLeg[], opts: SlipOptio
     if (!covered.length) continue;
     // A book with no URL scheme at all (the Altenar tenants) is not a candidate: there is nowhere
     // to send the reader, and a made-up URL would be worse than none.
-    const link = linkForSelections(rows, opts);
-    if (!link) continue;
-    candidates.push({ book, platform: rows[0].platform, covered, missing, decimal: round2(rows.reduce((p, r) => p * r.decimal, 1)), full: missing.length === 0, link });
+    const picked = linkForSelections(rows, opts);
+    if (!picked) continue;
+    // `picked.carried` indexes the rows handed to the link builder, which are the covered legs in
+    // order: back to the ticket's own numbering, so the screen can name the legs the URL carries.
+    const carried = picked.carried.map((i) => covered[i]);
+    candidates.push({
+      book,
+      platform: rows[0].platform,
+      covered,
+      missing,
+      decimal: round2(rows.reduce((p, r) => p * r.decimal, 1)),
+      carried,
+      carriedDecimal: picked.carried.length ? round2(picked.carried.reduce((p, i) => p * rows[i].decimal, 1)) : null,
+      full: missing.length === 0,
+      link: picked.link,
+    });
   }
   candidates.sort(rank);
 
