@@ -40,7 +40,12 @@ test("a cross-game ticket opens in one betslip, with the three matches in the UR
   await setPlan(email, "pro");
   await skipTour(page);
   await page.goto("/app/parlays?sport=wnba&lang=pt");
-  await page.getByTestId("build-slate").click();
+  // The slate is built once a day for the whole product, so by the time this spec runs the test
+  // above has usually built it already and there is no button to press. Either way, what this spec
+  // is about is the tickets being on screen.
+  const build = page.getByTestId("build-slate");
+  await expect(build.or(page.getByTestId("ticket").first())).toBeVisible({ timeout: 60_000 });
+  if (await build.count()) await build.click();
   await expect(page.getByTestId("expected-losers").first()).toBeVisible({ timeout: 60_000 });
 
   // The prices arrive after the tickets, the same way the game page loads them. The slate can hold
