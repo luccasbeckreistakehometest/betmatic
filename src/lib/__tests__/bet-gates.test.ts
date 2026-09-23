@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import path from "node:path";
 
 process.env.DATA_DIR = path.join(process.cwd(), "data", "unit-gates");
-const { capPlayerConcentration, playerKeysOf, MAX_PLAYER_SHARE } = await import("@/lib/bets/gates");
+const { capPlayerConcentration, playerKeysOf, unplayableReason, MAX_PLAYER_SHARE, MIN_MINUTES_FOR_VOLUME_OVER } = await import("@/lib/bets/gates");
+const { priceAll } = await import("@/lib/bets/builder");
+type Raw = import("@/lib/bets/builder").RawSuggestion;
 type Bet = import("@/lib/types").BetSuggestion;
+type Drop = import("@/lib/bets/gates").GateDrop;
 
 /** A priced ticket, reduced to what the cap reads: its band, its quality and who it is a bet on. */
 const ticket = (id: string, bandKey: string, players: string[], evidenceScore = 100, modelledProbability = 0.5): Bet => ({
@@ -92,5 +95,65 @@ describe("the by-player concentration cap", () => {
   it("leaves a build of one ticket alone", () => {
     const one = [ticket("only", "safe", ["star"])];
     expect(capPlayerConcentration(one)).toEqual({ kept: one, dropped: [] });
+  });
+});
+
+describe("the availability gate", () => {
+  const model = (over: Partial<NonNullable<import("@/lib/types").PropRow["model"]>> = {}) => ({
+    computed: 0.6, distribution: 0.6, pOver: 0.6, pUnder: 0.4, mean: 20, sd: 6, rate: 0.66, recentRate: 0.7, dispersion: 0.09,
+    minutes: { expected: 30, sd: 4, availability: "ok" as const }, ladder: [], note: "0.66/min × 30 ± 4 min → 20.0 ± 6.0", ...over,
+  });
+  const prop = (over: Record<string, unknown> = {}) => ({
+    player: "Kayla McBride", team: "MIN", market: "Points", marketKey: "points", athleteId: "11", line: 18.5, side: "over" as const,
+    odds: "1.90", decimal: 1.9, book: "DraftKings", priced: true, noVigFair: 0.5, model: model(), ...over,
+  });
+  const key = (over: Record<string, unknown> = {}) => ({
+    settlementType: "player_prop", settlementPlayer: "Kayla McBride", settlementStat: "points", settlementLine: 18.5,
+    settlementSide: "over", settlementTeam: null, ...over,
+  } as import("@/lib/bets/enrich").LegKey);
+
+  it("emits a line the rate model priced", () => {
+    expect(unplayableReason([key()], { props: [prop()], sportKey: "wnba" })).toBeNull();
+  });
+
+  it("refuses a line on a player the report lists out, on either side", () => {
+    const listed = model({ minutes: { expected: 32, sd: 5, availability: "listed_out" as const } });
+    // The feed posts both sides of a line; the gate has to read the same flag on either of them.
+    const out = [prop({ model: listed }), prop({ model: listed, side: "under" as const })];
+    expect(unplayableReason([key()], { props: out, sportKey: "wnba" })).toMatch(/listed OUT/);
+    expect(unplayableReason([key({ settlementSide: "under" })], { props: out, sportKey: "wnba" })).toMatch(/listed OUT/);
+  });
+
+  it("refuses a line the feed never carried, so no minutes stand behind it", () => {
+    // Four of the six losing overs on a player who finished 0/0/0/0 were legs of exactly this kind.
+    expect(unplayableReason([key({ settlementStat: "PTS+AST", settlementLine: 19.5 })], { props: [prop()], sportKey: "wnba" }))
+      .toMatch(/no projected minutes/);
+    expect(unplayableReason([key()], { props: [], sportKey: "wnba" })).toMatch(/no projected minutes/);
+  });
+
+  it("refuses an over on a volume stat under the minutes floor, and leaves the under alone", () => {
+    const short = model({ minutes: { expected: MIN_MINUTES_FOR_VOLUME_OVER - 5, sd: 4, availability: "ok" as const } });
+    const thin = [prop({ model: short }), prop({ model: short, side: "under" as const })];
+    expect(unplayableReason([key()], { props: thin, sportKey: "wnba" })).toMatch(/projected minutes, under the 20/);
+    expect(unplayableReason([key({ settlementSide: "under" })], { props: thin, sportKey: "wnba" })).toBeNull();
+  });
+
+  it("gates basketball only: a football prop has no candidate of this shape to read", () => {
+    expect(unplayableReason([key({ settlementStat: "shots", settlementPlayer: "Yuri Alberto" })], { props: [], sportKey: "soccer-bra" })).toBeNull();
+  });
+
+  it("drops the whole ticket before tip-off, and stands down in play", () => {
+    const raw = (): Raw => ({
+      kind: "single", alternativeOf: null, swapReason: null, title: "t", background: "b", riskNote: "r", confidence: "medium",
+      legs: [{ selection: "Kayla McBride over 19.5 PTS+AST", market: "player prop", odds: "1.90", book: null, explanation: "", evidence: "measured",
+        fairProbability: 0.68, settlementType: "player_prop", settlementTeam: null, settlementPlayer: "Kayla McBride", settlementStat: "PTS+AST",
+        settlementLine: 19.5, settlementSide: "over", sourceBasis: "measured history", gameId: null }],
+    });
+    const ctx = { props: [prop()], sportKey: "wnba" };
+    const drops: Drop[] = [];
+    expect(priceAll([raw()], ctx, { onDrop: (d) => drops.push(d) })).toEqual([]);
+    expect(drops.map((d) => d.gate)).toEqual(["availability"]);
+    // In play the projection reports the minutes that REMAIN and the report has nothing left to say.
+    expect(priceAll([raw()], ctx, { live: true })).toHaveLength(1);
   });
 });

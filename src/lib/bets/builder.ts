@@ -30,7 +30,7 @@ import { environmentPrompt, gameEnvironment, type GameEnvironment } from "@/lib/
 import { ticketCorrelation, type CorrLeg } from "@/lib/signals/correlation";
 import { matchAthlete, resolveStatLabels } from "@/lib/props/history";
 import { linkAlternatives, ticketId } from "@/lib/bets/alternatives";
-import { capPlayerConcentration, type GateDrop } from "@/lib/bets/gates";
+import { capPlayerConcentration, unplayableReason, type GateDrop } from "@/lib/bets/gates";
 import type { ProviderLines } from "@/lib/sources/espn-props";
 import { mockGameSlate, mockSlateBets } from "@/lib/ai/mocks";
 
@@ -419,6 +419,14 @@ export function priceAll(raws: RawSuggestion[], ctx: EnrichContext, opts: { oneL
     let priced = priceSuggestion(anchored, band?.key ?? "unbanded");
     // Books discount legs from the same game, so a product of their prices would overstate the payout.
     if (priced && opts.oneLegPerGame && !independentGames(priced)) priced = null;
+    // Who is playing, before anything is said about how she plays. Pre-game only: see bets/gates.ts.
+    if (priced && !opts.live) {
+      const reason = unplayableReason(anchored.legs, ctx);
+      if (reason) {
+        opts.onDrop?.({ ticketId: priced.id, gate: "availability", reason });
+        priced = null;
+      }
+    }
     if (priced) {
       // The computed probability anchors fairProbability inside enrichLeg, so the ticket's numbers are
       // recomputed from the anchored legs before correlation is applied.

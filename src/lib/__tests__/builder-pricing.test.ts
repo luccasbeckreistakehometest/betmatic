@@ -3,7 +3,7 @@ import path from "node:path";
 
 process.env.DATA_DIR = path.join(process.cwd(), "data", "unit-builder");
 const { priceSuggestion, priceAll, independentGames, describeModel, describeProps, minutesFromProps } = await import("@/lib/bets/builder");
-const { anchoredProbability, ANCHOR_BAND } = await import("@/lib/bets/enrich");
+const { anchoredProbability, ANCHOR_BAND, enrichLeg } = await import("@/lib/bets/enrich");
 type Raw = import("@/lib/bets/builder").RawSuggestion;
 
 const leg = (selection: string, odds: string): Raw["legs"][number] => ({
@@ -26,9 +26,13 @@ describe("priceSuggestion", () => {
 });
 
 describe("priceAll", () => {
+  // A real candidate row carries the rate model: bets/gates.ts will not emit a prop leg without one.
+  const rateModel = { computed: 0.6, distribution: 0.6, pOver: 0.6, pUnder: 0.4, mean: 20, sd: 6, rate: 0.66, recentRate: 0.7, dispersion: 0.09,
+    minutes: { expected: 30, sd: 4, availability: "ok" as const }, ladder: [], note: "0.66/min × 30 ± 4 min → 20.0 ± 6.0" };
   const prop = (player: string, line: number, decimal: number, athleteId: string) => ({
     player, market: "Points", marketKey: "points", athleteId, line, side: "over" as const, odds: decimal.toFixed(2), decimal, book: "DraftKings", priced: true, openDecimal: 1.95, noVigFair: 0.52,
     measured: { stat: "PTS", line, side: "over" as const, last5: { hits: 4, of: 5 }, last10: { hits: 7, of: 10 }, season: { hits: 20, of: 30 }, average: 20, median: 20, impliedFair: 0.66, sampleNote: "" },
+    model: rateModel,
   });
   const propLeg = (player: string, line: number, odds: string, gameId: string | null = null): Raw["legs"][number] => ({
     ...leg(`${player} over ${line} points`, odds), market: "player prop", settlementType: "player_prop", settlementPlayer: player, settlementStat: "points", settlementLine: line, gameId,
@@ -100,13 +104,19 @@ describe("the computed probability in the builder", () => {
     const [bet] = priceAll([raw([propLeg("Ana Lima", 0.75)])], { props: [prop("Ana Lima", "11", 0.45)], sportKey: "wnba" });
     expect(bet.legs[0].rawProbability).toBe(0.75);
     expect(bet.legs[0].fairProbability).toBeCloseTo(0.53, 6);
-    // Listed out: the computed number assumes she plays, so it must not pull a 20% up to 68%.
+    // Listed out: the computed number assumes she plays, so it must not pull a 20% up to 68%. The
+    // ticket itself no longer reaches a reader — bets/gates.ts drops it before tip-off — but enrich
+    // still has to leave the number alone for the paths that price such a leg anyway.
     const out = { ...prop("Ana Lima", "11", 0.76), model: { ...model(0.76), minutes: { expected: 32, sd: 5, availability: "listed_out" as const } } };
-    const [listed] = priceAll([raw([propLeg("Ana Lima", 0.2)])], { props: [out], sportKey: "wnba" });
-    expect(listed.legs[0].fairProbability).toBe(0.2);
-    expect(listed.legs[0].computedProbability).toBe(0.76);
-    expect(listed.legs[0].rawProbability).toBe(0.2);
-    expect(listed.modelledProbability).toBeCloseTo(0.2, 6);
+    expect(priceAll([raw([propLeg("Ana Lima", 0.2)])], { props: [out], sportKey: "wnba" })).toEqual([]);
+    const enriched = enrichLeg(
+      { selection: "Ana Lima over 18.5 points", market: "player prop", odds: "1.90", oddsDecimal: 1.9, explanation: "", evidence: "", fairProbability: 0.2 },
+      { settlementType: "player_prop", settlementPlayer: "Ana Lima", settlementStat: "points", settlementLine: 18.5, settlementSide: "over", settlementTeam: null },
+      { props: [out], sportKey: "wnba" },
+    );
+    expect(enriched.fairProbability).toBe(0.2);
+    expect(enriched.computedProbability).toBe(0.76);
+    expect(enriched.rawProbability).toBe(0.2);
   });
 
   it("drops a ticket with two rungs of the same stat on one player instead of showing an edge no book pays", () => {
@@ -126,7 +136,9 @@ describe("the computed probability in the builder", () => {
   it("resolves a leg the feed did not carry to its player, so two legs on one player are never strangers", () => {
     const ctx = { props: [prop("Ana Lima", "11", 0.6)], sportKey: "wnba" };
     const rebounds: Raw["legs"][number] = { ...propLeg("Ana Lima", 0.6), settlementStat: "rebounds", settlementLine: 6.5, selection: "Ana Lima over 6.5 rebounds", odds: "1.90" };
-    const [bet] = priceAll([raw([propLeg("Ana Lima", 0.6), rebounds])], ctx);
+    // In play, where the pre-game availability gate does not run: a leg the feed never carried is
+    // exactly what that gate drops before tip-off, and the resolution below is what prices it live.
+    const [bet] = priceAll([raw([propLeg("Ana Lima", 0.6), rebounds])], ctx, { live: true });
     expect(bet.legs[1].athleteId).toBeUndefined();
     expect(bet.correlation).toBeDefined();
     expect(bet.correlation!.note).toMatch(/same player, different stats/);
