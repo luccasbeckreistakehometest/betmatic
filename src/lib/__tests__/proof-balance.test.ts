@@ -29,7 +29,10 @@ describe("the balance, overall and per Brasília day", () => {
     // The pending ticket kicks off 22:00 BRT on the 22nd, so it sits on that day, undecided.
     expect(days.map((d) => d.day)).toEqual(["2026-09-22", "2026-09-20"]);
     const d = days[0];
-    expect(d).toMatchObject({ generated: 5, pending: 1, settled: 4, won: 2, lost: 2, unitsStaked: 2, live: { settled: 2, won: 1 } });
+    // `settled`/`won`/`lost` describe the pre-game tickets the units are staked on — two of them,
+    // one won — not every scope and every non-pending outcome. Counting those made a day row read
+    // larger than the whole record. What the day produced is `generated`; the live pair is `live`.
+    expect(d).toMatchObject({ generated: 5, pending: 1, settled: 2, won: 1, lost: 1, unitsStaked: 2, live: { settled: 2, won: 1 } });
     // Two pre-game tickets, one of them home at 1.38: the live 14.65 never touches the balance.
     expect(d.unitsReturned).toBeCloseTo(1.38, 6);
     expect(d.roi).toBeCloseTo((1.38 - 2) / 2, 6);
@@ -44,5 +47,50 @@ describe("the balance, overall and per Brasília day", () => {
     expect(brasiliaDay("2026-09-23T03:30:00.000Z")).toBe("2026-09-23");
     expect(brasiliaDay(undefined, "x")).toBe("x");
     expect(dayBalances([entry("open", "pending", 3, "2026-09-23T01:00:00.000Z")])[0]).toMatchObject({ day: "2026-09-22", pending: 1 });
+  });
+});
+
+/**
+ * On 23/09/2026 the public balance read "Geral 36 bilhetes · Hoje 103" — more tickets on one day
+ * than in the whole record, which is impossible and was the first thing a reader would notice. The
+ * Geral row counted decided PRE-GAME tickets, while each day row counted every scope and every
+ * non-pending outcome, voids included. A pre-game table has to count the tickets it stakes on.
+ */
+describe("the balance counts the tickets it stakes on", () => {
+  const day = "2026-09-23T01:00:00.000Z";
+  const rows = [
+    entry("pre-won", "won", 2.0, day),
+    entry("pre-lost", "lost", 3.0, day),
+    entry("pre-void", "void", 4.0, day),
+    entry("pre-pending", "pending", 5.0, day),
+    { ...entry("live-won", "won", 6.0, day), scope: "live" as const },
+    { ...entry("live-lost", "lost", 7.0, day), scope: "live" as const },
+  ];
+
+  it("leaves live reads, voids and pending out of the day's ticket and hit counts", () => {
+    const [d] = dayBalances(rows);
+    expect(d.settled).toBe(2);
+    expect(d.won).toBe(1);
+    expect(d.lost).toBe(1);
+    // The units are staked on exactly those tickets.
+    expect(d.unitsStaked).toBe(d.settled);
+    expect(d.live.settled).toBe(2);
+    expect(d.live.won).toBe(1);
+  });
+
+  it("still reports everything the day produced, so nothing is hidden", () => {
+    const [d] = dayBalances(rows);
+    expect(d.generated).toBe(6);
+    expect(d.pending).toBe(1);
+  });
+
+  it("never puts more tickets on one day than the whole record has", () => {
+    const s = proofStats(rows);
+    const overall = s.won + s.lost;
+    for (const d of s.byDay) {
+      expect(d.settled).toBeLessThanOrEqual(overall);
+      expect(d.won).toBeLessThanOrEqual(s.won);
+    }
+    expect(s.byDay.reduce((a, d) => a + d.settled, 0)).toBe(overall);
   });
 });
