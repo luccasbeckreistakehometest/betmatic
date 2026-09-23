@@ -153,6 +153,42 @@ function parseSelection(leg: SettledLeg, final: FinalGame): ParsedSelection {
   return { type: "other" };
 }
 
+/**
+ * The games a ticket is played on. A cross-game ticket stores a composite id
+ * (`slate:401857208+401857209+…`): ESPN cannot resolve it, so `getGameDetail` returned nothing and
+ * the ticket sat pending for ever — on 23/09/2026 every cross-game ticket ever written was stuck
+ * that way, invisible to the record. Splitting the id hands the real events back.
+ */
+export function gameIdsOf(gameId: string): string[] {
+  const CROSS = "slate:";
+  if (!gameId.startsWith(CROSS)) return [gameId];
+  return gameId.slice(CROSS.length).split("+").filter(Boolean);
+}
+
+/**
+ * Which finished game a leg belongs to. A single-game ticket has one answer. On a cross-game ticket
+ * each leg names its own game: a player prop by the roster holding the player, a team market by the
+ * team it names. A leg no game claims gets none — it is written off rather than graded against a
+ * stranger's boxscore, which would invent a result.
+ */
+function pickGame(leg: SettledLeg, finals: FinalGame[]): FinalGame | null {
+  if (finals.length <= 1) return finals[0] ?? null;
+
+  const player = leg.settlement?.type === "player_prop" ? leg.settlement.player : undefined;
+  if (player) return finals.find((f) => matchAthlete(player, f.athletes)) ?? null;
+
+  const abbr = leg.settlement?.teamAbbreviation;
+  if (abbr) return finals.find((f) => f.homeAbbr === abbr || f.awayAbbr === abbr) ?? null;
+
+  const text = leg.selection.toLowerCase();
+  return finals.find((f) => [...f.homeNames, ...f.awayNames].some((n) => n && text.includes(n.toLowerCase()))) ?? null;
+}
+
+/** The last game to start decides the grace window when no single game owns the leg. */
+function latestOf(finals: FinalGame[]): FinalGame {
+  return finals.reduce((a, b) => (Date.parse(b.startsAt) > Date.parse(a.startsAt) ? b : a));
+}
+
 function finalOf(detail: GameDetail, sportKey: string): FinalGame {
   return {
     gameId: detail.game.id,
@@ -202,15 +238,28 @@ export async function settlePending(limit = 50): Promise<{ settled: number; stil
   let awaitingBoxscore = 0;
 
   for (const entry of pending) {
-    const detail = await getGameDetail(entry.gameId, false, entry.sportKey).catch(() => null);
-    if (!detail || detail.game.status !== "final") {
+    const ids = gameIdsOf(entry.gameId);
+    const details = await Promise.all(ids.map((id) => getGameDetail(id, false, entry.sportKey).catch(() => null)));
+    // Every game the ticket touches has to be over: one still running can still move a leg.
+    if (!details.length || details.some((d) => !d || d.game.status !== "final")) {
       stillPending += 1;
       continue;
     }
 
-    const final = finalOf(detail, entry.sportKey);
+    const finals = details.map((d) => finalOf(d as GameDetail, entry.sportKey));
     const legs: SettledLeg[] = [];
     for (const leg of entry.legs) {
+      const final = pickGame(leg, finals);
+      if (!final) {
+        // No roster anywhere yet is a half-published payload, worth waiting for. Rosters that are
+        // published and hold nobody by this name is a wrong pick, and waiting never fixes it.
+        const anyRoster = finals.some((f) => f.athletes.length > 0);
+        const fallback = latestOf(finals);
+        legs.push(anyRoster
+          ? { ...leg, outcome: "void" as const, actual: "leg names no game on this ticket" }
+          : unmeasured(leg, fallback));
+        continue;
+      }
       legs.push(await gradeLeg(leg, final, parseSelection(leg, final)));
     }
 
