@@ -1,5 +1,5 @@
 import { readLedger } from "@/lib/ledger/store";
-import { brasiliaDay, mainTickets } from "@/lib/ledger/proof";
+import { brasiliaDay, mainTickets, withinRecordWindow } from "@/lib/ledger/proof";
 import { canonicalMarket } from "@/lib/ledger/stat-key";
 import { calibrationFactor, SIZING, type StakeMode } from "@/lib/bets/sizing";
 import type { LedgerEntry, SettledLeg } from "@/lib/types";
@@ -269,10 +269,24 @@ export function calibrationSnapshot(opts: { excludeDay?: string } = {}): Calibra
   };
 }
 
-/** The two numbers the measurement notice on /app/hoje prints. */
-export function calibrationHeadline(): { settledLegs: number; gapPoints: number } {
+/**
+ * The two numbers the measurement notice on /app/hoje prints — and the ONLY place in this file
+ * that honours the publication window.
+ *
+ * /prova counts from `recordStartDay` and says so on the page. This notice reads the same ledger
+ * and used to count everything, so the first entry older than the window would have put two
+ * numbers in the product describing different periods, one of them under a sentence naming its
+ * period. The window belongs to what is PUBLISHED.
+ *
+ * It stops here, deliberately. `sliceCalibration`, `bestSlice`, `calibrationSnapshot` and
+ * `livePeriodCalibration` all keep reading the whole ledger, because they feed the correction and
+ * the carteira gate: more settled legs is a better correction and a safer gate, and hiding history
+ * from them would make the wallet open on less evidence rather than more. Publishing a number and
+ * computing with one are different jobs, and only the first has an audience to be consistent with.
+ */
+export function calibrationHeadline(env: Record<string, string | undefined> = process.env): { settledLegs: number; gapPoints: number } {
   try {
-    const pre = sliceCalibration({ scope: "pregame-main" });
+    const pre = sliceCalibration({ scope: "pregame-main" }, withinRecordWindow(readLedger(), env));
     return { settledLegs: pre.settled, gapPoints: Number((pre.gapPoints * 100).toFixed(1)) };
   } catch {
     return { settledLegs: 0, gapPoints: 0 };

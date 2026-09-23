@@ -61,6 +61,19 @@ export const SIZING = {
   minEdgeGrossLive: 0.08,
   liveValidityMs: 90_000,
 
+  /**
+   * The price ceiling, and a warning for whoever moves it: **5.00 is not a measured number.**
+   *
+   * What is measured is 20x and up — 0 greens in 33 decided, which got stronger when the ledger
+   * was re-graded. Between 5x and 20x the sample is under the gate and has already reversed once:
+   * 3-5x read -43.5 % before the re-grade and +17.3 % after, and 5-10x went from -63.4 % to
+   * -17.1 %. Meanwhile ≤3x IS over the gate, at -18.7 %.
+   *
+   * So the half of the window that looks good is the long half, and **if this ceiling ever moves,
+   * the evidence points at raising it, not lowering it.** What holds it at 5.00 is not a
+   * measurement but `shrinkFactor`: k(d) already strips a long price of its edge with no ceiling
+   * at all, so this is a conservative backstop on top of arithmetic that already works.
+   */
   maxOdds: 5,
   minOdds: 1.3,
   maxLegs: 2,

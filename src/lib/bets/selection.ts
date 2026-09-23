@@ -25,8 +25,8 @@ import {
  *   1  pre-game, main ticket (never an alternative), game not under way
  *   2  evidenceScore = 100          (23.8 % hit vs 0 % below 100 on the ledger, p = 0.012)
  *   3  confidence ≠ low             (0 of 27 pre-game, p = 0.002)
- *   4  at most 2 legs               (5+ linhas: 0 greens in 22 decided here, 0 in 30 corrected)
- *   5  odds in [1.30, 5.00]         (above 20x: 0 greens in 24 here, 0 in 34 corrected)
+ *   4  at most 2 legs               (5+ linhas: 0 greens in 30 decided)
+ *   5  odds in [1.30, 5.00]         (above 20x: 0 greens in 33 decided)
  *   6  raw model edge ≥ 4 %
  *   7  raw model edge ≤ 20 %        (above that: the admin's review queue, not the wallet)
  *   8  calibrated, shrunk edge ≥ 2 % — the wallet's gate, not applied in `medicao` (see below)
@@ -34,28 +34,39 @@ import {
  *  10  at most 1 per game and 2 appearances of the same player in a day
  *
  * Cuts 4 and 5 carry most of the loss between them, but only part of that is settled evidence and
- * the two must not be confused. The production ledger was re-graded on 23/09 — the settle
- * vocabulary could not read PTS+AST, REB+AST or PTS+REB, 57 linhas had been filed as unmeasurable,
- * and nine verdicts changed, four of them from void to WIN. What survived the re-grading:
+ * the two must not be confused. The ledger behind the test fixture was re-graded on 23/09 — the
+ * settle vocabulary could not read PTS+AST, REB+AST or PTS+REB, so 57 settled linhas had been
+ * filed as unmeasurable — and 29 of the 123 outcomes moved, four of them from void to a WIN. The
+ * fixture is rebuilt from it by `scripts/research/build-selecao-fixture.mts`; pre-game now reads
+ * 92 decided, 19 green, -41.8 %.
  *
- *   · nothing above 20x has ever won (0 of 24 on the test fixture, 0 of 34 corrected);
- *   · `long` and `moonshot` are that same tail under a label (0 of 24 / 0 of 33), and every one of
- *     them is priced outside the window — which is why there is no list of banned bands here;
- *   · five linhas or more has never landed (0 of 22 / 0 of 30);
- *   · the overconfidence is in every bucket, single linhas included, and widens with the count.
+ * What the re-graded ledger supports, each slice over the 20-decided gate:
  *
- * What did NOT survive, and is therefore open rather than decided:
+ *   · nothing above 20x has ever won: 0 of 33, and the re-grade made it stronger;
+ *   · `long` and `moonshot` are that same tail under a label (0 of 33), and every one of them is
+ *     priced outside the window — which is why there is no list of banned bands here;
+ *   · five linhas or more has never landed: 0 of 30;
+ *   · the overconfidence is in every bucket and widens with the count — 65.0 % promised against
+ *     47.6 % delivered on one linha, 21.7 % against 12.5 % on three.
+ *
+ * What it does NOT support, and is therefore open rather than decided:
  *
  *   · **The ceiling at 5x is not itself measured.** 3-5x read -43.5 % before the re-grade and
- *     +17.3 % after; 5-10x went from -63.4 % to -17.1 %. Both are under the 20-decided gate, and
- *     the gate binds for good news as well as bad. What justifies the ceiling is not those numbers
- *     but the shrinkage: k(d) = σ_true²/(σ_true² + (d·σ_p)²) already strips a long price of its
- *     edge with no ceiling at all, so 5.00 is a conservative backstop. Revisit at n ≥ 20.
- *   · **Three and four linhas.** Corrected, three reads -45 % and four reads +51 % on six tickets.
- *     The cut at 2 rests on the five-plus finding and on the correlation, not on those two.
- *   · **Treating an alternative as a worse ticket.** Over all tickets the second option and the
- *     main are indistinguishable. Cut 1 stands on DUPLICATION — an alternative is the same bet on
- *     the same game — and rule 10 is what enforces it.
+ *     +17.3 % after; 5-10x went from -63.4 % to -17.1 %. Both are under the gate, which binds for
+ *     good news as well as bad. What justifies the ceiling is the shrinkage, not those numbers:
+ *     k(d) = σ_true²/(σ_true² + (d·σ_p)²) already strips a long price of its edge with no ceiling
+ *     at all, so 5.00 is a conservative backstop. Revisit at n ≥ 20 — and note that ≤3x is now
+ *     over the gate at -18.7 % while 3-5x is the half that looks good, so if the ceiling ever
+ *     moves the evidence points at raising it, not lowering it.
+ *   · **Three and four linhas.** Three reads -45.1 % on 16 and four reads +51.1 % on SIX, which is
+ *     noise. The cut at 2 rests on the five-plus finding and on the correlation, not on those.
+ *   · **Treating an alternative as a worse ticket.** Inside the window the two arms land on top of
+ *     each other — 40.0 % of 10 against 41.2 % of 17, both promised ~54 % — so the second option
+ *     is plainly not the worse ticket. But a comparison needs BOTH arms over the gate and neither
+ *     is there yet, so cut 1 stays on the ground it always had: DUPLICATION. An alternative is a
+ *     second version of the same bet on the same game, and rule 10 already caps a game at one
+ *     ticket, so admitting them would add candidates without adding exposure. That is the argument
+ *     for relaxing cut 1 the day both arms clear 20, and not a day before.
  */
 
 export type Scope = "pre" | "live";

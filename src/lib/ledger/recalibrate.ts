@@ -66,7 +66,12 @@ const find = (rows: CalibrationRow[], key: string) => rows.find((r) => r.key ===
  */
 export interface Calibrator {
   /** The corrected chance for one leg, and why it moved. */
-  apply(stated: number, sourceBasis: string, market: string): { probability: number; correction: Correction | null };
+  /**
+   * `stat` is the canonical market key (stat-key.ts) — PTS, REB+AST, PTS+REB. Pass it whenever the
+   * caller can compute it: 1076 of the ledger's 1099 linhas carry `market: "player_prop"`, so
+   * `byMarket` is very nearly one bucket and the slice it offers is rarely the sharp one.
+   */
+  apply(stated: number, sourceBasis: string, market: string, stat?: string | null): { probability: number; correction: Correction | null };
   /** Human-readable, for the generation log and the data note. */
   describe(): string;
 }
@@ -83,11 +88,17 @@ export function calibratorFor(scope: "pre" | "live"): Calibrator {
 export function buildCalibrator(report: CalibrationReport = calibrate(MIN_SAMPLE)): Calibrator {
   const applied: Correction[] = [];
   return {
-    apply(stated, sourceBasis, market) {
+    apply(stated, sourceBasis, market, stat) {
       const p = clamp(stated);
-      // The narrower slice wins: how a source behaves ON THIS MARKET beats how it behaves overall.
+      // The narrower slice wins, and the ladder walks from narrow to wide: the canonical stat
+      // first, because PTS and REB+AST are populations that behave differently and `player_prop`
+      // holds 1076 of the ledger's 1099 linhas; then the raw market; then the source. Each rung is
+      // gated at MIN_SAMPLE inside `correctionOf`, so a thin stat slice falls through on its own
+      // and nothing is ever corrected off a sample too small to say anything.
       const correction =
-        correctionOf(find(report.byMarket, market)) ?? correctionOf(find(report.bySource, sourceBasis));
+        (stat ? correctionOf(find(report.byStat, stat)) : null) ??
+        correctionOf(find(report.byMarket, market)) ??
+        correctionOf(find(report.bySource, sourceBasis));
       if (!correction) return { probability: p, correction: null };
       if (!applied.some((c) => c.label === correction.label)) applied.push(correction);
       return { probability: clamp(sigmoid(logit(p) + correction.shift)), correction };

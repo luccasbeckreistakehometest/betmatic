@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CARTEIRA_GATE, bestSlice, sigmaFrom, sliceCalibration, wilson } from "@/lib/ledger/calibration-input";
+import { withinRecordWindow } from "@/lib/ledger/proof";
 import { SIZING } from "@/lib/bets/sizing";
 import type { LedgerEntry, LegOutcome, SettledLeg } from "@/lib/types";
 
@@ -108,5 +109,33 @@ describe("the statistics themselves", () => {
     const sigma = sigmaFrom(perfect, 1);
     expect(sigma).toBeGreaterThanOrEqual(SIZING.sigmaPFloor);
     expect(sigma).toBeLessThanOrEqual(SIZING.sigmaPCeiling);
+  });
+});
+
+describe("the publication window reaches the published number and nothing else", () => {
+  // Two nights either side of a window that opens on the 22nd.
+  const env = { RECORD_START_DAY: "2026-09-22" };
+  const before = run(40, 20, 0.7, { startsAt: "2026-09-21T22:00:00.000Z", settledAt: "2026-09-22T02:00:00.000Z" });
+  const after = run(40, 28, 0.7, { startsAt: "2026-09-22T22:00:00.000Z", settledAt: "2026-09-23T02:00:00.000Z" });
+  const all = [...before, ...after];
+
+  it("counts only the published window when the window is applied", () => {
+    expect(withinRecordWindow(all, env)).toHaveLength(40);
+    const published = sliceCalibration({ scope: "pregame-main" }, withinRecordWindow(all, env));
+    expect(published.settled).toBe(40);
+    // 28 of 40 against 70 % promised: the published notice describes the published period.
+    expect(published.gapPoints).toBeCloseTo(0, 1);
+  });
+
+  it("but the correction and the gate keep seeing the whole ledger", () => {
+    const full = sliceCalibration({ scope: "pregame-main" }, all);
+    expect(full.settled).toBe(80);
+    // Twice the evidence, and a WORSE measured slice: `gapPoints` is predicted minus actual, so
+    // the older night's 20-point optimism shows up here (+10 points over the two) and is invisible
+    // to the published notice (0). That is the point — hiding the older half from the gate would
+    // open the wallet on less evidence and a flattering number, which is the wrong direction twice.
+    const published = sliceCalibration({ scope: "pregame-main" }, withinRecordWindow(all, env));
+    expect(full.gapPoints).toBeGreaterThan(published.gapPoints);
+    expect(full.gapPoints).toBeCloseTo(0.1, 6);
   });
 });
