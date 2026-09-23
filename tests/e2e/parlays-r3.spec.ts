@@ -43,9 +43,13 @@ test("a cross-game ticket opens in one betslip, with the three matches in the UR
   await page.getByTestId("build-slate").click();
   await expect(page.getByTestId("expected-losers").first()).toBeVisible({ timeout: 60_000 });
 
-  // The prices arrive after the tickets, the same way the game page loads them.
-  const prices = page.locator('[data-testid="ticket-prices"][data-coverage="full"]').first();
-  await expect(prices).toBeVisible({ timeout: 30_000 });
+  // The prices arrive after the tickets, the same way the game page loads them. The slate can hold
+  // more than one cross-game ticket (three matches and two), so the long one is picked by what its
+  // link carries, never by its place on the page — the list is sorted by price, not by length.
+  await expect(page.locator('[data-testid="ticket-prices"][data-coverage="full"]').first()).toBeVisible({ timeout: 30_000 });
+  const prices = page.locator('[data-testid="ticket-prices"][data-coverage="full"]')
+    .filter({ has: page.locator('[data-testid="ticket-open-book"][data-carried="3"]') });
+  await expect(prices).toHaveCount(1);
   const link = prices.getByTestId("ticket-open-book").first();
   await expect(link).toContainText("Abrir o bilhete inteiro na Superbet");
   await expect(link).toHaveAttribute("data-coverage", "full");
