@@ -6,7 +6,13 @@ export const CLIENT_EVENTS = [
   "page_view", "landing_view", "sport_funnel_view", "jogo_view", "prova_view", "tool_used", "signup_view", "first_game_open",
   "ticket_viewed", "alt_expanded", "share_clicked", "plan_view", "telegram_link_started", "live_panel_open", "tipster_funnel_view",
   "referral_landing",
-  // An outbound click on a bookmaker link under a ticket (props: book, gameId, ticketId, legIndex, kind, deep).
+  // An outbound click on a bookmaker link under a ticket. Props: book, gameId, ticketId, legIndex,
+  // kind (leg | ticket), deep (the URL pre-fills a betslip), verified, and what the reader was
+  // offered when they clicked — coverage (full | partial | near), covered, the number of the
+  // ticket's legs that book prices at the exact line, and carried, the number the URL itself
+  // pre-fills (smaller than covered when a covered row has no deep-link ids). Partial and near
+  // clicks are the measurement the best-effort slip exists for: whether a reader will take most of
+  // a ticket in one tap.
   "book_click",
 ] as const;
 export type ClientEvent = (typeof CLIENT_EVENTS)[number];

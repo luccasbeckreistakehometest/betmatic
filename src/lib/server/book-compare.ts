@@ -1,7 +1,8 @@
 import { resolveStatLabels } from "@/lib/props/history";
 import { booksForGame, pricesForGame } from "@/lib/server/book-prices";
 import { compareTicket, groupBySelection, propSignals, selectionKey, type LegComparison, type LegQuery, type PropSignal, type Quote, type TicketComparison } from "@/lib/sources/br-books/compare";
-import { affiliateTagsFromEnv, deepLinkFor, ticketDeepLinkFor, type DeepLink } from "@/lib/sources/br-books/deeplinks";
+import { ticketSlip, type TicketSlip } from "@/lib/sources/br-books/coverage";
+import { affiliateTagsFromEnv, deepLinkFor, type DeepLink } from "@/lib/sources/br-books/deeplinks";
 import { playerKey } from "@/lib/sources/br-books/normalise";
 import { booksConfig } from "@/lib/sources/br-books/registry";
 import type { BookPrice } from "@/lib/sources/br-books/types";
@@ -65,8 +66,13 @@ export interface TicketPrices extends Omit<TicketComparison, "legs"> {
   suggestionId: string;
   /** One per ticket leg, null where the leg could not be named. */
   legs: (LegPrices | null)[];
-  /** Every leg in one betslip at the best single book, when that book's scheme carries a whole ticket. */
-  ticketLink: DeepLink | null;
+  /**
+   * The best link this ticket can have anywhere: the whole ticket in one slip where a book carries
+   * it, else the most of it one book carries, else a near line, else nothing. See coverage.ts —
+   * coverage, the link's own reach and a near line are three separate numbers there and stay
+   * separate all the way to the screen.
+   */
+  slip: TicketSlip;
 }
 
 export interface GamePrices { books: string[]; fetchedAt: string | null; tickets: TicketPrices[]; signals: PropSignal[] }
@@ -106,20 +112,16 @@ export function compareSuggestionsWith(prices: BookPrice[], suggestions: BetSugg
     const named = s.legs.map((leg, i) => ({ query: queries[i], decimal: leg.oddsDecimal })).filter((x): x is { query: LegQuery; decimal: number } => !!x.query);
     if (!named.length) continue;
     const cmp = compareTicket(prices, named, opts);
-    // Each leg's link per book, and the row behind each quote so the whole ticket can be linked at one book.
-    const rowsByBook: Map<string, BookPrice>[] = [];
+    // Each leg's link per book, best price first (the whole ticket's links come from coverage.ts).
     const withLinks: LegPrices[] = cmp.legs.map((c) => {
       const rows = groups.get(selectionKey({ market: c.query.market, player: c.query.player, stat: c.query.stat })) ?? [];
-      const byBook = new Map<string, BookPrice>();
       const links: DeepLink[] = [];
       for (const quote of c.quotes) {
         const row = rowBehind(rows, c.query, quote);
         if (!row) continue;
-        byBook.set(quote.book, row);
         const link = deepLinkFor(row, linkOpts);
         if (link) links.push(link);
       }
-      rowsByBook.push(byBook);
       return { ...c, links };
     });
     // Re-expand to the ticket's leg order so the UI can put each verdict under its leg.
@@ -129,9 +131,10 @@ export function compareSuggestionsWith(prices: BookPrice[], suggestions: BetSugg
     // would describe a shorter ticket than the one shown.
     const complete = queries.every(Boolean);
     const bestSingleBook = complete ? cmp.bestSingleBook : null;
-    const ticketRows = bestSingleBook ? rowsByBook.map((m) => m.get(bestSingleBook.book)) : [];
-    const ticketLink = bestSingleBook && ticketRows.every((r): r is BookPrice => !!r) ? ticketDeepLinkFor(ticketRows, linkOpts) : null;
-    out.push({ suggestionId: s.id, legs, bestSingleBook, perBook: complete ? cmp.perBook : [], theoreticalBest: complete ? cmp.theoreticalBest : null, referenceDecimal: cmp.referenceDecimal, bestSingleVsReferencePct: complete ? cmp.bestSingleVsReferencePct : null, theoreticalVsReferencePct: complete ? cmp.theoreticalVsReferencePct : null, books: cmp.books, ticketLink });
+    // Coverage is measured over the ticket's OWN legs, unnamed ones included, so "3 das 4 linhas"
+    // counts the four the reader sees.
+    const slip = ticketSlip(prices, s.legs.map((leg, i) => ({ query: queries[i], decimal: leg.oddsDecimal })), linkOpts);
+    out.push({ suggestionId: s.id, legs, bestSingleBook, perBook: complete ? cmp.perBook : [], theoreticalBest: complete ? cmp.theoreticalBest : null, referenceDecimal: cmp.referenceDecimal, bestSingleVsReferencePct: complete ? cmp.bestSingleVsReferencePct : null, theoreticalVsReferencePct: complete ? cmp.theoreticalVsReferencePct : null, books: cmp.books, slip });
   }
   return out;
 }

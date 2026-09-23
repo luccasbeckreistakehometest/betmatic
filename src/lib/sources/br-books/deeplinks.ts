@@ -274,3 +274,43 @@ export function ticketDeepLinkFor(prices: BookPrice[], opts: DeepLinkOptions = {
 export function supportsTicketLink(platform: string): boolean {
   return platform === "superbet" || platform === "kambi" || platform === "sportingbet";
 }
+
+/** A link, and exactly which of the selections it was asked for the URL itself pre-fills. */
+export interface SelectionsLink {
+  link: DeepLink;
+  /** Indices into the `prices` array given, in order. Empty when the link is a page. */
+  carried: number[];
+}
+
+/**
+ * The best link one book can give for a set of selections it prices — the entry point the
+ * best-effort ticket link uses, where "best effort" means: as much of the ticket as this book's own
+ * URL scheme can carry, and never a claim beyond it.
+ *
+ * The slip with every selection where the platform takes several (Superbet, KTO, Sportingbet); the
+ * event or market page where it takes one (Betfair Exchange, Betnacional), which is still the right
+ * page with the runners on screen; null where the platform exposes no URL at all (the five Altenar
+ * tenants) or the first row lacks the ids.
+ *
+ * `carried` is the whole point of the return shape. A whole-ticket slip needs EVERY row to carry
+ * the platform's ids (`SelectionRef` is optional by design: rows stored before deep links existed
+ * have none), and one row without them drops the link to the single-selection fallback — the same
+ * book, the same coverage, a URL with ONE bet in it. The caller must be able to tell those apart
+ * without re-deriving the rule, because the difference is a reader clicking "o bilhete inteiro" and
+ * landing on a single. It is deliberately NOT the number of legs the book prices: the caller counts
+ * coverage itself and the two numbers are shown to the reader separately, so "3 das 4 linhas" and
+ * "página do jogo" can both be true of the same link.
+ */
+export function linkForSelections(prices: BookPrice[], opts: DeepLinkOptions = {}): SelectionsLink | null {
+  if (!prices.length) return null;
+  const [first] = prices;
+  if (prices.some((p) => p.book !== first.book || p.platform !== first.platform)) return null;
+  const whole = ticketDeepLinkFor(prices, opts);
+  if (whole && whole.selections === prices.length) return { link: whole, carried: prices.map((_, i) => i) };
+  // Either the whole-slip attempt failed, or it came back as a page (a one-row ticket at a book
+  // whose scheme carries nothing). Both land on the same fallback, and the fallback is built from
+  // `prices[0]`, so the one selection it can pre-fill is the first — never a later one.
+  const link = whole ?? deepLinkFor(first, opts);
+  if (!link) return null;
+  return { link, carried: link.selections > 0 ? [0] : [] };
+}

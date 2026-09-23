@@ -220,3 +220,50 @@ describe("books in the model's consensus", () => {
     expect(austin.consensusLine).toBe(17.5);
   });
 });
+
+/**
+ * Found on 23/09/2026 while fixing the same defect in the closest-line block: `lineAlternatives`
+ * reduced with `latestPerBook`, which keeps ONE row per book. A book publishing a whole ladder in
+ * one round stamps every rung with the same `fetchedAt`, and `pricesForGame` has no ORDER BY, so
+ * the survivor was whichever SQLite returned first — and the "número melhor" on screen, which the
+ * UI picks with `.find(a => a.better)`, was arbitrary.
+ */
+describe("the friendlier number, out of a whole ladder", () => {
+  const ladder = (lines: [number, number][]) => [
+    prop("Superbet", "Ana Lima", "points", "over", 17.5, 1.9),
+    ...lines.map(([line, decimal]) => prop("Superbet", "Ana Lima", "points", "over", line, decimal)),
+  ];
+  const ask = (rows: BookPrice[]) =>
+    compareLeg(rows, { market: "player_prop", player: "Lima, Ana", stat: "points", side: "over", line: 17.5 });
+
+  it("sees every rung the book published, not one of them at random", () => {
+    const c = ask(ladder([[16.5, 1.62], [15.5, 1.38], [18.5, 2.25]]));
+    expect(c.lineAlternatives.map((a) => a.line).sort((x, y) => x - y)).toEqual([15.5, 16.5, 18.5]);
+  });
+
+  it("offers the smallest concession that helps, out of the rungs that clear the price gate", () => {
+    // Over 17,5 is friendlier at a LOWER line. Both rungs here are out of step enough to qualify;
+    // in a coherent ladder the nearer rung is also the better-paying one, which is what the sort
+    // reads. A rung that pays far below the consensus is not a better number at all — next test.
+    const better = ask(ladder([[16.5, 1.86], [15.5, 1.83]])).lineAlternatives.find((a) => a.better);
+    expect(better).toMatchObject({ line: 16.5 });
+  });
+
+  it("refuses a friendlier rung that pays far below the line's own consensus", () => {
+    const c = ask(ladder([[16.5, 1.62], [15.5, 1.38]]));
+    expect(c.lineAlternatives.find((a) => a.better)).toBeUndefined();
+    expect(c.lineAlternatives.map((a) => a.line).sort((x, y) => x - y)).toEqual([15.5, 16.5]);
+  });
+
+  it("never treats a harder line as the friendlier number", () => {
+    const c = ask(ladder([[18.5, 2.25]]));
+    expect(c.lineAlternatives.find((a) => a.better)).toBeUndefined();
+    expect(c.lineAlternatives).toHaveLength(1);
+  });
+
+  it("gives the same answer whether or not the rest of the ladder is in the database", () => {
+    const whole = ask(ladder([[16.5, 1.86], [15.5, 1.83], [18.5, 2.25]])).lineAlternatives.find((a) => a.better);
+    const alone = ask(ladder([[16.5, 1.86]])).lineAlternatives.find((a) => a.better);
+    expect(whole).toEqual(alone);
+  });
+});
