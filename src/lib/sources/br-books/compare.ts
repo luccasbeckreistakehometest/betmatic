@@ -108,7 +108,9 @@ export interface CompareOptions {
   now?: number;
 }
 
-const EXCHANGE = "betfair-exchange";
+/** The exchange is the reference the margins are measured against, never a competing book. */
+export const EXCHANGE_PLATFORM = "betfair-exchange";
+const EXCHANGE = EXCHANGE_PLATFORM;
 /** The exchange counts as a reference only while a lay sits within this ratio of the back… */
 export const EXCHANGE_MAX_SPREAD = 1.1;
 /** …or, at long odds where the price ladder's own ticks are wide, within this much implied probability. */
@@ -123,7 +125,9 @@ export function exchangeIsMarket(back: number, lay: number | undefined): boolean
   if (!lay || lay < back || back <= 1) return false;
   return lay / back <= EXCHANGE_MAX_SPREAD || 1 / back - 1 / lay <= EXCHANGE_MAX_GAP;
 }
-const same = (a: number | undefined, b: number | undefined) => a !== undefined && b !== undefined && Math.abs(a - b) < 0.011;
+/** Two lines are the same line: the books print 17.5 and 17.50, and one is 0.01 off on a rounding. */
+export const sameLine = (a: number | undefined, b: number | undefined) => a !== undefined && b !== undefined && Math.abs(a - b) < 0.011;
+const same = sameLine;
 
 // playerKey normalises Unicode on every call; a game carries a thousand prop rows and each query
 // scans them, so the key is remembered per spelling (bounded, cleared when it grows).
@@ -164,7 +168,7 @@ function median(values: number[]): number | null {
 const pctOver = (a: number, b: number) => Number(((a / b - 1) * 100).toFixed(2));
 
 /** Rows that describe the same selection as the query, regardless of line. */
-function sameSelection(p: BookPrice, q: LegQuery): boolean {
+export function sameSelection(p: BookPrice, q: LegQuery): boolean {
   if (p.market !== q.market) return false;
   if (q.market === "player_prop") return !!q.player && !!p.player && pkey(p.player) === pkey(q.player) && p.stat === q.stat && p.side === q.side;
   if (q.market === "moneyline") return p.side === q.side;
@@ -178,7 +182,7 @@ const toQuote = (p: BookPrice): Quote => ({ book: p.book, platform: p.platform, 
  * the newest row per (book, kind) wins; and where a book posts the same line twice — an over/under
  * pair at 17.5 and an "18+" rung — the two settle identically, so the better price is the book's.
  */
-function latestPerBook(rows: BookPrice[]): BookPrice[] {
+export function latestPerBook(rows: BookPrice[]): BookPrice[] {
   const byBookKind = new Map<string, BookPrice>();
   for (const r of rows) {
     const k = `${r.book}|${r.kind ?? ""}`;

@@ -274,3 +274,23 @@ export function ticketDeepLinkFor(prices: BookPrice[], opts: DeepLinkOptions = {
 export function supportsTicketLink(platform: string): boolean {
   return platform === "superbet" || platform === "kambi" || platform === "sportingbet";
 }
+
+/**
+ * The best link one book can give for a set of selections it prices — the entry point the
+ * best-effort ticket link uses, where "best effort" means: as much of the ticket as this book's own
+ * URL scheme can carry, and never a claim beyond it.
+ *
+ * The slip with every selection where the platform takes several (Superbet, KTO, Sportingbet); the
+ * event or market page where it takes one (Betfair Exchange, Betnacional), which is still the right
+ * page with the runners on screen; null where the platform exposes no URL at all (the five Altenar
+ * tenants) or a row lacks the ids. The returned `selections` is what the URL actually pre-fills — 0
+ * on a page — and it is deliberately NOT the number of legs the book prices: the caller counts
+ * coverage itself and the two numbers are shown to the reader separately, so "3 das 4 linhas" and
+ * "página do jogo" can both be true of the same link.
+ */
+export function linkForSelections(prices: BookPrice[], opts: DeepLinkOptions = {}): DeepLink | null {
+  if (!prices.length) return null;
+  const [first] = prices;
+  if (prices.some((p) => p.book !== first.book || p.platform !== first.platform)) return null;
+  return ticketDeepLinkFor(prices, opts) ?? deepLinkFor(first, opts);
+}
