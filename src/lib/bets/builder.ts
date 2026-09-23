@@ -70,6 +70,32 @@ const SuggestionSchema = z.object({
 });
 
 export type RawSuggestion = z.infer<typeof SuggestionSchema>;
+/**
+ * Whether a leg's settlement descriptor describes the bet its own text describes. The grader trusts
+ * this descriptor completely, so an incoherent one is worse than no ticket: a player's rebounds
+ * settled as a game total is a silent wrong grade, not a visible error.
+ */
+export function settlementIsCoherent(leg: Pick<RawLeg, "selection" | "settlementType" | "settlementPlayer" | "settlementStat" | "settlementLine" | "settlementSide" | "settlementTeam" | "sourceBasis">): boolean {
+  const names = /(pontos|rebotes|assist|bolas de 3|triplos|roubos|tocos|erros|faltas|minutos|PRA|points|rebounds|assists|3-?point|steals|blocks|turnovers)/i;
+  const looksLikeAPlayerLine = names.test(leg.selection) && !/^(mais|menos) de [\d.,]+ (gols|pontos no jogo)/i.test(leg.selection);
+  switch (leg.settlementType) {
+    case "player_prop":
+      return !!leg.settlementPlayer && !!leg.settlementStat && leg.settlementLine !== null && (leg.settlementSide === "over" || leg.settlementSide === "under");
+    case "total":
+      // A game total never names a player, and a line that reads like a player's stat is not one.
+      return !leg.settlementPlayer && !looksLikeAPlayerLine && leg.settlementLine !== null && (leg.settlementSide === "over" || leg.settlementSide === "under");
+    case "spread":
+      return !!leg.settlementTeam && !leg.settlementPlayer && leg.settlementLine !== null;
+    case "moneyline":
+      return !!leg.settlementTeam && !leg.settlementPlayer;
+    case "other":
+      // Nothing grades "other"; it would be voided at best and mis-graded at worst.
+      return false;
+    default:
+      return false;
+  }
+}
+
 export type RawLeg = z.infer<typeof LegSchema>;
 
 export const SlateSchema = z.object({
@@ -214,6 +240,11 @@ export function priceSuggestion(
 ): BetSuggestion | null {
   const legs: BetLeg[] = [];
   for (const leg of raw.legs) {
+    // A settlement descriptor that does not match its own selection is how a ticket gets graded
+    // against the wrong thing: on 22/09/2026 "Kamilla Cardoso under 8.5 rebotes" was emitted as a
+    // game `total` and settled against the final score (182 vs 8.5), losing a ticket that had
+    // nothing to do with the game's points. The leg is dropped here rather than graded later.
+    if (!settlementIsCoherent(leg)) return null;
     const decimal = parseOdds(leg.odds);
     legs.push({
       selection: leg.selection,
