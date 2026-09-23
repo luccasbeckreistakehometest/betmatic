@@ -21,6 +21,7 @@ import { consensusPrompt, type ConsensusProp } from "@/lib/props/consensus";
 import { livePrompt, type LiveState } from "@/lib/live/state";
 import { rolePrompt, type RoleProfile } from "@/lib/props/role";
 import { anchoredOdds, enrichLeg, type EnrichContext } from "@/lib/bets/enrich";
+import { buildCalibrator, type Calibrator } from "@/lib/ledger/recalibrate";
 import { minutesPrompt, type MinutesProjection } from "@/lib/props/minutes";
 import { environmentPrompt, gameEnvironment, type GameEnvironment } from "@/lib/signals/environment";
 import { ticketCorrelation, type CorrLeg } from "@/lib/signals/correlation";
@@ -75,6 +76,17 @@ export type RawSuggestion = z.infer<typeof SuggestionSchema>;
  * this descriptor completely, so an incoherent one is worse than no ticket: a player's rebounds
  * settled as a game total is a silent wrong grade, not a visible error.
  */
+/**
+ * Whether a leg names any evidence at all. `sourceBasis` is the model's own answer to "what is this
+ * leaning on", and "none" is an answer it is allowed to give — the learning run of 23/09/2026 asked
+ * for those legs to stop being published, having found one settled against the wrong market entirely.
+ * It costs almost nothing to enforce: 2 legs of 1.099 in the record ever said "none".
+ */
+export function hasEvidence(sourceBasis: string): boolean {
+  const s = sourceBasis.trim().toLowerCase();
+  return !!s && !["none", "nenhuma", "nenhum", "sem fonte", "n/a", "na", "-", "—"].includes(s);
+}
+
 export function settlementIsCoherent(leg: Pick<RawLeg, "selection" | "settlementType" | "settlementPlayer" | "settlementStat" | "settlementLine" | "settlementSide" | "settlementTeam" | "sourceBasis">): boolean {
   const names = /(pontos|rebotes|assist|bolas de 3|triplos|roubos|tocos|erros|faltas|minutos|PRA|points|rebounds|assists|3-?point|steals|blocks|turnovers)/i;
   const looksLikeAPlayerLine = names.test(leg.selection) && !/^(mais|menos) de [\d.,]+ (gols|pontos no jogo)/i.test(leg.selection);
@@ -245,6 +257,9 @@ export function priceSuggestion(
     // game `total` and settled against the final score (182 vs 8.5), losing a ticket that had
     // nothing to do with the game's points. The leg is dropped here rather than graded later.
     if (!settlementIsCoherent(leg)) return null;
+    // A leg that names no evidence is a guess wearing a probability. It is dropped with the ticket,
+    // the same way an incoherent settlement is: publishing it would put a number on nothing.
+    if (!hasEvidence(leg.sourceBasis)) return null;
     const decimal = parseOdds(leg.odds);
     legs.push({
       selection: leg.selection,
@@ -367,7 +382,20 @@ function matchedProp(leg: BetLeg, ctx: EnrichContext): PropRow | null {
  * and the computed probability, applies same-game correlation and orders the result. The model's
  * own odds text is used only where no feed carries the market.
  */
+/**
+ * The stated chance replaced by the corrected one, where the record has enough settled legs to earn
+ * a correction. The model's own number survives as `rawProbability`, so the ledger can still race
+ * what it said against what it was served with.
+ */
+function calibrated(leg: BetLeg, calibrator: Calibrator): BetLeg {
+  const { probability, correction } = calibrator.apply(leg.fairProbability, leg.settlement?.sourceBasis ?? "", leg.market);
+  if (!correction || probability === leg.fairProbability) return leg;
+  return { ...leg, rawProbability: leg.rawProbability ?? leg.fairProbability, fairProbability: probability };
+}
+
 export function priceAll(raws: RawSuggestion[], ctx: EnrichContext, opts: { oneLegPerGame?: boolean } = {}): BetSuggestion[] {
+  // Read the record once for the whole slate: the correction is the same for every ticket in it.
+  const calibrator = buildCalibrator();
   const items = raws.map((raw) => {
     const anchored: RawSuggestion = { ...raw, legs: raw.legs.map((l) => ({ ...l, odds: anchoredOdds(l, ctx) })) };
     const decimalGuess = parlayDecimal(
@@ -381,7 +409,7 @@ export function priceAll(raws: RawSuggestion[], ctx: EnrichContext, opts: { oneL
     if (priced) {
       // The computed probability anchors fairProbability inside enrichLeg, so the ticket's numbers are
       // recomputed from the anchored legs before correlation is applied.
-      const legs = priced.legs.map((leg, j) => enrichLeg(leg, anchored.legs[j], ctx));
+      const legs = priced.legs.map((leg, j) => calibrated(enrichLeg(leg, anchored.legs[j], ctx), calibrator));
       const modelled = legs.reduce((acc, l) => acc * l.fairProbability, 1);
       priced = applyCorrelation({
         ...priced, legs, modelledProbability: modelled,
