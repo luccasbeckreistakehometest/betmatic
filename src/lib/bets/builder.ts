@@ -21,7 +21,7 @@ import { consensusPrompt, type ConsensusProp } from "@/lib/props/consensus";
 import { livePrompt, type LiveState } from "@/lib/live/state";
 import { rolePrompt, type RoleProfile } from "@/lib/props/role";
 import { anchoredOdds, enrichLeg, type EnrichContext } from "@/lib/bets/enrich";
-import { buildCalibrator, type Calibrator } from "@/lib/ledger/recalibrate";
+import { calibratorFor, type Calibrator } from "@/lib/ledger/recalibrate";
 import { minutesPrompt, type MinutesProjection } from "@/lib/props/minutes";
 import { environmentPrompt, gameEnvironment, type GameEnvironment } from "@/lib/signals/environment";
 import { ticketCorrelation, type CorrLeg } from "@/lib/signals/correlation";
@@ -393,9 +393,10 @@ function calibrated(leg: BetLeg, calibrator: Calibrator): BetLeg {
   return { ...leg, rawProbability: leg.rawProbability ?? leg.fairProbability, fairProbability: probability };
 }
 
-export function priceAll(raws: RawSuggestion[], ctx: EnrichContext, opts: { oneLegPerGame?: boolean } = {}): BetSuggestion[] {
+export function priceAll(raws: RawSuggestion[], ctx: EnrichContext, opts: { oneLegPerGame?: boolean; live?: boolean } = {}): BetSuggestion[] {
   // Read the record once for the whole slate: the correction is the same for every ticket in it.
-  const calibrator = buildCalibrator();
+  // A read taken with the game under way answers to the live record, which is the harsher one.
+  const calibrator = calibratorFor(opts.live ? "live" : "pre");
   const items = raws.map((raw) => {
     const anchored: RawSuggestion = { ...raw, legs: raw.legs.map((l) => ({ ...l, odds: anchoredOdds(l, ctx) })) };
     const decimalGuess = parlayDecimal(
@@ -518,7 +519,7 @@ export async function buildBets(args: BuildArgs): Promise<BetSlate> {
     mock: () => mockGameSlate({ game, detail, props, lang, bands, live: !!live }),
   });
 
-  const suggestions = priceAll(result.suggestions, { props, sportKey: game.sportKey, game, lines });
+  const suggestions = priceAll(result.suggestions, { props, sportKey: game.sportKey, game, lines }, { live: !!live });
 
   // Log every ticket at generation time so it can be graded once the game finishes. The ledger keeps
   // the computed probability beside the model's per leg (SettledLeg.computedProbability), which is

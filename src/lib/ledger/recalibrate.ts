@@ -71,6 +71,15 @@ export interface Calibrator {
   describe(): string;
 }
 
+/**
+ * The calibrator for one kind of ticket. A live read is corrected against the live record, never
+ * against the pre-game one: the two are measured far apart (−8 points against −22), so borrowing
+ * the gentler number would leave most of the overconfidence in place.
+ */
+export function calibratorFor(scope: "pre" | "live"): Calibrator {
+  return buildCalibrator(calibrate(MIN_SAMPLE, scope));
+}
+
 export function buildCalibrator(report: CalibrationReport = calibrate(MIN_SAMPLE)): Calibrator {
   const applied: Correction[] = [];
   return {
