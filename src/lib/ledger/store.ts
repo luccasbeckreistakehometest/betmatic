@@ -115,6 +115,9 @@ export function recordPredictions(
       combinedDecimal: s.combinedDecimal,
       modelledProbability: s.modelledProbability,
       evidenceScore: s.evidenceScore,
+      // Copied out of the slate because the slate is overwritten when a game is regenerated, and
+      // this is a selection cut: losing it silently changes which tickets the wallet would take.
+      ...(s.confidence ? { confidence: s.confidence } : {}),
       suggestionId: s.id,
       // Recorded so a ticket's price can be rebuilt from its legs — which is what re-pricing a
       // ticket over its surviving legs, after one is voided, needs.
