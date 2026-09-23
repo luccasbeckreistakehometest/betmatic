@@ -123,7 +123,7 @@ export function BankrollBoard() {
                       {e.alerts?.length ? (
                         <span data-testid="entry-alert" title={e.alerts.map((a) => a.player).join(", ")}>
                           <Badge tone="neg">
-                            {lang === "pt" ? `escalação: ${e.alerts.length === 1 ? "1 perna em risco" : `${e.alerts.length} pernas em risco`}` : `lineup: ${e.alerts.length === 1 ? "1 leg at risk" : `${e.alerts.length} legs at risk`}`}
+                            {lang === "pt" ? `escalação: ${e.alerts.length === 1 ? "1 linha em risco" : `${e.alerts.length} linhas em risco`}` : `lineup: ${e.alerts.length === 1 ? "1 leg at risk" : `${e.alerts.length} legs at risk`}`}
                           </Badge>
                         </span>
                       ) : null}
@@ -160,7 +160,9 @@ export function BankrollBoard() {
                     {e.clv && (e.clv.n > 0 || e.clv.moved > 0)
                       ? e.clv.n
                         ? `CLV ${formatPercent(e.clv.pct, lang, { signed: true })}`
-                        : lang === "pt" ? "linha mudou" : "line moved"
+                        // Same table row as the "1 linha em risco" badge: here "linha" is the
+                        // market's number, so it is named that way.
+                        : lang === "pt" ? "número mudou" : "line moved"
                       : "—"}
                   </Td>
                   <Td numeric label={t("profit")} className={tone(e.outcome)}>

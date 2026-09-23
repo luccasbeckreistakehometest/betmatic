@@ -118,7 +118,7 @@ export function lineupAlertText(a: Pick<LegAlert, "kind" | "player">, selection:
     key_absence: `${a.player} is not playing.`,
   };
   return lang === "pt"
-    ? { title: `Escalação — ${matchup}`, body: `${pt[a.kind]} A perna "${selection}" perdeu a base. Se quiser, confira a alternativa sem ele na página do jogo.` }
+    ? { title: `Escalação — ${matchup}`, body: `${pt[a.kind]} A linha "${selection}" perdeu a base. Se quiser, confira a alternativa sem ele na página do jogo.` }
     : { title: `Lineup — ${matchup}`, body: `${en[a.kind]} The leg "${selection}" lost its footing. The backup without him is on the game page if you want it.` };
 }
 

@@ -63,7 +63,22 @@ export default async function globalSetup() {
     { id: "990000001:value:Betis vence|Mais de 1,5 gols", gameId: "990000001", sportKey: "soccer-esp", matchup: "Girona @ Betis", createdAt: new Date().toISOString(), startsAt: new Date(Date.now() + 3 * 3_600_000).toISOString(), bandKey: "value", kind: "parlay", title: "Betis em casa com gols", combinedDecimal: 2.4, modelledProbability: 0.45, evidenceScore: 70, outcome: "pending", legs: [leg("Betis vence", "pending", 1.8), leg("Mais de 1,5 gols", "pending", 1.33)] },
     { id: "401882878:long:Sevilha vence de virada", gameId: "401882878", sportKey: "soccer-esp", matchup: "Valencia @ Sevilla", createdAt: "2026-09-11T10:00:00.000Z", startsAt: "2026-09-11T19:00:00.000Z", bandKey: "long", kind: "single", title: "Virada do Sevilha", combinedDecimal: 21, modelledProbability: 0.05, evidenceScore: 30, outcome: "pending", legs: [leg("Sevilha vence de virada", "pending", 21)] },
   ];
-  fs.writeFileSync(path.join(ledgerDir, "predictions.jsonl"), entries.map((e) => JSON.stringify(e)).join("\n") + "\n");
+  // Twelve decided live reads on the game under way, so /prova's live block has a sample to
+  // measure: they promised about 90% and landed a third of it, which is the shape the real ledger
+  // of 22/09/2026 has — and the block's whole job is to say so out loud.
+  const liveAt = new Date(Date.now() - 2 * 3_600_000).toISOString();
+  const liveLeg = (selection: string, computed: number, won: boolean) =>
+    ({ selection, market: "player_prop", sourceBasis: "measured history", predictedProbability: computed, computedProbability: computed, oddsDecimal: 1.6, outcome: won ? "won" : "lost" });
+  const liveEntry = (n: number, period: number, won: boolean) => ({
+    id: `990000102:live${period * 10}:mid:e2e-${n}`, gameId: "990000102", sportKey: "wnba", matchup: "Dunas Divers @ Cedro Comets",
+    createdAt: liveAt, startsAt: liveAt, settledAt: liveAt, bandKey: "mid", kind: "parlay", title: `Leitura ao vivo ${n}`,
+    combinedDecimal: 2.56, modelledProbability: 0.9, evidenceScore: 60, scope: "live", minute: period * 10, period, clockLeft: 4.5,
+    outcome: won ? "won" : "lost",
+    legs: [liveLeg(`Gabi Reis mais de ${n},5 pontos`, 0.95, won), liveLeg(`Hana Melo mais de ${n},5 rebotes`, 0.93, true)],
+  });
+  // Four of twelve land where the reads' own chances expected about eleven.
+  const liveEntries = [1, 2, 3, 4, 5, 6].map((n) => liveEntry(n, 2, n <= 2)).concat([7, 8, 9, 10, 11, 12].map((n) => liveEntry(n, 3, n <= 8)));
+  fs.writeFileSync(path.join(ledgerDir, "predictions.jsonl"), [...entries, ...liveEntries].map((e) => JSON.stringify(e)).join("\n") + "\n");
 
   // Checkout goes to a local fake of the Mercado Pago API for the whole run.
   const fakeMp = await startFakeMercadoPago();

@@ -86,13 +86,17 @@ export interface LiveCalibration {
  * the same bar `proofMinDecided` sets for the money. LIVE_CALIBRATION_MIN_LEGS overrides it.
  */
 export const LIVE_CALIBRATION_MIN_LEGS = 100;
-/** A quarter needs its own sample before it gets its own line. */
+/** A quarter needs its own sample before it gets its own line. LIVE_PERIOD_MIN_LEGS overrides it. */
 export const PERIOD_MIN_LEGS = 20;
 
-export function liveCalibrationMinLegs(env: Record<string, string | undefined> = process.env): number {
-  const n = Number(env.LIVE_CALIBRATION_MIN_LEGS);
-  return Number.isFinite(n) && n >= 1 ? Math.floor(n) : LIVE_CALIBRATION_MIN_LEGS;
-}
+const gate = (raw: string | undefined, fallback: number): number => {
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 1 ? Math.floor(n) : fallback;
+};
+export const liveCalibrationMinLegs = (env: Record<string, string | undefined> = process.env): number =>
+  gate(env.LIVE_CALIBRATION_MIN_LEGS, LIVE_CALIBRATION_MIN_LEGS);
+export const periodMinLegs = (env: Record<string, string | undefined> = process.env): number =>
+  gate(env.LIVE_PERIOD_MIN_LEGS, PERIOD_MIN_LEGS);
 
 export interface CalibrationRowInput { p: number; won: boolean }
 
@@ -341,7 +345,7 @@ export function liveCalibration(
 
   const byPeriod = [...new Set(legRows.map((r) => r.period))].sort((a, b) => a - b)
     .map((p) => ({ period: p, rows: legRows.filter((r) => r.period === p) }))
-    .filter((g) => g.rows.length >= PERIOD_MIN_LEGS)
+    .filter((g) => g.rows.length >= periodMinLegs())
     .map((g) => calibrationSlice(`q${g.period}`, periodLabel(g.period), g.rows));
 
   const bands = ["1.00-1.99", "2.00-2.99", "3.00-4.99", "5.00-9.99", "10.0-24.9", "25+"];

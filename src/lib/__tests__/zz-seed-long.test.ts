@@ -53,7 +53,7 @@ const THOMAS = leg({
 });
 const BUECKERS_PTS = leg({
   selection: "Paige Bueckers mais de 19,5 pontos", odds: "1.84",
-  explanation: "A mesma noite grande da primeira perna, pelo lado do placar: média 20,14 pontos e mediana 21.",
+  explanation: "A mesma noite grande da primeira linha, pelo lado do placar: média 20,14 pontos e mediana 21.",
   evidence: "Medido: 25/43 na temporada (58%), 7/10 nos últimos 10, média 20,14 e mediana 21.",
   fairProbability: 0.57, settlementPlayer: "Paige Bueckers", settlementStat: "points", settlementLine: 19.5, settlementSide: "over",
 });
@@ -61,18 +61,18 @@ const BUECKERS_PTS = leg({
 const RAWS: RawSuggestion[] = [
   {
     kind: "parlay", alternativeOf: null, swapReason: null,
-    title: "O jogo inteiro de Dallas, seis pernas",
-    background: "Uma tese só, esticada: Phoenix sem Copper e sem Plum, cedendo 87,3 pontos por jogo, contra o ataque que mais pontua. As três pernas de Dallas sobem juntas se o jogo for de ritmo alto; as três de Phoenix caem juntas se o banco jogar pouco. É um bilhete de uma história só, não seis apostas soltas.",
+    title: "O jogo inteiro de Dallas, seis linhas",
+    background: "Uma tese só, esticada: Phoenix sem Copper e sem Plum, cedendo 87,3 pontos por jogo, contra o ataque que mais pontua. As três linhas de Dallas sobem juntas se o jogo for de ritmo alto; as três de Phoenix caem juntas se o banco jogar pouco. É um bilhete de uma história só, não seis apostas soltas.",
     legs: [BUECKERS, SHEPARD, BROCHANT, ARIKE, KUIER, THOMAS],
-    riskNote: "Seis pernas são seis formas de perder, e a margem da casa se acumula em cada uma. Um jogo truncado, de poucas posses, derruba as pernas de Dallas e salva as de Phoenix ao mesmo tempo.",
+    riskNote: "Seis linhas são seis formas de perder, e a margem da casa se acumula em cada uma. Um jogo truncado, de poucas posses, derruba as linhas de Dallas e salva as de Phoenix ao mesmo tempo.",
     confidence: "low",
   },
   {
     kind: "parlay", alternativeOf: null, swapReason: null,
-    title: "A noite grande da Bueckers, sete pernas",
-    background: "A mesma leitura com a sétima perna deliberadamente correlacionada: se a soma da Bueckers passa de 24,5, o caminho mais provável é que ela também passe de 19,5 pontos. Correlação a favor é o que transforma um preço longo numa aposta única, e não em sete apostas independentes.",
+    title: "A noite grande da Bueckers, sete linhas",
+    background: "A mesma leitura com a sétima linha deliberadamente correlacionada: se a soma da Bueckers passa de 24,5, o caminho mais provável é que ela também passe de 19,5 pontos. Correlação a favor é o que transforma um preço longo numa aposta única, e não em sete apostas independentes.",
     legs: [BUECKERS, BUECKERS_PTS, SHEPARD, BROCHANT, ARIKE, KUIER, THOMAS],
-    riskNote: "Duas pernas dependem da mesma jogadora: se Bueckers tiver uma noite fria ou sentar cedo com o jogo resolvido, as duas caem juntas. Sete pernas do mesmo jogo é o formato mais caro em margem que existe.",
+    riskNote: "Duas linhas dependem da mesma jogadora: se Bueckers tiver uma noite fria ou sentar cedo com o jogo resolvido, as duas caem juntas. Sete linhas do mesmo jogo é o formato mais caro em margem que existe.",
     confidence: "low",
   },
 ];
@@ -82,7 +82,7 @@ it("adds the long tickets", { timeout: 120_000 }, () => {
   const game = dump.detail.game;
   const longs = priceAll(RAWS, { props: dump.props, sportKey: "wnba", game, lines: dump.lines as never });
   for (const s of longs) {
-    console.log(`  [${s.bandKey}] ${s.title} — ${s.combinedDecimal.toFixed(2)}x | chance ${(s.modelledProbability * 100).toFixed(1)}% | implícita ${(s.impliedProbability * 100).toFixed(1)}% | evidência ${s.evidenceScore} | pernas ${s.legs.length}`);
+    console.log(`  [${s.bandKey}] ${s.title} — ${s.combinedDecimal.toFixed(2)}x | chance ${(s.modelledProbability * 100).toFixed(1)}% | implícita ${(s.impliedProbability * 100).toFixed(1)}% | evidência ${s.evidenceScore} | linhas ${s.legs.length}`);
   }
   expect(longs.length).toBe(2);
 

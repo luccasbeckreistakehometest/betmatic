@@ -24,13 +24,13 @@ const PRESETS = [5, 20, 100];
 
 const C = {
   pt: {
-    kicker: "Múltiplas", title: "Múltipla sob medida", sub: "Você diz quanto quer que pague; a gente procura, entre as pernas com preço e histórico de hoje, a combinação com mais chance de bater perto desse número — uma perna por jogo. Se não der, a gente fala.",
-    target: "Quanto quer que pague", legs: "Máximo de pernas", markets: "Mercados", allMarkets: "todos", games: "Jogos (opcional)", allGames: "todos os jogos de hoje",
-    measured: "Só pernas com histórico medido", minRate: "Acerto mínimo de cada perna", build: "Montar", coins: "coins", noCoins: "Coins insuficientes para montar.", buy: "Comprar coins",
-    signIn: "Entre na sua conta para montar a sua múltipla.", running: "Procurando a melhor combinação…", unreachable: "Não dá para chegar em {target} com as pernas de hoje. O mais perto: {nearest}. Os coins voltaram para você.",
-    empty: "Nenhuma perna de hoje passa nesses filtros. Afrouxe o acerto mínimo ou os mercados. Os coins voltaram.", chance: "chance estimada", implied: "chance da casa", ev: "EV",
+    kicker: "Múltiplas", title: "Múltipla sob medida", sub: "Você diz quanto quer que pague; a gente procura, entre as linhas com preço e histórico de hoje, a combinação com mais chance de bater perto desse número — uma linha por jogo. Se não der, a gente fala.",
+    target: "Quanto quer que pague", legs: "Máximo de linhas", markets: "Mercados", allMarkets: "todos", games: "Jogos (opcional)", allGames: "todos os jogos de hoje",
+    measured: "Só linhas com histórico medido", minRate: "Acerto mínimo de cada linha", build: "Montar", coins: "coins", noCoins: "Coins insuficientes para montar.", buy: "Comprar coins",
+    signIn: "Entre na sua conta para montar a sua múltipla.", running: "Procurando a melhor combinação…", unreachable: "Não dá para chegar em {target} com as linhas de hoje. O mais perto: {nearest}. Os coins voltaram para você.",
+    empty: "Nenhuma linha de hoje passa nesses filtros. Afrouxe o acerto mínimo ou os mercados. Os coins voltaram.", chance: "chance estimada", implied: "chance da casa", ev: "EV",
     stake: "Valor", save: "Salvar na banca", saved: "Salvo na banca ✓", limit: "Passa do seu teto de aposta.", paused: "Sua pausa está ativa.",
-    honesty: "Chance estimada vem do histórico medido de cada perna (puxado um pouco para o preço da casa). Múltipla longa perde na maioria das vezes.",
+    honesty: "Chance estimada vem do histórico medido de cada linha (puxado um pouco para o preço da casa). Múltipla longa perde na maioria das vezes.",
     template: "Explicação automática (sem IA).", cached: "mesmo cálculo de minutos atrás, sem gastar IA de novo", spent: "gastou", failed: "Não deu para montar agora. Os coins voltaram.",
   },
   en: {

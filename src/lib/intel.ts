@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { cached, cachedUnlessError } from "@/lib/cache";
+import { GLOSSARY_RULE } from "@/lib/bets/prompt-defaults";
 import { listExtraSources, loadConfig } from "@/lib/config";
 import { getGameDetail, getPlayerHistory } from "@/lib/sources/espn";
 import { attachMeasurement, matchAthlete } from "@/lib/props/history";
@@ -135,7 +136,9 @@ const BRIEF_SYSTEM_PT = `${BRIEF_SYSTEM}
 
 Write every field of your answer in Brazilian Portuguese — headline, angles, support, injuryWatch,
 conflicts, missingData and disclaimer. Keep player names, team names, market names and every number
-exactly as supplied.`;
+exactly as supplied.
+
+${GLOSSARY_RULE}`;
 
 async function briefFor(
   detail: GameDetail,

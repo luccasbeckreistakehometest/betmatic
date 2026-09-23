@@ -54,7 +54,7 @@ export async function POST(request: Request) {
   const games = [...new Set(legs.map((l) => l.resolved.matchup ?? l.event).filter(Boolean))];
   const entry = addWithLegs(user.id, {
     source: "scan",
-    title: `${d.book ?? (lang === "pt" ? "Print" : "Slip")} · ${d.legs.length} ${lang === "pt" ? (d.legs.length === 1 ? "perna" : "pernas") : d.legs.length === 1 ? "leg" : "legs"}`,
+    title: `${d.book ?? (lang === "pt" ? "Print" : "Slip")} · ${d.legs.length} ${lang === "pt" ? (d.legs.length === 1 ? "linha" : "linhas") : d.legs.length === 1 ? "leg" : "legs"}`,
     matchup: games.length === 1 ? games[0] : `${games.length} ${lang === "pt" ? "jogos" : "games"}`,
     odds: d.totalOdds,
     stake: d.stake,

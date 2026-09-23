@@ -16,7 +16,7 @@ const C = {
   pt: {
     title: "Relatório da semana", sub: "Um espelho de como você apostou: onde perde, quando aumentou a aposta depois de perder e o quanto foi para bilhetes longos. Não é conselho para apostar mais — é para você decidir com calma.",
     windows: "Retorno", days: "{d} dias", bets: "apostas", roi: "retorno", staked: "apostado", noBets: "sem apostas decididas",
-    clv: "Preço contra o fechamento", clvNone: "Sem pernas com fechamento nesta semana.",
+    clv: "Preço contra o fechamento", clvNone: "Sem linhas com fechamento nesta semana.",
     chasing: "Aumento depois de perder", chasingNone: "Você não aumentou a aposta logo depois de uma derrota nesta semana.",
     chasingItem: "{stake} apostados {m} min depois de perder {prev}", chasingLead: (n: number) => `${n === 1 ? "1 vez" : `${n} vezes`} você apostou pelo menos 1,5× o valor anterior até 3 horas depois de perder.`,
     kelly: "Tamanho das apostas", kellyNone: "Informe sua banca em Configurações para ver se os valores estão dentro de um tamanho sensato.", kellyText: (o: number, s: number) => `${o} de ${s} apostas passaram do dobro do tamanho sensato (¼ Kelly) para a sua banca.`,

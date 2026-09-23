@@ -79,11 +79,11 @@ linha JSON no log (`job.lineups`, `job.close`, `job.weekly`, `job.cleanup`, `job
 | job | quando | o que faz |
 |---|---|---|
 | `lineups` | a cada tick (15 min) | vigia de escalação: bilhetes pendentes com jogo nas próximas 100 min contra escalação e lesões (ESPN), no máximo 30 jogos por tick |
-| `close` | a cada tick | CLV: odd de fechamento das pernas cujo jogo começa em até 30 min (janela maior que o intervalo do cron) |
+| `close` | a cada tick | CLV: odd de fechamento das linhas cujo jogo começa em até 30 min (janela maior que o intervalo do cron) |
 | `weekly` | de hora em hora | relatório semanal; só escreve na segunda a partir das 12:00 UTC (`force=1` para rodar agora) |
 | `cleanup` | 1 vez por dia | apaga eventos de medição com mais de 180 dias |
 | `featured` | junto do refresh (a cada 4 h) | destaques do dia; roda mesmo com `CRON_ENABLED=0` |
-| `books` | a cada tick | preços das casas brasileiras (Superbet, KTO, EstrelaBet e as outras da Altenar, Betfair Exchange, Sportingbet, Betnacional) para todo jogo das próximas 48 h, só pré-jogo. **Desligado até `BR_BOOKS` ser definido** (`all` ou a lista de ids em `.env.example`); cada casa tem timeout com cancelamento e erro isolados, o tick inteiro respeita `BOOKS_JOB_BUDGET_MS`, o histórico é apagado depois de `BOOKS_RETENTION_DAYS`; o painel admin liga/desliga cada casa; `pnpm tsx scripts/books-run.mts wnba` roda o mesmo job no shell; cada perna e cada bilhete ganham um link "Abrir na casa" (bilhete já montado na Superbet, KTO e Sportingbet; página do mercado na Betfair Exchange; página do jogo na Betnacional), com tag de afiliado opcional por casa em `BOOK_AFFILIATE_<CASA>` (`.env.example`) |
+| `books` | a cada tick | preços das casas brasileiras (Superbet, KTO, EstrelaBet e as outras da Altenar, Betfair Exchange, Sportingbet, Betnacional) para todo jogo das próximas 48 h, só pré-jogo. **Desligado até `BR_BOOKS` ser definido** (`all` ou a lista de ids em `.env.example`); cada casa tem timeout com cancelamento e erro isolados, o tick inteiro respeita `BOOKS_JOB_BUDGET_MS`, o histórico é apagado depois de `BOOKS_RETENTION_DAYS`; o painel admin liga/desliga cada casa; `pnpm tsx scripts/books-run.mts wnba` roda o mesmo job no shell; cada linha e cada bilhete ganham um link "Abrir na casa" (bilhete já montado na Superbet, KTO e Sportingbet; página do mercado na Betfair Exchange; página do jogo na Betnacional), com tag de afiliado opcional por casa em `BOOK_AFFILIATE_<CASA>` (`.env.example`) |
 
 No stack de produção (`/srv/apps/stack/docker-compose.yml`, serviço `betmatic-cron`) acrescente as mesmas
 linhas do `docker-compose.yml` deste repositório.
@@ -96,7 +96,7 @@ usados pelos recursos da rodada 3.
 Trava de linha vencida (jogo em andamento): as props da ESPN são **de antes do jogo** e não se mexem
 depois que a bola sobe — num jogo em andamento a linha "mais de 7,5 pontos" continua publicada mesmo com
 a jogadora em 10. Por isso, quando o jogo está ao vivo, o app lê o box score da súmula da ESPN (a mesma
-que o painel ao vivo consulta, cache de 45 s) e, antes de qualquer geração, descarta as pernas já
+que o painel ao vivo consulta, cache de 45 s) e, antes de qualquer geração, descarta as linhas já
 decididas — o over que não pode mais perder e o under que não pode mais ganhar, incluindo os mercados
 combinados (P+R, P+A, R+A, P+R+A). As que sobram vão para o modelo com o que ainda falta e quantos
 minutos restam, e o bloco de props avisa que os preços são **referência de antes do jogo**. Sem box

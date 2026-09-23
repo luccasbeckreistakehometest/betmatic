@@ -4,8 +4,11 @@ import { loginAdmin } from "./helpers";
 test("public track record shows every ticket, and each has a shareable permalink", async ({ page }) => {
   await page.goto("/prova?lang=pt");
   const stats = page.getByTestId("proof-stats");
-  await expect(stats).toContainText("5"); // generated, including the two that are still private
-  await expect(stats).toContainText(/50,0\s*%/); // 1 won / 2 decided, in pt-BR numerals
+  // 5 pre-game + 12 live reads; the two pre-game tickets that are still private are counted too.
+  await expect(stats).toContainText("17");
+  // 1 won / 2 decided PRE-GAME tickets, in pt-BR numerals: the live reads have no price to pay, so
+  // they carry no unit, no return and no ROI — only the block below measures them.
+  await expect(stats).toContainText(/50,0\s*%/);
   const list = page.getByTestId("proof-list");
   // Three seeded pre-game tickets are public, plus whatever live read an earlier spec took on the
   // game under way: live tickets count in the record since 22/09/2026, tagged as such.
@@ -28,6 +31,28 @@ test("public track record shows every ticket, and each has a shareable permalink
   const og = await page.request.get(ogUrl!);
   expect(og.ok()).toBeTruthy();
   expect(og.headers()["content-type"]).toContain("image/png");
+});
+
+test("the live reads are measured against their own chance, and never paid a price", async ({ page }) => {
+  await page.goto("/prova?lang=pt");
+  const block = page.getByTestId("proof-live");
+  // Promised roughly 86%, landed 3 of 6: the headline says both numbers and the verdict.
+  await expect(block.getByTestId("proof-live-headline")).toContainText("12 leituras decididas, 4 acertaram");
+  await expect(block).toContainText("Chance média que demos");
+  await expect(block).toContainText("Acertos esperados");
+  await expect(block).toContainText("Faixa esperada (95%)");
+  await expect(block).toContainText("abaixo do esperado");
+  await expect(block.getByTestId("proof-live-buckets")).toContainText("Linhas");
+  await expect(block.getByTestId("proof-live-quarters")).toBeVisible();
+  await expect(block.getByTestId("proof-live-foot")).toContainText("Não publicamos retorno das leituras ao vivo.");
+  // No money anywhere in it, at any depth.
+  await expect(block).not.toContainText("ROI");
+  await expect(block).not.toContainText("retorno de referência");
+  await expect(block).not.toContainText(/\d+,\d+u/);
+  // And the balance beside it says out loud that its units are pre-game units.
+  await expect(page.getByTestId("proof-balance")).toContainText("Balanço (pré-jogo)");
+  // The whole page speaks the new vocabulary and not one word of the old one.
+  await expect(page.locator("body")).not.toContainText(/\bpernas?\b/i);
 });
 
 test("track record never names a source for visitors", async ({ page }) => {

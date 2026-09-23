@@ -14,6 +14,15 @@ describe("backtest rows", () => {
     const [, old] = toRows([e, { ...e, id: "old", settledAt: undefined, outcome: "pending", evidenceScore: undefined }]);
     expect(old).toMatchObject({ at: "2026-09-01T00:00:00Z", evidence: null });
   });
+
+  // The curve is money. A live read's price is the pre-game board, which the book had already
+  // moved: a curve that counts it climbs on units nobody could have staked.
+  it("leaves the live reads out of the curve entirely", () => {
+    const e: LedgerEntry = { id: "pre", gameId: "g", sportKey: "wnba", matchup: "A @ B", createdAt: "2026-09-01T00:00:00Z", settledAt: "2026-09-02T00:00:00Z", bandKey: "value", kind: "single", title: "t", combinedDecimal: 2, modelledProbability: 0.5, outcome: "won", legs: [] };
+    const rows = toRows([e, { ...e, id: "live", scope: "live", minute: 30, combinedDecimal: 30 }]);
+    expect(rows.map((r) => r.id)).toEqual(["pre"]);
+    expect(equityCurve(rows).units).toBeCloseTo(1, 9);
+  });
   it("pays odds minus one on a win, costs one on a loss, nothing otherwise", () => {
     expect(unitDelta({ outcome: "won", odds: 2.5 })).toBe(1.5);
     expect(unitDelta({ outcome: "lost", odds: 2.5 })).toBe(-1);

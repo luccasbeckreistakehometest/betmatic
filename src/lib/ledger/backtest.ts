@@ -8,6 +8,10 @@ import type { LedgerEntry, LegOutcome } from "@/lib/types";
  * anything with a source name in it must never reach a non-admin. Flat one unit on every ticket —
  * the same honest stake the public proof page uses — so "what if I had only followed band X" is a
  * filter, not a model.
+ *
+ * PRE-GAME ONLY. A live read carries the pre-game board as its price, which no book is still
+ * offering once the ball is up, so a unit "staked" on one is a unit at a price that did not exist:
+ * a curve with them in it climbs on money nobody could have collected. `toRows` drops them.
  */
 export interface BacktestRow {
   id: string;
@@ -46,7 +50,7 @@ export interface CurveSummary {
 
 /** `idOf` lets the server hand the browser public slugs instead of raw ids (which embed selection text). */
 export function toRows(entries: LedgerEntry[], idOf: (e: LedgerEntry) => string = (e) => e.id): BacktestRow[] {
-  return entries.map((e) => ({
+  return entries.filter((e) => e.scope !== "live").map((e) => ({
     id: idOf(e), at: e.settledAt ?? e.createdAt, outcome: e.outcome, odds: e.combinedDecimal, band: e.bandKey, sport: e.sportKey, kind: e.kind,
     evidence: typeof e.evidenceScore === "number" ? e.evidenceScore : null,
   }));

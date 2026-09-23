@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { getDb, newId, nowIso } from "@/lib/server/db";
-import { DEFAULT_PROMPTS, type PromptKind } from "@/lib/bets/prompt-defaults";
+import { DEFAULT_PROMPTS, GLOSSARY_RULE, type PromptKind } from "@/lib/bets/prompt-defaults";
 import { generateStructured } from "@/lib/ai/extract";
 import type { Lang } from "@/lib/i18n";
 
@@ -24,6 +24,17 @@ export function upgradeAlternativesRule(content: string): string | null {
     : `${content.replace(/isAlternative/g, "alternativeOf")}\n\n${ALTERNATIVES_RULE}`;
 }
 
+/**
+ * The product stopped calling a ticket's selection "perna" and started calling it "linha". Editing
+ * prompt-defaults.ts changes nothing in production, because getPrompt() serves the stored active
+ * version: any pt version saved by an admin would go on writing "perna" into titles and risk notes
+ * for ever. So the rule is appended to every active Portuguese version that does not carry it.
+ */
+export function upgradeGlossaryRule(content: string, lang: Lang): string | null {
+  if (lang !== "pt" || content.includes("PORTUGUESE GLOSSARY")) return null;
+  return `${content}\n\n${GLOSSARY_RULE}`;
+}
+
 let upgraded = false;
 function ensurePromptUpgrades(): void {
   if (upgraded) return;
@@ -31,8 +42,11 @@ function ensurePromptUpgrades(): void {
   for (const kind of Object.keys(DEFAULT_PROMPTS) as PromptKind[]) {
     for (const lang of ["pt", "en"] as Lang[]) {
       const row = getDb().prepare("SELECT content FROM prompt_versions WHERE kind=? AND lang=? AND active=1").get(kind, lang) as { content: string } | undefined;
-      const next = row ? upgradeAlternativesRule(row.content) : null;
-      if (next) savePrompt({ kind, lang, content: next, source: "manual", rationale: "Sistema: bilhetes agora trazem duas alternativas ligadas por alternativeOf (índice do principal) e swapReason; a regra antiga com isAlternative foi substituída.", createdBy: "system" });
+      if (!row) continue;
+      const alternatives = upgradeAlternativesRule(row.content);
+      if (alternatives) savePrompt({ kind, lang, content: alternatives, source: "manual", rationale: "Sistema: bilhetes agora trazem duas alternativas ligadas por alternativeOf (índice do principal) e swapReason; a regra antiga com isAlternative foi substituída.", createdBy: "system" });
+      const glossary = upgradeGlossaryRule(alternatives ?? row.content, lang);
+      if (glossary) savePrompt({ kind, lang, content: glossary, source: "manual", rationale: "Sistema: uma seleção do bilhete agora se chama \"linha\", nunca \"perna\"; a regra de glossário foi anexada ao prompt em português, com a desambiguação contra a linha de mercado.", createdBy: "system" });
     }
   }
 }
