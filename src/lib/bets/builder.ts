@@ -3,6 +3,7 @@ import { generateStructured } from "@/lib/ai/extract";
 import { MODEL } from "@/lib/ai/client";
 import { getPrompt, getPromptVersion } from "@/lib/server/prompts";
 import { calibrationPrompt } from "@/lib/ledger/calibrate";
+import { canonicalMarket } from "@/lib/ledger/stat-key";
 import { ledgerIdFor, recordPredictions } from "@/lib/ledger/store";
 import { recordLegPrices } from "@/lib/server/leg-prices";
 import { settlePending } from "@/lib/ledger/settle";
@@ -388,8 +389,9 @@ function matchedProp(leg: BetLeg, ctx: EnrichContext): PropRow | null {
  * a correction. The model's own number survives as `rawProbability`, so the ledger can still race
  * what it said against what it was served with.
  */
-function calibrated(leg: BetLeg, calibrator: Calibrator): BetLeg {
-  const { probability, correction } = calibrator.apply(leg.fairProbability, leg.settlement?.sourceBasis ?? "", leg.market);
+function calibrated(leg: BetLeg, calibrator: Calibrator, sportKey: string): BetLeg {
+  const stat = canonicalMarket(leg, sportKey);
+  const { probability, correction } = calibrator.apply(leg.fairProbability, leg.settlement?.sourceBasis ?? "", leg.market, stat);
   if (!correction || probability === leg.fairProbability) return leg;
   return { ...leg, rawProbability: leg.rawProbability ?? leg.fairProbability, fairProbability: probability };
 }
@@ -411,7 +413,7 @@ export function priceAll(raws: RawSuggestion[], ctx: EnrichContext, opts: { oneL
     if (priced) {
       // The computed probability anchors fairProbability inside enrichLeg, so the ticket's numbers are
       // recomputed from the anchored legs before correlation is applied.
-      const legs = priced.legs.map((leg, j) => calibrated(enrichLeg(leg, anchored.legs[j], ctx), calibrator));
+      const legs = priced.legs.map((leg, j) => calibrated(enrichLeg(leg, anchored.legs[j], ctx), calibrator, ctx.sportKey));
       const modelled = legs.reduce((acc, l) => acc * l.fairProbability, 1);
       priced = applyCorrelation({
         ...priced, legs, modelledProbability: modelled,
