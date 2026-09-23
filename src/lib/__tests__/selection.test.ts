@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import fixture from "./fixtures/selecao-3-noites.json";
 import { DEFAULT_CALIBRATION, PERIOD_MIN_LEGS, selectDaily, type Candidate, type SelectionContext } from "@/lib/bets/selection";
-import { SIZING } from "@/lib/bets/sizing";
+import { SIZING, shrinkFactor } from "@/lib/bets/sizing";
 
 /**
  * The day's short list. Everything here is the policy speaking, and the fixture is the production
@@ -222,6 +222,20 @@ describe("the three real nights of the production ledger", () => {
     expect(nights).toEqual(["2026-09-21", "2026-09-22", "2026-09-23"]);
   });
 
+  /**
+   * Four tickets and 4.50 u, where the project's §2i specified six and 6.75 u.
+   *
+   * The 6/6.75 came from the research script that proposed the policy (`politica/policy.py`),
+   * which filtered on {pre-game, main, EV ≥ 100, ≤ 2 linhas, ≤ 5x, edge > 0} and rounded the
+   * stake. The policy of §1.2 is stricter than the script that suggested it, and three of the ten
+   * cuts the script never had are what move the number: cut 3 (confidence), cut 6/7 (the 4-20 %
+   * edge window) and cut 8 (the shrunk edge) drop two of the six, and the floor — flooring to the
+   * 0.25 u step rather than rounding, because rounding up is betting above Kelly — takes a third
+   * from 0.25 u to nothing.
+   *
+   * So 4/4.50 u is what the specified policy does; 6/6.75 u was what a looser filter did. The
+   * number moved because the specification was measured, not because the specification changed.
+   */
   it("regime A (c = 1, σ_p = 0.03): four tickets, 4.50 u over three nights", () => {
     const runs = nights.map((d) => realNight(d, { factorPre: 1, factorLive: 1, sigmaPPre: 0.03, sigmaPLive: 0.03, mode: "carteira" }));
     expect(runs.flatMap((r) => r.items)).toHaveLength(4);
@@ -261,17 +275,24 @@ describe("the three real nights of the production ledger", () => {
  * The cuts of §1.2 are not taste. This block measures the same fixture the policy runs on and
  * states what the loss is made of, so a future edit that loosens a cut has to argue with a number.
  *
- * Everything here is computed from the fixture at run time — no level is written down — because
- * the fixture is a snapshot that keeps settling. A newer snapshot measured on the server reads
- * -54.8 % overall against this one's -67.7 %, and the two disagree on the level of every small
- * slice while agreeing on every slice big enough to have a verdict. That is exactly why the
- * assertions below are about SIGN and COUNT on samples over the gate, never about a percentage.
+ * Every level is computed from the fixture at run time and nothing is written down, because the
+ * fixture is a frozen snapshot and the production ledger behind it keeps moving. It has already
+ * moved once in a way that mattered: the settle vocabulary could not read `PTS+AST`, `REB+AST` or
+ * `PTS+REB`, 57 settled linhas had been filed as unmeasurable, and re-grading them changed nine
+ * verdicts — four of which were WINS, so the defect had been making the record look worse than it
+ * was. On the corrected ledger the 3-5x band went from -4.9 % to +17.3 % and 5-10x from -63.4 % to
+ * -17.1 %.
+ *
+ * So this block asserts only what survives BOTH readings, and only on slices over the 20-decided
+ * gate. Anything the two snapshots disagree about is recorded below as explicitly open, because the
+ * gate is a rule for the good news as well as the bad.
  */
+type Slice = RealRow[];
 const decided = REAL.filter((r) => r.outcome === "won" || r.outcome === "lost");
-const roiOf = (rows: RealRow[]) => rows.reduce((a, r) => a + (r.outcome === "won" ? r.decimal : 0), 0) / rows.length - 1;
-const greens = (rows: RealRow[]) => rows.filter((r) => r.outcome === "won").length;
+const roiOf = (rows: Slice) => rows.reduce((a, r) => a + (r.outcome === "won" ? r.decimal : 0), 0) / rows.length - 1;
+const greens = (rows: Slice) => rows.filter((r) => r.outcome === "won").length;
 
-/** The product's own sample gate: nothing concludes under 20 decided. */
+/** The product's own sample gate: nothing concludes under 20 decided, in either direction. */
 const GATE = 20;
 
 describe("the long tail is where the pre-game loss lives", () => {
@@ -279,65 +300,82 @@ describe("the long tail is where the pre-game loss lives", () => {
     expect(decided.length).toBeGreaterThanOrEqual(GATE);
   });
 
-  it("above 5x there is not one winner, and the odds cut removes every one of them", () => {
-    const longshots = decided.filter((r) => r.decimal > SIZING.maxOdds);
-    expect(longshots.length).toBeGreaterThanOrEqual(GATE);
-    expect(greens(longshots)).toBe(0);
-    expect(roiOf(longshots)).toBe(-1);
-    // Not one of them ever reaches the list, and the cut that removes them is about the PRICE:
-    // for every longshot that is otherwise clean, the single recorded reason is "odds".
-    for (const c of longshots) {
-      const sel = selectDaily([c], ctx({ day: c.day, now: Date.parse(c.startsAt) - 3_600_000 }));
-      expect(sel.items).toEqual([]);
-      const clean = c.evidenceScore === 100 && c.confidence !== "low" && c.legs <= SIZING.maxLegs && !c.alternativeOf;
-      if (clean) expect(reasonOf(sel, c.ledgerId)).toBe("odds");
-    }
+  it("above 20x there is not one winner, on either reading of the ledger", () => {
+    // This snapshot: 0 of 24. The corrected production ledger: 0 of 34, and the correction made it
+    // stronger rather than weaker. It is the one price finding with a comfortable sample.
+    const dead = decided.filter((r) => r.decimal > 20);
+    expect(dead.length).toBeGreaterThanOrEqual(GATE);
+    expect(greens(dead)).toBe(0);
+    expect(roiOf(dead)).toBe(-1);
   });
 
-  it("the long and moonshot bands are that same tail wearing a name", () => {
+  it("the long and moonshot bands are that tail wearing a name, and they die on price", () => {
     const tail = decided.filter((r) => r.bandKey === "long" || r.bandKey === "moonshot");
     expect(tail.length).toBeGreaterThanOrEqual(GATE);
     expect(greens(tail)).toBe(0);
-    // They are cut by their PRICE, never by their label: the policy has no list of banned bands,
-    // so a "long" that ever prices inside 1.30-5.00 is judged like anything else.
+    // Every one of them is priced outside the window, which is why the policy needs no list of
+    // banned bands: a "long" that ever prices inside 1.30-5.00 is judged like anything else.
     expect(tail.every((r) => r.decimal > SIZING.maxOdds)).toBe(true);
+    for (const c of tail) {
+      const sel = selectDaily([c], ctx({ day: c.day, now: Date.parse(c.startsAt) - 3_600_000 }));
+      expect(sel.items).toEqual([]);
+    }
   });
 
-  it("three linhas or more is a different game, and the leg cut removes it", () => {
-    const many = decided.filter((r) => r.legs > SIZING.maxLegs);
+  it("five linhas or more has never landed one", () => {
+    // 0 of 22 here, 0 of 30 on the corrected ledger. Three and four linhas are NOT in this claim:
+    // corrected, three reads -45 % and four reads +51 % on six tickets, which is noise.
+    const many = decided.filter((r) => r.legs >= 5);
     expect(many.length).toBeGreaterThanOrEqual(GATE);
-    expect(greens(many)).toBeLessThanOrEqual(1);
-    expect(roiOf(many)).toBeLessThan(-0.8);
-    // Against what survives the cut, on the same nights.
-    const few = decided.filter((r) => r.legs <= SIZING.maxLegs);
-    expect(greens(few) / few.length).toBeGreaterThan(greens(many) / many.length);
+    expect(greens(many)).toBe(0);
+    // The leg cut removes them all, well before the count gets that high.
+    expect(SIZING.maxLegs).toBeLessThan(5);
   });
 
-  it("the overconfidence is not in the tail only — it is everywhere, and it grows with the linhas", () => {
-    const gap = (rows: RealRow[]) => greens(rows) / rows.length - rows.reduce((a, r) => a + r.modelProbability, 0) / rows.length;
-    // Every bucket promises more than it delivers, single linhas included.
+  it("the overconfidence is everywhere, not only in the tail, and it grows with the linhas", () => {
+    const gap = (rows: Slice) => greens(rows) / rows.length - rows.reduce((a, r) => a + r.modelProbability, 0) / rows.length;
+    // Every bucket promises more than it delivers, single linhas included — 65.0 % against 47.6 %
+    // on one linha and 21.7 % against 12.5 % on three, on the corrected ledger.
     expect(gap(decided.filter((r) => r.legs === 1))).toBeLessThan(0);
     expect(gap(decided.filter((r) => r.legs >= 3))).toBeLessThan(0);
-    // This is unpriced correlation between the linhas of one ticket, which is precisely what
-    // `p_cal = p_model * c^legs` exists to undo — the compounding, not a flat haircut.
+    // This is unpriced correlation between the linhas of one ticket. Generation now prices it with
+    // an explicit correlation factor; `c^legs` is the shape this layer would use if it had to.
     expect(SIZING.maxLegs).toBeLessThanOrEqual(3);
   });
+});
 
-  it("does NOT tighten the ceiling below 5x: neither half of that window has a verdict", () => {
+/**
+ * Three questions the data is not allowed to answer yet. They are tests rather than a comment so
+ * that the day the sample clears the gate, the assertion that says "there is no sample" fails and
+ * somebody has to come back and decide.
+ */
+describe("what the sample does NOT support, and must not be adopted by momentum", () => {
+  it("does not tighten the ceiling below 5x", () => {
     const short = decided.filter((r) => r.decimal <= 3);
     const mid = decided.filter((r) => r.decimal > 3 && r.decimal <= SIZING.maxOdds);
-    // Both sit under the gate on this snapshot, and a newer one reverses which of the two looks
-    // better. Cutting at 3x on that would drop the half that measured better on the other snapshot.
     expect(Math.min(short.length, mid.length)).toBeLessThan(GATE);
+    // And the direction has already reversed once: 3-5x read -43.5 % on this snapshot and +17.3 %
+    // on the corrected ledger. Cutting at 3x would have thrown away the better half.
     expect(SIZING.maxOdds).toBe(5);
   });
 
-  it("does NOT treat an alternative as a worse ticket: inside the wallet window there is no sample", () => {
+  it("does not claim the ceiling at 5x is itself measured — only that nothing contradicts it", () => {
+    // What IS measured is 20x+. Between 5x and 20x the sample is thin and the corrected ledger
+    // reads 5-10x at -17 %, not the -63 % this snapshot shows. The ceiling stands on the shrinkage
+    // instead: k(d) = σ²/(σ² + (d·σ_p)²) already strips a long price of its edge without any
+    // ceiling at all, so 5.00 is a conservative backstop, not a conclusion. Revisit it at n ≥ 20.
+    const between = decided.filter((r) => r.decimal > SIZING.maxOdds && r.decimal <= 20);
+    expect(between.length).toBeLessThan(GATE);
+    expect(shrinkFactor(20, 0.12)).toBeLessThan(shrinkFactor(SIZING.maxOdds, 0.12));
+  });
+
+  it("does not treat an alternative as a worse ticket", () => {
     const inWindow = decided.filter((r) => r.decimal >= SIZING.minOdds && r.decimal <= SIZING.maxOdds && r.legs <= SIZING.maxLegs && r.evidenceScore === 100 && r.confidence !== "low");
     const main = inWindow.filter((r) => !r.alternativeOf);
     const alt = inWindow.filter((r) => r.alternativeOf);
-    // 19 decided between them: the cut stands on duplication (one bet per game), never on a claim
-    // that the second option is worse — measured over ALL tickets the two are indistinguishable.
+    // Under the gate between them, and over ALL tickets the two populations are indistinguishable.
+    // Cut 1 stands on DUPLICATION — an alternative is the same bet on the same game — and rule 10
+    // is what enforces that. It has never stood on the second option being worse.
     expect(inWindow.length).toBeLessThan(GATE);
     expect(Math.min(main.length, alt.length)).toBeGreaterThan(0);
   });

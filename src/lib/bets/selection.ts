@@ -25,37 +25,37 @@ import {
  *   1  pre-game, main ticket (never an alternative), game not under way
  *   2  evidenceScore = 100          (23.8 % hit vs 0 % below 100 on the ledger, p = 0.012)
  *   3  confidence ≠ low             (0 of 27 pre-game, p = 0.002)
- *   4  at most 2 legs               (3+ linhas: 1 green in 37 decided, ROI -92 %)
- *   5  odds in [1.30, 5.00]         (above 5x: 0 greens in 37 decided — the whole long tail)
+ *   4  at most 2 legs               (5+ linhas: 0 greens in 22 decided here, 0 in 30 corrected)
+ *   5  odds in [1.30, 5.00]         (above 20x: 0 greens in 24 here, 0 in 34 corrected)
  *   6  raw model edge ≥ 4 %
  *   7  raw model edge ≤ 20 %        (above that: the admin's review queue, not the wallet)
  *   8  calibrated, shrunk edge ≥ 2 % — the wallet's gate, not applied in `medicao` (see below)
  *   9  every market canonically named; "unmapped" never enters
  *  10  at most 1 per game and 2 appearances of the same player in a day
  *
- * Cuts 4 and 5 carry almost the whole loss between them. Measured on the fixture the tests run on
- * (`selecao-3-noites.json`, 64 decided of 123), pre-game overall is -67.7 % and the tail is all of
- * it: nothing above 5x has ever won (0 of 37), the `long` and `moonshot` bands are that same tail
- * under a label (0 of 24, every one of them priced above 5x), and three linhas or more is 1 green
- * in 37. A newer snapshot from the server reads -54.8 % overall with the same shape — the levels
- * move as tickets settle, the shape does not.
+ * Cuts 4 and 5 carry most of the loss between them, but only part of that is settled evidence and
+ * the two must not be confused. The production ledger was re-graded on 23/09 — the settle
+ * vocabulary could not read PTS+AST, REB+AST or PTS+REB, 57 linhas had been filed as unmeasurable,
+ * and nine verdicts changed, four of them from void to WIN. What survived the re-grading:
  *
- * Two things that evidence does NOT support, recorded here so they are not quietly adopted later:
+ *   · nothing above 20x has ever won (0 of 24 on the test fixture, 0 of 34 corrected);
+ *   · `long` and `moonshot` are that same tail under a label (0 of 24 / 0 of 33), and every one of
+ *     them is priced outside the window — which is why there is no list of banned bands here;
+ *   · five linhas or more has never landed (0 of 22 / 0 of 30);
+ *   · the overconfidence is in every bucket, single linhas included, and widens with the count.
  *
- *   · **A ceiling below 5x.** The window splits into ≤3x and 3-5x at n=15 and n=12 on this
- *     snapshot and n=21 and n=14 on the newer one, and the two snapshots disagree about which half
- *     looks better. Both halves are under the 20-decided gate; cutting at 3x would be picking the
- *     loser on one of the two readings.
+ * What did NOT survive, and is therefore open rather than decided:
+ *
+ *   · **The ceiling at 5x is not itself measured.** 3-5x read -43.5 % before the re-grade and
+ *     +17.3 % after; 5-10x went from -63.4 % to -17.1 %. Both are under the 20-decided gate, and
+ *     the gate binds for good news as well as bad. What justifies the ceiling is not those numbers
+ *     but the shrinkage: k(d) = σ_true²/(σ_true² + (d·σ_p)²) already strips a long price of its
+ *     edge with no ceiling at all, so 5.00 is a conservative backstop. Revisit at n ≥ 20.
+ *   · **Three and four linhas.** Corrected, three reads -45 % and four reads +51 % on six tickets.
+ *     The cut at 2 rests on the five-plus finding and on the correlation, not on those two.
  *   · **Treating an alternative as a worse ticket.** Over all tickets the second option and the
- *     main are indistinguishable (-54.5 % vs -55.3 % on the newer snapshot). Cut 1 stands on
- *     DUPLICATION — an alternative is the same bet on the same game — and rule 10 is what enforces
- *     that. Inside the window the wallet actually bets there are 19 decided tickets between the
- *     two populations, which is under the gate and settles nothing either way.
- *
- * The overconfidence itself is not a tail effect: every leg bucket promises more than it delivers,
- * single linhas included, and the gap widens with the count. That is unpriced correlation between
- * the linhas of one ticket, measured independently by the learning run (65 % of linhas landed
- * against 36 % of tickets), and it is what `p_cal = p_model · c^legs` compounds away per leg.
+ *     main are indistinguishable. Cut 1 stands on DUPLICATION — an alternative is the same bet on
+ *     the same game — and rule 10 is what enforces it.
  */
 
 export type Scope = "pre" | "live";
@@ -138,9 +138,12 @@ export interface CalibrationContext {
   sigmaPLive: number;
   mode: StakeMode;
   /**
-   * The live scope measured one quarter at a time, keyed by period. A live read is corrected by its
-   * OWN quarter, never by the scope average: on the ledger of 22/09 the scope average hides a
-   * 24-point spread between the quarter that keeps its promise and the ones that do not.
+   * The live scope measured one quarter at a time, keyed by period. The factor here is the
+   * quarter's DEVIATION from its scope, not its absolute calibration: generation already took the
+   * scope-level gap out of every live leg, and the quarter is the one dimension it cannot see. On
+   * the ledger of 22/09 that scope average hides a 24-point spread between the quarter that keeps
+   * its promise and the ones that do not, so a quarter above 1 is being given back what the scope
+   * correction took from it unfairly.
    */
   livePeriods?: Record<number, { settled: number; factor: number; sigmaP: number; gapPoints: number }>;
 }
@@ -168,10 +171,17 @@ export interface SelectionContext {
 }
 
 export const DEFAULT_CALIBRATION: CalibrationContext = {
-  // Measured on the production ledger 2026-09-23: 172 pre-game legs at ratio 0.794, 419 live at 0.858,
-  // both pulled to 1 with the 200-leg prior; σ_p is the de-biased RMSE of the calibration curve.
-  factorPre: 0.905,
-  factorLive: 0.904,
+  /**
+   * 1, and not the 0.905 / 0.904 the ledger measures, because the MEAN is corrected at generation
+   * now (`ledger/recalibrate.ts` shifts each leg in log-odds and rebuilds the ticket from the
+   * corrected legs). Applying the measured ratio again here would be the same correction twice.
+   * The measurement is not lost: it is `measuredFactor` on every slice, it is what the `carteira`
+   * gate refuses to open on, and it is what the admin panel prints.
+   */
+  factorPre: 1,
+  factorLive: 1,
+  // The spread is this layer's own and always was: it drives the Kelly shrinkage and the gate, and
+  // generation corrects no part of it. Measured on the production ledger 2026-09-23.
   sigmaPPre: 0.12,
   sigmaPLive: 0.11,
   mode: "medicao",

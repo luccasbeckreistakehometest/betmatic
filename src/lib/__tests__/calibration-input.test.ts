@@ -31,9 +31,12 @@ describe("the measured ratio and the factor", () => {
     const slice = sliceCalibration({ scope: "pregame-main" }, run(100, 56, 0.7));
     expect(slice.settled).toBe(100);
     expect(slice.measuredRatio).toBeCloseTo(0.8, 3);
-    // Pulled towards 1 with the 200-leg prior, never applied at full force off 100 legs.
-    expect(slice.factor).toBeGreaterThan(0.9);
-    expect(slice.factor).toBeLessThan(1);
+    // Pulled towards 1 with the 200-leg prior, never taken at full force off 100 legs.
+    expect(slice.measuredFactor).toBeGreaterThan(0.9);
+    expect(slice.measuredFactor).toBeLessThan(1);
+    // And it is measured, not applied: generation already corrected this mean, so the factor this
+    // layer puts on the stake is 1. Correcting it twice is the bug this asserts against.
+    expect(slice.factor).toBe(1);
   });
 
   it("closes the wallet when there is no sample at all", () => {

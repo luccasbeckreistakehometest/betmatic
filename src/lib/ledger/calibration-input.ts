@@ -26,8 +26,17 @@ export interface SliceCalibration {
   measuredRatio: number;
   /** The de-biased spread of the estimate, clamped to [0.03, 0.15]. */
   sigmaP: number;
-  /** The empirical-Bayes calibration factor the stake is computed with. */
+  /**
+   * The factor this layer APPLIES to the stake. For a scope or market slice it is 1: generation
+   * already corrected that mean (see the note on `MEAN_IS_CORRECTED_AT_GENERATION`). For a quarter
+   * slice it is the quarter's deviation from its scope, which generation cannot see.
+   */
   factor: number;
+  /**
+   * What the ledger measures the factor to be, applied or not. This is the audit number: the admin
+   * panel reads it, the `carteira` gate reads its gap, and nothing sizes a bet with it.
+   */
+  measuredFactor: number;
   mode: StakeMode;
   /** Predicted minus actual, in points — positive means overconfident. */
   gapPoints: number;
@@ -37,6 +46,42 @@ export interface SliceCalibration {
 
 /** The gate that opens a slice for real stakes. All three, or the slice stays in measurement. */
 export const CARTEIRA_GATE = { sigmaP: 0.08, settledLegs: 300, biasPoints: 0.03 } as const;
+
+/**
+ * Why this layer stopped correcting the mean.
+ *
+ * The generation layer now corrects it in code (`ledger/recalibrate.ts`): a leg's stated chance is
+ * shifted in log-odds by the measured gap of its market or source slice, shrunk by n/(n+40), gated
+ * at 20 settled legs and measured per scope — and the ticket's `modelledProbability` is rebuilt
+ * from the corrected legs with a correlation factor on top. By the time a candidate reaches this
+ * file, its probability has already been pulled down once.
+ *
+ * Applying the measured gap again here would correct it twice. In steady state both loops converge
+ * to zero and it would not matter, but the transition is the problem: today's history is entirely
+ * pre-correction, so both layers measure the same large gap and both act on it. Conservative, and
+ * still wrong — the card would show a chance pulled down twice and a minimum price raised twice.
+ *
+ * Three ways out were on the table and two do not survive contact with the code:
+ *
+ *   · **Measure on `rawProbability`.** It is not a pre-correction snapshot. `enrichLeg` sets it to
+ *     the model's estimate before ANCHORING, and `calibrated()` only sets it when it is absent, so
+ *     the field means "pre-anchor" for an enriched leg and "pre-Platt" for one that was not.
+ *     Measuring across it would mix two quantities and un-do an anchoring this layer never applied.
+ *   · **Split the history by a date.** The correction is per-leg and conditional — a slice under
+ *     20 settled legs earns none — so within one slate some legs are corrected and others are not.
+ *     No cutoff separates the populations.
+ *
+ * So the layers split by what each can see, which is the honest line:
+ *
+ *   · generation owns the MEAN, per leg and per scope, plus the ticket's correlation factor;
+ *   · this layer owns the SPREAD (σ_p, which drives the Kelly shrinkage and the gate) and the
+ *     QUARTER of a live read, which generation's scope-level correction cannot see at all;
+ *   · and this layer AUDITS the mean instead of re-applying it — `measuredFactor` and `gapPoints`
+ *     are still measured on every slice, and the `carteira` gate still refuses to open a slice
+ *     whose bias is over three points. If generation's correction stops working, the wallet stays
+ *     shut. That is the check a second corrector was never able to be.
+ */
+export const MEAN_IS_CORRECTED_AT_GENERATION = true;
 
 const decided = (l: SettledLeg) => l.outcome === "won" || l.outcome === "lost";
 const clamp = (x: number, lo: number, hi: number) => Math.min(Math.max(x, lo), hi);
@@ -113,19 +158,24 @@ export function sliceCalibration(query: SliceQuery, entries: LedgerEntry[] = rea
   // always had and nothing downstream has to learn a new shape to ask the same question.
   const key = [query.scope, query.stat ?? "*", query.side ?? "*", ...(query.period === undefined ? [] : [`q${query.period}`])].join(":");
   const rows = rowsFor(query, entries);
-  if (!rows.length) return { key, settled: 0, measuredRatio: 1, sigmaP: SIZING.sigmaPCeiling, factor: 1, mode: "medicao", gapPoints: 0, biased: false };
+  if (!rows.length) return { key, settled: 0, measuredRatio: 1, sigmaP: SIZING.sigmaPCeiling, factor: 1, measuredFactor: 1, mode: "medicao", gapPoints: 0, biased: false };
 
   const predicted = rows.reduce((a, r) => a + r.p, 0);
   const won = rows.reduce((a, r) => a + r.y, 0);
   const measuredRatio = predicted > 0 ? won / predicted : 1;
-  const factor = calibrationFactor(measuredRatio, rows.length);
-  const sigmaP = sigmaFrom(rows, factor);
+  const measuredFactor = calibrationFactor(measuredRatio, rows.length);
+  // σ_p is de-biased with the MEASURED factor on purpose: removing the average optimism first is
+  // what leaves a spread rather than a mean error. That is a measurement, not a correction, and it
+  // reaches the stake only through the shrinkage — never as a second haircut on the probability.
+  const sigmaP = sigmaFrom(rows, measuredFactor);
   const average = predicted / rows.length;
   const ci = wilson(won, rows.length);
   const biased = average < ci.low || average > ci.high;
   const gapPoints = average - won / rows.length;
   const open = sigmaP <= CARTEIRA_GATE.sigmaP && rows.length >= CARTEIRA_GATE.settledLegs && Math.abs(gapPoints) < CARTEIRA_GATE.biasPoints;
-  return { key, settled: rows.length, measuredRatio, sigmaP, factor, mode: open ? "carteira" : "medicao", gapPoints, biased };
+  // The applied factor is 1: generation corrected this mean already. A quarter slice overrides it
+  // in `livePeriodCalibration`, which is the one dimension generation has no view of.
+  return { key, settled: rows.length, measuredRatio, sigmaP, factor: 1, measuredFactor, mode: open ? "carteira" : "medicao", gapPoints, biased };
 }
 
 /**
@@ -179,8 +229,15 @@ export const PERIOD_MIN_LEGS = 20;
 export function livePeriodCalibration(opts: { excludeDay?: string } = {}, entries?: LedgerEntry[]): Record<number, SliceCalibration> {
   const rows = entries ?? mainTickets(readLedger(), true);
   const out: Record<number, SliceCalibration> = {};
+  // The scope's own measured factor is the part generation has already taken out of every live
+  // leg. What is left for a quarter is its DEVIATION from that scope — so the applied factor is the
+  // ratio of the two, and a quarter that behaves exactly like its scope applies nothing (1.0).
+  // Q3 lands above 1: generation pulls the whole live scope down, and Q3 did not deserve it.
+  const scope = sliceCalibration({ scope: "live", excludeDay: opts.excludeDay }, rows);
   for (const period of new Set(rows.filter((e) => e.scope === "live").map((e) => e.period ?? 0))) {
-    out[period] = sliceCalibration({ scope: "live", period, excludeDay: opts.excludeDay }, rows);
+    const slice = sliceCalibration({ scope: "live", period, excludeDay: opts.excludeDay }, rows);
+    const relative = scope.measuredFactor > 0 ? slice.measuredFactor / scope.measuredFactor : 1;
+    out[period] = { ...slice, factor: Number.isFinite(relative) && relative > 0 ? relative : 1 };
   }
   return out;
 }
