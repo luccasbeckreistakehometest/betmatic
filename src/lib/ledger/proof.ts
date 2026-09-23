@@ -113,6 +113,32 @@ export function proofStats(entries: LedgerEntry[]): ProofStats {
 }
 
 /**
+ * The first Brasília day the public record speaks for. The product before it is not the product
+ * being measured — those tickets were built by hand, on another sport, against another prompt — and
+ * averaging them into today's number would describe something nobody can buy. The window is stated
+ * on the page rather than applied quietly: a record that silently starts where it looks best is not
+ * a record. `RECORD_START_DAY` moves it (YYYY-MM-DD, Brasília).
+ */
+export const DEFAULT_RECORD_START = "2026-09-21";
+
+export function recordStartDay(env: Record<string, string | undefined> = process.env): string {
+  const v = (env.RECORD_START_DAY ?? "").trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : DEFAULT_RECORD_START;
+}
+
+/**
+ * The entries inside the published window. A ticket with no kickoff falls back to when it was
+ * written, so nothing slips in unmeasured.
+ */
+export function withinRecordWindow<T extends Pick<LedgerEntry, "startsAt" | "createdAt">>(
+  entries: T[],
+  env: Record<string, string | undefined> = process.env,
+): T[] {
+  const start = recordStartDay(env);
+  return entries.filter((e) => brasiliaDay(e.startsAt ?? e.createdAt, "") >= start);
+}
+
+/**
  * Whether a ticket's content (title, legs, permalink) may be shown to someone who has not paid for
  * it. A ticket is the product until its game starts: before kickoff only the operator sees it.
  * Tickets logged before kickoff times were recorded go public once they are graded.
