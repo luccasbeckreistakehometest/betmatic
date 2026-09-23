@@ -3,7 +3,8 @@ import { findPrediction, savePrediction } from "@/lib/server/predictions";
 import { getLiveSnapshot, liveTracker } from "@/lib/server/live";
 import { buildBets } from "@/lib/bets/builder";
 import { buildPropCandidates } from "@/lib/props/candidates";
-import { recordPredictions } from "@/lib/ledger/store";
+import { ledgerIdFor, recordPredictions } from "@/lib/ledger/store";
+import { recordLegPrices } from "@/lib/server/leg-prices";
 import { sendTicketMail } from "@/lib/server/ticket-mail";
 import { AiBudgetExceededError, brasiliaDayStart } from "@/lib/server/ai-budget";
 import { reportError } from "@/lib/server/ops-log";
@@ -14,7 +15,7 @@ import { logEvent } from "@/lib/server/ops-log";
 import { budgetState } from "@/lib/server/ai-budget";
 import type { LiveState } from "@/lib/live/state";
 import type { LiveSnapshot } from "@/lib/live/snapshot";
-import type { BetSlate, PropRow } from "@/lib/types";
+import type { BetSlate, BetSuggestion, Game, PropRow } from "@/lib/types";
 import type { PublicUser } from "@/lib/server/users";
 import type { Lang } from "@/lib/i18n";
 
@@ -191,6 +192,10 @@ export async function runLiveRead(user: LivePrincipal, sportKey: string, gameId:
       // Graded like every other ticket, kept out of the public ROI: the live record measures how
       // often a read lands, and the reference prices say nothing about what it would have paid.
       recordPredictions(detail.game, slate.suggestions, { live: { minute, period: snap.period } });
+      // The price each live leg was written with, recorded as what it is: the pre-game board, not an
+      // in-play price. Without this row the live scope has no way to prove it is not quoting a price
+      // nobody could have taken — which is the whole reason its return is called a reference.
+      recordLiveLegPrices(detail.game, slate.suggestions, { minute, period: snap.period });
       void sendTicketMail({ gameId, sportKey, dateKey, matchup: `${detail.game.away.displayName} @ ${detail.game.home.displayName}`, lang, fresh: { kind: "live", period: snap.period, minute } });
       getDb().prepare("UPDATE generation_requests SET status='ok', finishedAt=? WHERE id=?").run(nowIso(), reqId);
       return { status: "ok", read: latestLiveRead(sportKey, gameId, dateKey, lang)!, cached: false };
@@ -202,6 +207,26 @@ export async function runLiveRead(user: LivePrincipal, sportKey: string, gameId:
   })();
   inflight.set(key, task);
   try { return await task; } finally { inflight.delete(key); }
+}
+
+/**
+ * One `leg_prices` row per live leg, flagged `no_live_price`. It is skipped by the close job (which
+ * reads `pending`) and by the public CLV, and it is what lets the admin count how much of the live
+ * balance is priced off a stale board — 109 % of it, on the sample that made this necessary.
+ */
+export function recordLiveLegPrices(game: Game, suggestions: BetSuggestion[], live: { minute: number; period?: number }): number {
+  try {
+    return suggestions.reduce((n, s) => n + recordLegPrices(
+      s.legs.map((leg, i) => ({
+        ledgerId: ledgerIdFor(game.id, s, live), legIndex: i, gameId: game.id, sportKey: game.sportKey,
+        startsAt: game.startsAt, homeAbbr: game.home.abbreviation, leg,
+      })),
+      { basis: "live", status: "no_live_price" },
+    ), 0);
+  } catch (error) {
+    reportError("live.leg_prices", error, { gameId: game.id }, "warn");
+    return 0;
+  }
 }
 
 export interface QuarterReadsResult { status: "ok" | "skipped" | "error"; checked: number; generated: number; cached: number; costUsd: number; note: string }
