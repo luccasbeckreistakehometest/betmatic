@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { LangPicker, useNavState } from "@/components/Controls";
-import { NAV_GROUPS } from "@/components/AppRail";
+import { RAIL_GROUPS } from "@/lib/nav";
 import { Icon } from "@/components/Icon";
 import { Button, LinkButton, Skeleton, cx } from "@/components/ui";
 import { makeT } from "@/lib/i18n";
@@ -144,7 +144,7 @@ export function AccountBar() {
             </div>
           )}
 
-          {NAV_GROUPS.map((group) => (
+          {RAIL_GROUPS.map((group) => (
             <nav key={group.label.en} className="border-b border-line py-1" aria-label={group.label[lang]}>
               <p className="px-2 pt-1 pb-0.5 text-label u-label text-fg-dim">{group.label[lang]}</p>
               {group.items.map((item) => (

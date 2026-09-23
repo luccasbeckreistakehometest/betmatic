@@ -329,8 +329,19 @@ const DICT = {
   seeTickets: { pt: "Ver bilhetes", en: "See tickets" },
   allBands: { pt: "Todas as faixas", en: "All bands" },
   navMore: { pt: "Mais", en: "More" },
+  navProof: { pt: "Prova pública", en: "Public record" },
+  navTools: { pt: "Calculadoras", en: "Calculators" },
+  navHelp: { pt: "Jogo responsável", en: "Responsible gambling" },
+  navAdmin: { pt: "Admin", en: "Admin" },
   menu: { pt: "Menu", en: "Menu" },
   closeMenu: { pt: "Fechar menu", en: "Close menu" },
+  /* ── O menu ───────────────────────────────────────────────────────────────────────────────────
+   * The one list of everything the product does. Each row carries what it is for and what it costs;
+   * the features with no page of their own are named at the end of their section, with the place
+   * they live, so the list is complete without inventing a door that opens onto nothing.
+   */
+  menuTitle: { pt: "Tudo que dá pra fazer aqui", en: "Everything you can do here" },
+  menuInside: { pt: "Dentro das telas", en: "Inside the screens" },
   logout: { pt: "Sair", en: "Log out" },
   login: { pt: "Entrar", en: "Log in" },
   planUntil: { pt: "até {date}", en: "until {date}" },
