@@ -39,8 +39,12 @@ export function TodayBoard() {
   useEffect(() => { const id = setTimeout(() => void load(), 0); return () => clearTimeout(id); }, [load]);
 
   const items = data?.items ?? [];
+  const observations = data?.observations ?? [];
   const live = data?.live ?? [];
-  const nothing = !!data && !items.length && !live.length;
+  // Three different answers, and they must not be collapsed into one: nothing cleared the cuts,
+  // something cleared them but none is worth a stake, and here is what to bet.
+  const nothing = !!data && !items.length && !observations.length && !live.length;
+  const noStake = !!data && !items.length && !!observations.length;
 
   return (
     <div className="flex flex-col gap-4" data-testid="today">
@@ -108,12 +112,37 @@ export function TodayBoard() {
         </section>
       )}
 
+      {noStake && (
+        <section className="flex flex-col gap-3" data-testid="today-no-stake">
+          <h2 className="u-title text-h3 text-fg">{t("todayNoStakeTitle")}</h2>
+          <Notice>
+            <Filled
+              text={t("todayNoStakeBody")}
+              values={{
+                k: String(observations.length),
+                n: String(data?.calibration.settledLegs ?? 0),
+                x: formatPercent(Math.abs(data?.calibration.gapPoints ?? 0) / 100, lang, { digits: 1 }),
+              }}
+            />
+          </Notice>
+        </section>
+      )}
+
       {!!items.length && (
         <div className="flex flex-col gap-3">
           {items.map((item) => (
             <TodayCard key={item.ledgerId} item={item} lang={lang} bankroll={data!.bankrollAmount} smallBankroll={data!.smallBankroll} sportKey={sport.key} day={data!.day} onSaved={() => void load()} />
           ))}
         </div>
+      )}
+
+      {!!observations.length && (
+        <section className="flex flex-col gap-3" data-testid="today-observations">
+          {!!items.length && <h2 className="u-title text-h3 text-fg">{t("todayObservations")}</h2>}
+          {observations.map((item) => (
+            <TodayCard key={item.ledgerId} item={item} lang={lang} bankroll={data!.bankrollAmount} smallBankroll={data!.smallBankroll} sportKey={sport.key} day={data!.day} onSaved={() => void load()} />
+          ))}
+        </section>
       )}
 
       {!!live.length && (

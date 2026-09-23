@@ -181,7 +181,7 @@ export function medicaoWeekUsed(day: string, sportKey: string): number {
 const hashOf = (sel: DailySelection) =>
   createHash("sha1").update(JSON.stringify({
     mode: sel.mode,
-    items: [...sel.items, ...sel.live].map((i) => [i.candidate.ledgerId, i.units, i.candidate.decimal, i.rank]),
+    items: [...sel.items, ...sel.observations, ...sel.live].map((i) => [i.candidate.ledgerId, i.units, i.candidate.decimal, i.rank]),
   })).digest("hex").slice(0, 16);
 
 /** Builds the day's list and files it. Idempotent: an unchanged answer is not rewritten. */
@@ -217,11 +217,14 @@ export function runDailyList(opts: { day?: string; sportKey: string; now?: numbe
     // the formula's and the owner's ladder — so the comparison is a query over what was actually
     // recommended, never a re-simulation after the fact, which is how these things get faked.
     const arm = stakePolicyForDay(day);
-    for (const item of [...selection.items, ...selection.live]) {
+    // Observations are filed beside the recommendations: `units` is 0 and the payload carries the
+    // reason, so the screen can list a ticket that cleared every cut without a stake instead of
+    // making the day look empty when it is not.
+    for (const item of [...selection.items, ...selection.observations, ...selection.live]) {
       const c = item.candidate;
       insert.run(day, opts.sportKey, c.ledgerId, item.rank, c.scope, c.gameId, c.suggestionId, c.bandKey, c.title ?? "", c.matchup ?? "", c.startsAt,
         c.decimal, c.modelProbability, item.calibratedProbability, item.grossEdge, item.shrunkEdge, item.units, item.minAcceptableDecimal,
-        item.capped, arm, ladderUnits(c.decimal), item.expiresAt ?? null, JSON.stringify({ k: item.k, score: item.score, legs: c.legs, players: c.players, markets: c.markets, evidenceScore: c.evidenceScore, confidence: c.confidence }));
+        item.capped, arm, ladderUnits(c.decimal), item.expiresAt ?? null, JSON.stringify({ k: item.k, score: item.score, legs: c.legs, players: c.players, markets: c.markets, evidenceScore: c.evidenceScore, confidence: c.confidence, noStakeReason: item.noStakeReason ?? null }));
     }
   }).immediate();
 

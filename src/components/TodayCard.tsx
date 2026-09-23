@@ -114,6 +114,13 @@ export function TodayCard({ item, lang, bankroll, smallBankroll, sportKey, day, 
           <p className="text-sm text-fg-muted">
             <Filled text={t("todayLiveReference")} values={{ d: formatOdds(item.decimal, lang) }} className="text-fg" />
           </p>
+        ) : item.units <= 0 ? (
+          /* An observation. It keeps its chance and its minimum price — everything except a stake,
+             because the one number it must not show is a size nobody should bet. */
+          <p data-testid="today-stake" className="flex flex-wrap items-baseline gap-x-2 border-t border-line pt-3 text-sm text-fg-muted">
+            <span className="text-fg">{t("todayNoStake")}</span>
+            <span className="text-tiny text-fg-dim">{item.noStakeReason === "day_cap" ? t("todayNoStakeCap") : t("todayNoStakeWhy")}</span>
+          </p>
         ) : (
           <p data-testid="today-stake" className="flex flex-wrap items-baseline gap-x-2 border-t border-line pt-3 text-sm text-fg-muted">
             <Filled

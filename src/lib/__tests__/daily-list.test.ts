@@ -71,7 +71,6 @@ describe("the filed answer", () => {
     expect(result.candidates).toBe(5);
 
     const stored = readDailySelection(DAY, "wnba")!;
-    expect(stored.mode).toBe("medicao");
     const reasons = new Set(stored.skipped.map((s) => s.reason));
     expect(reasons).toContain("alternative");
     expect(reasons).toContain("confidence");
@@ -79,8 +78,15 @@ describe("the filed answer", () => {
 
     const items = readDailyItems(DAY, "wnba");
     expect(items.length).toBeGreaterThan(0);
-    expect(items.every((i) => i.units > 0)).toBe(true);
-    // One per game, and never the long band.
+    // This fixture has no settled ledger behind it, so σ_p sits at the ceiling and the formula
+    // sizes everything under the floor. The wallet is therefore closed and the rows are filed as
+    // observations — which is the whole point: the answer is still written down in full, with the
+    // discards and their reasons, instead of a stake being invented to make the day look alive.
+    expect(stored.mode).toBe("fechado");
+    expect(stored.totals.units).toBe(0);
+    expect(items.every((i) => i.units === 0)).toBe(true);
+    expect(stored.note).toMatch(/nothing is worth a stake today/);
+    // One per game, and never the long band — the cuts and the concentration rule still ran.
     expect(new Set(items.map((i) => i.gameId)).size).toBe(items.length);
     expect(items.some((i) => i.bandKey === "long")).toBe(false);
     // The owner's ladder is filed beside the formula's number, for the A/B.
@@ -99,7 +105,8 @@ describe("the filed answer", () => {
 
   it("builds the same answer in memory when nothing has been filed", () => {
     const live = buildDailyList(DAY, "wnba", { now: NOW });
-    expect(live.selection.items.map((i) => i.candidate.ledgerId)).toEqual(readDailyItems(DAY, "wnba").filter((i) => i.scope === "pre").map((i) => i.ledgerId));
+    const filed = readDailyItems(DAY, "wnba").filter((i) => i.scope === "pre").map((i) => i.ledgerId);
+    expect([...live.selection.items, ...live.selection.observations].map((i) => i.candidate.ledgerId)).toEqual(filed);
   });
 });
 

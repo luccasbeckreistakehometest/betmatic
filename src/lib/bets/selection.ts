@@ -115,6 +115,12 @@ export interface SelectedItem {
   /** The worst price still worth taking. "Só vale até 1,33. Abaixo disso, passa." */
   minAcceptableDecimal: number;
   capped: CapKind;
+  /**
+   * Set on an OBSERVATION — a ticket that cleared every cut and still earns no stake. `below_floor`
+   * means the arithmetic came out under 0.25 u, `day_cap` that the day's budget was already spent.
+   * Null on anything in `items`, which is what the product actually recommends.
+   */
+  noStakeReason?: "below_floor" | "day_cap" | null;
   /** Live reads only: when the card stops being an answer to anything. */
   expiresAt?: string;
   /**
@@ -129,8 +135,18 @@ export interface DailySelection {
   day: string;
   sportKey: string;
   mode: StakeMode;
-  /** The wallet: pre-game tickets with units on them. */
+  /** The wallet: pre-game tickets with units on them. Empty is a legitimate answer. */
   items: SelectedItem[];
+  /**
+   * Tickets that survived all ten cuts and still earn nothing — because the size the formula
+   * produced is under the floor, or the day's budget is gone.
+   *
+   * They are listed, never staked, and never dressed up. Printing 0.25 u on a 1.86 to have
+   * something to show is how this went wrong once already: a quarter unit risked to win 0.215 is
+   * not a bet, and the `capped` field said "none" because nothing had been capped — nothing had
+   * been computed either. An honest zero is worth more than an invented floor.
+   */
+  observations: SelectedItem[];
   /**
    * Live reads. They are part of the list and never part of the wallet: the price stored on a live
    * ticket is the pre-game table, inflated 1.64x at Q1 rising to 1.88x at Q4, so `units` stays 0
@@ -411,12 +427,10 @@ export function selectDaily(candidates: Candidate[], ctx: SelectionContext): Dai
   const capped = applyCaps(sized, caps);
 
   const items: SelectedItem[] = [];
+  const observations: SelectedItem[] = [];
   for (const r of capped) {
-    if (r.units <= 0) {
-      skipped.push({ ledgerId: r.row.candidate.ledgerId, reason: r.capped === "day" || r.capped === "game" ? "day_cap" : "below_floor" });
-      continue;
-    }
-    items.push({
+    const noStakeReason = r.units > 0 ? null : r.capped === "day" || r.capped === "game" ? "day_cap" as const : "below_floor" as const;
+    const item: SelectedItem = {
       candidate: r.row.candidate,
       rank: 0,
       calibratedProbability: r.row.calibratedProbability,
@@ -428,9 +442,15 @@ export function selectDaily(candidates: Candidate[], ctx: SelectionContext): Dai
       pctOfBankroll: r.units * SIZING.unitPct,
       minAcceptableDecimal: minAcceptableDecimal(r.row.calibratedProbability, SIZING.minEdgeGross),
       capped: r.capped,
-    });
+      noStakeReason,
+    };
+    // A ticket with no stake is not a discard: it cleared every cut, and it stays on the screen
+    // with its chance and its minimum price. `skipped` is for what the CUTS removed, and mixing
+    // the two would hide why the wallet is empty behind a pile of things that never qualified.
+    (noStakeReason ? observations : items).push(item);
   }
   items.forEach((item, i) => { item.rank = i + 1; });
+  observations.forEach((item, i) => { item.rank = i + 1; });
 
   const live = mode === "fechado" ? [] : selectLive(liveRaw, ctx, skipped);
   const units = items.reduce((a, i) => a + i.units, 0);
@@ -438,18 +458,21 @@ export function selectDaily(candidates: Candidate[], ctx: SelectionContext): Dai
   return {
     day: ctx.day,
     sportKey: ctx.sportKey,
-    mode: items.length || live.length ? mode : "fechado",
+    // The wallet is closed unless it actually produced a stake. Observations do not open it.
+    mode: items.length ? mode : "fechado",
     items,
+    observations,
     live,
     skipped,
     totals: { units: Number(units.toFixed(2)), pctOfBankroll: units * SIZING.unitPct, games: new Set(items.map((i) => i.candidate.gameId)).size },
-    note: noteFor(mode, items.length, live.length),
+    note: noteFor(mode, items.length, observations.length, live.length),
   };
 }
 
-function noteFor(mode: StakeMode, items: number, live: number): string {
-  if (!items && !live) return "no candidate cleared the cuts";
-  if (mode === "medicao") return "measurement regime: every stake is the 0.25 u floor until the calibration closes";
+function noteFor(mode: StakeMode, items: number, observations: number, live: number): string {
+  if (!items && !observations && !live) return "no candidate cleared the cuts";
+  if (!items && observations) return `nothing is worth a stake today: ${observations} ticket${observations === 1 ? "" : "s"} cleared the cuts and none sized above the 0.25 u floor`;
+  if (mode === "medicao") return `measurement regime: ${items} ticket${items === 1 ? "" : "s"} at no more than the 0.25 u floor while the calibration closes`;
   return `${items} ticket${items === 1 ? "" : "s"} sized by quarter Kelly on the shrunk edge`;
 }
 
