@@ -6,16 +6,21 @@ import { loginAdmin, skipTour } from "./helpers";
 /**
  * "Os bilhetes de hoje": the screen that answers which ones and how much.
  *
- * The three cases the policy has to survive are all here: a day with a card, the same day without a
- * declared bankroll, and a day where nothing clears the cuts — which is a legitimate answer and must
- * look like one, not like a broken page. And the rule that matters most across all of them: nothing
- * was removed. /app still holds every ticket, one tap away, including the ones this screen discarded.
+ * Four cases, and the world seeds all four: a day the wallet is open on, that same day with no
+ * declared bankroll, a day where everything clears the cuts and NOTHING is worth a stake, and a day
+ * where nothing clears them at all. The last two are different answers and must not look alike.
+ *
+ * The rule that matters across all of them: nothing was removed. /app still holds every ticket, one
+ * tap away, including the ones this screen discarded and the ones it declined to size.
  */
 
 const seed = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data", "e2e", "hoje-day.json"), "utf8")) as
-  { day: string; sportKey: string; gameId: string };
+  { day: string; sportKey: string; gameId: string; nothingDay: string };
 
+/** The calibrated day: 330 settled legs behind it, so the wallet is open and the formula sizes. */
 const board = `/app/hoje?sport=${seed.sportKey}&lang=pt&day=${seed.day}`;
+/** The uncalibrated day: the same history is hidden from it by leave-one-day-out, so it measures. */
+const nothingBoard = `/app/hoje?sport=${seed.sportKey}&lang=pt&day=${seed.nothingDay}`;
 
 async function setBankroll(page: import("@playwright/test").Page, bankrollAmount: number | null) {
   const r = await page.request.patch("/api/settings", { data: { bankrollAmount } });
@@ -40,8 +45,10 @@ test.describe("a day with a recommendation", () => {
     // What the spec asserts is the triple itself: never the unit without the share and the money.
     // pt-BR writes the percent with a non-breaking space before the sign, so the assertion is on the
     // shape of the triple, not on one spelling of it: the unit, the share and the money, together.
+    // 1.50 u of a R$ 1.000 bankroll is 1,50 % and R$ 15,00. The three have to agree: a unit with no
+    // share is unreadable, and a share with no money is a number nobody can act on.
     const stake = card.getByTestId("today-stake");
-    await expect(stake).toHaveText(/Apostar\s+0,25\s*u\s+·\s+0,25\s*%\s+da sua banca\s+·\s+R\$\s*2,50/);
+    await expect(stake).toHaveText(/Apostar\s+1,50\s*u\s+·\s+1,50\s*%\s+da sua banca\s+·\s+R\$\s*15,00/);
 
     // The multiplier never appears without the chance beside it (DESIGN.md §13).
     await expect(card).toContainText("1,38");
@@ -50,10 +57,16 @@ test.describe("a day with a recommendation", () => {
     await expect(card).toContainText(/Só vale até/i);
   });
 
-  test("says the regime out loud instead of pretending the floor is a recommendation", async ({ page }) => {
+  test("sizes from the formula, so it is not the floor and not the ceiling", async ({ page }) => {
+    await setBankroll(page, 1000);
     await page.goto(board);
-    await expect(page.getByTestId("today")).toContainText(/calibração/i);
-    await expect(page.getByTestId("today")).toContainText("0,25");
+    const stake = page.getByTestId("today-card").first().getByTestId("today-stake");
+    // The two numbers that would mean the arithmetic was skipped: the measurement floor and the
+    // per-ticket ceiling. A recommendation that is always one of those is not a recommendation.
+    await expect(stake).not.toContainText("0,25 u");
+    await expect(stake).not.toContainText("2,00 u");
+    // And with the wallet open there is no calibration notice to show.
+    await expect(page.getByTestId("today")).not.toContainText(/em calibração/i);
   });
 
   test("asks for a bankroll instead of inventing one, and still shows the unit and the share", async ({ page }) => {
@@ -61,7 +74,7 @@ test.describe("a day with a recommendation", () => {
     await page.goto(board);
 
     const stake = page.getByTestId("today-card").first().getByTestId("today-stake");
-    await expect(stake).toHaveText(/Apostar\s+0,25\s*u\s+·\s+0,25\s*%\s+da sua banca/);
+    await expect(stake).toHaveText(/Apostar\s+1,50\s*u\s+·\s+1,50\s*%\s+da sua banca/);
     await expect(stake).not.toContainText("R$");
     await expect(page.getByRole("link", { name: /definir sua banca|definir banca/i }).first()).toBeVisible();
   });
@@ -95,6 +108,68 @@ test.describe("a day with a recommendation", () => {
     const text = (await page.getByTestId("today").textContent()) ?? "";
     expect(text).not.toMatch(/lucro|renda|garantid|ganho certo|última chance|só até/i);
     expect(text).toMatch(/Pesquisa, não garantia de resultado/i);
+  });
+});
+
+/**
+ * The state the owner rejected, pinned so it cannot come back. His words were "como vou apostar
+ * 0,25 u em uma odd 1,86? nada disso", and he was right: that 0.25 u was the measurement regime
+ * substituting a constant for the formula, not a size anything had computed.
+ */
+test.describe("a day with nothing worth a stake", () => {
+  test.beforeEach(async ({ page }) => {
+    await loginAdmin(page);
+    await skipTour(page);
+    await setBankroll(page, 1000);
+  });
+
+  test("says it recommends nothing, and says what stopped it", async ({ page }) => {
+    await page.goto(nothingBoard);
+    const head = page.getByTestId("today-no-stake");
+    await expect(head).toBeVisible();
+    await expect(head).toContainText(/Hoje não recomendamos nada/i);
+    // How many cleared the cuts, and the measured error that kept them out. A bare "nothing today"
+    // would be indistinguishable from a broken page.
+    await expect(head).toContainText(/passaram nos cortes/i);
+    await expect(head).toContainText(/0,25\s*u/);
+    await expect(head).toContainText(/linhas liquidadas/i);
+  });
+
+  test("the card is listed, keeps its chance, and carries no stake", async ({ page }) => {
+    await page.goto(nothingBoard);
+    const card = page.getByTestId("today-card").first();
+    await expect(card).toBeVisible();
+    await expect(card).toContainText("Arike Ogunbowale");
+    // Nothing was removed: the chance and the minimum price are still there to read.
+    await expect(card).toContainText("1,38");
+    await expect(card).toContainText(/Só vale até/i);
+
+    const stake = card.getByTestId("today-stake");
+    await expect(stake).toContainText(/Sem aposta/i);
+    await expect(stake).toContainText(/observação, não como recomendação/i);
+  });
+
+  test("prints no stake anywhere on the screen — not a unit, not a share, not an amount", async ({ page }) => {
+    await page.goto(nothingBoard);
+    await expect(page.getByTestId("today-observations")).toBeVisible();
+    const text = (await page.getByTestId("today").textContent()) ?? "";
+    // This is the regression guard. No stake is offered in any of the three forms the card can
+    // offer one: an instruction, a share of the bankroll, or an amount of money.
+    expect(text).not.toMatch(/Apostar\s+\d/);
+    expect(text).not.toMatch(/da sua banca/);
+    expect(text).not.toMatch(/R\$\s*\d/);
+    // And the ONLY unit figure anywhere on the screen is the floor itself, which appears twice —
+    // in the header and on the card — both times naming the minimum that was NOT reached. Any
+    // other unit number here would be a size somebody could act on, which is the bug.
+    expect([...new Set(text.match(/\d+,\d+\s*u\b/g) ?? [])]).toEqual(["0,25 u"]);
+  });
+
+  test("still points at everything that was generated", async ({ page }) => {
+    await page.goto(nothingBoard);
+    const all = page.getByTestId("today-all");
+    await expect(all).toBeVisible();
+    await all.click();
+    await expect(page).toHaveURL(/\/app\?/);
   });
 });
 
