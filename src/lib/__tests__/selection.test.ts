@@ -369,14 +369,24 @@ describe("what the sample does NOT support, and must not be adopted by momentum"
     expect(shrinkFactor(20, 0.12)).toBeLessThan(shrinkFactor(SIZING.maxOdds, 0.12));
   });
 
-  it("does not treat an alternative as a worse ticket", () => {
+  it("does not treat an alternative as a worse ticket, and does not yet let one in either", () => {
     const inWindow = decided.filter((r) => r.decimal >= SIZING.minOdds && r.decimal <= SIZING.maxOdds && r.legs <= SIZING.maxLegs && r.evidenceScore === 100 && r.confidence !== "low");
     const main = inWindow.filter((r) => !r.alternativeOf);
     const alt = inWindow.filter((r) => r.alternativeOf);
-    // Under the gate between them, and over ALL tickets the two populations are indistinguishable.
-    // Cut 1 stands on DUPLICATION — an alternative is the same bet on the same game — and rule 10
-    // is what enforces that. It has never stood on the second option being worse.
-    expect(inWindow.length).toBeLessThan(GATE);
+
+    // The window itself cleared the gate on the re-graded ledger (27 decided, up from 19), and the
+    // two arms land on top of each other: 40.0 % of 10 against 41.2 % of 17, both promised ~54 %.
+    // That is the coordinator's finding reproduced — the second option is not the worse ticket.
+    expect(inWindow.length).toBeGreaterThanOrEqual(GATE);
+
+    // But a COMPARISON needs both arms over the gate, not their sum, and neither arm is there yet.
+    // Applying the gate to the total would be the trick this suite refuses everywhere else: it is
+    // the same rule that keeps 3-5x at +17.3 % from becoming a conclusion, and it binds for the
+    // good news as well as the bad. So the cut stays, and it stays for the reason it always had —
+    // DUPLICATION. An alternative is a second version of the same bet on the same game, and rule 10
+    // already caps a game at one ticket, so admitting them would add candidates without adding
+    // exposure. That is an argument for relaxing cut 1 the day this assertion fails, not before.
+    expect(Math.min(main.length, alt.length)).toBeLessThan(GATE);
     expect(Math.min(main.length, alt.length)).toBeGreaterThan(0);
   });
 });

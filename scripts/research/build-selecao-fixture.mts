@@ -1,0 +1,149 @@
+/**
+ * Regenerates `src/lib/__tests__/fixtures/selecao-3-noites.json` — the pre-game candidates the
+ * selection policy's regression suite runs on — from a copy of the production ledger.
+ *
+ * This exists because the fixture had no generator for its first two lives, and a fixture nobody
+ * can rebuild is a debt: the ledger was re-graded on 23/09 (the settle vocabulary could not read
+ * PTS+AST, REB+AST or PTS+REB, so 57 settled linhas had been filed as unmeasurable) and 29 of the
+ * 123 outcomes moved, four of them from void to a WIN. Without this script the next re-grade is
+ * somebody guessing.
+ *
+ *   pnpm tsx scripts/research/build-selecao-fixture.mts \
+ *     --ledger src/lib/__tests__/fixtures/ledger-prod-20260923.jsonl
+ *
+ *   # writing nothing, just reporting what would change:
+ *   pnpm tsx scripts/research/build-selecao-fixture.mts --ledger <file> --dry
+ *
+ * ## The one field the ledger does not carry
+ *
+ * `confidence` lives on the served BetSuggestion, in the `predictions` table, and never reaches the
+ * ledger. It is not cosmetic — it is cut 3, and it removes 70 of these 123 tickets — so the script
+ * refuses to invent it. It is resolved in this order:
+ *
+ *   1. `--db <path>`, reading `predictions.payload` and matching on the suggestion id;
+ *   2. the fixture already on disk, carried forward by ledger id;
+ *
+ * and any entry it cannot resolve either way is listed by name and the run fails. Everything else
+ * is derived from the ledger, so a re-grade only ever moves outcomes.
+ */
+import fs from "node:fs";
+import path from "node:path";
+import Database from "better-sqlite3";
+import { brasiliaDay } from "@/lib/ledger/proof";
+import { canonicalMarket } from "@/lib/ledger/stat-key";
+import type { BetSlate, LedgerEntry } from "@/lib/types";
+
+const arg = (flag: string): string | undefined => {
+  const i = process.argv.indexOf(flag);
+  return i >= 0 ? process.argv[i + 1] : undefined;
+};
+const DRY = process.argv.includes("--dry");
+const OUT = path.join(process.cwd(), "src/lib/__tests__/fixtures/selecao-3-noites.json");
+const LEDGER = arg("--ledger");
+if (!LEDGER) {
+  console.error("usage: build-selecao-fixture.mts --ledger <ledger.jsonl> [--db <betmatic.db>] [--dry]");
+  process.exit(1);
+}
+
+/** The shape the suite reads: a `Candidate` plus the day it belongs to and how it settled. */
+interface FixtureRow {
+  ledgerId: string;
+  suggestionId: string;
+  gameId: string;
+  sportKey: string;
+  scope: "pre" | "live";
+  bandKey: string;
+  decimal: number;
+  modelProbability: number;
+  legs: number;
+  players: string[];
+  markets: string[];
+  evidenceScore: number;
+  confidence: "high" | "medium" | "low";
+  startsAt: string;
+  day: string;
+  outcome: string;
+  alternativeOf?: string;
+}
+
+const entries = fs.readFileSync(LEDGER, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l) as LedgerEntry);
+// Pre-game only. A live read is a different population with its own fixture and its own measure.
+const pre = entries.filter((e) => e.scope !== "live");
+
+/** `confidence` by suggestion id, from a `predictions` copy when one is given. */
+function confidenceFromDb(file: string): Map<string, string> {
+  const out = new Map<string, string>();
+  const db = new Database(file, { readonly: true });
+  for (const row of db.prepare("SELECT payload FROM predictions").all() as { payload: string }[]) {
+    let slate: BetSlate;
+    try { slate = JSON.parse(row.payload) as BetSlate; } catch { continue; }
+    for (const s of slate.suggestions ?? []) if (s.id && s.confidence) out.set(s.id, s.confidence);
+  }
+  db.close();
+  return out;
+}
+
+/** `confidence` by ledger id, carried forward from the fixture already on disk. */
+function confidenceFromFixture(): Map<string, string> {
+  if (!fs.existsSync(OUT)) return new Map();
+  const rows = JSON.parse(fs.readFileSync(OUT, "utf8")) as FixtureRow[];
+  return new Map(rows.map((r) => [r.ledgerId, r.confidence]));
+}
+
+const dbFile = arg("--db");
+const bySuggestion = dbFile ? confidenceFromDb(dbFile) : new Map<string, string>();
+const byLedgerId = confidenceFromFixture();
+
+const rows: FixtureRow[] = [];
+const unresolved: string[] = [];
+for (const e of pre) {
+  const confidence = bySuggestion.get(e.suggestionId ?? "") ?? byLedgerId.get(e.id);
+  if (!confidence) { unresolved.push(e.id); continue; }
+  rows.push({
+    ledgerId: e.id,
+    suggestionId: e.suggestionId ?? "",
+    gameId: e.gameId,
+    sportKey: e.sportKey,
+    scope: "pre",
+    bandKey: e.bandKey,
+    decimal: e.combinedDecimal,
+    modelProbability: e.modelledProbability,
+    legs: e.legs.length,
+    // The concentration rule counts appearances of a player, so a leg with no named player
+    // contributes nothing rather than an empty string that would collide with every other one.
+    players: [...new Set(e.legs.map((l) => l.settlement?.player).filter((p): p is string => !!p))],
+    // Canonical keys, because that is what cut 9 reads. An unmapped market stays "unmapped" and the
+    // policy refuses it — dropping it here would hide exactly the case the cut exists for.
+    markets: e.legs.map((l) => canonicalMarket(l, e.sportKey) ?? "unmapped"),
+    evidenceScore: e.evidenceScore ?? 0,
+    confidence: confidence as FixtureRow["confidence"],
+    startsAt: e.startsAt ?? "",
+    day: brasiliaDay(e.startsAt ?? e.createdAt),
+    outcome: e.outcome,
+    ...(e.alternativeOf ? { alternativeOf: e.alternativeOf } : {}),
+  });
+}
+
+if (unresolved.length) {
+  console.error(`\n${unresolved.length} ticket(s) with no confidence, and it is cut 3 so none of them may be guessed:`);
+  for (const id of unresolved.slice(0, 20)) console.error(`  ${id}`);
+  console.error("\nPass --db <betmatic.db> with the predictions table that served them.");
+  process.exit(1);
+}
+
+rows.sort((a, b) => a.day.localeCompare(b.day) || a.ledgerId.localeCompare(b.ledgerId));
+
+const before = fs.existsSync(OUT) ? (JSON.parse(fs.readFileSync(OUT, "utf8")) as FixtureRow[]) : [];
+const was = new Map(before.map((r) => [r.ledgerId, r.outcome]));
+const moved = rows.filter((r) => was.has(r.ledgerId) && was.get(r.ledgerId) !== r.outcome);
+const days = [...new Set(rows.map((r) => r.day))].sort();
+const settled = rows.filter((r) => r.outcome === "won" || r.outcome === "lost");
+
+console.log(`${rows.length} pre-game tickets over ${days.length} nights (${days.join(", ")})`);
+console.log(`${settled.length} decided, ${settled.filter((r) => r.outcome === "won").length} green`);
+console.log(`${moved.length} outcome(s) moved since the fixture on disk`);
+for (const r of moved.slice(0, 40)) console.log(`  ${was.get(r.ledgerId)} -> ${r.outcome}  ${r.ledgerId.slice(0, 72)}`);
+
+if (DRY) { console.log("\n--dry: nothing written"); process.exit(0); }
+fs.writeFileSync(OUT, `${JSON.stringify(rows, null, 2)}\n`, "utf8");
+console.log(`\nwrote ${path.relative(process.cwd(), OUT)}`);
