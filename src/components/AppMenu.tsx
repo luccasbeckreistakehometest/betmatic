@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, type MouseEvent } from "react";
+import { useCallback, useEffect, useRef, useSyncExternalStore, type MouseEvent } from "react";
+import { createPortal } from "react-dom";
 import { Icon } from "@/components/Icon";
 import { LangPicker } from "@/components/Controls";
 import { Button, Dialog, LinkButton, Sheet, cx, useIsPhone } from "@/components/ui";
@@ -27,8 +28,13 @@ import { NAV_GROUPS, hrefFor, type NavHint, type NavItem } from "@/lib/nav";
  * Both shapes are the native <dialog>, so the focus trap, Esc and the return of focus to the menu
  * button come from the platform. The phone's own back gesture closes it too: opening pushes a
  * history entry at the same URL, and popping it is what closes the menu — so back dismisses the
- * sheet instead of leaving the page. A row navigates through that same pop, which keeps the entry
- * from piling up behind the page the reader asked for.
+ * sheet instead of leaving the page. Everything that leaves the menu — a row, Esc, the backdrop,
+ * logout — goes out through that one pop and hands its work over afterwards, so the menu's entry
+ * can never sit behind the page the reader asked for, nor race the navigation it was closing for.
+ *
+ * It renders into a portal at the end of <body> rather than inside the header. A modal belongs
+ * there: a dialog's heading must not come before the page's own title in the document, because
+ * that is the order a screen reader walks and the order a document query returns.
  */
 
 interface MenuUser {
@@ -38,6 +44,9 @@ interface MenuUser {
   planExpiresAt: string | null;
   plan: { id: string; name: string };
 }
+
+/** The client is the client for as long as it lives: nothing to subscribe to. */
+const subscribeToNothing = () => () => {};
 
 const ROW = "u-ring-inset flex min-h-11 w-full items-center gap-3 px-3 py-2 text-left transition-colors duration-(--dur-1) ease-(--ease-out)";
 
@@ -179,50 +188,69 @@ export function AppMenu({ open, onClose, lang, sportKey, user, here, leaving = f
   const router = useRouter();
   /** True while the history entry this menu pushed is the one on top. */
   const owned = useRef(false);
-  /** Where a tapped row is going, handed to the router once our entry is off the stack. */
-  const pending = useRef<string | null>(null);
+  /** What the reader asked for on the way out, run once our entry is off the stack. */
+  const pending = useRef<(() => void) | null>(null);
+  /** A portal needs a document, and the server has none; the same shape useIsPhone uses. */
+  const mounted = useSyncExternalStore(subscribeToNothing, () => true, () => false);
 
+  // Always listening, never tied to `open`: the pop is what closes the menu, so the handler has to
+  // outlive the closing it causes. `owned` is the guard, so an unrelated back is left alone.
   useEffect(() => {
-    if (!open) return;
-    // The same URL, spelled out: Next patches pushState and wants the third argument.
-    window.history.pushState({ betmaticMenu: true }, "", window.location.href);
-    owned.current = true;
     const onPop = () => {
+      if (!owned.current) return;
       owned.current = false;
       onClose();
-      const href = pending.current;
+      const run = pending.current;
       pending.current = null;
-      if (href) router.push(href);
+      run?.();
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
-  }, [open, onClose, router]);
-
-  /** Esc, the backdrop and the close button all leave through the same door as the back gesture. */
-  const close = useCallback(() => {
-    if (owned.current) window.history.back();
-    else onClose();
   }, [onClose]);
 
+  useEffect(() => {
+    if (!open || owned.current) return;
+    // The same URL, spelled out: Next patches pushState and wants the third argument.
+    window.history.pushState({ betmaticMenu: true }, "", window.location.href);
+    owned.current = true;
+  }, [open]);
+
   /**
-   * A row is a real <a> — a middle click or a modifier still opens a tab. A plain click goes
-   * through the back gesture instead, so the menu's history entry does not sit behind the page.
+   * The one way out. Esc, the backdrop, the close button, a row and logout all come through here:
+   * the entry is popped first and the errand runs after, so nothing the menu does can be undone by
+   * a back it triggered itself.
    */
-  const navigate = useCallback((href: string, event: MouseEvent<HTMLAnchorElement>) => {
-    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    if (!owned.current) { onClose(); return; }
-    event.preventDefault();
-    const url = new URL(event.currentTarget.href, window.location.origin);
-    pending.current = `${url.pathname}${url.search}`;
+  const leave = useCallback((errand?: () => void) => {
+    if (!owned.current) { onClose(); errand?.(); return; }
+    pending.current = errand ?? null;
     window.history.back();
   }, [onClose]);
 
+  const close = useCallback(() => leave(), [leave]);
+
+  /**
+   * A row is a real <a> — a middle click or a modifier still opens a tab. A plain click leaves by
+   * the same door, and the router is handed the destination only once the menu's entry is gone.
+   */
+  const navigate = useCallback((href: string, event: MouseEvent<HTMLAnchorElement>) => {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    const url = new URL(event.currentTarget.href, window.location.origin);
+    const to = `${url.pathname}${url.search}`;
+    leave(() => router.push(to));
+  }, [leave, router]);
+
+  /** Logout is not a destination — it drops the session and sends the reader home — so it is an
+   *  errand like any other, run after the menu's entry is off the stack rather than against it. */
+  const logout = useCallback(() => leave(onLogout), [leave, onLogout]);
+
   const Shell = phone ? Sheet : Dialog;
-  return (
+  const menu = (
     <Shell open={open} onClose={close} title={t("menuTitle")} closeLabel={t("closeMenu")}>
       <div id="app-menu" data-testid="app-menu">
-        <MenuBody lang={lang} sportKey={sportKey} user={user} here={here} leaving={leaving} onNavigate={navigate} onLogout={onLogout} />
+        <MenuBody lang={lang} sportKey={sportKey} user={user} here={here} leaving={leaving} onNavigate={navigate} onLogout={logout} />
       </div>
     </Shell>
   );
+  return mounted ? createPortal(menu, document.body) : null;
 }

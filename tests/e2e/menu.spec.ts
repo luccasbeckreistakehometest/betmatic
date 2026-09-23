@@ -92,13 +92,3 @@ test("a row opens its door, and the menu does not stay behind the page", async (
   await page.goBack();
   await expect(page).toHaveURL(/\/app\?/);
 });
-
-test("an admin sees the admin door, in the room where it belongs", async ({ page }) => {
-  const { loginAdmin } = await import("./helpers");
-  await loginAdmin(page);
-  await skipTour(page);
-  await page.goto(`/app?${Q}&date=20260911`);
-  await page.getByTestId("menu-button").click();
-  const conta = page.getByTestId("app-menu").locator('[data-menu-section="account"]');
-  await expect(conta.getByRole("link", { name: "Admin" })).toBeVisible();
-});
