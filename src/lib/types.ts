@@ -349,6 +349,15 @@ export interface LedgerEntry {
   modelledProbability: number;
   /** The generator's 0–100 evidence score at creation; absent on tickets logged before it was recorded. */
   evidenceScore?: number;
+  /**
+   * The generator's own confidence in this ticket, filed here rather than only inside the stored
+   * slate. The slate keeps one row per game and language and is OVERWRITTEN when a game is
+   * regenerated: on 22/09/2026 game 401857209 was rebuilt at 23:57 and took the suggestion ids of
+   * twelve already-served tickets with it, so their confidence became unrecoverable — and it is a
+   * selection cut, not decoration. The ledger is append-only, so a copy here survives regeneration.
+   * Absent on tickets logged before this was recorded.
+   */
+  confidence?: string;
   /** The suggestion id inside its stored slate (links alerts and prices to the served ticket). */
   suggestionId?: string;
   /** Ledger id of the main ticket this one backs up. The public record counts main tickets by default. */
