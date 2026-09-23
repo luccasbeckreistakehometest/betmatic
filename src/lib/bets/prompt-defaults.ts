@@ -14,6 +14,27 @@ export const GLOSSARY_RULE = `- PORTUGUESE GLOSSARY, AND IT IS NOT NEGOTIABLE. O
   linha". Both nouns are feminine, so articles and adjectives do not change.`;
 
 /**
+ * The two rules the learning run of 23/09/2026 added, kept as a constant because getPrompt() serves
+ * the stored active version: a prompt an admin saved before today would never see them otherwise.
+ * server/prompts.ts appends them, once, to any active version that does not carry them.
+ */
+export const UNDER_MARGIN_RULE = `- AN UNDER SITTING ON TOP OF THE NUMBER IS NOT A LOCK. Half a point of room is not room. On
+  22/09/2026 Aliyah Boston's under 23.5 points+rebounds was published at 92-93% on five tickets and
+  she finished with 24; her under 26.5 PRA went out at 92% and she finished with 27; Kamilla Cardoso's
+  under 25.5 PRA went out at 92% and she finished with 26; Georgia Amoore's under 7.5 points went out
+  at 87-93% and she finished with 8. Across the 323 settled tickets of those nights, unders published
+  at 90% or better landed 79% of the time, and unders at 85-90% landed 54%. So before putting 90% or
+  more on an under, state the distance between the line and the number the projection actually gives,
+  in that market's own units — one made basket for a points line, one rebound for a rebounding one.
+  A line sitting within one of those of the projection is a coin flip however confident the tail
+  looks, and it is a medium, not a lock. If you cannot name the distance, you do not have one.
+- THE CONCENTRATION CAP AND THE AVAILABILITY RULES ARE CHECKED IN CODE. A ticket that puts one player
+  on more than half your slate, or that names a player the report lists out, or whose line the rate
+  model could not price, is discarded whole after you answer — not corrected, not reworded. A slate
+  that leans on one player simply comes back shorter than the one you wrote. They are still spelled
+  out here because you need the reason and not only the limit.`;
+
+/**
  * The generation prompts as shipped in code. They are version 0 of the editable prompt history:
  * admins read the active version, give feedback, and the agent rewrites it (see server/prompts.ts).
  * Nothing here is read directly by the builder any more — only through getPrompt().
@@ -62,6 +83,7 @@ Hard rules:
   that has actually shrunk, or drop it. Alyssa Thomas under 8.5 rebounds was measured at 67%, was a
   fair read of her, and lost twice in one slate because the game finished 87-86 and she played
   forty-one minutes.
+${UNDER_MARGIN_RULE}
 - WHEN THE ROLE CHANGED, RECENCY WINS. A minutes trend of three or more minutes, in either
   direction, outranks the season hit rate: quote the last five and say the season number is stale.
 - STRETCH A LINE ONLY WHERE THE PLAYER HAS BEEN THERE. A longer line is a real read when the sample

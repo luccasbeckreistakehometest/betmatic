@@ -87,7 +87,12 @@ export function mockGameSlate(args: { game: Game; detail: GameDetail; props: Pro
     const b = rest.find((p) => p.player !== a.player);
     const c = rest.find((p) => p.player !== a.player && p !== b);
     const d = rest.find((p) => p.player !== a.player && p !== b && p !== c);
+    // A fourth main ticket on a name none of the others use. The mock has to obey the product's own
+    // by-player cap (bets/gates.ts): with three main tickets the cap is one, and the single and the
+    // double below both lean on `a`, so without this one the double is dropped before it is shown.
+    const e = rest.find((p) => ![a.player, b?.player, c?.player].includes(p.player));
     suggestions.push(ticket([mockPropLeg(a, lang)], lang === "pt" ? "A linha mais medida" : "The best-measured line", lang));
+    if (e) suggestions.push(ticket([mockPropLeg(e, lang)], lang === "pt" ? "Outro nome do jogo" : "Another name in the game", lang));
     if (b) {
       const main = suggestions.push(ticket([mockPropLeg(a, lang), mockPropLeg(b, lang)], lang === "pt" ? "Dupla de jogadores" : "Player double", lang)) - 1;
       if (c) suggestions.push(ticket([mockPropLeg(a, lang), mockPropLeg(c, lang)], lang === "pt" ? "Dupla alternativa" : "Backup double", lang, { alternativeOf: main, swapReason: lang === "pt" ? `se ${b.player} for vetado` : `if ${b.player} is ruled out` }));
@@ -101,14 +106,27 @@ export function mockGameSlate(args: { game: Game; detail: GameDetail; props: Pro
 /** One long cross-game ticket (one leg per game) and, when possible, a moonshot. */
 export function mockSlateBets(args: { games: { game: Game; detail: GameDetail; props?: PropRow[] }[]; lang: Lang }): RawSlate {
   const { lang } = args;
+  const best = (props: PropRow[] | undefined, floor: number, taken: Set<string>) =>
+    (props ?? []).filter((p) => p.priced && p.decimal && p.decimal >= floor && !taken.has(p.player)).sort((x, y) => (y.decimal ?? 0) - (x.decimal ?? 0))[0];
+  const taken = new Set<string>();
   const perGame = args.games
     .map(({ game, props }) => {
-      const pick = (props ?? []).filter((p) => p.priced && p.decimal && p.decimal >= 2.2).sort((x, y) => (y.decimal ?? 0) - (x.decimal ?? 0))[0];
+      const pick = best(props, 2.2, new Set());
+      if (pick) taken.add(pick.player);
+      return pick ? mockPropLeg(pick, lang, game.id) : null;
+    })
+    .filter((l): l is RawLeg => l !== null);
+  // The second ticket is built on OTHER players, never on a subset of the first: two cross-game
+  // tickets sharing a name would put that player on both, which is over the by-player cap the
+  // builder now enforces (bets/gates.ts), and the shorter one would be dropped before it is shown.
+  const second = args.games
+    .map(({ game, props }) => {
+      const pick = best(props, 1.01, taken);
       return pick ? mockPropLeg(pick, lang, game.id) : null;
     })
     .filter((l): l is RawLeg => l !== null);
   const suggestions: RawSuggestion[] = [];
   if (perGame.length >= 2) suggestions.push(ticket(perGame, lang === "pt" ? "Múltipla da rodada" : "Round parlay", lang, { confidence: "low" }));
-  if (perGame.length >= 3) suggestions.push(ticket(perGame.slice(0, perGame.length - 1), lang === "pt" ? "Múltipla menor" : "Shorter parlay", lang, { confidence: "low" }));
+  if (second.length >= 2) suggestions.push(ticket(second.slice(0, Math.max(2, second.length - 1)), lang === "pt" ? "Múltipla menor" : "Shorter parlay", lang, { confidence: "low" }));
   return { suggestions, dataNote: "AI_MOCK" };
 }

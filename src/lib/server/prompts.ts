@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { getDb, newId, nowIso } from "@/lib/server/db";
-import { DEFAULT_PROMPTS, GLOSSARY_RULE, type PromptKind } from "@/lib/bets/prompt-defaults";
+import { DEFAULT_PROMPTS, GLOSSARY_RULE, UNDER_MARGIN_RULE, type PromptKind } from "@/lib/bets/prompt-defaults";
 import { generateStructured } from "@/lib/ai/extract";
 import { readLedger } from "@/lib/ledger/store";
 import { mainTickets } from "@/lib/ledger/proof";
@@ -37,6 +37,17 @@ export function upgradeGlossaryRule(content: string, lang: Lang): string | null 
   return `${content}\n\n${GLOSSARY_RULE}`;
 }
 
+/**
+ * The learning run of 23/09/2026 added the under-margin rule and the note that the concentration and
+ * availability caps are now enforced in code. A version an admin saved before that would never carry
+ * either, and the second one matters most: without it the model keeps writing slates the builder then
+ * shortens, with no idea why. Appended to every active version that does not have it, in both langs.
+ */
+export function upgradeUnderMarginRule(content: string): string | null {
+  if (content.includes("AN UNDER SITTING ON TOP OF THE NUMBER IS NOT A LOCK")) return null;
+  return `${content}\n\n${UNDER_MARGIN_RULE}`;
+}
+
 let upgraded = false;
 function ensurePromptUpgrades(): void {
   if (upgraded) return;
@@ -49,6 +60,8 @@ function ensurePromptUpgrades(): void {
       if (alternatives) savePrompt({ kind, lang, content: alternatives, source: "manual", rationale: "Sistema: bilhetes agora trazem duas alternativas ligadas por alternativeOf (índice do principal) e swapReason; a regra antiga com isAlternative foi substituída.", createdBy: "system" });
       const glossary = upgradeGlossaryRule(alternatives ?? row.content, lang);
       if (glossary) savePrompt({ kind, lang, content: glossary, source: "manual", rationale: "Sistema: uma seleção do bilhete agora se chama \"linha\", nunca \"perna\"; a regra de glossário foi anexada ao prompt em português, com a desambiguação contra a linha de mercado.", createdBy: "system" });
+      const margin = upgradeUnderMarginRule(glossary ?? alternatives ?? row.content);
+      if (margin) savePrompt({ kind, lang, content: margin, source: "manual", rationale: "Sistema: um under colado no número não recebe 90%+ sem dizer a distância até a projeção, e o teto por jogadora e as regras de disponibilidade passaram a ser verificados no código — o bilhete que os quebra é descartado depois da resposta.", createdBy: "system" });
     }
   }
 }

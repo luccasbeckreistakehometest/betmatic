@@ -6,6 +6,7 @@ import { calibrationPrompt } from "@/lib/ledger/calibrate";
 import { canonicalMarket } from "@/lib/ledger/stat-key";
 import { ledgerIdFor, recordPredictions } from "@/lib/ledger/store";
 import { recordLegPrices } from "@/lib/server/leg-prices";
+import { logEvent } from "@/lib/server/ops-log";
 import { settlePending } from "@/lib/ledger/settle";
 import {
   ODDS_BANDS, expectedValue, formatAmerican, getBand, impliedProbability, parlayDecimal, parseOdds,
@@ -29,6 +30,7 @@ import { environmentPrompt, gameEnvironment, type GameEnvironment } from "@/lib/
 import { ticketCorrelation, type CorrLeg } from "@/lib/signals/correlation";
 import { matchAthlete, resolveStatLabels } from "@/lib/props/history";
 import { linkAlternatives, ticketId } from "@/lib/bets/alternatives";
+import { capPlayerConcentration, unplayableReason, type GateDrop } from "@/lib/bets/gates";
 import type { ProviderLines } from "@/lib/sources/espn-props";
 import { mockGameSlate, mockSlateBets } from "@/lib/ai/mocks";
 
@@ -396,7 +398,14 @@ function calibrated(leg: BetLeg, calibrator: Calibrator, sportKey: string): BetL
   return { ...leg, rawProbability: leg.rawProbability ?? leg.fairProbability, fairProbability: probability };
 }
 
-export function priceAll(raws: RawSuggestion[], ctx: EnrichContext, opts: { oneLegPerGame?: boolean; live?: boolean } = {}): BetSuggestion[] {
+/**
+ * Prices a build's raw suggestions and applies every gate that decides what gets emitted.
+ *
+ * `onDrop` hears about the tickets the slate-level gates removed, with the reason, so the caller can
+ * log them; pricing's own drops (an unpriced leg, an incoherent settlement, two rungs of one stat)
+ * stay silent as they always were, because those are malformed tickets rather than rejected ones.
+ */
+export function priceAll(raws: RawSuggestion[], ctx: EnrichContext, opts: { oneLegPerGame?: boolean; live?: boolean; onDrop?: (drop: GateDrop) => void } = {}): BetSuggestion[] {
   // Read the record once for the whole slate: the correction is the same for every ticket in it.
   // A read taken with the game under way answers to the live record, which is the harsher one.
   const calibrator = calibratorFor(opts.live ? "live" : "pre");
@@ -410,6 +419,14 @@ export function priceAll(raws: RawSuggestion[], ctx: EnrichContext, opts: { oneL
     let priced = priceSuggestion(anchored, band?.key ?? "unbanded");
     // Books discount legs from the same game, so a product of their prices would overstate the payout.
     if (priced && opts.oneLegPerGame && !independentGames(priced)) priced = null;
+    // Who is playing, before anything is said about how she plays. Pre-game only: see bets/gates.ts.
+    if (priced && !opts.live) {
+      const reason = unplayableReason(anchored.legs, ctx);
+      if (reason) {
+        opts.onDrop?.({ ticketId: priced.id, gate: "availability", reason });
+        priced = null;
+      }
+    }
     if (priced) {
       // The computed probability anchors fairProbability inside enrichLeg, so the ticket's numbers are
       // recomputed from the anchored legs before correlation is applied.
@@ -422,7 +439,11 @@ export function priceAll(raws: RawSuggestion[], ctx: EnrichContext, opts: { oneL
     }
     return { alternativeOf: raw.alternativeOf, swapReason: raw.swapReason, priced };
   });
-  return linkAlternatives(items);
+  // The by-player cap is counted over the tickets this build actually returns, so it runs last, once
+  // the alternatives know which main they belong to.
+  const { kept, dropped } = capPlayerConcentration(linkAlternatives(items));
+  for (const drop of dropped) opts.onDrop?.(drop);
+  return kept;
 }
 
 /** A cross-game ticket needs one leg per game, each leg naming its game. */
@@ -522,7 +543,11 @@ export async function buildBets(args: BuildArgs): Promise<BetSlate> {
     mock: () => mockGameSlate({ game, detail, props, lang, bands, live: !!live }),
   });
 
-  const suggestions = priceAll(result.suggestions, { props, sportKey: game.sportKey, game, lines }, { live: !!live });
+  const suggestions = priceAll(result.suggestions, { props, sportKey: game.sportKey, game, lines }, {
+    live: !!live,
+    // A dropped ticket leaves a line behind: without it the only visible trace is a shorter slate.
+    onDrop: (drop) => logEvent("bets.gate.dropped", { ...drop, gameId: game.id, sportKey: game.sportKey, scope: live ? "live" : "pre" }),
+  });
 
   // Log every ticket at generation time so it can be graded once the game finishes. The ledger keeps
   // the computed probability beside the model's per leg (SettledLeg.computedProbability), which is
@@ -612,7 +637,10 @@ export async function buildSlateBets(args: SlateBuildArgs): Promise<BetSlate> {
   });
 
   const allProps = games.flatMap((g) => g.props ?? []);
-  const suggestions = priceAll(result.suggestions, { props: allProps, sportKey: games[0]?.game.sportKey ?? "" }, { oneLegPerGame: true });
+  const suggestions = priceAll(result.suggestions, { props: allProps, sportKey: games[0]?.game.sportKey ?? "" }, {
+    oneLegPerGame: true,
+    onDrop: (drop) => logEvent("bets.gate.dropped", { ...drop, gameId: "slate", sportKey: games[0]?.game.sportKey ?? "", scope: "slate" }),
+  });
 
   // Cross-game tickets are logged against a synthetic game id so they can still be settled per leg.
   if (games.length) {

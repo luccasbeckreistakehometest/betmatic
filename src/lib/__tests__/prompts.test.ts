@@ -42,6 +42,17 @@ describe("what the default prompt must keep saying", () => {
     }
   });
 
+  // Five tickets died on Aliyah Boston's under 23.5 points+rebounds at 92-93%: she finished with 24.
+  // The margin a market needs is a judgement per market, so this one stays prose on purpose — the
+  // record has no stored projection to gate it against (see bets/gates.ts for the two that are code).
+  it("refuses to call an under sitting on top of the number a lock", () => {
+    for (const lang of ["pt", "en"] as const) {
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/AN UNDER SITTING ON TOP OF THE NUMBER IS NOT A LOCK/);
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/state the distance between the line and the number/);
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/THE CONCENTRATION CAP AND THE AVAILABILITY RULES ARE CHECKED IN CODE/);
+    }
+  });
+
   // Two tickets died on a 67%-measured under because the game finished 87-86 and nobody sat.
   it("ties an under to the projected margin", () => {
     for (const lang of ["pt", "en"] as const) {
@@ -172,11 +183,17 @@ describe("prompt versions", () => {
 });
 
 describe("alternatives rule upgrade", async () => {
-  const { upgradeAlternativesRule, ALTERNATIVES_RULE } = await import("@/lib/server/prompts");
+  const { upgradeAlternativesRule, ALTERNATIVES_RULE, upgradeUnderMarginRule } = await import("@/lib/server/prompts");
   it("replaces the old isAlternative paragraph and leaves current prompts alone", () => {
     const old = "intro\n- ALWAYS pair each main ticket with at least one alternative, flagged with isAlternative, placed\n  immediately after it. blah rather than restating the same bet at a worse price.\nend";
     expect(upgradeAlternativesRule(old)).toBe(`intro\n${ALTERNATIVES_RULE}\nend`);
     expect(upgradeAlternativesRule("edited by hand: use isAlternative")).toContain(ALTERNATIVES_RULE);
     expect(upgradeAlternativesRule("already current")).toBeNull();
+    // A prompt an admin saved before 23/09/2026 has neither of that run's rules; appending is idempotent.
+    const stored = upgradeUnderMarginRule("edited by hand")!;
+    expect(stored).toMatch(/AN UNDER SITTING ON TOP OF THE NUMBER IS NOT A LOCK/);
+    expect(stored).toMatch(/THE CONCENTRATION CAP AND THE AVAILABILITY RULES ARE CHECKED IN CODE/);
+    expect(upgradeUnderMarginRule(stored)).toBeNull();
+    expect(upgradeUnderMarginRule(DEFAULT_PROMPTS.game.pt)).toBeNull();
   });
 });
