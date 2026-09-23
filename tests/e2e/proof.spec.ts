@@ -4,8 +4,10 @@ import { loginAdmin } from "./helpers";
 test("public track record shows every ticket, and each has a shareable permalink", async ({ page }) => {
   await page.goto("/prova?lang=pt");
   const stats = page.getByTestId("proof-stats");
-  // 5 pre-game + 12 live reads; the two pre-game tickets that are still private are counted too.
-  await expect(stats).toContainText("17");
+  // 5 pre-game (the two still-private ones included) + 12 seeded live reads, plus whatever live
+  // read an earlier spec took on the game under way — so the floor, not an exact count.
+  const generated = Number((await stats.textContent())?.match(/gerados\s*(\d+)/i)?.[1] ?? 0);
+  expect(generated).toBeGreaterThanOrEqual(17);
   // 1 won / 2 decided PRE-GAME tickets, in pt-BR numerals: the live reads have no price to pay, so
   // they carry no unit, no return and no ROI — only the block below measures them.
   await expect(stats).toContainText(/50,0\s*%/);
