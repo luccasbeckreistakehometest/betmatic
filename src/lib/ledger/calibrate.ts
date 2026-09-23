@@ -103,8 +103,13 @@ export function modelRaceLine(race: ModelRace = modelRace()): string {
  * Grades the model against its own past calls. Legs are the unit, not tickets — a parlay losing
  * tells you little, but the individual legs inside it are clean evidence about each source.
  */
-export function calibrate(minSample = 5): CalibrationReport {
-  const entries = readLedger({ excludeLive: true }).filter((e) => e.outcome !== "pending");
+export function calibrate(minSample = 5, scope: "pre" | "live" = "pre"): CalibrationReport {
+  // A live read and a pre-game ticket are not the same model answering the same question, and the
+  // record says so: pre-game props promise 57,8% and deliver 49,6%, while live reads promise 86,3%
+  // and deliver 71,7% over 593 legs. Correcting a live leg with the pre-game gap would fix about a
+  // quarter of it, so the two records are kept apart.
+  const all = readLedger({ excludeLive: scope === "pre" });
+  const entries = all.filter((e) => e.outcome !== "pending" && (e.scope === "live") === (scope === "live"));
   const bySource = new Map<string, Bucket>();
   const byMarket = new Map<string, Bucket>();
   const bySport = new Map<string, Bucket>();

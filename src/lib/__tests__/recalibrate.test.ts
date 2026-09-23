@@ -103,3 +103,4 @@ describe("the corrected chance a ticket is served with", () => {
     expect(got.probability).toBeLessThan(1);
   });
 });
+
