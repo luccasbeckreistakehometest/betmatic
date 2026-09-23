@@ -97,6 +97,13 @@ function transportFor(cfg: TicketMailConfig): Transporter {
   return transport;
 }
 
+/** One message to the configured recipients. Throws, so the caller decides what a failure means. */
+export async function sendMail(subject: string, text: string, html?: string): Promise<void> {
+  const cfg = ticketMailConfig();
+  if (!cfg) throw new Error("mail not configured");
+  await transportFor(cfg).sendMail({ from: cfg.from, to: cfg.to.join(", "), subject, text, ...(html ? { html } : {}) });
+}
+
 /** Fire-and-forget: called after a read is saved; never throws into the generation path. */
 export async function sendTicketMail(args: Parameters<typeof gatherTicketMail>[0]): Promise<{ sent: boolean; reason?: string }> {
   const cfg = ticketMailConfig();
