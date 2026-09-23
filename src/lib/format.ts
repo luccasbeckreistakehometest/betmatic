@@ -160,6 +160,15 @@ export function formatUnits(value: number, lang: Lang, digits = 2): string {
   return `${formatNumber(value, lang, { digits, signed: true })}${NBSP}u`;
 }
 
+/**
+ * A stake in units: "1,25 u". Unsigned on purpose — `formatUnits` signs because a *result* is a
+ * delta, but a stake is a quantity, and "+1,25 u" beside "Apostar" reads as a profit.
+ */
+export function formatStakeUnits(value: number, lang: Lang, digits = 2): string {
+  if (!Number.isFinite(value)) return NOT_PRICED;
+  return `${formatNumber(value, lang, { digits })}${NBSP}u`;
+}
+
 /** A decimal multiplier, always two decimals so the points align down a column. */
 export function formatOdds(decimal: number, lang: Lang): string {
   if (!Number.isFinite(decimal) || decimal <= 0) return NOT_PRICED;

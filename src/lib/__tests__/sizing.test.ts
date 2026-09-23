@@ -10,6 +10,7 @@ import {
   shrinkFactor,
   stakeUnits,
   unitsToMoney,
+  type CapRow,
 } from "@/lib/bets/sizing";
 
 /**
@@ -139,7 +140,7 @@ describe("the minimum acceptable price", () => {
 });
 
 describe("caps", () => {
-  const row = (gameId: string, units: number, players: string[] = []) => ({ gameId, units, players, capped: "none" as const });
+  const row = (gameId: string, units: number, players: string[] = []): CapRow => ({ gameId, units, players, capped: "none" });
 
   it("trims four rows worth 9 u down to the day's 5 u, keeping the proportions", () => {
     const rows = [row("g1", 3), row("g2", 2.5), row("g3", 2), row("g4", 1.5)];

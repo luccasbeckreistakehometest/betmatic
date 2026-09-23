@@ -35,6 +35,8 @@ services:
           curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=close"; echo
           # Brazilian books: prices for every game in the next 48 h, every tick (pre-game only).
           curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=books"; echo
+          # The day's short list: rebuilt from inventory that already exists, every tick, zero tokens.
+          curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=today"; echo
           [ $$((t % 4)) -eq 1 ]  && { curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=weekly"; echo; }
           [ $$((t % 96)) -eq 50 ] && { curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=cleanup"; echo; }
           t=$$((t + 1)); sleep 900

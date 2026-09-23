@@ -341,6 +341,65 @@ const DICT = {
   slateHonesty: { pt: "Múltiplas de 100x ou mais perdem quase sempre. Cada bilhete mostra a chance real do lado.", en: "Parlays at 100x and beyond lose almost every time. Each ticket shows its real chance next to the price." },
   customParlay: { pt: "Múltipla sob medida", en: "Custom parlay" },
   networkError: { pt: "Sem conexão. Confira sua internet e tente de novo.", en: "No connection. Check your internet and try again." },
+
+  /* ── Os bilhetes de hoje ──────────────────────────────────────────────────────────────────────
+   * The short list. Four things a card may say — the ticket, the unit, the chance, the next step —
+   * and everything else behind "por que este". No promised profit, no urgency, no substitute
+   * suggestion when the answer is "hoje não tem": marketing-claims.test.ts reads every string here.
+   */
+  navToday: { pt: "Hoje", en: "Today" },
+  todayTitle: { pt: "Os bilhetes de hoje", en: "Today's tickets" },
+  todaySubtitle: { pt: "Pesquisa, não garantia de resultado.", en: "Research, not a guarantee of any result." },
+  todayMeta: { pt: "{n} bilhetes · {u} u no total (máximo de 3 por noite)", en: "{n} tickets · {u} u in total (three a night at most)" },
+  todayMetaOne: { pt: "1 bilhete · {u} u (máximo de 3 por noite)", en: "1 ticket · {u} u (three a night at most)" },
+  todayFooter: {
+    pt: "Aposta é entretenimento e envolve risco de perda. Nada aqui é promessa de ganho. 18+. CVV 188.",
+    en: "Betting is entertainment and carries a risk of loss. Nothing here is a promise of gain. 18+. CVV 188.",
+  },
+  todayStake: { pt: "Apostar {u} u · {pct} da sua banca · {money}", en: "Bet {u} u · {pct} of your bankroll · {money}" },
+  todayStakeNoMoney: { pt: "Apostar {u} u · {pct} da sua banca", en: "Bet {u} u · {pct} of your bankroll" },
+  todayChance: { pt: "Chance estimada {p}. O preço paga como {implied}.", en: "Estimated chance {p}. The price pays as {implied}." },
+  todayMinOdds: { pt: "Só vale até {odd}. Abaixo disso, passa.", en: "Only worth it down to {odd}. Below that, pass." },
+  todayCheckPrice: { pt: "Confira o preço na casa antes: ele muda sozinho.", en: "Check the price at the book first: it moves on its own." },
+  todayNoBankroll: { pt: "Defina sua banca para ver o valor em reais.", en: "Set your bankroll to see the amount in reais." },
+  todaySetBankroll: { pt: "definir banca", en: "set bankroll" },
+  todaySmallBankroll: {
+    pt: "Com essa banca, 0,25 u fica abaixo do mínimo da casa. Aposte um valor fixo pequeno, por diversão.",
+    en: "With that bankroll, 0.25 u lands under the book's minimum. Put a small fixed amount on it, for fun.",
+  },
+  todayWhy: { pt: "por que este", en: "why this one" },
+  todayOpenBook: { pt: "Abrir na casa", en: "Open at the book" },
+  todayOpenGame: { pt: "Abrir o jogo", en: "Open the game" },
+  todayRegister: { pt: "Registrei essa aposta", en: "I placed this one" },
+  todayRegistered: { pt: "Registrado. A partir daqui isso conta no seu histórico.", en: "Logged. From here it counts in your record." },
+  todayLadder: { pt: "regra de faixa: {u} u", en: "band rule: {u} u" },
+  todayCapped: { pt: "reduzido pelo teto do dia", en: "trimmed by the day's ceiling" },
+  todayAllTickets: { pt: "ver todos os bilhetes de hoje", en: "see every ticket generated today" },
+
+  todayLive: { pt: "Leitura ao vivo · vale por {s} s", en: "Live read · good for {s} s" },
+  todayLiveReference: {
+    pt: "Preço de referência (pré-jogo): {d}. O preço ao vivo é outro: confira na casa.",
+    en: "Reference price (pre-game): {d}. The in-play price is another one: check it at the book.",
+  },
+  todayLiveMin: { pt: "Só vale a partir de {odd}.", en: "Only worth it from {odd} up." },
+  todayLiveAsk: { pt: "Qual odd você pegou?", en: "What price did you get?" },
+  todayLiveExpired: { pt: "Essa leitura expirou. O preço já é outro.", en: "That read has expired. The price has moved." },
+  todayLiveUnverified: { pt: "Sem preço confirmado. Fica de fora da carteira.", en: "No confirmed price. It stays out of the wallet." },
+
+  todayMeasuring: {
+    pt: "A carteira está em calibração. Até a medição fechar, a recomendação sai no tamanho mínimo: 0,25 u. Hoje temos {n} pernas liquidadas neste recorte e um erro medido de {x} pontos entre a chance que estimamos e a que aconteceu.",
+    en: "The wallet is being calibrated. Until the measurement closes, every recommendation comes out at the minimum size: 0.25 u. Today this slice has {n} settled legs and a measured gap of {x} points between the chance we estimate and the one that happened.",
+  },
+  todayNoneTitle: { pt: "Hoje não tem.", en: "Nothing today." },
+  todayNoneBody: {
+    pt: "Nenhum bilhete passou no corte. Nos {n} jogos de hoje, nenhum preço ficou acima da nossa estimativa depois de descontar o erro que a gente mede no próprio histórico.",
+    en: "No ticket cleared the cuts. Across today's {n} games, no price sat above our estimate once the error we measure on our own record is taken out.",
+  },
+  todayNoneAll: { pt: "Ver os {m} bilhetes gerados hoje", en: "See the {m} tickets generated today" },
+  todayNoneMethod: { pt: "Ver como o corte funciona", en: "See how the cuts work" },
+  todayPlanBand: { pt: "Seu plano não abre a faixa de odds destes bilhetes.", en: "Your plan does not open the odds band these tickets sit in." },
+  todayUnavailable: { pt: "Não foi possível montar a lista agora. Tente de novo em instantes.", en: "Couldn't assemble the list right now. Try again shortly." },
+  todayStakeRefused: { pt: "Esse valor passa do limite que você mesmo definiu.", en: "That amount is over the ceiling you set yourself." },
 } as const;
 
 export type DictKey = keyof typeof DICT;

@@ -407,6 +407,7 @@ function migrate(d: Database.Database): void {
   addColumn(d, "referrals", "paymentRowId", "TEXT");
   addColumn(d, "generation_requests", "scope", "TEXT NOT NULL DEFAULT 'game'");
   migrateRound3(d);
+  migrateRound4(d);
   d.exec(`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_provider_payment ON payments(providerPaymentId) WHERE providerPaymentId IS NOT NULL;
     CREATE INDEX IF NOT EXISTS idx_payments_preference ON payments(preferenceId);
@@ -566,6 +567,67 @@ function migrateRound3(d: Database.Database): void {
   addColumn(d, "users", "signupSource", "TEXT");
   addColumn(d, "users", "signupUtm", "TEXT");
   addColumn(d, "user_slips", "kind", "TEXT NOT NULL DEFAULT 'analysis'");
+}
+
+/**
+ * Round 4 — the day's short list. Additive and idempotent, like every other step here: the
+ * production database is live, and nothing above this line changes shape.
+ */
+function migrateRound4(d: Database.Database): void {
+  d.exec(`
+    -- "Os bilhetes de hoje": one row per Brasília day and sport. The job rewrites it only when the
+    -- content hash changes, so a reader never sees the list flicker between two equal answers.
+    CREATE TABLE IF NOT EXISTS daily_selection (
+      day TEXT NOT NULL,                            -- YYYY-MM-DD, America/Sao_Paulo
+      sportKey TEXT NOT NULL,
+      mode TEXT NOT NULL,                           -- carteira | medicao | fechado
+      policyVersion TEXT NOT NULL DEFAULT '',
+      calibration TEXT NOT NULL DEFAULT '{}',       -- the c and sigma_p each slice was sized with
+      totals TEXT NOT NULL DEFAULT '{}',
+      -- Every discarded candidate with the reason it was discarded: this is what answers
+      -- "why is that one not on the list?" without opening the code.
+      skipped TEXT NOT NULL DEFAULT '[]',
+      note TEXT NOT NULL DEFAULT '',
+      hash TEXT NOT NULL DEFAULT '',
+      candidates INTEGER NOT NULL DEFAULT 0,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL,
+      PRIMARY KEY (day, sportKey)
+    );
+
+    CREATE TABLE IF NOT EXISTS daily_selection_items (
+      day TEXT NOT NULL,
+      sportKey TEXT NOT NULL,
+      ledgerId TEXT NOT NULL,
+      rank INTEGER NOT NULL DEFAULT 0,
+      scope TEXT NOT NULL DEFAULT 'pre',            -- pre (the wallet) | live (the list only)
+      gameId TEXT NOT NULL,
+      suggestionId TEXT NOT NULL DEFAULT '',
+      bandKey TEXT NOT NULL DEFAULT '',
+      title TEXT NOT NULL DEFAULT '',
+      matchup TEXT NOT NULL DEFAULT '',
+      startsAt TEXT,
+      oddsDecimal REAL NOT NULL,
+      modelProbability REAL NOT NULL DEFAULT 0,
+      calibratedProbability REAL NOT NULL DEFAULT 0,
+      grossEdge REAL NOT NULL DEFAULT 0,
+      shrunkEdge REAL NOT NULL DEFAULT 0,
+      units REAL NOT NULL DEFAULT 0,
+      minDecimal REAL,
+      capped TEXT NOT NULL DEFAULT 'none',
+      -- Which arm of the stake A/B this row was sized by (§4.5): the formula or the owner's ladder.
+      stakePolicy TEXT NOT NULL DEFAULT 'formula',
+      ladderUnits REAL NOT NULL DEFAULT 0,
+      expiresAt TEXT,
+      payload TEXT NOT NULL DEFAULT '{}',
+      PRIMARY KEY (day, sportKey, ledgerId)
+    );
+    CREATE INDEX IF NOT EXISTS idx_daily_items_day ON daily_selection_items(day, sportKey, scope, rank);
+  `);
+  // A bet logged from the short list keeps the price it was recommended at beside the price the
+  // reader actually got: that pair is what makes the wallet's own CLV computable.
+  addColumn(d, "bankroll_entries", "recommendedDecimal", "REAL");
+  addColumn(d, "bankroll_entries", "recommendedAt", "TEXT");
 }
 
 export function nowIso(): string {

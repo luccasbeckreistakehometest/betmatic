@@ -142,7 +142,8 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       if (await startCheckout()) return;
       const destination = result.mustChangePassword
         ? `/app/conta?lang=${lang}&trocar=1`
-        : next ?? (result.role === "admin" ? "/admin" : `/app?lang=${lang}`);
+        // HOME_TODAY decides whether a login opens the short list or the full desk (src/lib/env.ts).
+        : next ?? (result.role === "admin" ? "/admin" : `${typeof result.home === "string" && result.home.startsWith("/app") ? result.home : "/app"}?lang=${lang}`);
       router.push(destination);
       router.refresh();
     } catch {
