@@ -400,8 +400,23 @@ const DICT = {
   todayLiveUnverified: { pt: "Sem preço confirmado. Fica de fora da carteira.", en: "No confirmed price. It stays out of the wallet." },
 
   todayMeasuring: {
-    pt: "A carteira está em calibração. Até a medição fechar, a recomendação sai no tamanho mínimo: 0,25 u. Hoje temos {n} linhas liquidadas neste recorte e um erro medido de {x} pontos entre a chance que estimamos e a que aconteceu.",
-    en: "The wallet is being calibrated. Until the measurement closes, every recommendation comes out at the minimum size: 0.25 u. Today this slice has {n} settled legs and a measured gap of {x} points between the chance we estimate and the one that happened.",
+    pt: "A carteira está em calibração. Até a medição fechar, nenhuma recomendação passa de 0,25 u. Hoje temos {n} linhas liquidadas neste recorte e um erro medido de {x} pontos entre a chance que estimamos e a que aconteceu.",
+    en: "The wallet is being calibrated. Until the measurement closes, no recommendation goes above 0.25 u. Today this slice has {n} settled legs and a measured gap of {x} points between the chance we estimate and the one that happened.",
+  },
+  todayNoStakeTitle: { pt: "Hoje não recomendamos nada.", en: "Nothing to recommend today." },
+  todayNoStakeBody: {
+    pt: "{k} bilhete(s) passaram nos cortes, mas nenhum chegou ao tamanho mínimo de 0,25 u. Com o erro que a gente mede no próprio histórico ({x} pontos em {n} linhas liquidadas), a vantagem deles não se separa do acaso. Preferimos dizer isso a inventar um número pra você seguir.",
+    en: "{k} ticket(s) cleared the cuts, and none reached the 0.25 u minimum. With the error we measure on our own record ({x} points over {n} settled legs), their edge does not separate from chance. We would rather say that than invent a number for you to follow.",
+  },
+  todayObservations: { pt: "O que olhamos hoje", en: "What we looked at today" },
+  todayNoStake: { pt: "Sem aposta", en: "No stake" },
+  todayNoStakeWhy: {
+    pt: "A conta deu menos de 0,25 u. Fica aqui como observação, não como recomendação.",
+    en: "The arithmetic came out under 0.25 u. It stays here as an observation, not a recommendation.",
+  },
+  todayNoStakeCap: {
+    pt: "O teto do dia já foi usado. Fica aqui como observação, não como recomendação.",
+    en: "The day's ceiling is already spent. It stays here as an observation, not a recommendation.",
   },
   todayNoneTitle: { pt: "Hoje não tem.", en: "Nothing today." },
   todayNoneBody: {

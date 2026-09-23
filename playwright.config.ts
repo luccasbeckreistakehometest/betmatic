@@ -35,9 +35,12 @@ export default defineConfig({
       // The live panel polls every 1.5 s in tests instead of once a minute.
       "NEXT_PUBLIC_LIVE_POLL_MS=1500 ANALYTICS_ALLOW_HEADLESS=1 RATE_LIMIT_IP_FACTOR=100 PROOF_MIN_DECIDED=1 LIVE_CALIBRATION_MIN_LEGS=1 LIVE_PERIOD_MIN_LEGS=1 LEGAL_NAME= LEGAL_DOCUMENT= LEGAL_ADDRESS= LEGAL_EMAIL= SUPPORT_EMAIL=ajuda@betmatic.test SUPPORT_WHATSAPP=",
       // The seeded world predates the real record window (21/09/2026) — its fixtures are older, and
-      // one of them is a football match from another season. The window itself is covered by unit
-      // tests; here it is opened so the specs can measure what they are actually about.
-      "RECORD_START_DAY=2000-01-01",
+      // one of them is a football match from another season — so the window is opened back to
+      // September 1st rather than left at its production date. Not to 2000: the calibration history
+      // the short list needs sits in August precisely so it stays OUT of the published record, and
+      // this is the line that keeps it out. /prova counts what it always counted; the wallet's gate
+      // reads everything, which is the split `calibrationHeadline` exists to hold.
+      "RECORD_START_DAY=2026-09-01",
       "npx next dev -p 3300",
     ].join(" "),
     url: "http://localhost:3300/login",

@@ -75,10 +75,20 @@ describe("stakeUnits", () => {
     expect(r.reason).toBe("below_floor");
   });
 
-  it("pays the floor and nothing else in the measurement regime", () => {
-    const r = stakeUnits({ decimal: 1.38, modelProbability: 0.8, c: 0.905, sigmaP: 0.12, mode: "medicao" });
+  it("never pays more than the floor in the measurement regime", () => {
+    // A ticket the formula would size well above the floor is still held to it while the slice is
+    // being measured: the regime buys a sample cheaply, it does not bet a slice it has not read.
+    const r = stakeUnits({ decimal: 1.38, modelProbability: 0.8, sigmaP: SIZING.sigmaPFloor, mode: "medicao" });
     expect(r.units).toBe(SIZING.medicaoU);
-    expect(r.capped).toBe("none");
+  });
+
+  it("but it does not INVENT the floor when the arithmetic lands under it", () => {
+    // The owner's case: 1.86 at 60 %, with the σ_p the ledger actually measures. The formula says
+    // 0.05 u. Printing 0.25 u here was risking a quarter unit to win 0.215 — not a bet, and not a
+    // number anybody should have been shown. Zero is the honest answer.
+    const r = stakeUnits({ decimal: 1.86, modelProbability: 0.6, sigmaP: 0.125, mode: "medicao" });
+    expect(r.units).toBe(0);
+    expect(r.reason).toBe("below_floor");
   });
 
   it("never sizes anything while the wallet is closed", () => {

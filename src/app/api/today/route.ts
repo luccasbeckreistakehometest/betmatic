@@ -35,6 +35,8 @@ export interface TodayItem {
   scope: "pre" | "live"; period?: number; bandKey: string;
   decimal: number; modelProbability: number; calibratedProbability: number; impliedProbability: number;
   units: number; pctOfBankroll: number; money: number | null;
+  /** Set on an observation: the ticket cleared every cut and still earns no stake. */
+  noStakeReason?: "below_floor" | "day_cap" | null;
   minDecimal: number; capped: string; ladderUnits: number; expiresAt?: string;
   book: string | null; gameHref: string;
   saved: boolean;
@@ -47,7 +49,13 @@ export interface TodayItem {
 
 export interface TodayView {
   day: string; sportKey: string; mode: string; note: string;
-  items: TodayItem[]; live: TodayItem[];
+  items: TodayItem[];
+  /**
+   * Cleared every cut, worth no stake. Listed so a day with nothing to recommend still shows what
+   * was looked at and why it was passed over, instead of printing a floor nobody should follow.
+   */
+  observations: TodayItem[];
+  live: TodayItem[];
   totals: { units: number; pctOfBankroll: number; money: number | null; games: number };
   bankrollAmount: number | null; smallBankroll: boolean;
   generated: number; games: number; bandGated: boolean;
@@ -55,6 +63,15 @@ export interface TodayView {
 }
 
 const EMPTY_TOTALS = { units: 0, pctOfBankroll: 0, money: null, games: 0 };
+
+/** The reason a filed row carries no stake, read back out of its payload. */
+function noStakeOf(payload: string | null | undefined, units: number): "below_floor" | "day_cap" | null {
+  if (units > 0) return null;
+  try {
+    const reason = (JSON.parse(payload ?? "{}") as { noStakeReason?: string }).noStakeReason;
+    return reason === "day_cap" ? "day_cap" : "below_floor";
+  } catch { return "below_floor"; }
+}
 
 function detailOf(s: BetSuggestion, alternatives: number): TodayItem["detail"] {
   return {
@@ -109,10 +126,11 @@ export function todayView(
   // No filed answer yet (a fresh day, or the job has not ticked): compute it for the read, write nothing.
   const fallback = stored ? null : buildDailyList(day, sportKey, { now, lang });
   const selected = stored
-    ? rows.map((r) => ({ ledgerId: r.ledgerId, scope: r.scope, units: r.units, minDecimal: r.minDecimal ?? NaN, capped: r.capped, calibratedProbability: r.calibratedProbability, expiresAt: r.expiresAt ?? undefined, rank: r.rank }))
-    : [...fallback!.selection.items, ...fallback!.selection.live].map((i) => ({
+    ? rows.map((r) => ({ ledgerId: r.ledgerId, scope: r.scope, units: r.units, minDecimal: r.minDecimal ?? NaN, capped: r.capped, calibratedProbability: r.calibratedProbability, expiresAt: r.expiresAt ?? undefined, rank: r.rank, noStakeReason: noStakeOf(r.payload, r.units) }))
+    : [...fallback!.selection.items, ...fallback!.selection.observations, ...fallback!.selection.live].map((i) => ({
         ledgerId: i.candidate.ledgerId, scope: i.candidate.scope, units: i.units, minDecimal: i.minAcceptableDecimal,
         capped: i.capped, calibratedProbability: i.calibratedProbability, expiresAt: i.expiresAt, rank: i.rank,
+        noStakeReason: i.noStakeReason ?? null,
       }));
 
   const settings = getSettings(user.id);
@@ -136,7 +154,7 @@ export function todayView(
       startsAt: c.startsAt, scope: c.scope, ...(c.period !== undefined ? { period: c.period } : {}), bandKey: c.bandKey,
       decimal: c.decimal, modelProbability: c.modelProbability, calibratedProbability: row.calibratedProbability,
       impliedProbability: impliedProbability(c.decimal),
-      units: row.units, pctOfBankroll: row.units * SIZING.unitPct,
+      units: row.units, pctOfBankroll: row.units * SIZING.unitPct, noStakeReason: row.noStakeReason ?? null,
       money: bankroll ? unitsToMoney(row.units, bankroll) : null,
       minDecimal: row.minDecimal, capped: row.capped, ladderUnits: ladderUnits(c.decimal),
       ...(row.expiresAt ? { expiresAt: row.expiresAt } : {}),
@@ -146,7 +164,11 @@ export function todayView(
     };
   };
 
-  const items = selected.filter((r) => r.scope === "pre").map(build).filter((x): x is TodayItem => !!x);
+  // A pre-game row with no units is an observation, never a recommendation. The invariant is the
+  // units themselves, so a row filed before this split existed still lands on the right side.
+  const pre = selected.filter((r) => r.scope === "pre").map(build).filter((x): x is TodayItem => !!x);
+  const items = pre.filter((i) => i.units > 0);
+  const observations = pre.filter((i) => i.units <= 0);
   const live = selected.filter((r) => r.scope === "live").map(build).filter((x): x is TodayItem => !!x);
   const units = items.reduce((a, i) => a + i.units, 0);
   const calibration = calibrationHeadline();
@@ -155,7 +177,7 @@ export function todayView(
     day, sportKey,
     mode: stored?.mode ?? fallback!.selection.mode,
     note: stored?.note ?? fallback!.selection.note,
-    items, live,
+    items, observations, live,
     totals: items.length
       ? { units: Number(units.toFixed(2)), pctOfBankroll: units * SIZING.unitPct, money: bankroll ? unitsToMoney(units, bankroll) : null, games: new Set(items.map((i) => i.gameId)).size }
       : EMPTY_TOTALS,

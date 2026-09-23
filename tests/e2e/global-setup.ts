@@ -52,6 +52,8 @@ export default async function globalSetup() {
   // name) and two that do not — so /app/hoje has a card to render and a discard pile behind it, and
   // the day is pinned rather than read off the wall clock.
   const HOJE_DAY = brasiliaDayOf(new Date(Date.now() + 3 * 86_400_000));
+  // A second slate day, for the state where the wallet is shut. See the calibration seed below.
+  const NOTHING_DAY = brasiliaDayOf(new Date(Date.now() + 4 * 86_400_000));
   const hojeStart = new Date(Date.parse(`${HOJE_DAY}T21:00:00-03:00`)).toISOString();
   const pra = (player: string, athleteId: string, line: number, odds: number, selection: string, p: number) => ({
     selection, market: "player prop", odds: String(odds), oddsDecimal: odds, explanation: "e2e", evidence: "e2e", fairProbability: p, athleteId, book: "Betano",
@@ -59,9 +61,14 @@ export default async function globalSetup() {
   });
   const hojeSlate = { dataNote: "e2e", suggestions: [
     // The one that should be picked: raw edge 0.80 × 1.38 − 1 = 10.4 %, inside the 4–20 % window.
+    // 1.38 at 77.5 %: a 6.9 % raw edge which, with the calibration seeded below, survives cut 8 at
+    // 2.4 % shrunk and sizes at 1.50 u — a number the formula produced, not the 2 u ceiling and not
+    // the 0.25 u floor. Cut 8 is the binding constraint here rather than the floor, and that is
+    // structural: 25·shrunk/(d−1) ≥ 0.25 whenever shrunk ≥ 2 %, so an open wallet can never reach
+    // the floor. The floor only ever binds in the measurement regime, which is the day below.
     { id: "hoje-main", kind: "single", bandKey: "safe", title: "Paige Bueckers mais de 24,5 PRA", background: "e2e",
-      legs: [pra("Paige Bueckers", "8001", 24.5, 1.38, "Paige Bueckers mais de 24,5 pontos+rebotes+assistências", 0.8)],
-      combinedDecimal: 1.38, combinedAmerican: "-263", impliedProbability: 1 / 1.38, modelledProbability: 0.8, edgePct: 10.4,
+      legs: [pra("Paige Bueckers", "8001", 24.5, 1.38, "Paige Bueckers mais de 24,5 pontos+rebotes+assistências", 0.775)],
+      combinedDecimal: 1.38, combinedAmerican: "-263", impliedProbability: 1 / 1.38, modelledProbability: 0.775, edgePct: 6.9,
       riskNote: "e2e", confidence: "medium", evidenceScore: 100, evidenceNotes: ["e2e"] },
     // Discarded by cut 5: 24x is outside 1.30–5.00, and the long band stays generated and visible on /app.
     { id: "hoje-long", kind: "single", bandKey: "long", title: "Bilhete de banda longa", background: "e2e",
@@ -76,7 +83,21 @@ export default async function globalSetup() {
   ] };
   db.prepare("INSERT INTO predictions (id,scope,sportKey,gameId,dateKey,lang,matchup,startsAt,payload,generatedAt,costUsd) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
     .run("pred_e2e_hoje", "game", "wnba", "990000103", etKey(new Date(hojeStart)), "pt", "Dallas Wings @ Connecticut Sun", hojeStart, JSON.stringify(hojeSlate), generatedAt, 0);
-  fs.writeFileSync(path.join(dir, "hoje-day.json"), JSON.stringify({ day: HOJE_DAY, sportKey: "wnba", gameId: "990000103" }));
+  fs.writeFileSync(path.join(dir, "hoje-day.json"), JSON.stringify({ day: HOJE_DAY, sportKey: "wnba", gameId: "990000103", nothingDay: NOTHING_DAY }));
+
+  // The same slate one day later, on its own game. Nothing about the ticket is wrong — it clears
+  // all ten cuts — but the day is deliberately left uncalibrated (see the seed below), so the
+  // policy is in the measurement regime and the formula sizes it at 0.14 u. Under the floor, so no
+  // stake: this is the day the owner's "0,25 u numa 1,86" used to be invented on.
+  const nothingStart = new Date(Date.parse(`${NOTHING_DAY}T21:00:00-03:00`)).toISOString();
+  const nothingSlate = { dataNote: "e2e", suggestions: [
+    { id: "nada-main", kind: "single", bandKey: "safe", title: "Arike Ogunbowale mais de 21,5 PRA", background: "e2e",
+      legs: [pra("Arike Ogunbowale", "8010", 21.5, 1.38, "Arike Ogunbowale mais de 21,5 pontos+rebotes+assistências", 0.8)],
+      combinedDecimal: 1.38, combinedAmerican: "-263", impliedProbability: 1 / 1.38, modelledProbability: 0.8, edgePct: 10.4,
+      riskNote: "e2e", confidence: "medium", evidenceScore: 100, evidenceNotes: ["e2e"] },
+  ] };
+  db.prepare("INSERT INTO predictions (id,scope,sportKey,gameId,dateKey,lang,matchup,startsAt,payload,generatedAt,costUsd) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
+    .run("pred_e2e_nada", "game", "wnba", "990000104", etKey(new Date(nothingStart)), "pt", "Dallas Wings @ Las Vegas Aces", nothingStart, JSON.stringify(nothingSlate), generatedAt, 0);
 
   db.close();
   // The books' prices on the pro game (990000101), written through the real store so the "Abrir na
@@ -114,7 +135,41 @@ export default async function globalSetup() {
   });
   // Four of twelve land where the reads' own chances expected about eleven.
   const liveEntries = [1, 2, 3, 4, 5, 6].map((n) => liveEntry(n, 2, n <= 2)).concat([7, 8, 9, 10, 11, 12].map((n) => liveEntry(n, 3, n <= 8)));
-  fs.writeFileSync(path.join(ledgerDir, "predictions.jsonl"), [...entries, ...liveEntries].map((e) => JSON.stringify(e)).join("\n") + "\n");
+  /*
+   * A settled pre-game history big enough and honest enough to CLOSE the calibration, so
+   * /app/hoje has a day where the wallet is actually open. Without it every day is a closed day
+   * and the screen's whole reason for existing — "which ones, and how much" — is never exercised.
+   *
+   * The gate wants all three: 300+ settled legs, a bias under 3 points, and σ_p at or under 0.08.
+   * 330 legs in three honest buckets deliver 0.15 points of bias and σ_p at its floor.
+   *
+   * Two dates, doing two different jobs, and both deliberate:
+   *
+   *   · `startsAt` is in August, BEFORE the published record window, so /prova and the public
+   *     ledger never count these and every existing proof assertion keeps its numbers. That the
+   *     wallet still sees them is the split this layer is built on: the window governs what is
+   *     PUBLISHED, never what the correction and the gate compute with.
+   *   · `settledAt` is on NOTHING_DAY, because a day is never part of its own calibration
+   *     (leave-one-day-out). So selecting NOTHING_DAY hides this whole history from itself and
+   *     lands in the measurement regime, while HOJE_DAY sees all of it and opens the wallet. One
+   *     ledger, both states, and the switch is a rule the policy already had.
+   */
+  const calAt = `${NOTHING_DAY}T12:00:00.000Z`;
+  const calEntries = [[0.55, 60], [0.65, 72], [0.75, 82]].flatMap(([p, won], b) =>
+    Array.from({ length: 110 }, (_, i) => {
+      const hit = i < won;
+      return {
+        id: `cal-${b}-${i}`, gameId: `9600000${b}`, sportKey: "wnba", matchup: "Storm @ Lynx",
+        createdAt: "2026-08-10T00:00:00.000Z", startsAt: `2026-08-${String(10 + b).padStart(2, "0")}T23:00:00.000Z`,
+        settledAt: calAt, bandKey: "safe", kind: "single", title: `Calibração ${b}-${i}`,
+        combinedDecimal: Number((1 / p + 0.1).toFixed(2)), modelledProbability: p, evidenceScore: 100,
+        outcome: hit ? "won" : "lost",
+        legs: [{ selection: `Linha de calibração ${b}-${i}`, market: "player_prop", sourceBasis: "measured history",
+          settlement: { type: "player_prop", player: `Jogadora ${b}`, stat: "PRA", line: 20.5, side: "over", sourceBasis: "measured history" },
+          predictedProbability: p, computedProbability: p, oddsDecimal: Number((1 / p + 0.1).toFixed(2)), outcome: hit ? "won" : "lost" }],
+      };
+    }));
+  fs.writeFileSync(path.join(ledgerDir, "predictions.jsonl"), [...entries, ...liveEntries, ...calEntries].map((e) => JSON.stringify(e)).join("\n") + "\n");
 
   // Checkout goes to a local fake of the Mercado Pago API for the whole run.
   const fakeMp = await startFakeMercadoPago();

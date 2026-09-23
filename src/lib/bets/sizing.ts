@@ -32,7 +32,16 @@ export const SIZING = {
   /** 1 u = 1 % of the declared bankroll. */
   unitPct: 0.01,
   kellyFraction: 0.25,
-  /** The spread of a *well-estimated* probability — the numerator of the shrinkage. */
+  /**
+   * The prior spread of a REAL edge, in EV points — not a probability spread, which is what this
+   * comment used to say and what made the shrinkage look dimensionally broken.
+   *
+   * Read that way `k = σ_true²/(σ_true² + (d·σ_p)²)` is consistent: both terms are edge variances,
+   * because an error of σ_p in a probability is an error of d·σ_p in the edge that probability
+   * implies. The prior it encodes is "a genuine edge is worth about 3 points of EV, whatever the
+   * price" — and the one price finding with a comfortable sample says exactly that long prices do
+   * not carry proportionally bigger true edges (0 greens in 33 decided above 20x).
+   */
   sigmaTrue: 0.03,
   /** σ_p is measured per slice and clamped: never sharper than 0.03, never blinder than 0.15. */
   sigmaPFloor: 0.03,
@@ -197,7 +206,16 @@ export function minAcceptableDecimal(prob: number, minEdge: number): number {
   return (1 + minEdge) / prob;
 }
 
-/** The whole chain for one ticket. `mode: "medicao"` pays the floor and ignores the formula's size. */
+/**
+ * The whole chain for one ticket. Every mode sizes with the SAME formula; the modes differ in their
+ * ceilings, never in whether the arithmetic is consulted.
+ *
+ * `medicao` used to return the floor outright, and that is the defect the owner caught: it printed
+ * 0.25 u on a 1.86 — a bet that risks a quarter unit to win 0.215 — and `capped` said "none",
+ * because nothing had been capped. Nothing had been computed either. A stake nobody should take is
+ * worse than no stake at all, so when the arithmetic lands under the floor the answer is now zero
+ * units and `below_floor`, and the screen says there is nothing to recommend.
+ */
 export function stakeUnits(input: StakeInput): StakeResult {
   const { decimal, modelProbability } = input;
   const legs = input.legs ?? 1;
@@ -219,20 +237,19 @@ export function stakeUnits(input: StakeInput): StakeResult {
 
   if (mode === "fechado") return { ...base, units: 0, capped: "none", reason: "no_edge" };
   /*
-   * The measurement regime does not size — it pays the floor to buy the ~400 settled legs per slice
-   * that would let it. It reads the RAW edge, not the calibrated one: with the calibration the
-   * ledger measures today (c = 0.905) the calibrated edge is negative on almost every ticket, which
-   * is exactly the thing being measured. Gating the measurement on its own unmeasured conclusion
-   * would mean never buying the sample. Cost of being wrong: 0.25 u a bet, 1 u a day, 3 u a week.
+   * The measurement regime reads the RAW edge to decide whether a ticket is worth WATCHING: with
+   * the calibration the ledger measures today the calibrated edge is negative on almost every
+   * ticket, which is exactly the thing being measured, and gating the sample on its own unmeasured
+   * conclusion would mean never buying it. But it sizes with the formula like everything else, and
+   * a size under the floor stays under the floor.
    */
-  if (mode === "medicao") return raw > 0
-    ? { ...base, units: SIZING.medicaoU, capped: "none", reason: null }
-    : { ...base, units: 0, capped: "none", reason: "no_edge" };
-  if (!(calEdge > 0)) return { ...base, units: 0, capped: "none", reason: "no_edge" };
+  if (mode === "medicao" ? !(raw > 0) : !(calEdge > 0)) return { ...base, units: 0, capped: "none", reason: "no_edge" };
 
   const fraction = SIZING.kellyFraction * (shrunk / (decimal - 1));
   const uncapped = fraction / SIZING.unitPct;
-  const ceilinged = Math.min(uncapped, maxU);
+  // The measurement regime never stakes more than the floor even when the formula would allow it:
+  // its job is to buy a sample cheaply, not to bet a slice it has not finished measuring.
+  const ceilinged = Math.min(uncapped, mode === "medicao" ? Math.min(maxU, SIZING.medicaoU) : maxU);
   const units = roundUnits(ceilinged);
   if (units <= 0) return { ...base, units: 0, capped: "none", reason: "below_floor" };
   return { ...base, units, capped: uncapped > maxU + 1e-9 ? "ticket" : "none", reason: null };

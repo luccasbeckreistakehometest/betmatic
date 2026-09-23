@@ -57,9 +57,14 @@ describe("the cuts, each one with its own reason recorded", () => {
     // 3.4x with a 33 % chance: 12 % raw, but the shrinkage at that price leaves under 2 %.
     const c = candidate({ decimal: 3.4, modelProbability: 0.33 });
     expect(reasonOf(selectDaily([c], ctx()), c.ledgerId)).toBe("shrunk_low");
+    // In the measurement regime cut 8 does not apply, so the ticket is not discarded — but its
+    // size is still the formula's, and at 3.4x with that σ_p the formula says nothing. It lands in
+    // `observations`: listed, no stake, and a reason.
     const medicao = selectDaily([c], ctx({ calibration: { ...DEFAULT_CALIBRATION, mode: "medicao" } }));
-    expect(medicao.items).toHaveLength(1);
-    expect(medicao.items[0].units).toBe(SIZING.medicaoU);
+    expect(medicao.items).toHaveLength(0);
+    expect(medicao.observations).toHaveLength(1);
+    expect(medicao.observations[0].noStakeReason).toBe("below_floor");
+    expect(reasonOf(medicao, c.ledgerId)).toBeUndefined();
   });
 });
 
@@ -88,7 +93,9 @@ describe("the ranking is growth, never EV%", () => {
     const long = candidate({ ledgerId: "long", gameId: "g2", decimal: 4.9, modelProbability: 0.244 });
     // Measured in the regime where both clear the cuts, so the assertion is about order alone.
     const sel = selectDaily([long, short], ctx({ calibration: { factorPre: 1, factorLive: 1, sigmaPPre: 0.03, sigmaPLive: 0.03, mode: "medicao" } }));
-    expect(sel.items.map((i) => i.candidate.ledgerId)).toEqual(["short", "long"]);
+    // Order is what this pins, so both arms are read together: the long one sizes under the floor
+    // even at σ_p = 0.03, which is itself the point being made.
+    expect([...sel.items, ...sel.observations].map((i) => i.candidate.ledgerId)).toEqual(["short", "long"]);
     // The long one carries the bigger EV and still loses the rank — this is the whole point.
     expect(long.decimal * long.modelProbability - 1).toBeGreaterThan(short.decimal * short.modelProbability - 1);
     // And in the wallet regime it does not even clear the cuts.
@@ -253,8 +260,28 @@ describe("the three real nights of the production ledger", () => {
     expect(runs.every((r) => r.mode === "fechado")).toBe(true);
   });
 
-  it("the measurement regime risks the floor and nothing more", () => {
+  it("with the σ_p the ledger measures, the measurement regime recommends NOTHING — and says so", () => {
     const runs = nights.map((d) => realNight(d, DEFAULT_CALIBRATION));
+    const items = runs.flatMap((r) => r.items);
+    const observations = runs.flatMap((r) => r.observations);
+
+    // This is the fix the owner asked for. These same nights used to print six tickets at 0.25 u,
+    // including a 0.25 u on a 1.86 to win 0.215. With σ_p ≈ 0.125 the formula sizes every one of
+    // them at a few hundredths of a unit, so the honest answer is no stake at all.
+    expect(items).toHaveLength(0);
+    expect(runs.reduce((a, r) => a + r.totals.units, 0)).toBe(0);
+
+    // And they are not hidden: they cleared every cut, so they are listed as observations with a
+    // reason, not swept into the discard pile with the tickets that never qualified.
+    expect(observations.length).toBeGreaterThan(0);
+    expect(observations.every((o) => o.units === 0 && o.noStakeReason === "below_floor")).toBe(true);
+    for (const run of runs) if (run.observations.length) expect(run.note).toMatch(/nothing is worth a stake today/);
+  });
+
+  it("still sizes with the formula when the estimate is sharp enough to earn it", () => {
+    // Same nights, same cuts, σ_p at the floor instead of the ceiling: now the arithmetic clears
+    // 0.25 u on its own and the regime holds it AT the floor rather than inventing it there.
+    const runs = nights.map((d) => realNight(d, { ...DEFAULT_CALIBRATION, sigmaPPre: SIZING.sigmaPFloor }));
     const items = runs.flatMap((r) => r.items);
     expect(items.length).toBeGreaterThan(0);
     expect(items.every((i) => i.units === SIZING.medicaoU)).toBe(true);

@@ -114,6 +114,13 @@ export function TodayCard({ item, lang, bankroll, smallBankroll, sportKey, day, 
           <p className="text-sm text-fg-muted">
             <Filled text={t("todayLiveReference")} values={{ d: formatOdds(item.decimal, lang) }} className="text-fg" />
           </p>
+        ) : item.units <= 0 ? (
+          /* An observation. It keeps its chance and its minimum price — everything except a stake,
+             because the one number it must not show is a size nobody should bet. */
+          <p data-testid="today-stake" className="flex flex-wrap items-baseline gap-x-2 border-t border-line pt-3 text-sm text-fg-muted">
+            <span className="text-fg">{t("todayNoStake")}</span>
+            <span className="text-tiny text-fg-dim">{item.noStakeReason === "day_cap" ? t("todayNoStakeCap") : t("todayNoStakeWhy")}</span>
+          </p>
         ) : (
           <p data-testid="today-stake" className="flex flex-wrap items-baseline gap-x-2 border-t border-line pt-3 text-sm text-fg-muted">
             <Filled
@@ -229,11 +236,16 @@ function TicketWhy({ item, lang }: { item: TodayItem; lang: Lang }) {
             <span><dt className="inline">{lang === "pt" ? "alternativas" : "alternatives"}</dt>{" "}<dd className="inline nums text-fg">{d.alternatives}</dd></span>
           )}
         </dl>
-        {/* The owner's hand-made ladder, kept visible beside the formula as a sanity anchor (§2f). */}
-        <p className="text-fg-dim">
-          <Filled text={t("todayLadder")} values={{ u: formatStakeUnits(item.ladderUnits, lang) }} />
-          {item.capped !== "none" && <span> · {t("todayCapped")}</span>}
-        </p>
+        {/* The owner's hand-made ladder, kept beside the formula as a sanity anchor (§2f) — and only
+            where there is a formula number to anchor. On an observation the wallet produced nothing,
+            so printing the band's 1,25 u here would put the one thing this card must not carry back
+            on the screen: a size to bet. The A/B arm is still filed on the row either way. */}
+        {item.units > 0 && (
+          <p className="text-fg-dim">
+            <Filled text={t("todayLadder")} values={{ u: formatStakeUnits(item.ladderUnits, lang) }} />
+            {item.capped !== "none" && <span> · {t("todayCapped")}</span>}
+          </p>
+        )}
         <Link href={item.gameHref} className="underline underline-offset-2">{t("todayAllTickets")}</Link>
       </div>
     </details>
