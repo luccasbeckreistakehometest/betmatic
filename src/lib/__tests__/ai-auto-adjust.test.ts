@@ -16,7 +16,7 @@ vi.mock("@/lib/ai/providers", () => ({
     configured: () => true,
     generate: async (req: { effort?: string }) => {
       efforts.push(req.effort ?? "?");
-      const usage = { inputTokens: 100, outputTokens: 48000, cacheRead: 0, cacheWrite: 0 };
+      const usage = { inputTokens: 100, outputTokens: 48000, cacheReadTokens: 0, cacheWriteTokens: 0 };
       // The first two attempts are cut by the cap — the model thought the budget away.
       if (efforts.length < 3) return { text: "", parsed: null, stop: "max_tokens", refusal: null, usage };
       return { text: JSON.stringify({ ok: true }), parsed: null, stop: "end", refusal: null, usage: { ...usage, outputTokens: 900 } };
@@ -40,7 +40,7 @@ describe("the auto-adjust ladder", () => {
     // Force every attempt to be cut: three cuts in a row from "medium" leaves only one rung below.
     const provider = (await import("@/lib/ai/providers")).getProvider();
     const original = provider.generate;
-    provider.generate = async (req: { effort?: string }) => { efforts.push(req.effort ?? "?"); return { text: "", parsed: null, stop: "max_tokens", refusal: null, usage: { inputTokens: 1, outputTokens: 1, cacheRead: 0, cacheWrite: 0 } }; };
+    provider.generate = async (req: { effort?: string }) => { efforts.push(req.effort ?? "?"); return { text: "", parsed: null, stop: "max_tokens", refusal: null, usage: { inputTokens: 1, outputTokens: 1, cacheReadTokens: 0, cacheWriteTokens: 0 } }; };
     await expect(generateStructured({ schema: z.object({ ok: z.boolean() }), system: "s", prompt: "p", effort: "medium", label: "unit2" })).rejects.toThrow(/token cap/);
     expect(efforts).toEqual(["medium", "low"]);
     provider.generate = original;
