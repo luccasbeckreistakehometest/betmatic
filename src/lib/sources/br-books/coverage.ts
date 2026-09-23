@@ -58,6 +58,8 @@ export interface NearLine {
   /** The ticket leg this stands in for. */
   index: number;
   book: string;
+  /** The player, on a prop: the shortest honest way to name the leg on screen. */
+  player?: string;
   side: BookSide;
   /** The ticket's own line, its price on the ticket, and the computed chance there. */
   from: { line: number; decimal: number | null; probability: number };
@@ -211,6 +213,7 @@ function nearLinesFor(
     out.push({
       index,
       book: pick.row.book,
+      player: q.player,
       side: q.side,
       from: { line: q.line, decimal: leg.decimal && leg.decimal > 1 ? leg.decimal : null, probability: round4(pick.from) },
       to: { line: pick.row.line!, decimal: pick.row.decimal, probability: round4(pick.to) },

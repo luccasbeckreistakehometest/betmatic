@@ -165,13 +165,15 @@ function missingLabel(c: BookCandidate, legNames: string[], lang: Lang, t: Retur
  */
 function NearLineRow({ near, legNames, lang, ctx }: { near: NearLine; legNames: string[]; lang: Lang; ctx: LinkContext }) {
   const t = booksCopy(lang);
-  const name = legNames[near.index] ?? `${lang === "pt" ? "perna" : "leg"} ${near.index + 1}`;
+  // The player alone on a prop — the leg's own text already carries the line, and repeating it
+  // ("Bia Souza mais de 6,5 — mais de 7,5 em vez de mais de 6,5") reads as two different bets.
+  const name = near.player ?? legNames[near.index] ?? `${lang === "pt" ? "perna" : "leg"} ${near.index + 1}`;
   const prices = near.from.decimal
     ? ` (${t("pays")} ${formatOdds(near.to.decimal, lang)} ${t("insteadOf")} ${formatOdds(near.from.decimal, lang)})`
     : ` (${t("pays")} ${formatOdds(near.to.decimal, lang)})`;
   return (
     <p className="nums mt-1.5 border-l-2 border-warn pl-2 text-micro leading-relaxed text-fg-dim" data-testid="ticket-near-line" data-book={near.book} data-leg={near.index}>
-      <span className="text-warn">{t("nearLine")}</span>: {name} — {lineLabel(near.side, near.to.line, lang)} {t("insteadOf")} {lineLabel(near.side, near.from.line, lang)}{prices}{" "}
+      <span className="text-warn">{t("nearLine")}</span>: {name} — {lineLabel(near.side, near.to.line, lang)} {t("insteadOf")} {formatNumber(near.from.line, lang, { digits: 1 })}{prices}{" "}
       {near.link ? (
         <BookLink link={near.link} ctx={{ ...ctx, legIndex: near.index }} what="ticket" lang={lang} coverage="near" covered={0} testId="ticket-near-open"
           className="font-sans font-medium text-fg underline decoration-line-control underline-offset-2 hover:decoration-fg max-md:inline-flex max-md:min-h-11 max-md:items-center">
