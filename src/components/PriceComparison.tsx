@@ -216,6 +216,8 @@ export function TicketPrices({ ticket, lang, ctx = {}, legNames = [], booksRead 
   const of = slip?.legs ?? ticket.legs.length;
   const runners = ticket.perBook.filter((b) => b.priced === b.of).slice(0, 4);
   const others = (slip?.others ?? []).slice(0, 3);
+  // What the book covers, when the link carries less than that: null when there is nothing to add.
+  const reach = best ? reachNote(best, of, lang) : null;
   return (
     <div className="mt-3 border-t border-line pt-2.5" data-testid="ticket-prices" data-coverage={slip?.kind ?? "none"}>
       <h4 className="text-micro u-label text-fg-dim">{t("whereToBet")}</h4>
@@ -234,9 +236,7 @@ export function TicketPrices({ ticket, lang, ctx = {}, legNames = [], booksRead 
               {best.carriedDecimal !== null && <> · {t("linkPays")} <span className="text-fg">{formatOdds(best.carriedDecimal, lang)}x</span></>}
             </span>
           </div>
-          {reachNote(best, of, lang) && (
-            <p className="nums mt-1 text-micro leading-relaxed text-fg-muted" data-testid="ticket-link-reach">{reachNote(best, of, lang)}</p>
-          )}
+          {reach && <p className="nums mt-1 text-micro leading-relaxed text-fg-muted" data-testid="ticket-link-reach">{reach}</p>}
           {best.missing.length > 0 && (
             <p className="mt-1 text-micro leading-relaxed text-fg-muted" data-testid="ticket-missing">{missingLabel(best, legNames, lang, t)}</p>
           )}
