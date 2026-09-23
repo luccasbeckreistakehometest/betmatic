@@ -32,6 +32,45 @@ const MARKET_MAP: { pattern: RegExp; labels: string[] }[] = [
   { pattern: /(personal foul|faltas)/i, labels: ["PF"] },
 ];
 
+/**
+ * The single stats a combined market can be built out of. Kept apart from MARKET_MAP because a
+ * combined market is parsed from its PARTS, not matched as a whole: the model writes the same bet
+ * as "PTS+AST", "points_assists", "Pontos + Assistências" or "Points and Assists", and no list of
+ * whole-market patterns survives that. On 23/09/2026 this was not cosmetic — 56 settled legs were
+ * written off as "não é possível medir" because "PTS+AST", "REB+AST" and "PTS+REB" matched nothing,
+ * and A'ja Wilson's under 12,5 rebotes+assistências (she finished on 12) was voided instead of won.
+ */
+const SINGLE_STATS: { pattern: RegExp; label: string }[] = [
+  { pattern: /^(pts|points?|pontos?)$/i, label: "PTS" },
+  { pattern: /^(rebs?|rebounds?|rebotes?)$/i, label: "REB" },
+  { pattern: /^(ast|assists?|assist[eê]ncias?)$/i, label: "AST" },
+  { pattern: /^(stl|steals?|roubos?)$/i, label: "STL" },
+  { pattern: /^(blk|blocks?|tocos?)$/i, label: "BLK" },
+  { pattern: /^(to|turnovers?|erros?)$/i, label: "TO" },
+  { pattern: /^(3pm|3pt|3-?pointers? made|3-?pointers?|triplos?|bolas de 3)$/i, label: "3PT" },
+];
+
+/** One order for the labels, whatever order the market was written in, so the catalogue matches. */
+const STAT_ORDER = ["PTS", "REB", "AST", "STL", "BLK", "TO", "3PT"];
+
+/**
+ * A combined market read as its parts. Returns null unless EVERY part is a stat we know and at
+ * least two of them are: a market with one unreadable part must stay unreadable, never be graded
+ * on the half that parsed.
+ */
+export function compositeStatLabels(market: string): string[] | null {
+  const parts = market.split(/\s*(?:[+&/,]|\be\b|\band\b|_)\s*/i).map((x) => x.trim()).filter(Boolean);
+  if (parts.length < 2) return null;
+  const labels: string[] = [];
+  for (const part of parts) {
+    const hit = SINGLE_STATS.find((s) => s.pattern.test(part));
+    if (!hit) return null;
+    if (!labels.includes(hit.label)) labels.push(hit.label);
+  }
+  if (labels.length < 2) return null;
+  return labels.sort((a, b) => STAT_ORDER.indexOf(a) - STAT_ORDER.indexOf(b));
+}
+
 function matchCatalogue(needle: string, markets: MarketDef[]): string[] | null {
   for (const m of markets) {
     if (!m.statLabels.length) continue;
@@ -53,6 +92,16 @@ export function resolveStatLabels(market: string, sportKey?: string): string[] |
 
   const scoped = matchCatalogue(needle, marketsFor(sportKey));
   if (scoped) return scoped;
+
+  // Read as a combination of known stats before falling back to whole-market patterns.
+  const composed = compositeStatLabels(clean);
+  if (composed) {
+    const sportMarkets = marketsFor(sportKey);
+    // Same rule as below: a sport that was named does not borrow another sport's stat.
+    if (!sportKey || !sportMarkets.length) return composed;
+    const belongs = sportMarkets.some((m) => JSON.stringify(m.statLabels) === JSON.stringify(composed));
+    if (belongs) return composed;
+  }
 
   if (sportKey) {
     // A sport was named but the market is not in its catalogue: do not borrow another sport's stat.
