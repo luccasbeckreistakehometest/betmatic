@@ -82,7 +82,7 @@ describe("the record that answers for a ticket", () => {
   });
 
   it("still says nothing on a scope with no sample", () => {
-    const empty = buildCalibrator({ totalSettled: 0, bySource: [], byMarket: [], bySport: [], generatedAt: "" });
+    const empty = buildCalibrator({ totalSettled: 0, bySource: [], byMarket: [], bySport: [], bySide: [], byStat: [], generatedAt: "" });
     expect(empty.apply(0.9, "measured history", "player_prop").correction).toBeNull();
     expect(empty.apply(0.9, "measured history", "player_prop").probability).toBe(0.9);
   });

@@ -407,6 +407,7 @@ function migrate(d: Database.Database): void {
   addColumn(d, "referrals", "paymentRowId", "TEXT");
   addColumn(d, "generation_requests", "scope", "TEXT NOT NULL DEFAULT 'game'");
   migrateRound3(d);
+  migrateRound4(d);
   d.exec(`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_provider_payment ON payments(providerPaymentId) WHERE providerPaymentId IS NOT NULL;
     CREATE INDEX IF NOT EXISTS idx_payments_preference ON payments(preferenceId);
@@ -566,6 +567,142 @@ function migrateRound3(d: Database.Database): void {
   addColumn(d, "users", "signupSource", "TEXT");
   addColumn(d, "users", "signupUtm", "TEXT");
   addColumn(d, "user_slips", "kind", "TEXT NOT NULL DEFAULT 'analysis'");
+}
+
+/**
+ * Round 4 — the day's short list. Additive and idempotent, like every other step here: the
+ * production database is live, and nothing above this line changes shape.
+ */
+function migrateRound4(d: Database.Database): void {
+  d.exec(`
+    -- "Os bilhetes de hoje": one row per Brasília day and sport. The job rewrites it only when the
+    -- content hash changes, so a reader never sees the list flicker between two equal answers.
+    CREATE TABLE IF NOT EXISTS daily_selection (
+      day TEXT NOT NULL,                            -- YYYY-MM-DD, America/Sao_Paulo
+      sportKey TEXT NOT NULL,
+      mode TEXT NOT NULL,                           -- carteira | medicao | fechado
+      policyVersion TEXT NOT NULL DEFAULT '',
+      calibration TEXT NOT NULL DEFAULT '{}',       -- the c and sigma_p each slice was sized with
+      totals TEXT NOT NULL DEFAULT '{}',
+      -- Every discarded candidate with the reason it was discarded: this is what answers
+      -- "why is that one not on the list?" without opening the code.
+      skipped TEXT NOT NULL DEFAULT '[]',
+      note TEXT NOT NULL DEFAULT '',
+      hash TEXT NOT NULL DEFAULT '',
+      candidates INTEGER NOT NULL DEFAULT 0,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL,
+      PRIMARY KEY (day, sportKey)
+    );
+
+    CREATE TABLE IF NOT EXISTS daily_selection_items (
+      day TEXT NOT NULL,
+      sportKey TEXT NOT NULL,
+      ledgerId TEXT NOT NULL,
+      rank INTEGER NOT NULL DEFAULT 0,
+      scope TEXT NOT NULL DEFAULT 'pre',            -- pre (the wallet) | live (the list only)
+      gameId TEXT NOT NULL,
+      suggestionId TEXT NOT NULL DEFAULT '',
+      bandKey TEXT NOT NULL DEFAULT '',
+      title TEXT NOT NULL DEFAULT '',
+      matchup TEXT NOT NULL DEFAULT '',
+      startsAt TEXT,
+      oddsDecimal REAL NOT NULL,
+      modelProbability REAL NOT NULL DEFAULT 0,
+      calibratedProbability REAL NOT NULL DEFAULT 0,
+      grossEdge REAL NOT NULL DEFAULT 0,
+      shrunkEdge REAL NOT NULL DEFAULT 0,
+      units REAL NOT NULL DEFAULT 0,
+      minDecimal REAL,
+      capped TEXT NOT NULL DEFAULT 'none',
+      -- Which arm of the stake A/B this row was sized by (§4.5): the formula or the owner's ladder.
+      stakePolicy TEXT NOT NULL DEFAULT 'formula',
+      ladderUnits REAL NOT NULL DEFAULT 0,
+      expiresAt TEXT,
+      payload TEXT NOT NULL DEFAULT '{}',
+      PRIMARY KEY (day, sportKey, ledgerId)
+    );
+    CREATE INDEX IF NOT EXISTS idx_daily_items_day ON daily_selection_items(day, sportKey, scope, rank);
+  `);
+  d.exec(`
+    -- Which leg killed the ticket. 94 of the 131 lost tickets in the production ledger died on
+    -- exactly one leg, so this is the normal case, not the rare one. Rebuilt from the ledger by
+    -- job=attribute on every tick: the ledger is the source, this table is only an index of it.
+    CREATE TABLE IF NOT EXISTS leg_attribution (
+      ledgerId TEXT NOT NULL,
+      legIndex INTEGER NOT NULL,
+      gameId TEXT NOT NULL,
+      sportKey TEXT NOT NULL,
+      scope TEXT NOT NULL DEFAULT 'pre',
+      alternative INTEGER NOT NULL DEFAULT 0,
+      marketKey TEXT NOT NULL DEFAULT 'unmapped',
+      side TEXT NOT NULL DEFAULT '',
+      athleteId TEXT NOT NULL DEFAULT '',
+      outcome TEXT NOT NULL,
+      sole INTEGER NOT NULL DEFAULT 0,
+      predicted REAL NOT NULL DEFAULT 0,
+      oddsDecimal REAL NOT NULL DEFAULT 0,
+      day TEXT NOT NULL DEFAULT '',
+      PRIMARY KEY (ledgerId, legIndex)
+    );
+    CREATE INDEX IF NOT EXISTS idx_leg_attr_market ON leg_attribution(scope, marketKey, outcome);
+
+    -- The calibration of every slice with a real sample, one row per (run, scope, dimension, value).
+    -- flagged = the Wilson interval excluded the prediction AND Benjamini-Hochberg kept it.
+    CREATE TABLE IF NOT EXISTS factor_stats (
+      runId TEXT NOT NULL,
+      id TEXT NOT NULL,
+      scope TEXT NOT NULL,
+      dim TEXT NOT NULL,
+      value TEXT NOT NULL,
+      legs INTEGER NOT NULL DEFAULT 0,
+      won INTEGER NOT NULL DEFAULT 0,
+      games INTEGER NOT NULL DEFAULT 0,
+      days INTEGER NOT NULL DEFAULT 0,
+      hitRate REAL NOT NULL DEFAULT 0,
+      predicted REAL NOT NULL DEFAULT 0,
+      gap REAL NOT NULL DEFAULT 0,
+      ciLow REAL NOT NULL DEFAULT 0,
+      ciHigh REAL NOT NULL DEFAULT 0,
+      pValue REAL NOT NULL DEFAULT 1,
+      qValue REAL NOT NULL DEFAULT 1,
+      flagged INTEGER NOT NULL DEFAULT 0,
+      computedAt TEXT NOT NULL,
+      codeVersion TEXT NOT NULL DEFAULT '',
+      PRIMARY KEY (runId, id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_factor_stats_latest ON factor_stats(computedAt DESC, flagged);
+
+    -- Rules the learning run proposed, so the same idea is not proposed for the fourth time and an
+    -- idea that reverses a live one is blocked instead of quietly cancelling it. The fingerprint is
+    -- sha1(dim + value + direction + bucket): the same thought in different words hashes the same.
+    CREATE TABLE IF NOT EXISTS rule_hypotheses (
+      id TEXT PRIMARY KEY,
+      fingerprint TEXT NOT NULL,
+      dim TEXT NOT NULL,
+      value TEXT NOT NULL,
+      direction TEXT NOT NULL,                      -- lower | raise | avoid | prefer
+      bucket TEXT NOT NULL DEFAULT '',
+      factorStatId TEXT NOT NULL DEFAULT '',
+      text TEXT NOT NULL DEFAULT '',
+      runId TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'proposed',      -- proposed | applied | rejected | superseded | blocked
+      verdict TEXT,                                 -- improved | no_change | worse | inconclusive
+      verdictNote TEXT NOT NULL DEFAULT '',
+      supersedes TEXT,
+      promptVersionId TEXT,
+      createdBy TEXT NOT NULL DEFAULT '',
+      createdAt TEXT NOT NULL,
+      appliedAt TEXT,
+      evaluatedAt TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_hypotheses_fp ON rule_hypotheses(fingerprint, status);
+    CREATE INDEX IF NOT EXISTS idx_hypotheses_status ON rule_hypotheses(status, createdAt DESC);
+  `);
+  // A bet logged from the short list keeps the price it was recommended at beside the price the
+  // reader actually got: that pair is what makes the wallet's own CLV computable.
+  addColumn(d, "bankroll_entries", "recommendedDecimal", "REAL");
+  addColumn(d, "bankroll_entries", "recommendedAt", "TEXT");
 }
 
 export function nowIso(): string {

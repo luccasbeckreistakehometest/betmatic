@@ -1,5 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
+import { marketKeyOf } from "@/lib/ledger/stat-key";
+import { POLICY_VERSION } from "@/lib/bets/sizing";
 import type { BetSuggestion, Game, LedgerEntry, SettledLeg } from "@/lib/types";
 
 // Lives under DATA_DIR so it sits on the persistent volume in Docker: this file IS the learning
@@ -65,7 +67,22 @@ export const ledgerIdFor = (gameId: string, s: Pick<BetSuggestion, "bandKey" | "
  * and a read at 30 minutes with five minutes left are not the same bet, and the ledger used to be
  * unable to tell them apart.
  */
-export function recordPredictions(game: Game, suggestions: BetSuggestion[], opts: { startsAt?: string; live?: { minute: number; period?: number; clockLeft?: number } } = {}): number {
+export function recordPredictions(
+  game: Game,
+  suggestions: BetSuggestion[],
+  opts: {
+    startsAt?: string;
+    live?: { minute: number; period?: number; clockLeft?: number };
+    /** The game's own context at generation time — the same for every leg, copied onto each. */
+    environment?: { blowoutProbability?: number | null; paceDelta?: number | null } | null;
+    /**
+     * What wrote this ticket. All optional, all filed at generation time: which prompt version, which
+     * model, what asked for it, and which selection policy was live. Without these a before/after is
+     * an argument; with them it is a query, and `ledger/ab.ts` is that query.
+     */
+    provenance?: { promptVersion?: string | null; modelId?: string | null; generatedBy?: string | null; policyVersion?: string | null };
+  } = {},
+): number {
   if (!suggestions.length) return 0;
   const existing = readLedger();
   const seen = new Set(existing.map((e) => e.id));
@@ -104,6 +121,10 @@ export function recordPredictions(game: Game, suggestions: BetSuggestion[], opts
             ...(opts.live.clockLeft !== undefined && Number.isFinite(opts.live.clockLeft) ? { clockLeft: opts.live.clockLeft } : {}),
           }
         : {}),
+      ...(opts.provenance?.promptVersion ? { promptVersion: opts.provenance.promptVersion } : {}),
+      ...(opts.provenance?.modelId ? { modelId: opts.provenance.modelId } : {}),
+      ...(opts.provenance?.generatedBy ? { generatedBy: opts.provenance.generatedBy } : {}),
+      policyVersion: opts.provenance?.policyVersion ?? POLICY_VERSION,
       outcome: "pending",
       legs: s.legs.map<SettledLeg>((l) => ({
         selection: l.selection,
@@ -116,6 +137,15 @@ export function recordPredictions(game: Game, suggestions: BetSuggestion[], opts
         oddsDecimal: l.oddsDecimal,
         outcome: "pending",
         actual: undefined,
+        // Copied from the generation payload so the factor report can cut the ledger by something
+        // other than the price. Every one is optional; an older row simply does not carry them.
+        ...(l.athleteId ? { athleteId: l.athleteId } : {}),
+        ...(marketKeyOf(l, game.sportKey) !== "unmapped" ? { marketKey: marketKeyOf(l, game.sportKey) } : {}),
+        ...(l.measured?.rate !== undefined && Number.isFinite(l.measured.rate) ? { measuredRate: Number(l.measured.rate.toFixed(3)) } : {}),
+        ...(l.projectedMinutes !== undefined ? { projectedMinutes: l.projectedMinutes } : {}),
+        ...(l.modelNote ? { modelNote: l.modelNote.slice(0, 240) } : {}),
+        ...(opts.environment?.blowoutProbability !== undefined && opts.environment?.blowoutProbability !== null ? { blowoutProbability: Number(opts.environment.blowoutProbability.toFixed(3)) } : {}),
+        ...(opts.environment?.paceDelta !== undefined && opts.environment?.paceDelta !== null ? { paceDelta: Number(opts.environment.paceDelta.toFixed(2)) } : {}),
       })),
     });
   }

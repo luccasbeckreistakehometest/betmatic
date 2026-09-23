@@ -115,6 +115,7 @@ export function enrichLeg(leg: BetLeg, key: LegKey, ctx: EnrichContext): BetLeg 
       ...(model ? {
         computedProbability: Number(model.computed.toFixed(3)),
         modelNote: model.note,
+        projectedMinutes: Number.isFinite(model.minutes.expected) ? Number(model.minutes.expected.toFixed(1)) : undefined,
         rawProbability: leg.fairProbability,
         fairProbability: listedOut ? leg.fairProbability : anchoredProbability(leg.fairProbability, model.computed),
       } : {}),

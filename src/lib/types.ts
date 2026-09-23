@@ -287,6 +287,8 @@ export interface BetLeg {
   modelNote?: string;
   /** The model's own estimate before it was anchored to computedProbability; the ledger races the two. */
   rawProbability?: number;
+  /** Minutes the projection gives this player — the number every counting-stat leg stands on. */
+  projectedMinutes?: number;
 }
 
 export type LegOutcome = "won" | "lost" | "push" | "void" | "pending";
@@ -312,6 +314,20 @@ export interface SettledLeg {
   liveDecimal?: number;
   outcome: LegOutcome;
   actual?: string;
+  /*
+   * Copied from the generation payload so a slice of the ledger can be cut by something other than
+   * the price. All optional: a row written before they existed reads exactly as it did before.
+   */
+  athleteId?: string;
+  /** The canonical market key at the time of writing (ledger/stat-key.ts). */
+  marketKey?: string;
+  /** Season hit rate measured at this exact line, from the game log. */
+  measuredRate?: number;
+  projectedMinutes?: number;
+  /** The game's own context at generation time, the same for every leg of the ticket. */
+  blowoutProbability?: number;
+  paceDelta?: number;
+  modelNote?: string;
 }
 
 export interface LedgerEntry {
@@ -361,6 +377,15 @@ export interface LedgerEntry {
   correlationFactor?: number;
   legs: SettledLeg[];
   outcome: LegOutcome;
+  /*
+   * What produced this ticket. All optional and all written at generation time, so a before/after
+   * is a query rather than an argument: which prompt version wrote it, which model, who asked, and
+   * which version of the selection policy was live when it was written.
+   */
+  promptVersion?: string;
+  modelId?: string;
+  generatedBy?: string;
+  policyVersion?: string;
 }
 
 /** Measured track record for one slice of predictions. */
@@ -379,7 +404,11 @@ export interface CalibrationReport {
   totalSettled: number;
   bySource: CalibrationRow[];
   byMarket: CalibrationRow[];
+  /** The same legs cut by canonical market key (stat-key.ts) — finer than `market`. */
+  byStat: CalibrationRow[];
   bySport: CalibrationRow[];
+  /** over vs under. `under` ran 20 points optimistic over 506 legs and nothing showed it. */
+  bySide: CalibrationRow[];
   generatedAt: string;
 }
 

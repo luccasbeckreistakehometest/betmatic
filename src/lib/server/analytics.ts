@@ -6,7 +6,7 @@ import { ANON_COOKIE, FIRST_TOUCH_COOKIE } from "@/lib/analytics/events";
  * Server-side funnel events (authoritative: they happen after the action succeeded). Never throws —
  * analytics must not break the feature it measures. No IP, no free text beyond small props.
  */
-export const SERVER_EVENTS = ["signup_done", "game_generated", "ticket_saved", "coins_spent", "scan_done", "custom_parlay_done", "checkout_started", "paid", "tipster_audit_done", "player_opened", "deep_slip_done", "refresh_done"] as const;
+export const SERVER_EVENTS = ["signup_done", "game_generated", "ticket_saved", "coins_spent", "scan_done", "custom_parlay_done", "checkout_started", "paid", "tipster_audit_done", "player_opened", "deep_slip_done", "refresh_done", "today_bet_logged"] as const;
 export type ServerEvent = (typeof SERVER_EVENTS)[number];
 
 export function recordEvent(name: ServerEvent, userId: string | null, props: Record<string, unknown> = {}, extra: { anonId?: string | null; path?: string } = {}): void {

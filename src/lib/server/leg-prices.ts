@@ -28,18 +28,26 @@ export function priceKeyOf(leg: Pick<BetLeg, "athleteId"> & { settlement?: Settl
 
 export interface PricedLegInput { ledgerId: string; legIndex: number; gameId: string; sportKey: string; startsAt: string | null; homeAbbr: string | null; leg: Pick<BetLeg, "athleteId" | "oddsDecimal" | "openOdds"> & { settlement?: Settlement } }
 
-/** Taken and open prices, written once when a ticket is logged (a re-log of the same ticket is ignored). */
-export function recordLegPrices(rows: PricedLegInput[]): number {
+/**
+ * Taken and open prices, written once when a ticket is logged (a re-log of the same ticket is ignored).
+ *
+ * `opts` exists for the one case where the recorded number is not a price anyone could have taken:
+ * a live read. ESPN's prop feed does not move once the ball is up, so the price stored on an in-play
+ * ticket is the pre-game board. Those rows are written with `basis: "live"` and
+ * `status: "no_live_price"`, which keeps them out of the close job (it reads `pending`) and out of
+ * the public CLV — the row itself says the price was never an in-play price.
+ */
+export function recordLegPrices(rows: PricedLegInput[], opts: { basis?: string; status?: string } = {}): number {
   const db = getDb();
-  const stmt = db.prepare(`INSERT OR IGNORE INTO leg_prices (ledgerId, legIndex, gameId, sportKey, startsAt, kind, marketKey, athleteId, side, line, takenDecimal, openDecimal, createdAt, updatedAt)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+  const stmt = db.prepare(`INSERT OR IGNORE INTO leg_prices (ledgerId, legIndex, gameId, sportKey, startsAt, kind, marketKey, athleteId, side, line, takenDecimal, openDecimal, basis, status, createdAt, updatedAt)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
   let n = 0;
   db.transaction(() => {
     for (const r of rows) {
       if (!/^\d{1,12}$/.test(r.gameId) || !Number.isFinite(r.leg.oddsDecimal) || r.leg.oddsDecimal <= 1) continue;
       const key = priceKeyOf(r.leg, r.homeAbbr);
       if (!key) continue;
-      n += stmt.run(r.ledgerId, r.legIndex, r.gameId, r.sportKey, r.startsAt, key.kind, key.marketKey, key.athleteId, key.side, key.line, r.leg.oddsDecimal, r.leg.openOdds ?? null, nowIso(), nowIso()).changes;
+      n += stmt.run(r.ledgerId, r.legIndex, r.gameId, r.sportKey, r.startsAt, key.kind, key.marketKey, key.athleteId, key.side, key.line, r.leg.oddsDecimal, r.leg.openOdds ?? null, opts.basis ?? null, opts.status ?? "pending", nowIso(), nowIso()).changes;
     }
   }).immediate();
   return n;

@@ -78,17 +78,18 @@ test("the tab bar sits at the bottom, names the game under way, is right on firs
   const live = page.getByTestId("tab-live");
   await expect(live).toBeVisible();
   await expect(live).toHaveAttribute("aria-label", "Ao vivo: Dunas Divers × Cedro Comets");
-  await expect(bar.getByRole("link")).toHaveText(["Jogos", "Múltiplas", "DUN × CED", "Banca", "Conta"]);
+  // "Hoje" leads, and nothing was dropped to make room for it: the bar grows to six columns.
+  await expect(bar.getByRole("link")).toHaveText(["Hoje", "Jogos", "Múltiplas", "DUN × CED", "Banca", "Conta"]);
   // The shell decides the live tab on the server (from the remembered sport), so the HTML already
-  // carries five tabs and nothing moves under the thumb after first paint.
+  // carries every tab and nothing moves under the thumb after first paint.
   const html = await page.request.get("/app?sport=wnba&lang=pt").then((r) => r.text());
   expect(html).toContain('data-testid="tab-live"');
   await page.goto("/app?sport=wnba&lang=pt", { waitUntil: "commit" });
   await page.locator('[data-testid="tab-bar"]').waitFor({ state: "attached" });
   const first = await page.locator('[data-testid="tab-bar"] a').count();
   await page.waitForTimeout(1500);
-  expect(first).toBe(5);
-  expect(await page.locator('[data-testid="tab-bar"] a').count()).toBe(5);
+  expect(first).toBe(6);
+  expect(await page.locator('[data-testid="tab-bar"] a').count()).toBe(6);
   // The current tab carries the rail's cue: a 2px rule in ink on its top edge, never a hue.
   const current = bar.getByRole("link", { name: "Jogos" });
   await expect(current).toHaveAttribute("aria-current", "page");
@@ -111,9 +112,9 @@ test("the tab bar sits at the bottom, names the game under way, is right on firs
   await bar.getByRole("link", { name: "Banca" }).click();
   await expect(page).toHaveURL(/\/app\/bankroll/);
   await expect(page.getByTestId("tab-bar").getByRole("link", { name: "Banca" })).toHaveAttribute("aria-current", "page");
-  // A sport with nothing in play has four tabs.
+  // A sport with nothing in play drops the live tab and keeps the other five.
   await page.goto("/app?sport=soccer-esp&lang=pt&date=20260911");
-  await expect(page.getByTestId("tab-bar").getByRole("link")).toHaveCount(4);
+  await expect(page.getByTestId("tab-bar").getByRole("link")).toHaveCount(5);
 });
 
 test("the slate is a list of tappable cards on a phone, the table stays for the desk", async ({ page }) => {

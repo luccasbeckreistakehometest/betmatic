@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { generateStructured } from "@/lib/ai/extract";
-import { getPrompt } from "@/lib/server/prompts";
+import { MODEL } from "@/lib/ai/client";
+import { getPrompt, getPromptVersion } from "@/lib/server/prompts";
 import { calibrationPrompt } from "@/lib/ledger/calibrate";
 import { ledgerIdFor, recordPredictions } from "@/lib/ledger/store";
 import { recordLegPrices } from "@/lib/server/leg-prices";
@@ -530,7 +531,11 @@ export async function buildBets(args: BuildArgs): Promise<BetSlate> {
   // TODO(ui): BetSuggestion.correlation (factor, independent probability, note) is carried on every
   // same-game ticket and nothing renders it yet; the ticket card should print it beside the chance.
   if (record) {
-    recordPredictions(game, suggestions);
+    recordPredictions(game, suggestions, {
+      environment: environment ? { blowoutProbability: environment.blowoutProbability, paceDelta: environment.paceDelta } : null,
+      // Which prompt wrote it and which model answered: `ledger/ab.ts` reads exactly these two.
+      provenance: { promptVersion: getPromptVersion("game", lang).id, modelId: args.model ?? MODEL, generatedBy: live ? "live" : "game" },
+    });
     recordLegPrices(suggestions.flatMap((s) => s.legs.map((leg, legIndex) => ({
       ledgerId: ledgerIdFor(game.id, s), legIndex, gameId: game.id, sportKey: game.sportKey, startsAt: game.startsAt, homeAbbr: game.home.abbreviation, leg,
     }))));
@@ -621,7 +626,10 @@ export async function buildSlateBets(args: SlateBuildArgs): Promise<BetSlate> {
       },
       suggestions,
       // Public only once every game on it has started; before that the remaining legs are still bettable.
-      { startsAt: games.map((g) => g.game.startsAt).filter(Boolean).sort().at(-1) },
+      {
+        startsAt: games.map((g) => g.game.startsAt).filter(Boolean).sort().at(-1),
+        provenance: { promptVersion: getPromptVersion("slate", lang).id, modelId: MODEL, generatedBy: "slate" },
+      },
     );
     // Each leg is closed against its own game.
     const byId = new Map(games.map((g) => [g.game.id, g.game]));

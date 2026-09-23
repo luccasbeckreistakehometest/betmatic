@@ -5,7 +5,7 @@ import { gradeLegAgainst, ticketOutcome } from "@/lib/ledger/settle";
 import { getGameDetail } from "@/lib/sources/espn";
 import { alertsForEntries } from "@/lib/server/lineups";
 import { clvByLedger, recordLegPrices } from "@/lib/server/leg-prices";
-import type { LedgerEntry, LegOutcome, Settlement, SettledLeg } from "@/lib/types";
+import type { BetLeg, LedgerEntry, LegOutcome, Settlement, SettledLeg } from "@/lib/types";
 
 export interface BankrollRow {
   id: string; userId: string; source: "ticket" | "manual" | "custom" | "scan"; ledgerId: string | null; title: string; matchup: string;
@@ -71,6 +71,33 @@ export function addTicket(userId: string, input: { gameId: string; bandKey: stri
   const rowId = newId("bk");
   getDb().prepare("INSERT INTO bankroll_entries (id,userId,source,ledgerId,title,matchup,combinedDecimal,stake,createdAt) VALUES (?,?,?,?,?,?,?,?,?)")
     .run(rowId, userId, "ticket", id, entry.title, entry.matchup, entry.combinedDecimal, input.stake, nowIso());
+  return listBankroll(userId).entries.find((e) => e.id === rowId) ?? null;
+}
+
+/**
+ * A ticket logged from the day's short list. Unlike `addTicket` the id is given, not rebuilt from
+ * its parts: a live read's ledger id carries the minute it was taken at, which no browser can
+ * reconstruct. The recommended price is stored beside the price the reader says they got, and the
+ * legs are priced into `leg_prices` so the entry has a close to be measured against.
+ */
+export function addTicketById(userId: string, input: {
+  ledgerId: string; stake: number; title: string; matchup: string;
+  recommendedDecimal: number; confirmedDecimal: number | null;
+  gameId: string; sportKey: string; startsAt: string | null; legs: BetLeg[];
+}): BankrollView | null {
+  const decimal = input.confirmedDecimal ?? input.recommendedDecimal;
+  if (!Number.isFinite(decimal) || decimal <= 1) return null;
+  const rowId = newId("bk");
+  const db = getDb();
+  const known = !!readLedger().find((e) => e.id === input.ledgerId);
+  db.prepare(`INSERT INTO bankroll_entries (id,userId,source,ledgerId,title,matchup,combinedDecimal,stake,createdAt,recommendedDecimal,recommendedAt)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?)`)
+    .run(rowId, userId, known ? "ticket" : "manual", known ? input.ledgerId : null, input.title.slice(0, 160), input.matchup.slice(0, 160), decimal, input.stake, nowIso(), input.recommendedDecimal, nowIso());
+  // CLV needs the price this bet was taken at; a leg the descriptor cannot name is simply skipped.
+  recordLegPrices(input.legs.slice(0, 20).map((l, i) => ({
+    ledgerId: known ? input.ledgerId : `bl:${rowId}`, legIndex: i, gameId: input.gameId, sportKey: input.sportKey,
+    startsAt: input.startsAt, homeAbbr: null, leg: l,
+  })));
   return listBankroll(userId).entries.find((e) => e.id === rowId) ?? null;
 }
 
