@@ -103,10 +103,13 @@ test("a paid user gets priced player legs, line movement and two alternatives un
   // (The roster panel still lists her as a deep-dive link; the legs live in the tickets' <ol>.)
   await expect(page.locator("ol li", { hasText: "Cris Rocha" })).toHaveCount(0);
 
-  // The public record counts main tickets only: three here, not five.
+  // The public record counts main tickets only: four here, not six. The fourth is the single on a
+  // name none of the others use — the mock world has to clear the by-player cap (src/lib/bets/
+  // gates.ts) the same way a real slate does, or the double would be dropped for leaning on Eva
+  // Nunes twice in a slate of three.
   await page.goto("/prova?lang=pt");
-  expect(await generated(page)).toBe(before + 3);
+  expect(await generated(page)).toBe(before + 4);
   await page.getByTestId("alts-toggle").click();
   await expect(page).toHaveURL(/alts=1/);
-  expect(await generated(page)).toBe(beforeWithAlts + 5);
+  expect(await generated(page)).toBe(beforeWithAlts + 6);
 });
