@@ -195,6 +195,63 @@ describe("the near line", () => {
     expect(slip.nearLines[0].from).toMatchObject({ line: 17.5, decimal: 1.9 });
   });
 
+  /**
+   * The ladder, whole: one fetch round publishes several rungs of the same prop at one book, every
+   * row stamped with the same `fetchedAt`. The rung offered has to be the one nearest the number on
+   * the ticket — which is only possible if all of them reach the comparison.
+   */
+  describe("out of a whole ladder", () => {
+    const ladder = [
+      row("Sportingbet", "sportingbet", SPB, prop("Ana Lima", "points", 16.5, "over", 1.55)),
+      row("Sportingbet", "sportingbet", SPB, prop("Ana Lima", "points", 18.5, "over", 2.1)),
+      // "20+" is posted as a milestone rung, a different `kind` on the same ladder.
+      row("Sportingbet", "sportingbet", SPB, { ...prop("Ana Lima", "points", 19.5, "over", 2.45), kind: "milestone" }),
+    ];
+
+    it("offers the rung nearest the ticket's number, not the first row nor the longest price", () => {
+      const slip = ticketSlip([...base, ...ladder], ticket);
+      expect(slip.nearLines).toHaveLength(1);
+      // 16.5 and 18.5 are both one step away; 18.5 is the one still recognisably this bet (a ~48%
+      // over against the ticket's ~51%, where 16.5 is a ~65% over), and 19.5 is two steps out.
+      expect(slip.nearLines[0]).toMatchObject({ index: 1, book: "Sportingbet", side: "over", basis: "implied" });
+      expect(slip.nearLines[0].to).toMatchObject({ line: 18.5, decimal: 2.1 });
+      expect(slip.nearLines[0].gap).toBeCloseTo(0.0366, 4);
+      expect(slip.nearLines[0].gap).toBeLessThan(NEAR_MAX_PROBABILITY_GAP);
+    });
+
+    it("gives the same answer with the ladder as with that rung alone: more data never means less offer", () => {
+      const whole = ticketSlip([...base, ...ladder], ticket);
+      const alone = ticketSlip([...base, ladder[1]], ticket);
+      expect(alone.nearLines).toHaveLength(1);
+      expect(whole.nearLines).toEqual(alone.nearLines);
+    });
+
+    it("keeps the nearest rung even when one further out prices closer to the ticket", () => {
+      // 19.5 was left at 1,98 while 18.5 moved to 2,30: a stale rung two steps away reads as the
+      // same chance as the ticket's line. It is still not the number the reader asked for.
+      const stale = [
+        row("Sportingbet", "sportingbet", SPB, prop("Ana Lima", "points", 18.5, "over", 2.3)),
+        row("Sportingbet", "sportingbet", SPB, prop("Ana Lima", "points", 19.5, "over", 1.98)),
+      ];
+      const slip = ticketSlip([...base, ...stale], ticket);
+      expect(slip.nearLines[0].to).toMatchObject({ line: 18.5, decimal: 2.3 });
+      // The rung that was not offered really was the closer one in chance: distance decided, and
+      // the offered gap is the bigger of the two.
+      expect(slip.nearLines[0].gap).toBeCloseTo(0.078, 3);
+    });
+
+    it("offers nothing when the book's own next rung is already a different bet", () => {
+      // The nearest rung is put to the chance gate and fails it. The stale 19.5 two steps out would
+      // pass, and is not offered instead: a step the book itself calls a different bet cannot be
+      // rescued by a longer step whose price has not moved.
+      const jump = [
+        row("Sportingbet", "sportingbet", SPB, prop("Ana Lima", "points", 18.5, "over", 2.6)),
+        row("Sportingbet", "sportingbet", SPB, prop("Ana Lima", "points", 19.5, "over", 1.95)),
+      ];
+      expect(ticketSlip([...base, ...jump], ticket).nearLines).toEqual([]);
+    });
+  });
+
   it("offers nothing for a leg a book already carries, and nothing beside a moneyline", () => {
     // Every leg covered: there is no gap for a near line to stand in.
     const whole = [...base, row("Sportingbet", "sportingbet", SPB, prop("Ana Lima", "points", 17.5, "over", 2.05))];

@@ -1,5 +1,5 @@
 import { impliedProbability } from "@/lib/odds";
-import { EXCHANGE_PLATFORM, fairPrice, groupBySelection, latestPerBook, sameLine, sameSelection, selectionKey, type LegQuery } from "@/lib/sources/br-books/compare";
+import { EXCHANGE_PLATFORM, fairPrice, groupBySelection, latestPerBook, latestPerBookLine, sameLine, sameSelection, selectionKey, type LegQuery } from "@/lib/sources/br-books/compare";
 import { deepLinkFor, linkForSelections, type DeepLink, type DeepLinkOptions } from "@/lib/sources/br-books/deeplinks";
 import type { BookPrice, BookSide } from "@/lib/sources/br-books/types";
 
@@ -203,31 +203,51 @@ function nearLinesFor(
     const cap = NEAR_MAX_LINE_MOVE[q.market];
     if (cap === undefined) continue;
     const rows = rowsFor(q);
-    const rungs = latestPerBook(rows.filter((p) =>
+    // Every rung the books post inside the points cap, ONE ROW PER BOOK PER LINE. A book's ladder
+    // has to arrive here whole: the question is which of its rungs sits nearest the reader's
+    // number, and a list already reduced to one row per book cannot answer it.
+    const rungs = latestPerBookLine(rows.filter((p) =>
       p.platform !== EXCHANGE_PLATFORM && sameSelection(p, q) && p.line !== undefined && !sameLine(p.line, q.line) && Math.abs(p.line - q.line!) <= cap));
     if (!rungs.length) continue;
     const here = chanceAt(rows, q, q.line);
-    const offers = rungs.flatMap((row) => {
-      const there = chanceAt(rows, q, row.line!);
+    const chances = new Map<number, ReturnType<typeof chanceAt>>();
+    const measured = rungs.flatMap((row) => {
+      const line = row.line!;
+      let there = chances.get(line);
+      if (!there) { there = chanceAt(rows, q, line); chances.set(line, there); }
       // Fair against fair, else implied against implied — and the ticket's own printed price is an
       // implied number, so it only ever stands in on the implied side.
       const bothFair = here.fair !== null && there.fair !== null;
       const from = bothFair ? here.fair! : here.implied ?? (leg.decimal && leg.decimal > 1 ? impliedProbability(leg.decimal) : null);
       const to = bothFair ? there.fair! : there.implied;
       if (from === null || to === null) return [];
-      const gap = Math.abs(from - to);
-      if (gap > maxGap) return [];
-      return [{ row, gap, from, to, basis: (bothFair ? "fair" : "implied") as NearLine["basis"] }];
+      return [{ row, move: Math.abs(line - q.line!), gap: Math.abs(from - to), from, to, basis: (bothFair ? "fair" : "implied") as NearLine["basis"] }];
     });
+    // Each book speaks once, through the rung NEAREST the reader's number, and only that rung is
+    // put to the chance gate. Nearest first and gate second, not the other way round: a book whose
+    // next rung along is already a different bet has nothing close to offer, and picking the rung
+    // two steps away because its price happens to sit nearer would hand the reader a bigger jump in
+    // the number than the one just refused. Ties in distance — 16.5 and 18.5 either side of 17.5 —
+    // go to the smaller gap in chance, this module's own measure of whether two lines are the same
+    // bet, and then to the better price, so the choice never depends on row order.
+    const nearest = new Map<string, (typeof measured)[number]>();
+    for (const m of measured) {
+      const cur = nearest.get(m.row.book);
+      if (!cur || m.move < cur.move || m.move === cur.move && (m.gap < cur.gap || m.gap === cur.gap && m.row.decimal > cur.row.decimal)) nearest.set(m.row.book, m);
+    }
+    const offers = [...nearest.values()].filter((m) => m.gap <= maxGap).map((m) => ({ ...m, link: deepLinkFor(m.row, opts) }));
     if (!offers.length) continue;
     // The book the reader is already being sent to first, so the whole thing can be placed in one
     // place; then a rung we can actually open (a book with no URL scheme can still be named, but a
-    // link the reader can tap is worth more); then the closest rung, then the better price.
+    // link the reader can tap is worth more); then the closest rung, then the smaller gap, then the
+    // better price, then the name.
     offers.sort((a, b) =>
       Number(b.row.book === preferBook) - Number(a.row.book === preferBook)
-      || Number(!!deepLinkFor(b.row, opts)) - Number(!!deepLinkFor(a.row, opts))
+      || Number(!!b.link) - Number(!!a.link)
+      || a.move - b.move
       || a.gap - b.gap
-      || b.row.decimal - a.row.decimal);
+      || b.row.decimal - a.row.decimal
+      || a.row.book.localeCompare(b.row.book));
     const pick = offers[0];
     out.push({
       index,
@@ -238,7 +258,7 @@ function nearLinesFor(
       to: { line: pick.row.line!, decimal: pick.row.decimal, probability: round4(pick.to) },
       gap: round4(pick.gap),
       basis: pick.basis,
-      link: deepLinkFor(pick.row, opts),
+      link: pick.link,
     });
     if (out.length >= (opts.nearLimit ?? 3)) break;
   }

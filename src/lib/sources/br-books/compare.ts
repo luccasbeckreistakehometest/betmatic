@@ -178,23 +178,49 @@ export function sameSelection(p: BookPrice, q: LegQuery): boolean {
 const toQuote = (p: BookPrice): Quote => ({ book: p.book, platform: p.platform, decimal: p.decimal, line: p.line, lay: p.lay, kind: p.kind, url: p.url, fetchedAt: p.fetchedAt });
 
 /**
- * One row per book for one selection and line. The store keeps history, the reader wants now, so
- * the newest row per (book, kind) wins; and where a book posts the same line twice — an over/under
- * pair at 17.5 and an "18+" rung — the two settle identically, so the better price is the book's.
+ * The newest row per group, then — where a group holds the same bet twice, an over/under pair at
+ * 17.5 and an "18+" rung — the better price, because the two settle identically.
+ *
+ * Both passes matter and both can tie. A fetch run stamps every row it writes with one `fetchedAt`,
+ * so "newest" cannot separate two rows read in the same round: whichever the store returned first
+ * survives, and `pricesForGame` has no ORDER BY. That is only ever harmless while the group really
+ * is one bet — which is what the two keys below are for.
+ */
+function newestPer(rows: BookPrice[], keyOf: (r: BookPrice) => string): BookPrice[] {
+  const byKind = new Map<string, BookPrice>();
+  for (const r of rows) {
+    const k = `${keyOf(r)}|${r.kind ?? ""}`;
+    const cur = byKind.get(k);
+    if (!cur || r.fetchedAt > cur.fetchedAt) byKind.set(k, r);
+  }
+  const out = new Map<string, BookPrice>();
+  for (const r of byKind.values()) {
+    const k = keyOf(r);
+    const cur = out.get(k);
+    if (!cur || r.decimal > cur.decimal) out.set(k, r);
+  }
+  return [...out.values()];
+}
+
+/**
+ * One row per book for ONE selection and ONE line — every caller must filter to a single line
+ * first. Handed a set that spans a book's ladder it returns one arbitrary rung of it (see
+ * `newestPer`: a single fetch round ties on `fetchedAt`, and the second pass then keeps the longest
+ * price, which on a ladder is the rung furthest from the reader's line). A set that spans lines
+ * belongs in `latestPerBookLine`.
  */
 export function latestPerBook(rows: BookPrice[]): BookPrice[] {
-  const byBookKind = new Map<string, BookPrice>();
-  for (const r of rows) {
-    const k = `${r.book}|${r.kind ?? ""}`;
-    const cur = byBookKind.get(k);
-    if (!cur || r.fetchedAt > cur.fetchedAt) byBookKind.set(k, r);
-  }
-  const byBook = new Map<string, BookPrice>();
-  for (const r of byBookKind.values()) {
-    const cur = byBook.get(r.book);
-    if (!cur || r.decimal > cur.decimal) byBook.set(r.book, r);
-  }
-  return [...byBook.values()];
+  return newestPer(rows, (r) => r.book);
+}
+
+/**
+ * One row per book PER LINE: the same rule applied to a set that spans a ladder, so every rung a
+ * book currently posts survives to be compared with the others. This is what a question about
+ * NEIGHBOURING lines needs — "which rung is nearest" cannot be answered by a list that has already
+ * thrown all but one of them away.
+ */
+export function latestPerBookLine(rows: BookPrice[]): BookPrice[] {
+  return newestPer(rows, (r) => `${r.book}|${r.line ?? ""}`);
 }
 
 /** The opposite side of a two-way selection, for no-vig fair prices. */
