@@ -6,10 +6,12 @@ import { formatPercent } from "@/lib/format";
 const C = {
   pt: {
     title: "O mercado concordou com a gente?",
-    body: "Toda perna é comparada com a odd de fechamento, a do apito inicial, sem a margem da casa. Pegar preço melhor que o fechamento com frequência é o sinal mais honesto de que a análise presta, mais do que acerto em amostra curta.",
-    mean: "CLV médio", beat: "pernas que bateram o fechamento", n: "pernas com fechamento", moved: "linha mudou",
-    movedNote: (n: number, f: number) => `${n === 1 ? "1 perna teve" : `${n} pernas tiveram`} a linha alterada antes do jogo (${f} a nosso favor); ${n === 1 ? "essa não entra" : "essas não entram"} na média.`,
-    small: "Amostra pequena: {n} pernas com fechamento. O número aparece a partir de {min}.", market: "Por mercado",
+    body: "Toda linha do bilhete é comparada com a odd de fechamento, a do apito inicial, sem a margem da casa. Pegar preço melhor que o fechamento com frequência é o sinal mais honesto de que a análise presta, mais do que acerto em amostra curta.",
+    // "linha" is the ticket's selection everywhere in the product, so the market line beside it is
+    // "o número": without that, this block would print "1 linha teve a linha alterada".
+    mean: "CLV médio", beat: "linhas que bateram o fechamento", n: "linhas com fechamento", moved: "número mudou",
+    movedNote: (n: number, f: number) => `${n === 1 ? "1 linha teve" : `${n} linhas tiveram`} o número alterado antes do jogo (${f} a nosso favor); ${n === 1 ? "essa não entra" : "essas não entram"} na média.`,
+    small: "Amostra pequena: {n} linhas com fechamento. O número aparece a partir de {min}.", market: "Por mercado",
     markets: { moneyline: "vencedor", total: "total do jogo" } as Record<string, string>,
   },
   en: {

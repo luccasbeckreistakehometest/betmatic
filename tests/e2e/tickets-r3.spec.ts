@@ -38,7 +38,7 @@ test("a paid user gets priced player legs, line movement and two alternatives un
   await expect(ticketLink).toContainText("Abrir bilhete inteiro na Superbet");
   await expect(ticketLink).toHaveAttribute("href", /superbet\.bet\.br\/betslip\?bets%5B%5D=/);
   // The player double is priced whole by Superbet alone: its link carries both legs into one slip.
-  const double = page.getByTestId("ticket-link").filter({ hasText: "2 pernas" }).first();
+  const double = page.getByTestId("ticket-link").filter({ hasText: "2 linhas" }).first();
   await expect(double).toBeVisible();
   const doubleHref = await double.getByTestId("ticket-open-book").getAttribute("href");
   expect(new URL(doubleHref!).searchParams.getAll("bets[]")).toHaveLength(2);

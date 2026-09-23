@@ -65,8 +65,8 @@ export function checkText(c: SlipCheck, lang: "pt" | "en"): string {
       : (lang === "pt" ? `O retorno impresso (${p}) não bate com valor × odd (${e}). Confira o valor ou a odd.` : `The printed return (${p}) doesn't match stake × odds (${e}). Check the stake or the odds.`);
   }
   return c.ok
-    ? (lang === "pt" ? `Odds conferem: produto das pernas ${e}.` : `Odds check out: the legs multiply to ${e}.`)
-    : (lang === "pt" ? `O produto das odds das pernas (${e}) não bate com a odd total (${p}). Alguma odd pode ter sido lida errado.` : `The legs multiply to ${e}, not the total ${p}. One of the odds may have been misread.`);
+    ? (lang === "pt" ? `Odds conferem: produto das linhas ${e}.` : `Odds check out: the legs multiply to ${e}.`)
+    : (lang === "pt" ? `O produto das odds das linhas (${e}) não bate com a odd total (${p}). Alguma odd pode ter sido lida errado.` : `The legs multiply to ${e}, not the total ${p}. One of the odds may have been misread.`);
 }
 
 /** The grading descriptor for a leg the resolver placed; null when it cannot be graded automatically. */

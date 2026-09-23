@@ -203,7 +203,7 @@ function Controls({ onOpenDialog, onOpenSheet }: { onOpenDialog: () => void; onO
         <Spec label="primary — uma por tela">
           <Button variant="primary">Salvar bilhete</Button>
           <Button variant="primary" icon="plus">
-            Adicionar perna
+            Adicionar linha
           </Button>
           <Button variant="primary" loading>
             Salvando

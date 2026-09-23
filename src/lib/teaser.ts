@@ -9,12 +9,12 @@ import type { BetSuggestion } from "@/lib/types";
  * number of legs, the band and the price instead.
  */
 export const legsLabel = (n: number, lang: Lang) =>
-  lang === "pt" ? `${n} ${n === 1 ? "perna" : "pernas"}` : `${n} ${n === 1 ? "leg" : "legs"}`;
+  lang === "pt" ? `${n} ${n === 1 ? "linha" : "linhas"}` : `${n} ${n === 1 ? "leg" : "legs"}`;
 
 export function teaserHeadline(bet: Pick<BetSuggestion, "legs" | "bandKey">, lang: Lang): string {
   const band = getBand(bet.bandKey).label[lang].replace(/\s*\(.*\)$/, "");
   const n = bet.legs.length;
-  if (lang === "pt") return n > 1 ? `Múltipla de ${n} pernas · faixa ${band}` : `Aposta simples · faixa ${band}`;
+  if (lang === "pt") return n > 1 ? `Múltipla de ${n} linhas · faixa ${band}` : `Aposta simples · faixa ${band}`;
   return n > 1 ? `${n}-leg parlay · ${band} band` : `Single · ${band} band`;
 }
 

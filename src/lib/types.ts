@@ -303,6 +303,13 @@ export interface SettledLeg {
   /** The language model's estimate before anchoring; predictedProbability is the anchored number the ticket was served with. */
   rawProbability?: number;
   oddsDecimal: number;
+  /**
+   * The price of this selection at the minute the live read was taken, once there is one to record.
+   * `oddsDecimal` on a live leg is the PRE-GAME board, which is why the live reads publish no
+   * return; collecting the in-play price is the epic that closes that question, and the field is
+   * here so the ledger written today can already carry it.
+   */
+  liveDecimal?: number;
   outcome: LegOutcome;
   actual?: string;
 }
@@ -340,6 +347,18 @@ export interface LedgerEntry {
   minute?: number;
   /** Period (quarter) the live read was taken in — basketball reads are taken at every quarter break. */
   period?: number;
+  /**
+   * Minutes of the period still on the clock when the read was taken. It is what makes "chance
+   * 1,000 because the clock had run out" visible in the ledger instead of having to be inferred:
+   * every live entry before this field was recorded has `minute` at exactly 10, 20, 30 or 40.
+   */
+  clockLeft?: number;
+  /**
+   * The same-game correlation factor already applied to `modelledProbability`
+   * (BetSuggestion.correlation.factor). Without it the ticket's own price cannot be rebuilt from
+   * its legs, so a ticket with a voided leg cannot be re-priced on the survivors.
+   */
+  correlationFactor?: number;
   legs: SettledLeg[];
   outcome: LegOutcome;
 }

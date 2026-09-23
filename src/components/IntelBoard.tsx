@@ -323,7 +323,7 @@ const KIND_TEXT: Record<LegAlertView["kind"], { pt: string; en: string }> = {
   key_absence: { pt: "não joga", en: "is not playing" },
 };
 
-/** "Escalação: Fulano começa no banco — 2 pernas destes bilhetes perderam a base." Informational only. */
+/** "Escalação: Fulano começa no banco — 2 linhas destes bilhetes perderam a base." Informational only. */
 function LineupBanner({ alerts, lang }: { alerts: LegAlertView[]; lang: "pt" | "en" }) {
   const byPlayer = new Map<string, { kind: LegAlertView["kind"]; legs: number }>();
   for (const a of alerts) {
@@ -336,7 +336,7 @@ function LineupBanner({ alerts, lang }: { alerts: LegAlertView[]; lang: "pt" | "
       <ul className="mt-1 flex flex-col gap-0.5 text-tiny text-fg">
         {[...byPlayer].map(([player, v]) => (
           <li key={player}>
-            {player} {KIND_TEXT[v.kind][lang]} — {lang === "pt" ? (v.legs === 1 ? "1 perna destes bilhetes perdeu a base" : `${v.legs} pernas destes bilhetes perderam a base`) : v.legs === 1 ? "1 leg on these tickets lost its footing" : `${v.legs} legs on these tickets lost their footing`}.
+            {player} {KIND_TEXT[v.kind][lang]} — {lang === "pt" ? (v.legs === 1 ? "1 linha destes bilhetes perdeu a base" : `${v.legs} linhas destes bilhetes perderam a base`) : v.legs === 1 ? "1 leg on these tickets lost its footing" : `${v.legs} legs on these tickets lost their footing`}.
           </li>
         ))}
       </ul>

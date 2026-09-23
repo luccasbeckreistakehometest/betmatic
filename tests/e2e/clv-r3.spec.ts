@@ -31,7 +31,7 @@ test("/prova hides CLV under 30 legs and shows the block once the sample is ther
   seed(10);
   await page.goto("/prova?lang=pt");
   await expect(page.getByTestId("clv-block")).toContainText("O mercado concordou com a gente?");
-  await expect(page.getByTestId("clv-small")).toContainText("Amostra pequena: 10 pernas com fechamento");
+  await expect(page.getByTestId("clv-small")).toContainText("Amostra pequena: 10 linhas com fechamento");
   seed(30);
   await page.reload();
   const block = page.getByTestId("clv-block");
@@ -39,7 +39,7 @@ test("/prova hides CLV under 30 legs and shows the block once the sample is ther
   await expect(block).toContainText(/\+1,8\s*%/);
   await expect(block).toContainText(/80\s*%/);
   await expect(page.getByTestId("clv-markets")).toContainText("total do jogo");
-  await expect(block).toContainText("1 perna teve a linha alterada");
+  await expect(block).toContainText("1 linha teve o número alterado");
   await page.goto("/prova?lang=en");
   await expect(page.getByTestId("clv-block")).toContainText("Did the market agree with us?");
 });

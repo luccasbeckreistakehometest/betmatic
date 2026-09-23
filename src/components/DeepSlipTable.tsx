@@ -8,12 +8,12 @@ import { formatNumber } from "@/lib/format";
 
 const C = {
   pt: {
-    title: "Conferência perna a perna", meta: "{n} de {total} pernas encontradas nos próximos jogos",
-    notFound: "não achamos esse jogo/jogador nos próximos jogos", measured: "passou da linha", book: "odd da casa", fair: "sem margem", best: "melhor odd entre {n} casas",
+    title: "Conferência linha a linha", meta: "{n} de {total} linhas encontradas nos próximos jogos",
+    notFound: "não achamos esse jogo/jogador nos próximos jogos", measured: "passou do número", book: "odd da casa", fair: "sem margem", best: "melhor odd entre {n} casas",
     role: { starter: "titular", rotation: "rotação", fringe: "pouco usado", unknown: "papel incerto" } as Record<string, string>,
-    injury: "lesão", flags: "Correlação", noFlags: "Nenhuma perna briga com outra nem anda junto no mesmo jogo.", deepDive: "raio-x",
+    injury: "lesão", flags: "Correlação", noFlags: "Nenhuma linha briga com outra nem anda junto no mesmo jogo.", deepDive: "raio-x",
     kind: { player: "jogador", moneyline: "vencedor", draw: "empate", total: "total", unknown: "?" } as Record<string, string>,
-    lineMoved: "a casa publicou {line}, não a sua linha",
+    lineMoved: "a casa publicou {line}, não o número que você pôs",
   },
   en: {
     title: "Leg-by-leg check", meta: "{n} of {total} legs found on the upcoming slate",

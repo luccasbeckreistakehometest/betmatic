@@ -168,7 +168,7 @@ export function TicketPrices({ ticket, lang, ctx = {} }: { ticket: TicketPricesV
             <Icon name="external" size={16} className="text-fg-dim" />
           </BookLink>
           <span className={`text-micro ${ticketLink.kind === "betslip" ? "text-pos" : "text-fg-dim"}`}>
-            {kindLabel(ticketLink.kind, t)}{ticketLink.selections > 1 ? ` · ${ticketLink.selections} ${lang === "pt" ? "pernas" : "legs"}` : ""}
+            {kindLabel(ticketLink.kind, t)}{ticketLink.selections > 1 ? ` · ${ticketLink.selections} ${lang === "pt" ? "linhas" : "legs"}` : ""}
           </span>
         </div>
       )}

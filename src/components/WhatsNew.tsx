@@ -8,11 +8,11 @@ const KEY = "bm_whats_new_r3";
 
 const ITEMS: { href: (sport: string, lang: Lang) => string; pt: [string, string]; en: [string, string] }[] = [
   { href: (s, l) => `/app?sport=${s}&lang=${l}`, pt: ["Plano B nos bilhetes", "até duas alternativas embaixo de cada um"], en: ["A plan B on tickets", "up to two alternatives under each one"] },
-  { href: (s, l) => `/app?sport=${s}&lang=${l}`, pt: ["Vigia de escalação", "jogador no banco vira selo na perna"], en: ["Lineup watch", "a benched player turns into a badge"] },
+  { href: (s, l) => `/app?sport=${s}&lang=${l}`, pt: ["Vigia de escalação", "jogador no banco vira selo na linha"], en: ["Lineup watch", "a benched player turns into a badge"] },
   { href: (s, l) => `/app/bankroll?sport=${s}&lang=${l}`, pt: ["Manda o print", "seu bilhete da casa entra na banca"], en: ["Snap your slip", "your book slip goes into the bankroll"] },
   { href: (s, l) => `/app/tipster?sport=${s}&lang=${l}`, pt: ["Raio-x do tipster", "o acerto real antes de pagar VIP"], en: ["Tipster audit", "the real record before you pay"] },
   { href: (s, l) => `/app?sport=${s}&lang=${l}`, pt: ["Raio-x do jogador", "qualquer linha, minutagem, com e sem"], en: ["Player deep dive", "any line, minutes, with/without"] },
-  { href: (s, l) => `/app?sport=${s}&lang=${l}`, pt: ["Ao vivo", "cada perna com a chance que resta"], en: ["Live", "every leg with the chance left"] },
+  { href: (s, l) => `/app?sport=${s}&lang=${l}`, pt: ["Ao vivo", "cada linha com a chance que resta"], en: ["Live", "every leg with the chance left"] },
   { href: (s, l) => `/app/parlays/custom?sport=${s}&lang=${l}`, pt: ["Múltipla sob medida", "você diz quanto quer que pague"], en: ["Custom parlay", "you name the payout"] },
   { href: (s, l) => `/app/report?sport=${s}&lang=${l}`, pt: ["Relatório da semana", "um espelho de como você apostou"], en: ["Weekly report", "a mirror of how you bet"] },
   { href: (_s, l) => `/prova?lang=${l}`, pt: ["CLV na prova pública", "o mercado concordou com a gente?"], en: ["CLV on the record", "did the market agree with us?"] },

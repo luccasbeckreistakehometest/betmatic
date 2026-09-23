@@ -118,9 +118,9 @@ export function correlationFlags(legs: ResolvedLeg[], favourite: Record<string, 
 }
 
 export const FLAG_TEXT: Record<CorrelationFlag["kind"], { pt: string; en: string }> = {
-  same_team: { pt: "Pernas {a} e {b}: dois jogadores do mesmo time no mesmo jogo andam juntos. Em Criar Aposta a casa desconta essa correlação na odd.", en: "Legs {a} and {b}: two players from the same team in the same game move together. A same-game builder discounts that correlation in the price." },
-  same_player: { pt: "Pernas {a} e {b}: o mesmo jogador duas vezes. Se ele render pouco, as duas caem juntas.", en: "Legs {a} and {b}: the same player twice. If he has a quiet night, both break together." },
-  fights: { pt: "Pernas {a} e {b} brigam entre si: o favorito vencer costuma vir com gols/pontos dele, e o under pede o contrário.", en: "Legs {a} and {b} pull against each other: the favourite winning usually comes with its own scoring, and the under asks for the opposite." },
+  same_team: { pt: "Linhas {a} e {b}: dois jogadores do mesmo time no mesmo jogo andam juntos. Em Criar Aposta a casa desconta essa correlação na odd.", en: "Legs {a} and {b}: two players from the same team in the same game move together. A same-game builder discounts that correlation in the price." },
+  same_player: { pt: "Linhas {a} e {b}: o mesmo jogador duas vezes. Se ele render pouco, as duas caem juntas.", en: "Legs {a} and {b}: the same player twice. If he has a quiet night, both break together." },
+  fights: { pt: "Linhas {a} e {b} brigam entre si: o favorito vencer costuma vir com gols/pontos dele, e o under pede o contrário.", en: "Legs {a} and {b} pull against each other: the favourite winning usually comes with its own scoring, and the under asks for the opposite." },
 };
 
 export const flagText = (f: CorrelationFlag, lang: "pt" | "en") => FLAG_TEXT[f.kind][lang].replace("{a}", String(f.legs[0] + 1)).replace("{b}", String(f.legs[1] + 1));

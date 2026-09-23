@@ -123,17 +123,17 @@ describe("book_prices store", () => {
   it("lists what could not be matched and takes a manual assignment", () => {
     const ev = event("kambi:ktobr:5", "Mistiques de Washington", "Sol de Connecticut", { kambi: "5" });
     persistPrices([price("KTO", ev, { market: "moneyline", side: "home", decimal: 1.1 })], "wnba", [GAME], NOW);
-    const unmatched = listUnmatchedEvents();
+    const unmatched = listUnmatchedEvents(60, NOW);
     expect(unmatched.map((u) => u.key)).toContain("kambi:ktobr:5");
     expect(unmatched.find((u) => u.key === "kambi:ktobr:5")).toMatchObject({ book: "KTO", prices: 1 });
     expect(assignEventGame("kambi:ktobr:5", "401857190")).toBe(true);
-    expect(listUnmatchedEvents().some((u) => u.key === "kambi:ktobr:5")).toBe(false);
+    expect(listUnmatchedEvents(60, NOW).some((u) => u.key === "kambi:ktobr:5")).toBe(false);
     expect(pricesForGame("401857190", NOW).some((p) => p.book === "KTO")).toBe(true);
     // A later automatic read never undoes the hand match.
     persistPrices([price("KTO", ev, { market: "moneyline", side: "home", decimal: 1.12 })], "wnba", [LATER], NOW);
     expect(pricesForGame("401857190", NOW).find((p) => p.book === "KTO")?.decimal).toBe(1.12);
-    expect(listCoverage().find((c) => c.gameId === "401857190")?.books).toEqual(["Betfair Exchange", "KTO", "Sportingbet", "Superbet"]);
-    expect(booksStats().matched).toBeGreaterThanOrEqual(3);
+    expect(listCoverage(40, NOW).find((c) => c.gameId === "401857190")?.books).toEqual(["Betfair Exchange", "KTO", "Sportingbet", "Superbet"]);
+    expect(booksStats(NOW).matched).toBeGreaterThanOrEqual(3);
   });
 
   it("has no current price for a game that has kicked off, and none for anyone after cleanup retires it", () => {
@@ -152,7 +152,7 @@ describe("book_prices store", () => {
     persistPrices([price("Superbet", old, { market: "moneyline", side: "home", decimal: 1.5, fetchedAt: "2026-09-01T12:00:00Z" })], "wnba", [{ ...GAME, id: "oldgame", startsAt: "2026-09-01T23:30:00Z" }], new Date("2026-09-01T12:00:00Z"));
     const ghost = event("superbet:superbet:ghost", "Novorizontino", "São Bernardo", { superbet: "ghost" }, "2026-09-25T22:30:00Z");
     persistPrices([price("Superbet", ghost, { market: "moneyline", side: "home", decimal: 2.1, fetchedAt: "2026-09-20T12:00:00Z" })], "soccer-bra", [], new Date("2026-09-20T12:00:00Z"));
-    expect(listUnmatchedEvents().some((u) => u.key === ghost.key)).toBe(true);
+    expect(listUnmatchedEvents(60, NOW).some((u) => u.key === ghost.key)).toBe(true);
     const out = cleanupBooks(new Date("2026-09-22T12:00:00Z"), 14);
     expect(out.events).toBe(2);
     expect(out.prices).toBe(2);

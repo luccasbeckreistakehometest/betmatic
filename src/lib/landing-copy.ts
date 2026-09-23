@@ -88,7 +88,7 @@ const PT: LandingCopy = {
   ladderReturns: "Retorno",
   ladderChance: "Chance real",
   ladderFootnote:
-    "Quanto maior o retorno, menor a chance — e a margem da casa cresce a cada perna. Numa múltipla de 6 pernas a −110, ela fica com 24% contra 4,5% numa simples. A gente mostra isso porque é o que separa aposta de loteria.",
+    "Quanto maior o retorno, menor a chance — e a margem da casa cresce a cada linha. Numa múltipla de 6 linhas a −110, ela fica com 24% contra 4,5% numa simples. A gente mostra isso porque é o que separa aposta de loteria.",
 
   honestyTitle: "Por que confiar nos nossos números",
   honestySub: "Três coisas que a gente faz e quase ninguém faz.",
@@ -113,14 +113,14 @@ const PT: LandingCopy = {
   edgeTitle: "O que só o Betmatic tem",
   edgeSub: "Quem vende palpite esconde o histórico e some quando erra. A gente construiu o contrário: cada bilhete conferido, vigiado e comparado com o mercado.",
   edges: [
-    { title: "Em qual casa o seu bilhete paga mais", body: "A cada 15 minutos a gente lê as odds abertas de oito casas brasileiras. Em cada perna aparece quem paga mais e quanto a mais que a pior; embaixo do bilhete, onde ele inteiro rende mais — e as linhas de jogador em que uma casa está fora do passo das outras.", href: "/signup" },
+    { title: "Em qual casa o seu bilhete paga mais", body: "A cada 15 minutos a gente lê as odds abertas de oito casas brasileiras. Em cada linha do bilhete aparece quem paga mais e quanto a mais que a pior; embaixo do bilhete, onde ele inteiro rende mais — e as linhas de jogador em que uma casa está fora do passo das outras.", href: "/signup" },
     { title: "Leitura no intervalo, com histórico separado", body: "Com o jogo rolando, uma leitura nova é montada só em cima do que já aconteceu em quadra: placar, minutos que faltam e o ritmo de cada jogador hoje. Cada leitura fica registrada e é conferida como qualquer bilhete, numa conta à parte da pré-jogo.", href: "/prova" },
-    { title: "Se a escalação mudar, seu bilhete avisa", body: "Uma hora antes do jogo a gente confere quem entrou em campo. Jogador no banco? A perna fica marcada em vermelho e, quando existe, a alternativa sem ele aparece do lado.", href: "/futebol" },
+    { title: "Se a escalação mudar, seu bilhete avisa", body: "Uma hora antes do jogo a gente confere quem entrou em campo. Jogador no banco? A linha fica marcada em vermelho e, quando existe, a alternativa sem ele aparece do lado.", href: "/futebol" },
     { title: "Plano B embaixo do bilhete", body: "Quando os dados sustentam, o bilhete vem com até duas alternativas que mantêm a mesma ideia. Mudou a linha ou caiu um titular, você já sabe pra onde ir.", href: "/signup" },
     { title: "Manda o print, a gente confere", body: "Fez o bilhete na casa? Manda o print. Ele entra na sua banca e é liquidado sozinho quando o jogo acaba. A imagem não fica guardada.", href: "/signup" },
     { title: "Antes de pagar grupo VIP, passa ele no raio-x", body: "Cola as mensagens do tipster e veja quanto ele acertou de verdade, inclusive os \"greens\" postados depois que o jogo já tinha começado. É privado: o nome nunca aparece.", href: "/raio-x-tipster" },
-    { title: "Prova pública: o mercado concordou com a gente?", body: "Cada perna com odd de fechamento disponível é comparada com ela. Pegar preço melhor que o fechamento com frequência é o sinal mais honesto de que a análise presta, e está na página de prova, pra todo mundo ver.", href: "/prova" },
-    { title: "Odd de verdade em cada perna de jogador", body: "Linha e preço publicados e, do lado, quantas vezes o jogador passou dessa linha nos últimos 5, 10 e na temporada. Quem joga pouco nem entra na lista.", href: "/basquete" },
+    { title: "Prova pública: o mercado concordou com a gente?", body: "Cada linha do bilhete com odd de fechamento disponível é comparada com ela. Pegar preço melhor que o fechamento com frequência é o sinal mais honesto de que a análise presta, e está na página de prova, pra todo mundo ver.", href: "/prova" },
+    { title: "Odd de verdade em cada linha de jogador", body: "O número e o preço publicados e, do lado, quantas vezes o jogador passou dele nos últimos 5, 10 e na temporada. Quem joga pouco nem entra na lista.", href: "/basquete" },
   ],
 
   dailyTitle: "Duas coisas acontecem sem ninguém pedir",
@@ -137,7 +137,7 @@ const PT: LandingCopy = {
     {
       title: "Linha de fechamento (CLV)",
       body:
-        "Quando a bola rola, a gente guarda a odd de fechamento de cada perna, tira a margem da casa e compara com o preço que estava no bilhete. Bater o fechamento com frequência diz mais sobre a análise do que uma sequência curta de greens. O número só aparece a partir de 30 pernas com fechamento — antes disso seria sorte.",
+        "Quando a bola rola, a gente guarda a odd de fechamento de cada linha, tira a margem da casa e compara com o preço que estava no bilhete. Bater o fechamento com frequência diz mais sobre a análise do que uma sequência curta de greens. O número só aparece a partir de 30 linhas com fechamento — antes disso seria sorte.",
       href: "/prova",
       cta: "Ver o CLV medido",
     },
@@ -155,19 +155,19 @@ const PT: LandingCopy = {
       n: "02",
       title: "Cada bilhete vem com a chance real e, quando dá, um plano B",
       body:
-        "Do seguro ao ousado, cada perna vem com o motivo, o preço e o histórico naquela linha. Embaixo, até duas alternativas com a mesma ideia. Se os dados não sustentam um bilhete, a gente não inventa um.",
+        "Do seguro ao ousado, cada linha vem com o motivo, o preço e o histórico naquele número. Embaixo, até duas alternativas com a mesma ideia. Se os dados não sustentam um bilhete, a gente não inventa um.",
     },
     {
       n: "03",
       title: "Até o apito final, a gente vigia",
       body:
-        "Uma hora antes, a escalação: se alguém da sua perna ficar no banco, você fica sabendo. Com a bola rolando, cada perna mostra se já bateu, se caiu ou quanto de chance ainda tem. No intervalo, quem é Pro ou Max pede uma leitura nova, feita só com o que já aconteceu em quadra.",
+        "Uma hora antes, a escalação: se alguém de uma linha sua ficar no banco, você fica sabendo. Com a bola rolando, cada linha mostra se já bateu, se caiu ou quanto de chance ainda tem. No intervalo, quem é Pro ou Max pede uma leitura nova, feita só com o que já aconteceu em quadra.",
     },
     {
       n: "04",
       title: "Depois do jogo, tudo é conferido em público",
       body:
-        "Cada bilhete é liquidado contra o placar oficial e cada perna com odd de fechamento disponível é comparada com ela. Acerto, retorno e CLV ficam na página de prova, bons ou ruins.",
+        "Cada bilhete é liquidado contra o placar oficial e cada linha com odd de fechamento disponível é comparada com ela. Acerto, retorno e CLV ficam na página de prova, bons ou ruins.",
     },
   ],
 
@@ -179,7 +179,7 @@ const PT: LandingCopy = {
       name: "Basquete",
       hook: "NBA e WNBA, temporada inteira",
       detail:
-        "Jogo a jogo, a gente mede quanto cada jogador produz, com a minutagem e o papel no time, e cruza com lesões. Perna de jogador só entra quando a casa publicou a linha e o preço. Pra cada linha, a chance calculada e a casa brasileira que paga mais.",
+        "Jogo a jogo, a gente mede quanto cada jogador produz, com a minutagem e o papel no time, e cruza com lesões. Aposta de jogador só entra quando a casa publicou a linha e o preço. Pra cada linha, a chance calculada e a casa brasileira que paga mais.",
       markets: "No bilhete: Resultado · Total de pontos · Pontos, rebotes, assistências e bolas de 3 com odd publicada — Na análise: o \"com e sem\" o companheiro",
     },
     {
@@ -215,7 +215,7 @@ const PT: LandingCopy = {
     },
     {
       q: "As odds são de quais casas?",
-      a: "Das casas brasileiras que publicam odds abertas: Superbet, KTO, EstrelaBet, Aposta Ganha, BetPix365, LotoGreen, Vaidebet e Betnacional, lidas a cada 15 minutos. Em cada perna a gente mostra a melhor e a pior. Casa que bloqueia leitura automática fica de fora — a gente não contorna bloqueio.",
+      a: "Das casas brasileiras que publicam odds abertas: Superbet, KTO, EstrelaBet, Aposta Ganha, BetPix365, LotoGreen, Vaidebet e Betnacional, lidas a cada 15 minutos. Em cada linha do bilhete a gente mostra a melhor e a pior. Casa que bloqueia leitura automática fica de fora — a gente não contorna bloqueio.",
     },
     {
       q: "Preciso apostar valores altos?",
@@ -416,9 +416,9 @@ export function landingCopy(lang: Lang): LandingCopy {
 
 /** The payout ladder. Chances are the honest implied probabilities of those decimal odds. */
 export const LADDER = [
-  { legs: 1, decimal: 1.91, label: { pt: "1 perna", en: "1 leg" } },
-  { legs: 2, decimal: 3.64, label: { pt: "2 pernas", en: "2 legs" } },
-  { legs: 4, decimal: 18.2, label: { pt: "4 pernas", en: "4 legs" } },
-  { legs: 6, decimal: 113.4, label: { pt: "6 pernas", en: "6 legs" } },
-  { legs: 8, decimal: 540, label: { pt: "8 pernas", en: "8 legs" } },
+  { legs: 1, decimal: 1.91, label: { pt: "1 linha", en: "1 leg" } },
+  { legs: 2, decimal: 3.64, label: { pt: "2 linhas", en: "2 legs" } },
+  { legs: 4, decimal: 18.2, label: { pt: "4 linhas", en: "4 legs" } },
+  { legs: 6, decimal: 113.4, label: { pt: "6 linhas", en: "6 legs" } },
+  { legs: 8, decimal: 540, label: { pt: "8 linhas", en: "8 legs" } },
 ];

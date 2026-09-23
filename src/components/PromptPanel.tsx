@@ -98,7 +98,7 @@ export function PromptPanel() {
 
       <div className="mt-5 border-t border-line pt-4">
         <p className="text-tiny font-semibold text-fg">Feedback pro agente</p>
-        <p className="mt-0.5 text-label text-fg-dim">Diga o que os bilhetes deveriam fazer diferente. O agente reescreve o prompt nos dois idiomas, ativa a versão nova e explica o que mudou. Ex.: “pare de sugerir cartões quando o árbitro não foi confirmado” ou “nas múltiplas, no máximo 4 pernas”.</p>
+        <p className="mt-0.5 text-label text-fg-dim">Diga o que os bilhetes deveriam fazer diferente. O agente reescreve o prompt nos dois idiomas, ativa a versão nova e explica o que mudou. Ex.: “pare de sugerir cartões quando o árbitro não foi confirmado” ou “nas múltiplas, no máximo 4 linhas”.</p>
         <textarea className="mt-2 h-24 w-full rounded-control border border-line-control bg-surface-0 p-3 text-sm text-fg" value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder="O que deve mudar na forma como o agente monta os bilhetes?" data-testid="prompt-feedback" />
         <div className="mt-2 flex items-center gap-3">
           <button onClick={sendFeedback} disabled={busy !== null || feedback.trim().length < 10} className={buttonClass("primary")} data-testid="prompt-apply">{busy === "feedback" ? "O agente está reescrevendo…" : "Aplicar feedback"}</button>
