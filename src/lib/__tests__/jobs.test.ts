@@ -46,7 +46,13 @@ function seedLedger(entries: LedgerEntry[]): void {
 }
 
 beforeEach(() => {
+  // An empty ledger is an EMPTY FILE, not a missing one. Deleting it let `migrateLegacy()` in
+  // store.ts copy the developer's own `./.ledger/predictions.jsonl` in — this checkout has 22
+  // tickets in it — so "the ledger is empty" quietly became "the ledger holds whoever ran this
+  // machine last", and the suite passed or failed depending on the checkout rather than the code.
   fs.rmSync(path.join(DIR, "ledger"), { recursive: true, force: true });
+  fs.mkdirSync(path.join(DIR, "ledger"), { recursive: true });
+  fs.writeFileSync(path.join(DIR, "ledger", "predictions.jsonl"), "", "utf8");
   for (const table of ["job_runs", "rule_hypotheses", "leg_attribution", "factor_stats", "prompt_versions"]) {
     getDb().prepare(`DELETE FROM ${table}`).run();
   }

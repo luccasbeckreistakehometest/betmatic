@@ -10,6 +10,13 @@ const LEDGER_DIR = path.join(process.env.DATA_DIR ?? path.join(process.cwd(), "d
 const FILE = path.join(LEDGER_DIR, "predictions.jsonl");
 const LEGACY_FILE = path.join(process.cwd(), ".ledger", "predictions.jsonl");
 
+/**
+ * Rescues the pre-DATA_DIR ledger (`./.ledger`) once, into whatever data dir is configured. It only
+ * fires when the configured file does not exist, so it never overwrites a real ledger — but note
+ * what that means for anything pointing DATA_DIR at a fresh directory while a `.ledger` sits in the
+ * working directory: the directory does not start empty. A test that wants an empty ledger must
+ * write an empty FILE, not leave the path missing.
+ */
 function migrateLegacy(): void {
   try {
     if (!fs.existsSync(FILE) && fs.existsSync(LEGACY_FILE)) {
