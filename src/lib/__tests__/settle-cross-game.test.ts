@@ -146,7 +146,7 @@ describe("a ticket played across two games", () => {
   });
 
   it("holds the whole ticket while any of its games is still being played", async () => {
-    const running = { ...DETAILS[GAME_B], game: { ...DETAILS[GAME_B].game, status: "in" as const, statusDetail: "Q3" } };
+    const running = { ...DETAILS[GAME_B], game: { ...DETAILS[GAME_B].game, status: "live" as const, statusDetail: "Q3" } };
     const saved = DETAILS[GAME_B];
     DETAILS[GAME_B] = running;
     seed(`slate:${GAME_A}+${GAME_B}`, [{ player: austin.name, stat: "points", line: 20.5, side: "under" }]);
