@@ -42,6 +42,17 @@ describe("what the default prompt must keep saying", () => {
     }
   });
 
+  // Five tickets died on Aliyah Boston's under 23.5 points+rebounds at 92-93%: she finished with 24.
+  // The margin a market needs is a judgement per market, so this one stays prose on purpose — the
+  // record has no stored projection to gate it against (see bets/gates.ts for the two that are code).
+  it("refuses to call an under sitting on top of the number a lock", () => {
+    for (const lang of ["pt", "en"] as const) {
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/AN UNDER SITTING ON TOP OF THE NUMBER IS NOT A LOCK/);
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/state the distance between the line and the number/);
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/THE CONCENTRATION CAP AND THE AVAILABILITY RULES ARE CHECKED IN CODE/);
+    }
+  });
+
   // Two tickets died on a 67%-measured under because the game finished 87-86 and nobody sat.
   it("ties an under to the projected margin", () => {
     for (const lang of ["pt", "en"] as const) {
