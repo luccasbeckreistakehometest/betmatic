@@ -63,7 +63,7 @@ test("live panel: legs tracked with the chance now, polling only while visible, 
   expect(count("SELECT COUNT(*) n FROM alert_log")).toBe(alertsBefore);
 
   // A free account follows the legs but gets no live read button.
-  const ctx = await browser.newContext({ baseURL: "http://localhost:3300", locale: "pt-BR" });
+  const ctx = await browser.newContext({ baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3300", locale: "pt-BR" });
   const free = await ctx.newPage();
   await registerUser(free, "livefree");
   await skipTour(free);

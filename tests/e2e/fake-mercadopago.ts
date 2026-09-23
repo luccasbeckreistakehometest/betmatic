@@ -5,7 +5,7 @@ import http from "node:http";
  * serves a checkout page, and lets a spec approve or refund a payment, which the app then reads back
  * through GET /v1/payments/:id exactly as it would from Mercado Pago.
  */
-export const FAKE_MP_PORT = 3399;
+export const FAKE_MP_PORT = Number(process.env.FAKE_MP_PORT ?? 3399);
 export const FAKE_MP = `http://localhost:${FAKE_MP_PORT}`;
 
 interface Pref { externalReference: string; amount: number }

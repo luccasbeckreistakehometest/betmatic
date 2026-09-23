@@ -6,7 +6,7 @@ withAiMock();
 const GAME = "/app/game/990000201?sport=soccer-bra&lang=pt";
 
 async function runLineups() {
-  const api = await pwRequest.newContext({ baseURL: "http://localhost:3300" });
+  const api = await pwRequest.newContext({ baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3300" });
   expect((await api.post("/api/auth/login", { data: { email: "admin@betmatic.app", password: "betmatic2026" } })).ok()).toBeTruthy();
   const r = await api.post("/api/cron/refresh?job=lineups");
   expect(r.ok(), await r.text()).toBeTruthy();
@@ -31,7 +31,7 @@ test("lineup watcher: a benched player flags the leg, the backup without him, th
   await saveMainTicket(page);
 
   // A second saver who then pauses: nothing reaches them.
-  const ctx = await browser.newContext({ baseURL: "http://localhost:3300", locale: "pt-BR" });
+  const ctx = await browser.newContext({ baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3300", locale: "pt-BR" });
   const paused = await ctx.newPage();
   const other = await registerUser(paused, "lineuppaused");
   await setPlan(other.email, "pro");

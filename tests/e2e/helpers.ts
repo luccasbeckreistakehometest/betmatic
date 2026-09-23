@@ -11,7 +11,7 @@ export function withAiMock() {
 }
 
 async function adminApi() {
-  const api = await pwRequest.newContext({ baseURL: "http://localhost:3300" });
+  const api = await pwRequest.newContext({ baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3300" });
   const login = await api.post("/api/auth/login", { data: { email: "admin@betmatic.app", password: "betmatic2026" } });
   expect(login.ok()).toBeTruthy();
   return api;

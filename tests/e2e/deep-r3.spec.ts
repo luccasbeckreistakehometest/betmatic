@@ -32,7 +32,7 @@ test("deep slip analysis: Max pays the normal price and sees every leg checked; 
   await expect(page.getByText("Análise de teste")).toBeVisible();
   expect(await coins(page)).toBe(12);
 
-  const ctx = await browser.newContext({ baseURL: "http://localhost:3300", locale: "pt-BR" });
+  const ctx = await browser.newContext({ baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3300", locale: "pt-BR" });
   const pro = await ctx.newPage();
   const other = await registerUser(pro, "prodeep");
   await setPlan(other.email, "pro", 20);

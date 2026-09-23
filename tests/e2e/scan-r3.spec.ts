@@ -40,7 +40,7 @@ test("manda o print: the slip is read, an odd is fixed, the bet is saved and gra
   await expect(entry.getByTestId("auto-grade")).toHaveCount(2);
 
   // The settle job grades the finished game's legs without anyone marking them.
-  const admin = await pwRequest.newContext({ baseURL: "http://localhost:3300" });
+  const admin = await pwRequest.newContext({ baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3300" });
   expect((await admin.post("/api/auth/login", { data: { email: "admin@betmatic.app", password: "betmatic2026" } })).ok()).toBeTruthy();
   expect((await admin.post("/api/cron/refresh?job=settle")).ok()).toBeTruthy();
   await admin.dispose();
