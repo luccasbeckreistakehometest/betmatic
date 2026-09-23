@@ -47,6 +47,36 @@ test("the signed-in app fits a phone, and the menu holds navigation and logout",
   await expect(page).toHaveURL(/\/app\/bankroll/);
 });
 
+test("the menu is a sheet at the bottom of a phone, and back dismisses it", async ({ page }) => {
+  await registerUser(page, "folha");
+  await skipTour(page);
+  const q = "sport=soccer-esp&lang=pt";
+  await page.goto(`/app?${q}&date=20260911`);
+  const url = page.url();
+  await page.getByTestId("menu-button").click();
+  const menu = page.getByTestId("app-menu");
+  await expect(menu).toBeVisible();
+
+  // A sheet, not a dialog in the middle: it sits on the bottom edge, inside a thumb's reach.
+  const sheet = page.locator("dialog:modal");
+  const box = (await sheet.boundingBox())!;
+  const viewport = page.viewportSize()!;
+  expect(Math.abs(box.y + box.height - viewport.height)).toBeLessThanOrEqual(1);
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(viewport.width + 1);
+
+  // Every row is a fingertip tall, doors and the features named under them alike.
+  for (const target of await menu.locator("[data-menu-row], [data-menu-hint]").all()) {
+    const row = (await target.boundingBox())!;
+    expect(row.height, await target.innerText()).toBeGreaterThanOrEqual(44);
+  }
+
+  // The phone's own back gesture closes the sheet instead of leaving the page.
+  await page.goBack();
+  await expect(menu).toBeHidden();
+  expect(page.url()).toBe(url);
+});
+
 test("the admin panel fits a phone", async ({ page }) => {
   const { loginAdmin } = await import("./helpers");
   await loginAdmin(page);

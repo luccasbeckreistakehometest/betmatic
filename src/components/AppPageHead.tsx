@@ -1,6 +1,6 @@
 "use client";
 
-import { NAV_GROUPS } from "@/components/AppRail";
+import { NAV_GROUPS } from "@/lib/nav";
 import { useNavState } from "@/components/Controls";
 import { PageHead, Skeleton } from "@/components/ui";
 import { makeT } from "@/lib/i18n";
