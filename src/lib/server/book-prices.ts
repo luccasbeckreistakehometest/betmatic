@@ -269,7 +269,12 @@ export function pricesForGame(gameId: string, now = new Date()): BookPrice[] {
   const d = db();
   const events = d.prepare("SELECT * FROM book_events WHERE gameId = ? AND startsAt > ?").all(gameId, now.toISOString()) as EventRow[];
   if (!events.length) return [];
-  const rows = d.prepare(`SELECT * FROM book_prices WHERE current = 1 AND eventKey IN (${events.map(() => "?").join(",")})`).all(...events.map((e) => e.key)) as PriceRow[];
+  // Ordered, because callers reduce these rows and one scan stamps a whole ladder with the same
+  // `fetchedAt`: with no ORDER BY, "the newest wins" ties and the survivor is whatever SQLite
+  // happened to return, so the same database could answer differently between reads. Two bugs on
+  // 23/09/2026 came out of that tie. The order is not a substitute for reducing by line — it just
+  // stops the answer from being luck.
+  const rows = d.prepare(`SELECT * FROM book_prices WHERE current = 1 AND eventKey IN (${events.map(() => "?").join(",")}) ORDER BY book, market, COALESCE(player,''), COALESCE(stat,''), COALESCE(side,''), COALESCE(line,0), fetchedAt`).all(...events.map((e) => e.key)) as PriceRow[];
   const byKey = new Map(events.map((e) => [e.key, e]));
   return rows.map((r) => toPrice(r, byKey.get(r.eventKey)!));
 }

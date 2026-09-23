@@ -293,7 +293,13 @@ export function compareLeg(prices: BookPrice[], q: LegQuery, opts: CompareOption
   // The same stat and side at another line: the owner's "odds desbalanceadas em linha específica".
   const lineAlternatives: LineAlternative[] = [];
   if ((q.market === "player_prop" || q.market === "total" || q.market === "spread") && q.line !== undefined) {
-    const others = latestPerBook(prices.filter((p) => p.platform !== EXCHANGE && sameSelection(p, q) && p.line !== undefined && !same(p.line, q.line)));
+    // Every rung of every book's ladder, not one rung per book: `latestPerBook` collapses to one
+    // row per book and a book publishing 15,5 / 16,5 / 17,5 / 18,5 in one round stamps them all
+    // with the same `fetchedAt`, so the survivor was whichever SQLite happened to return first and
+    // the "número melhor" on screen was arbitrary. With the ladder whole, the sort below decides:
+    // among the friendlier rungs that still clear the price gate, the one paying most is the one
+    // nearest the ticket's own line — the smallest concession that actually helps.
+    const others = latestPerBookLine(prices.filter((p) => p.platform !== EXCHANGE && sameSelection(p, q) && p.line !== undefined && !same(p.line, q.line)));
     // Measured against the consensus at the leg's own line, not against an outlier best price.
     const reference = medianDecimal ?? best?.decimal ?? null;
     for (const p of others) {
