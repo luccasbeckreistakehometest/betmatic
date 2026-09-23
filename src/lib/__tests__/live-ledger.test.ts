@@ -76,7 +76,7 @@ describe("the live record", () => {
     legs: legs.map((o) => ({ selection: "x", market: "player_prop", sourceBasis: "", predictedProbability: 0.6, oddsDecimal: 1.8, outcome: o })),
   });
 
-  it("counts hit rates and a reference return, ignoring pre-game entries and pending reads", () => {
+  it("counts hit rates only — never a return — ignoring pre-game entries and pending reads", () => {
     const r = liveRecordFrom([
       { ...entry("a", "mid", "won", 14.65, ["won", "won", "won"], "live"), period: 2 },
       { ...entry("b", "mid", "lost", 13.06, ["won", "lost", "won", "won"], "live"), period: 2 },
@@ -84,7 +84,9 @@ describe("the live record", () => {
       entry("d", "long", "pending", 20, ["pending"], "live"),
       entry("pre", "safe", "won", 1.38, ["won"]),
     ]);
-    expect(r).toMatchObject({ decided: 3, pending: 1, won: 1, legs: 11, legsWon: 9, referenceReturn: 14.65 });
+    expect(r).toMatchObject({ decided: 3, pending: 1, won: 1, legs: 11, legsWon: 9 });
+    // The pre-game board is not a price anybody could have taken in play: no return, at any depth.
+    expect(JSON.stringify(r)).not.toContain("referenceReturn");
     expect(r.hitRate).toBeCloseTo(1 / 3, 6);
     expect(r.legHitRate).toBeCloseTo(9 / 11, 6);
     expect(r.modelledAverage).toBeCloseTo(0.25, 6);
