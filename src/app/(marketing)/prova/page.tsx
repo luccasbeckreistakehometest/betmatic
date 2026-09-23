@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { MarketingPage } from "@/components/MarketingShell";
 import { langFrom, langPaths, pageMetadata, type SearchProps } from "@/lib/seo";
-import { formatDate, formatPercent } from "@/lib/format";
+import { formatDate, formatPercent, formatNumber } from "@/lib/format";
 import { KPI, LinkButton, Notice, Panel, PrintButton, PrintHeader, Table, Td, Th, Tr } from "@/components/ui";
 import { readLedger } from "@/lib/ledger/store";
 import { liveRecord } from "@/lib/ledger/live-record";
@@ -115,7 +115,7 @@ export default async function ProofPage({ searchParams }: SearchProps) {
               <Td numeric label={c.ticketsCol} className="text-fg-muted">{d ? d.settled : "—"}</Td>
               <Td numeric label={c.hitsCol} className="text-fg-muted">{d ? `${d.won}/${d.settled}` : "—"}</Td>
               <Td numeric label={c.stakedCol} className="text-fg-muted">{d ? `${d.unitsStaked}${c.unit}` : "—"}</Td>
-              <Td numeric label={c.returnedCol} className="text-fg">{d ? `${formatDecimal(d.unitsReturned, lang)}${c.unit}` : "—"}</Td>
+              <Td numeric label={c.returnedCol} className="text-fg">{d ? `${formatNumber(d.unitsReturned, lang, { digits: 2 })}${c.unit}` : "—"}</Td>
               <Td numeric label={c.roiCol} className={d ? roiTone(d.roi) : "text-fg-dim"}>{d && d.settled ? pct(d.roi, true) : "—"}</Td>
               <Td numeric label={c.liveCol} className="text-fg-dim">{d && d.live.settled ? `${d.live.won}/${d.live.settled}` : "—"}</Td>
             </Tr>
