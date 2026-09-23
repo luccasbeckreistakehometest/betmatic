@@ -11,6 +11,15 @@ export function envValue(name: string, env: Env = process.env): string {
   return v.startsWith("#") ? "" : v;
 }
 
+/**
+ * Where a fresh login lands. `HOME_TODAY=1` opens the day's short list; anything else opens the full
+ * desk, exactly as today. One switch, no migration either way: both screens exist at all times and
+ * both are one tap from the other.
+ */
+export function appHome(env: Env = process.env): "/app/hoje" | "/app" {
+  return envValue("HOME_TODAY", env) === "1" ? "/app/hoje" : "/app";
+}
+
 /** A value someone meant to leave blank but that carries a comment or spaces. */
 const looksLikeComment = (raw: string | undefined) => {
   const v = (raw ?? "").trim();

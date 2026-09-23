@@ -1,4 +1,7 @@
 import { readLedger } from "@/lib/ledger/store";
+import { canonicalMarket } from "@/lib/ledger/stat-key";
+import { factorPromptLines } from "@/lib/ledger/factor-report";
+import { latestFactorStats } from "@/lib/server/factors-job";
 import { clvPromptLine } from "@/lib/server/leg-prices";
 import { getSport } from "@/lib/sports";
 import type { CalibrationReport, CalibrationRow, LedgerEntry, SettledLeg } from "@/lib/types";
@@ -103,22 +106,37 @@ export function modelRaceLine(race: ModelRace = modelRace()): string {
  * Grades the model against its own past calls. Legs are the unit, not tickets — a parlay losing
  * tells you little, but the individual legs inside it are clean evidence about each source.
  */
-export function calibrate(minSample = 5, scope: "pre" | "live" = "pre"): CalibrationReport {
+export function calibrate(minSample = 5, scope: "pre" | "live" = "pre", opts: { mainOnly?: boolean } = {}): CalibrationReport {
   // A live read and a pre-game ticket are not the same model answering the same question, and the
   // record says so: pre-game props promise 57,8% and deliver 49,6%, while live reads promise 86,3%
   // and deliver 71,7% over 593 legs. Correcting a live leg with the pre-game gap would fix about a
   // quarter of it, so the two records are kept apart.
+  //
+  // `mainOnly` narrows further, to the tickets a reader was actually served: 95 of the 172 settled
+  // pre-game legs come from alternatives, so a global average is mostly a population nobody saw.
   const all = readLedger({ excludeLive: scope === "pre" });
-  const entries = all.filter((e) => e.outcome !== "pending" && (e.scope === "live") === (scope === "live"));
+  const settled = all.filter((e) => e.outcome !== "pending" && (e.scope === "live") === (scope === "live"));
+  const entries = opts.mainOnly ? settled.filter((e) => !e.alternativeOf) : settled;
   const bySource = new Map<string, Bucket>();
   const byMarket = new Map<string, Bucket>();
+  const byStat = new Map<string, Bucket>();
   const bySport = new Map<string, Bucket>();
+  const bySide = new Map<string, Bucket>();
 
   for (const entry of entries) {
     for (const leg of entry.legs) {
       addLeg(bySource, leg.sourceBasis, leg.sourceBasis, leg);
+      // `byMarket` is keyed by the leg's own `market` string because that is what the generation
+      // calibrator looks it up by (`recalibrate.ts` passes `leg.market` straight in). Re-keying it
+      // to canonical names made that lookup miss silently and cost the correction its sharpest
+      // slice, so the canonical cut lives beside it under its own name instead.
       addLeg(byMarket, leg.market, leg.market, leg);
+      // The canonical market, not settlement.type: `player_prop` is one bucket holding 1,098 of the
+      // ledger's 1,099 legs, and a table with one row is not a table (ledger/stat-key.ts).
+      const stat = leg.marketKey ?? canonicalMarket(leg, entry.sportKey) ?? "unmapped";
+      addLeg(byStat, stat, stat, leg);
       addLeg(bySport, entry.sportKey, getSport(entry.sportKey).label.en, leg);
+      if (leg.settlement?.side) addLeg(bySide, leg.settlement.side, leg.settlement.side, leg);
     }
   }
 
@@ -131,7 +149,9 @@ export function calibrate(minSample = 5, scope: "pre" | "live" = "pre"): Calibra
     totalSettled: settledLegs,
     bySource: summarise(bySource, minSample),
     byMarket: summarise(byMarket, minSample),
+    byStat: summarise(byStat, minSample),
     bySport: summarise(bySport, minSample),
+    bySide: summarise(bySide, minSample),
     generatedAt: new Date().toISOString(),
   };
 }
@@ -156,8 +176,18 @@ function safeClvLine(): string {
   try { return clvPromptLine(); } catch { return ""; }
 }
 
+/**
+ * The factors that are lit right now, each with the id of the row that lit it. Every lesson the
+ * post-mortem writes has to cite one of these ids, which is what stops a run from proposing a rule
+ * about something nobody measured (ledger/hypotheses.ts).
+ */
+function safeFactorLines(): string {
+  try { return factorPromptLines(latestFactorStats(40)); } catch { return ""; }
+}
+
 export function calibrationPrompt(): string {
-  const report = calibrate();
+  // Main pre-game tickets only: an alternative is a different population and never served alone.
+  const report = calibrate(5, "pre", { mainOnly: true });
   if (report.totalSettled < 10) {
     return `TRACK RECORD: only ${report.totalSettled} legs settled so far — not enough to calibrate against. Do not claim any source has a proven edge.`;
   }
@@ -183,7 +213,9 @@ export function calibrationPrompt(): string {
     "",
     `By evidence source:\n${fmt(report.bySource) || "- no slice has a large enough sample yet"}`,
     "",
-    `By market type:\n${fmt(report.byMarket) || "- no slice has a large enough sample yet"}`,
+    `By market (canonical names):\n${fmt(report.byStat) || "- no slice has a large enough sample yet"}`,
+    "",
+    `By side:\n${fmt(report.bySide) || "- no slice has a large enough sample yet"}`,
     spec.length
       ? `\nStrongest source/market combinations measured so far:\n${spec
           .slice(0, 6)
@@ -191,6 +223,7 @@ export function calibrationPrompt(): string {
           .join("\n")}`
       : "",
     "",
+    safeFactorLines(),
     safeClvLine(),
     modelRaceLine(),
     "Apply this honestly: where a source is measured OVERCONFIDENT, lower your fairProbability for legs leaning on it. Where a slice has no sample, say so instead of assuming it is good.",

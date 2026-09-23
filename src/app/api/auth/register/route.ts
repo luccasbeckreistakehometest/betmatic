@@ -9,6 +9,7 @@ import { hit, ipKey } from "@/lib/server/rate-limit";
 import { reportError } from "@/lib/server/ops-log";
 import { anonIdFromCookies, firstTouchFromCookies, recordEvent } from "@/lib/server/analytics";
 import { getDb } from "@/lib/server/db";
+import { appHome } from "@/lib/env";
 import { sourceOf } from "@/lib/analytics/events";
 
 export const runtime = "nodejs";
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
     getDb().prepare("UPDATE users SET signupSource = ?, signupUtm = ? WHERE id = ?").run(source, ft ? JSON.stringify(ft) : null, user.id);
     recordEvent("signup_done", user.id, { source, campaign: ft?.c ?? "", landing: ft?.l ?? "" }, { anonId: await anonIdFromCookies() });
     await issueSession(user);
-    return NextResponse.json({ ok: true, role: user.role });
+    return NextResponse.json({ ok: true, role: user.role, home: appHome() });
   } catch (error) {
     if (error instanceof EmailTakenError) return apiError("email_taken", lang, 409);
     reportError("auth.register", error);

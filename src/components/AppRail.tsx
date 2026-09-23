@@ -25,6 +25,8 @@ export const NAV_GROUPS: { label: { pt: string; en: string }; items: Item[] }[] 
   {
     label: { pt: "Mesa", en: "Desk" },
     items: [
+      // The short list first: what to bet tonight, and how much. Everything else is still here.
+      { href: "/app/hoje", key: "navToday", icon: "calendar", tour: "today" },
       { href: "/app", key: "navSlate", icon: "grid" },
       { href: "/app/parlays", key: "navParlays", icon: "layers" },
       { href: "/app/slip", key: "mySlip", icon: "receipt" },
@@ -58,11 +60,13 @@ export const NAV_GROUPS: { label: { pt: string; en: string }; items: Item[] }[] 
 ];
 
 /**
- * The phone's tabs: the slate, the parlays, the bankroll and the account — and, while a game of
- * the current sport is being played, that game, so the live panel is one tap away from anywhere.
- * Everything else is in the header menu, in the rail's own order.
+ * The phone's tabs: the day's short list, the slate, the parlays, the bankroll and the account —
+ * and, while a game of the current sport is being played, that game, so the live panel is one tap
+ * away from anywhere. Everything else is in the header menu, in the rail's own order. Nothing was
+ * dropped to make room for "Hoje": the bar grows to six columns while a game is under way.
  */
 const TABS: { href: string; key: DictKey; icon: IconName }[] = [
+  { href: "/app/hoje", key: "navToday", icon: "calendar" },
   { href: "/app", key: "navSlate", icon: "grid" },
   { href: "/app/parlays", key: "navParlays", icon: "layers" },
   { href: "/app/bankroll", key: "tabBankroll", icon: "wallet" },
@@ -191,7 +195,7 @@ export function AppBottomBar({ initialLive = null }: { initialLive?: LiveTabInit
       aria-label={lang === "pt" ? "Navegação" : "Navigation"}
       className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface-1 pb-(--safe-b) md:hidden"
     >
-      <ul className={cx("grid h-14", tabs.length === 5 ? "grid-cols-5" : "grid-cols-4")}>
+      <ul className={cx("grid h-14", tabs.length >= 6 ? "grid-cols-6" : tabs.length === 5 ? "grid-cols-5" : "grid-cols-4")}>
         {tabs.map((tab) => (
           <li key={tab.href} className="min-w-0">
             <Link

@@ -1,5 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
+import { marketKeyOf } from "@/lib/ledger/stat-key";
+import { POLICY_VERSION } from "@/lib/bets/sizing";
 import type { BetSuggestion, Game, LedgerEntry, SettledLeg } from "@/lib/types";
 
 // Lives under DATA_DIR so it sits on the persistent volume in Docker: this file IS the learning
@@ -8,6 +10,13 @@ const LEDGER_DIR = path.join(process.env.DATA_DIR ?? path.join(process.cwd(), "d
 const FILE = path.join(LEDGER_DIR, "predictions.jsonl");
 const LEGACY_FILE = path.join(process.cwd(), ".ledger", "predictions.jsonl");
 
+/**
+ * Rescues the pre-DATA_DIR ledger (`./.ledger`) once, into whatever data dir is configured. It only
+ * fires when the configured file does not exist, so it never overwrites a real ledger — but note
+ * what that means for anything pointing DATA_DIR at a fresh directory while a `.ledger` sits in the
+ * working directory: the directory does not start empty. A test that wants an empty ledger must
+ * write an empty FILE, not leave the path missing.
+ */
 function migrateLegacy(): void {
   try {
     if (!fs.existsSync(FILE) && fs.existsSync(LEGACY_FILE)) {
@@ -65,7 +74,22 @@ export const ledgerIdFor = (gameId: string, s: Pick<BetSuggestion, "bandKey" | "
  * and a read at 30 minutes with five minutes left are not the same bet, and the ledger used to be
  * unable to tell them apart.
  */
-export function recordPredictions(game: Game, suggestions: BetSuggestion[], opts: { startsAt?: string; live?: { minute: number; period?: number; clockLeft?: number } } = {}): number {
+export function recordPredictions(
+  game: Game,
+  suggestions: BetSuggestion[],
+  opts: {
+    startsAt?: string;
+    live?: { minute: number; period?: number; clockLeft?: number };
+    /** The game's own context at generation time — the same for every leg, copied onto each. */
+    environment?: { blowoutProbability?: number | null; paceDelta?: number | null } | null;
+    /**
+     * What wrote this ticket. All optional, all filed at generation time: which prompt version, which
+     * model, what asked for it, and which selection policy was live. Without these a before/after is
+     * an argument; with them it is a query, and `ledger/ab.ts` is that query.
+     */
+    provenance?: { promptVersion?: string | null; modelId?: string | null; generatedBy?: string | null; policyVersion?: string | null };
+  } = {},
+): number {
   if (!suggestions.length) return 0;
   const existing = readLedger();
   const seen = new Set(existing.map((e) => e.id));
@@ -91,6 +115,9 @@ export function recordPredictions(game: Game, suggestions: BetSuggestion[], opts
       combinedDecimal: s.combinedDecimal,
       modelledProbability: s.modelledProbability,
       evidenceScore: s.evidenceScore,
+      // Copied out of the slate because the slate is overwritten when a game is regenerated, and
+      // this is a selection cut: losing it silently changes which tickets the wallet would take.
+      ...(s.confidence ? { confidence: s.confidence } : {}),
       suggestionId: s.id,
       // Recorded so a ticket's price can be rebuilt from its legs — which is what re-pricing a
       // ticket over its surviving legs, after one is voided, needs.
@@ -104,6 +131,10 @@ export function recordPredictions(game: Game, suggestions: BetSuggestion[], opts
             ...(opts.live.clockLeft !== undefined && Number.isFinite(opts.live.clockLeft) ? { clockLeft: opts.live.clockLeft } : {}),
           }
         : {}),
+      ...(opts.provenance?.promptVersion ? { promptVersion: opts.provenance.promptVersion } : {}),
+      ...(opts.provenance?.modelId ? { modelId: opts.provenance.modelId } : {}),
+      ...(opts.provenance?.generatedBy ? { generatedBy: opts.provenance.generatedBy } : {}),
+      policyVersion: opts.provenance?.policyVersion ?? POLICY_VERSION,
       outcome: "pending",
       legs: s.legs.map<SettledLeg>((l) => ({
         selection: l.selection,
@@ -116,6 +147,15 @@ export function recordPredictions(game: Game, suggestions: BetSuggestion[], opts
         oddsDecimal: l.oddsDecimal,
         outcome: "pending",
         actual: undefined,
+        // Copied from the generation payload so the factor report can cut the ledger by something
+        // other than the price. Every one is optional; an older row simply does not carry them.
+        ...(l.athleteId ? { athleteId: l.athleteId } : {}),
+        ...(marketKeyOf(l, game.sportKey) !== "unmapped" ? { marketKey: marketKeyOf(l, game.sportKey) } : {}),
+        ...(l.measured?.rate !== undefined && Number.isFinite(l.measured.rate) ? { measuredRate: Number(l.measured.rate.toFixed(3)) } : {}),
+        ...(l.projectedMinutes !== undefined ? { projectedMinutes: l.projectedMinutes } : {}),
+        ...(l.modelNote ? { modelNote: l.modelNote.slice(0, 240) } : {}),
+        ...(opts.environment?.blowoutProbability !== undefined && opts.environment?.blowoutProbability !== null ? { blowoutProbability: Number(opts.environment.blowoutProbability.toFixed(3)) } : {}),
+        ...(opts.environment?.paceDelta !== undefined && opts.environment?.paceDelta !== null ? { paceDelta: Number(opts.environment.paceDelta.toFixed(2)) } : {}),
       })),
     });
   }

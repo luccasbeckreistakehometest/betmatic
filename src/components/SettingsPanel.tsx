@@ -85,8 +85,8 @@ export function SettingsPanel() {
       <Panel className="max-w-[56rem]" title={lang === "pt" ? "Sua banca (opcional)" : "Your bankroll (optional)"}>
         <p className="text-tiny text-fg-dim">
           {lang === "pt"
-            ? "Quanto você separou para apostar, no total. Serve só para o relatório da semana mostrar quando um valor apostado passou muito do tamanho sensato (¼ Kelly). Não é compartilhado."
-            : "How much you set aside for betting, in total. It only lets the weekly report show when a stake went well past a sensible size (¼ Kelly). It is never shared."}
+            ? "Quanto você separou para apostar, no total. É o que transforma a unidade em reais: 1 u = 1% da banca, e é com ela que \u201cOs bilhetes de hoje\u201d mostra o valor ao lado da unidade. Serve também para o relatório da semana mostrar quando um valor apostado passou muito do tamanho sensato (¼ Kelly). Não é compartilhado."
+            : "How much you set aside for betting, in total. It is what turns a unit into money: 1 u = 1 % of the bankroll, and it is how \u201cToday's tickets\u201d shows the amount beside the unit. It also lets the weekly report show when a stake went well past a sensible size (¼ Kelly). It is never shared."}
         </p>
         {data && (
           <div className="mt-3 flex flex-wrap items-end gap-3">

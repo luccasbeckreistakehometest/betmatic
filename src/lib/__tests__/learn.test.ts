@@ -47,7 +47,8 @@ describe("runLearning", () => {
   it("stores the post-mortem as a proposal and applies it on the admin's click", async () => {
     const r = await runLearning({ now: new Date(now) }, async ({ summary }) => ({
       summary: `${summary.lost} perdidos por cartão`, wentRight: ["book line 2/2"], wentWrong: ["cartões pelo árbitro 0/2"],
-      lessons: ["ancorar cartões nas taxas dos times"], promptFeedback: "Não use média do árbitro sozinha para cartões.", confidence: "medium",
+      lessons: [{ factorStatId: "", text: "ancorar cartões nas taxas dos times" }], promptFeedback: "Não use média do árbitro sozinha para cartões.",
+      promptFeedbackFactorStatId: "", confidence: "medium",
     }));
     expect(r.status).toBe("ok"); expect(r.applied).toBe(0);
     expect(listLearningRuns().some((x) => x.id === r.id)).toBe(true);
@@ -58,7 +59,7 @@ describe("runLearning", () => {
     expect(getPrompt("game", "pt")).toBe(before);
   });
   it("auto-applies when asked and the run proposed something", async () => {
-    const r = await runLearning({ now: new Date(now), autoApply: false }, async () => ({ summary: "s", wentRight: [], wentWrong: [], lessons: [], promptFeedback: "", confidence: "low" }));
+    const r = await runLearning({ now: new Date(now), autoApply: false }, async () => ({ summary: "s", wentRight: [], wentWrong: [], lessons: [], promptFeedback: "", promptFeedbackFactorStatId: "", confidence: "low" }));
     expect(r.applied).toBe(0); expect(r.promptFeedback).toBe("");
   });
 });

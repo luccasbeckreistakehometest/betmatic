@@ -28,13 +28,21 @@ services:
           [ $$((t % 4)) -eq 0 ]  && curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=settle" >/dev/null || true
           [ $$((t % 4)) -eq 2 ]  && curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=digest" >/dev/null || true
           [ $$((t % 16)) -eq 0 ] && curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh" >/dev/null || true
-          [ $$((t % 96)) -eq 95 ] && curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=learn" >/dev/null || true
+          # learn and evaluate are called every tick and decide for themselves whether today is done,
+          # by asking job_runs. The old "[ $$((t % 96)) -eq 95 ]" lost every deploy day: t restarts at
+          # zero with the container and never reached 95, so the product ran zero post-mortems.
+          curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=learn" >/dev/null || true
+          curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=evaluate" >/dev/null || true
           # Round 3: lineup watch and closing prices every tick, the weekly report hourly (it writes on
           # Mondays), the analytics cleanup daily. Their JSON summaries go to the log.
           curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=lineups"; echo
           curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=close"; echo
           # Brazilian books: prices for every game in the next 48 h, every tick (pre-game only).
           curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=books"; echo
+          # Blame per leg and the factor calibration, rebuilt from the ledger every tick (zero tokens).
+          curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=attribute"; echo
+          # The day's short list: rebuilt from inventory that already exists, every tick, zero tokens.
+          curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=today"; echo
           [ $$((t % 4)) -eq 1 ]  && { curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=weekly"; echo; }
           [ $$((t % 96)) -eq 50 ] && { curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=cleanup"; echo; }
           t=$$((t + 1)); sleep 900

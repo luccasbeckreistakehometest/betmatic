@@ -1,0 +1,3329 @@
+[
+  {
+    "ledgerId": "401857207:long:Jessica Shepard mais de 13,5 rebotes|Arike Ogunbowale mais de 3,5 rebotes|Paige Bueckers mais de 5,5 assistências",
+    "suggestionId": "long-3eecf646",
+    "gameId": "401857207",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 36.059400000000004,
+    "modelProbability": 0.06820000000000001,
+    "legs": 3,
+    "players": [
+      "Jessica Shepard",
+      "Arike Ogunbowale",
+      "Paige Bueckers"
+    ],
+    "markets": [
+      "rebounds",
+      "rebounds",
+      "assists"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-22T02:00Z",
+    "day": "2026-09-21",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857207:long:Jessica Shepard mais de 14,5 rebotes|Arike Ogunbowale mais de 3,5 rebotes",
+    "suggestionId": "long-f8d2418b",
+    "gameId": "401857207",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 24.375,
+    "modelProbability": 0.084,
+    "legs": 2,
+    "players": [
+      "Jessica Shepard",
+      "Arike Ogunbowale"
+    ],
+    "markets": [
+      "rebounds",
+      "rebounds"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-22T02:00Z",
+    "day": "2026-09-21",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857207:long:Paige Bueckers mais de 24,5 pontos+rebotes+assistências|Paige Bueckers mais de 19,5 pontos|Jessica Shepard mais de 19,5 pontos+rebotes|Noemie Brochant menos de 2,5 assistências|Arike Ogunbowale mais de 19,5 pontos+assistências|Awak Kuier menos de 15,5 pontos+rebotes|Alyssa Thomas menos de 8,5 rebotes",
+    "suggestionId": "long-ef0c8cf5",
+    "gameId": "401857207",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 29.723837879854077,
+    "modelProbability": 0.05504565924000001,
+    "legs": 7,
+    "players": [
+      "Paige Bueckers",
+      "Jessica Shepard",
+      "Noemie Brochant",
+      "Arike Ogunbowale",
+      "Awak Kuier",
+      "Alyssa Thomas"
+    ],
+    "markets": [
+      "pra",
+      "points",
+      "pr",
+      "assists",
+      "pa",
+      "pr",
+      "rebounds"
+    ],
+    "evidenceScore": 82,
+    "confidence": "low",
+    "startsAt": "2026-09-22T02:00Z",
+    "day": "2026-09-21",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857207:mid:Paige Bueckers mais de 24,5 pontos+rebotes+assistências|Jessica Shepard mais de 19,5 pontos+rebotes|Noemie Brochant menos de 2,5 assistências|Arike Ogunbowale mais de 19,5 pontos+assistências",
+    "suggestionId": "mid-ab0e898f",
+    "gameId": "401857207",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 5.33566512,
+    "modelProbability": 0.2655744000000001,
+    "legs": 4,
+    "players": [
+      "Paige Bueckers",
+      "Jessica Shepard",
+      "Noemie Brochant",
+      "Arike Ogunbowale"
+    ],
+    "markets": [
+      "pra",
+      "pr",
+      "assists",
+      "pa"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-22T02:00Z",
+    "day": "2026-09-21",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857207:mid:Paige Bueckers mais de 24,5 pontos+rebotes+assistências|Jessica Shepard mais de 19,5 pontos+rebotes|Noemie Brochant menos de 2,5 assistências|Arike Ogunbowale mais de 19,5 pontos+assistências|Awak Kuier menos de 15,5 pontos+rebotes|Alyssa Thomas menos de 8,5 rebotes",
+    "suggestionId": "mid-d7b4e95d",
+    "gameId": "401857207",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 16.154259717311998,
+    "modelProbability": 0.09657133200000002,
+    "legs": 6,
+    "players": [
+      "Paige Bueckers",
+      "Jessica Shepard",
+      "Noemie Brochant",
+      "Arike Ogunbowale",
+      "Awak Kuier",
+      "Alyssa Thomas"
+    ],
+    "markets": [
+      "pra",
+      "pr",
+      "assists",
+      "pa",
+      "pr",
+      "rebounds"
+    ],
+    "evidenceScore": 88,
+    "confidence": "low",
+    "startsAt": "2026-09-22T02:00Z",
+    "day": "2026-09-21",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857207:safe:Jessica Shepard mais de 19,5 pontos+rebotes",
+    "suggestionId": "safe-e939eba6",
+    "gameId": "401857207",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.39,
+    "modelProbability": 0.76,
+    "legs": 1,
+    "players": [
+      "Jessica Shepard"
+    ],
+    "markets": [
+      "pr"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-22T02:00Z",
+    "day": "2026-09-21",
+    "outcome": "won",
+    "alternativeOf": "401857207:safe:Paige Bueckers mais de 24,5 pontos+rebotes+assistências"
+  },
+  {
+    "ledgerId": "401857207:safe:Paige Bueckers mais de 24,5 pontos+rebotes+assistências",
+    "suggestionId": "safe-d20f8bf5",
+    "gameId": "401857207",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.38,
+    "modelProbability": 0.8,
+    "legs": 1,
+    "players": [
+      "Paige Bueckers"
+    ],
+    "markets": [
+      "pra"
+    ],
+    "evidenceScore": 100,
+    "confidence": "high",
+    "startsAt": "2026-09-22T02:00Z",
+    "day": "2026-09-21",
+    "outcome": "won"
+  },
+  {
+    "ledgerId": "401857207:safe:Paige Bueckers mais de 24,5 pontos+rebotes+assistências|Jessica Shepard mais de 19,5 pontos+rebotes",
+    "suggestionId": "safe-748620c8",
+    "gameId": "401857207",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.9181999999999997,
+    "modelProbability": 0.6080000000000001,
+    "legs": 2,
+    "players": [
+      "Paige Bueckers",
+      "Jessica Shepard"
+    ],
+    "markets": [
+      "pra",
+      "pr"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-22T02:00Z",
+    "day": "2026-09-21",
+    "outcome": "won"
+  },
+  {
+    "ledgerId": "401857207:value:Paige Bueckers mais de 24,5 pontos+rebotes+assistências|Jessica Shepard mais de 19,5 pontos+rebotes|Noemie Brochant menos de 2,5 assistências",
+    "suggestionId": "value-e1938ebc",
+    "gameId": "401857207",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 2.9156639999999996,
+    "modelProbability": 0.4742400000000001,
+    "legs": 3,
+    "players": [
+      "Paige Bueckers",
+      "Jessica Shepard",
+      "Noemie Brochant"
+    ],
+    "markets": [
+      "pra",
+      "pr",
+      "assists"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-22T02:00Z",
+    "day": "2026-09-21",
+    "outcome": "won"
+  },
+  {
+    "ledgerId": "401857208:long:Leila Lacan Points + Assists over 14.5|Kiki Iriafen Points + Rebounds + Assists under 27.5|Aaliyah Edwards Rebounds under 5.5|Shakira Austin Points + Assists under 20.5|Shakira Austin Assists under 2.5|Georgia Amoore Points + Assists under 11.5",
+    "suggestionId": "long-077cb78a",
+    "gameId": "401857208",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 35.418307261428005,
+    "modelProbability": 0.0413957485314236,
+    "legs": 6,
+    "players": [
+      "Leila Lacan",
+      "Kiki Iriafen",
+      "Aaliyah Edwards",
+      "Shakira Austin",
+      "Georgia Amoore"
+    ],
+    "markets": [
+      "pa",
+      "pra",
+      "rebounds",
+      "pa",
+      "assists",
+      "pa"
+    ],
+    "evidenceScore": 88,
+    "confidence": "low",
+    "startsAt": "2026-09-22T23:30Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857208:long:Leila Lacan Points + Assists over 14.5|Michaela Onyenwere 3-Pointers Made over 1.5|Kiki Iriafen Points + Rebounds + Assists under 27.5|Sonia Citron Rebounds + Assists under 8.5|Sonia Citron 3-Pointers Made under 1.5"
+  },
+  {
+    "ledgerId": "401857208:long:Leila Lacan Points + Assists over 14.5|Michaela Onyenwere 3-Pointers Made over 1.5|Kiki Iriafen Points + Rebounds + Assists under 27.5|Sonia Citron Rebounds + Assists under 8.5|Sonia Citron 3-Pointers Made under 1.5",
+    "suggestionId": "long-081a4b08",
+    "gameId": "401857208",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 24.3241942944,
+    "modelProbability": 0.040923602977085756,
+    "legs": 5,
+    "players": [
+      "Leila Lacan",
+      "Michaela Onyenwere",
+      "Kiki Iriafen",
+      "Sonia Citron"
+    ],
+    "markets": [
+      "pa",
+      "threes",
+      "pra",
+      "ra",
+      "threes"
+    ],
+    "evidenceScore": 94,
+    "confidence": "low",
+    "startsAt": "2026-09-22T23:30Z",
+    "day": "2026-09-22",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857208:long:Sonia Citron Assists under 4.5|Sonia Citron Rebounds under 3.5|Shakira Austin Points + Assists under 20.5|Shakira Austin Assists under 2.5|Aaliyah Edwards Rebounds under 5.5",
+    "suggestionId": "long-585aad9e",
+    "gameId": "401857208",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 21.718469026799998,
+    "modelProbability": 0.0964264597182954,
+    "legs": 5,
+    "players": [
+      "Sonia Citron",
+      "Shakira Austin",
+      "Aaliyah Edwards"
+    ],
+    "markets": [
+      "assists",
+      "rebounds",
+      "pa",
+      "assists",
+      "rebounds"
+    ],
+    "evidenceScore": 94,
+    "confidence": "low",
+    "startsAt": "2026-09-22T23:30Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857208:long:Leila Lacan Points + Assists over 14.5|Michaela Onyenwere 3-Pointers Made over 1.5|Kiki Iriafen Points + Rebounds + Assists under 27.5|Sonia Citron Rebounds + Assists under 8.5|Sonia Citron 3-Pointers Made under 1.5"
+  },
+  {
+    "ledgerId": "401857208:mid:Aaliyah Edwards Rebounds under 5.5|Michaela Onyenwere Rebounds under 2.5|Georgia Amoore Points + Assists under 11.5",
+    "suggestionId": "mid-9714bebe",
+    "gameId": "401857208",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 5.416424999999999,
+    "modelProbability": 0.221291595,
+    "legs": 3,
+    "players": [
+      "Aaliyah Edwards",
+      "Michaela Onyenwere",
+      "Georgia Amoore"
+    ],
+    "markets": [
+      "rebounds",
+      "rebounds",
+      "pa"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-22T23:30Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857208:mid:Shakira Austin Points + Assists under 20.5|Michaela Onyenwere Rebounds under 2.5|Aaliyah Edwards Rebounds under 5.5"
+  },
+  {
+    "ledgerId": "401857208:mid:Leila Lacan Points + Assists over 14.5|Kiki Iriafen Points + Rebounds + Assists under 27.5|Georgia Amoore Points + Assists under 11.5",
+    "suggestionId": "mid-2051bf4e",
+    "gameId": "401857208",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 5.896618,
+    "modelProbability": 0.18270772559999998,
+    "legs": 3,
+    "players": [
+      "Leila Lacan",
+      "Kiki Iriafen",
+      "Georgia Amoore"
+    ],
+    "markets": [
+      "pa",
+      "pra",
+      "pa"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-22T23:30Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857208:mid:Shakira Austin Points + Assists under 20.5|Michaela Onyenwere Rebounds under 2.5|Aaliyah Edwards Rebounds under 5.5"
+  },
+  {
+    "ledgerId": "401857208:mid:Shakira Austin Points + Assists under 20.5|Michaela Onyenwere Rebounds under 2.5|Aaliyah Edwards Rebounds under 5.5",
+    "suggestionId": "mid-fa4889fa",
+    "gameId": "401857208",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 5.44635,
+    "modelProbability": 0.24587955,
+    "legs": 3,
+    "players": [
+      "Shakira Austin",
+      "Michaela Onyenwere",
+      "Aaliyah Edwards"
+    ],
+    "markets": [
+      "pa",
+      "rebounds",
+      "rebounds"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-22T23:30Z",
+    "day": "2026-09-22",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857208:moonshot:Leila Lacan Points + Assists over 14.5|Michaela Onyenwere 3-Pointers Made over 1.5|Sonia Citron Assists under 4.5|Sonia Citron 3-Pointers Made under 1.5|Kiki Iriafen Points + Rebounds + Assists under 27.5|Shakira Austin Points + Assists under 20.5|Shakira Austin Assists under 2.5|Aaliyah Edwards Rebounds under 5.5",
+    "suggestionId": "moonshot-e44888ef",
+    "gameId": "401857208",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "moonshot",
+    "decimal": 164.87758196835048,
+    "modelProbability": 0.00884215833866974,
+    "legs": 8,
+    "players": [
+      "Leila Lacan",
+      "Michaela Onyenwere",
+      "Sonia Citron",
+      "Kiki Iriafen",
+      "Shakira Austin",
+      "Aaliyah Edwards"
+    ],
+    "markets": [
+      "pa",
+      "threes",
+      "assists",
+      "threes",
+      "pra",
+      "pa",
+      "assists",
+      "rebounds"
+    ],
+    "evidenceScore": 76,
+    "confidence": "low",
+    "startsAt": "2026-09-22T23:30Z",
+    "day": "2026-09-22",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857208:moonshot:Leila Lacan Points + Assists over 14.5|Sonia Citron Assists under 4.5|Sonia Citron 3-Pointers Made under 1.5|Kiki Iriafen Points under 16.5|Shakira Austin Points + Assists under 20.5|Shakira Austin Assists under 2.5|Georgia Amoore Points + Assists under 11.5|Georgia Amoore Assists under 3.5",
+    "suggestionId": "moonshot-04c134b5",
+    "gameId": "401857208",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "moonshot",
+    "decimal": 118.22783917418293,
+    "modelProbability": 0.009767575049041589,
+    "legs": 8,
+    "players": [
+      "Leila Lacan",
+      "Sonia Citron",
+      "Kiki Iriafen",
+      "Shakira Austin",
+      "Georgia Amoore"
+    ],
+    "markets": [
+      "pa",
+      "assists",
+      "threes",
+      "points",
+      "pa",
+      "assists",
+      "pa",
+      "assists"
+    ],
+    "evidenceScore": 76,
+    "confidence": "low",
+    "startsAt": "2026-09-22T23:30Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857208:moonshot:Leila Lacan Points + Assists over 14.5|Michaela Onyenwere 3-Pointers Made over 1.5|Sonia Citron Assists under 4.5|Sonia Citron 3-Pointers Made under 1.5|Kiki Iriafen Points + Rebounds + Assists under 27.5|Shakira Austin Points + Assists under 20.5|Shakira Austin Assists under 2.5|Aaliyah Edwards Rebounds under 5.5"
+  },
+  {
+    "ledgerId": "401857208:moonshot:Michaela Onyenwere 3-Pointers Made over 1.5|Sonia Citron Assists under 4.5|Sonia Citron 3-Pointers Made under 1.5|Kiki Iriafen Points + Rebounds + Assists under 27.5|Shakira Austin Points + Assists under 20.5|Shakira Austin Assists under 2.5|Aaliyah Edwards Rebounds under 5.5|Georgia Amoore Points + Assists under 11.5",
+    "suggestionId": "moonshot-a321f8f5",
+    "gameId": "401857208",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "moonshot",
+    "decimal": 166.71978958810863,
+    "modelProbability": 0.00896812569618341,
+    "legs": 8,
+    "players": [
+      "Michaela Onyenwere",
+      "Sonia Citron",
+      "Kiki Iriafen",
+      "Shakira Austin",
+      "Aaliyah Edwards",
+      "Georgia Amoore"
+    ],
+    "markets": [
+      "threes",
+      "assists",
+      "threes",
+      "pra",
+      "pa",
+      "assists",
+      "rebounds",
+      "pa"
+    ],
+    "evidenceScore": 76,
+    "confidence": "low",
+    "startsAt": "2026-09-22T23:30Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857208:moonshot:Leila Lacan Points + Assists over 14.5|Michaela Onyenwere 3-Pointers Made over 1.5|Sonia Citron Assists under 4.5|Sonia Citron 3-Pointers Made under 1.5|Kiki Iriafen Points + Rebounds + Assists under 27.5|Shakira Austin Points + Assists under 20.5|Shakira Austin Assists under 2.5|Aaliyah Edwards Rebounds under 5.5"
+  },
+  {
+    "ledgerId": "401857208:safe:Aaliyah Edwards Rebounds under 5.5",
+    "suggestionId": "safe-d7befb50",
+    "gameId": "401857208",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.71,
+    "modelProbability": 0.63,
+    "legs": 1,
+    "players": [
+      "Aaliyah Edwards"
+    ],
+    "markets": [
+      "rebounds"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-22T23:30Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857208:safe:Leila Lacan Points + Rebounds + Assists over 14.5"
+  },
+  {
+    "ledgerId": "401857208:safe:Leila Lacan Points + Rebounds + Assists over 14.5",
+    "suggestionId": "safe-9d5dba8e",
+    "gameId": "401857208",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.48,
+    "modelProbability": 0.73,
+    "legs": 1,
+    "players": [
+      "Leila Lacan"
+    ],
+    "markets": [
+      "pra"
+    ],
+    "evidenceScore": 100,
+    "confidence": "high",
+    "startsAt": "2026-09-22T23:30Z",
+    "day": "2026-09-22",
+    "outcome": "won"
+  },
+  {
+    "ledgerId": "401857208:safe:Leila Lacan Points over 9.5",
+    "suggestionId": "safe-b9ea8e76",
+    "gameId": "401857208",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.72,
+    "modelProbability": 0.65,
+    "legs": 1,
+    "players": [
+      "Leila Lacan"
+    ],
+    "markets": [
+      "points"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-22T23:30Z",
+    "day": "2026-09-22",
+    "outcome": "won",
+    "alternativeOf": "401857208:safe:Leila Lacan Points + Rebounds + Assists over 14.5"
+  },
+  {
+    "ledgerId": "401857208:value:Michaela Onyenwere Rebounds under 2.5|Georgia Amoore Points + Assists under 11.5",
+    "suggestionId": "value-eadd050b",
+    "gameId": "401857208",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 3.1675,
+    "modelProbability": 0.3186,
+    "legs": 2,
+    "players": [
+      "Michaela Onyenwere",
+      "Georgia Amoore"
+    ],
+    "markets": [
+      "rebounds",
+      "pa"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-22T23:30Z",
+    "day": "2026-09-22",
+    "outcome": "won",
+    "alternativeOf": "401857208:value:Sonia Citron Assists under 4.5|Kiki Iriafen Points under 16.5"
+  },
+  {
+    "ledgerId": "401857208:value:Sonia Citron Assists under 4.5|Kiki Iriafen Points under 16.5",
+    "suggestionId": "value-5e0af1eb",
+    "gameId": "401857208",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 3.535,
+    "modelProbability": 0.39322193392146687,
+    "legs": 2,
+    "players": [
+      "Sonia Citron",
+      "Kiki Iriafen"
+    ],
+    "markets": [
+      "assists",
+      "points"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-22T23:30Z",
+    "day": "2026-09-22",
+    "outcome": "won"
+  },
+  {
+    "ledgerId": "401857208:value:Sonia Citron Rebounds + Assists under 8.5|Shakira Austin Points + Assists under 20.5",
+    "suggestionId": "value-0a1739d5",
+    "gameId": "401857208",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 3.2578,
+    "modelProbability": 0.348,
+    "legs": 2,
+    "players": [
+      "Sonia Citron",
+      "Shakira Austin"
+    ],
+    "markets": [
+      "ra",
+      "pa"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-22T23:30Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857208:value:Sonia Citron Assists under 4.5|Kiki Iriafen Points under 16.5"
+  },
+  {
+    "ledgerId": "401857209:long:Kayla McBride Points + Rebounds over 24.5|Caitlin Clark Points + Rebounds over 26.5|Courtney Williams over 4.5 rebounds|Makayla Timpson over 6.5 points",
+    "suggestionId": "long-28323c59",
+    "gameId": "401857209",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 23.473212400000005,
+    "modelProbability": 0.04535685882000002,
+    "legs": 4,
+    "players": [
+      "Kayla McBride",
+      "Caitlin Clark",
+      "Courtney Williams",
+      "Makayla Timpson"
+    ],
+    "markets": [
+      "pr",
+      "pr",
+      "rebounds",
+      "points"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857209:long:Natasha Howard Points + Rebounds over 24.5|Kayla McBride Points + Rebounds over 24.5|Caitlin Clark over 22.5 points|Aliyah Boston over 2.5 assists"
+  },
+  {
+    "ledgerId": "401857209:long:Makayla Timpson under 6.5 rebounds|Aliyah Boston under 11.5 rebounds + assists|Courtney Williams over 3.5 rebounds|Courtney Williams under 1.5 3-Pointers Made|Napheesa Collier under 1.5 3-Pointers Made|Olivia Miles under 1.5 3-Pointers Made",
+    "suggestionId": "long-e1b2e034",
+    "gameId": "401857209",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 22.795196406840002,
+    "modelProbability": 0.04821011924010019,
+    "legs": 6,
+    "players": [
+      "Makayla Timpson",
+      "Aliyah Boston",
+      "Courtney Williams",
+      "Napheesa Collier",
+      "Olivia Miles"
+    ],
+    "markets": [
+      "rebounds",
+      "ra",
+      "rebounds",
+      "threes",
+      "threes",
+      "threes"
+    ],
+    "evidenceScore": 88,
+    "confidence": "low",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857209:long:Natasha Howard over 24.5 points + rebounds + assists|Makayla Timpson under 6.5 rebounds|Aliyah Boston under 11.5 rebounds + assists|Courtney Williams over 3.5 rebounds|Courtney Williams under 1.5 3-Pointers Made|Napheesa Collier under 1.5 3-Pointers Made"
+  },
+  {
+    "ledgerId": "401857209:long:Natasha Howard over 20.5 points + rebounds + assists|Makayla Timpson under 6.5 rebounds|Aliyah Boston under 11.5 rebounds + assists|Courtney Williams over 3.5 rebounds|Courtney Williams under 1.5 3-Pointers Made|Napheesa Collier under 1.5 3-Pointers Made",
+    "suggestionId": "long-b039eea0",
+    "gameId": "401857209",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 23.849309535480003,
+    "modelProbability": 0.046397170157284263,
+    "legs": 6,
+    "players": [
+      "Natasha Howard",
+      "Makayla Timpson",
+      "Aliyah Boston",
+      "Courtney Williams",
+      "Napheesa Collier"
+    ],
+    "markets": [
+      "pra",
+      "rebounds",
+      "ra",
+      "rebounds",
+      "threes",
+      "threes"
+    ],
+    "evidenceScore": 88,
+    "confidence": "low",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857209:long:Natasha Howard over 24.5 points + rebounds + assists|Makayla Timpson under 6.5 rebounds|Aliyah Boston under 11.5 rebounds + assists|Courtney Williams over 3.5 rebounds|Courtney Williams under 1.5 3-Pointers Made|Napheesa Collier under 1.5 3-Pointers Made"
+  },
+  {
+    "ledgerId": "401857209:long:Natasha Howard over 24.5 points + rebounds + assists|Makayla Timpson under 6.5 rebounds|Aliyah Boston under 11.5 rebounds + assists|Courtney Williams over 3.5 rebounds|Courtney Williams under 1.5 3-Pointers Made|Napheesa Collier under 1.5 3-Pointers Made",
+    "suggestionId": "long-d0938b27",
+    "gameId": "401857209",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 42.69158170992,
+    "modelProbability": 0.030786217756849428,
+    "legs": 6,
+    "players": [
+      "Natasha Howard",
+      "Makayla Timpson",
+      "Aliyah Boston",
+      "Courtney Williams",
+      "Napheesa Collier"
+    ],
+    "markets": [
+      "pra",
+      "rebounds",
+      "ra",
+      "rebounds",
+      "threes",
+      "threes"
+    ],
+    "evidenceScore": 88,
+    "confidence": "low",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857209:long:Natasha Howard Points + Rebounds over 19.5|Kayla McBride Points + Rebounds over 20.5|Caitlin Clark over 22.5 points|Aliyah Boston over 2.5 assists|Courtney Williams over 4.5 rebounds",
+    "suggestionId": "long-c2274515",
+    "gameId": "401857209",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 24.5480288256,
+    "modelProbability": 0.042312715795350016,
+    "legs": 5,
+    "players": [
+      "Natasha Howard",
+      "Kayla McBride",
+      "Caitlin Clark",
+      "Aliyah Boston",
+      "Courtney Williams"
+    ],
+    "markets": [
+      "pr",
+      "pr",
+      "points",
+      "assists",
+      "rebounds"
+    ],
+    "evidenceScore": 94,
+    "confidence": "low",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857209:long:Natasha Howard Points + Rebounds over 24.5|Kayla McBride Points + Rebounds over 24.5|Caitlin Clark over 22.5 points|Aliyah Boston over 2.5 assists"
+  },
+  {
+    "ledgerId": "401857209:long:Natasha Howard Points + Rebounds over 24.5|Kayla McBride Points + Rebounds over 24.5|Caitlin Clark over 22.5 points|Aliyah Boston over 2.5 assists",
+    "suggestionId": "long-e0036851",
+    "gameId": "401857209",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 35.8836408,
+    "modelProbability": 0.028599741382978727,
+    "legs": 4,
+    "players": [
+      "Natasha Howard",
+      "Kayla McBride",
+      "Caitlin Clark",
+      "Aliyah Boston"
+    ],
+    "markets": [
+      "pr",
+      "pr",
+      "points",
+      "assists"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857209:mid:Caitlin Clark Points + Rebounds over 26.5|Natasha Howard Points + Rebounds + Assists over 22.5|Aliyah Boston over 2.5 assists",
+    "suggestionId": "mid-d6402a9f",
+    "gameId": "401857209",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 5.77584,
+    "modelProbability": 0.17657640000000002,
+    "legs": 3,
+    "players": [
+      "Caitlin Clark",
+      "Natasha Howard",
+      "Aliyah Boston"
+    ],
+    "markets": [
+      "pr",
+      "pra",
+      "assists"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857209:mid:Caitlin Clark Points + Rebounds over 26.5|Natasha Howard Points + Rebounds over 19.5|Courtney Williams over 4.5 rebounds",
+    "suggestionId": "mid-3b538002",
+    "gameId": "401857209",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 7.531512,
+    "modelProbability": 0.14240772000000004,
+    "legs": 3,
+    "players": [
+      "Caitlin Clark",
+      "Natasha Howard",
+      "Courtney Williams"
+    ],
+    "markets": [
+      "pr",
+      "pr",
+      "rebounds"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857209:mid:Caitlin Clark Points + Rebounds over 26.5|Natasha Howard Points + Rebounds + Assists over 22.5|Aliyah Boston over 2.5 assists"
+  },
+  {
+    "ledgerId": "401857209:mid:Courtney Williams under 1.5 3-Pointers Made|Courtney Williams over 3.5 rebounds|Napheesa Collier under 1.5 3-Pointers Made|Natasha Howard over 9.5 rebounds + assists",
+    "suggestionId": "mid-b7611e4a",
+    "gameId": "401857209",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 7.5644712,
+    "modelProbability": 0.10359727055791502,
+    "legs": 4,
+    "players": [
+      "Courtney Williams",
+      "Napheesa Collier",
+      "Natasha Howard"
+    ],
+    "markets": [
+      "threes",
+      "rebounds",
+      "threes",
+      "ra"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857209:mid:Courtney Williams under 1.5 3-Pointers Made|Courtney Williams over 3.5 rebounds|Napheesa Collier under 1.5 3-Pointers Made|Olivia Miles under 1.5 3-Pointers Made",
+    "suggestionId": "mid-07287916",
+    "gameId": "401857209",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 7.0357715999999995,
+    "modelProbability": 0.10572672286218593,
+    "legs": 4,
+    "players": [
+      "Courtney Williams",
+      "Napheesa Collier",
+      "Olivia Miles"
+    ],
+    "markets": [
+      "threes",
+      "rebounds",
+      "threes",
+      "threes"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857209:mid:Courtney Williams under 1.5 3-Pointers Made|Courtney Williams over 3.5 rebounds|Napheesa Collier under 1.5 3-Pointers Made|Natasha Howard over 9.5 rebounds + assists"
+  },
+  {
+    "ledgerId": "401857209:mid:Napheesa Collier under 1.5 3-Pointers Made|Aliyah Boston under 11.5 rebounds + assists|Olivia Miles under 1.5 3-Pointers Made",
+    "suggestionId": "mid-9fea861a",
+    "gameId": "401857209",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 5.57406,
+    "modelProbability": 0.21800394000000006,
+    "legs": 3,
+    "players": [
+      "Napheesa Collier",
+      "Aliyah Boston",
+      "Olivia Miles"
+    ],
+    "markets": [
+      "threes",
+      "ra",
+      "threes"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "void",
+    "alternativeOf": "401857209:mid:Courtney Williams under 1.5 3-Pointers Made|Courtney Williams over 3.5 rebounds|Napheesa Collier under 1.5 3-Pointers Made|Natasha Howard over 9.5 rebounds + assists"
+  },
+  {
+    "ledgerId": "401857209:mid:Natasha Howard Points + Rebounds + Assists over 22.5|Aliyah Boston over 2.5 assists|Makayla Timpson over 6.5 points",
+    "suggestionId": "mid-50ab20ff",
+    "gameId": "401857209",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 5.65488,
+    "modelProbability": 0.17657640000000002,
+    "legs": 3,
+    "players": [
+      "Natasha Howard",
+      "Aliyah Boston",
+      "Makayla Timpson"
+    ],
+    "markets": [
+      "pra",
+      "assists",
+      "points"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857209:mid:Caitlin Clark Points + Rebounds over 26.5|Natasha Howard Points + Rebounds + Assists over 22.5|Aliyah Boston over 2.5 assists"
+  },
+  {
+    "ledgerId": "401857209:safe:Aliyah Boston over 2.5 assists",
+    "suggestionId": "safe-078e1c8d",
+    "gameId": "401857209",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.68,
+    "modelProbability": 0.55,
+    "legs": 1,
+    "players": [
+      "Aliyah Boston"
+    ],
+    "markets": [
+      "assists"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "won",
+    "alternativeOf": "401857209:safe:Natasha Howard over 9.5 points"
+  },
+  {
+    "ledgerId": "401857209:safe:Courtney Williams under 1.5 3-Pointers Made",
+    "suggestionId": "safe-52f8a254",
+    "gameId": "401857209",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.43,
+    "modelProbability": 0.67,
+    "legs": 1,
+    "players": [
+      "Courtney Williams"
+    ],
+    "markets": [
+      "threes"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "won",
+    "alternativeOf": "401857209:safe:Natasha Howard over 10.5 points"
+  },
+  {
+    "ledgerId": "401857209:safe:Kayla McBride Points + Rebounds + Assists over 19.5",
+    "suggestionId": "safe-9e0cf52b",
+    "gameId": "401857209",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.44,
+    "modelProbability": 0.68,
+    "legs": 1,
+    "players": [
+      "Kayla McBride"
+    ],
+    "markets": [
+      "pra"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857209:safe:Natasha Howard over 9.5 points"
+  },
+  {
+    "ledgerId": "401857209:safe:Natasha Howard over 10.5 points",
+    "suggestionId": "safe-7f57d939",
+    "gameId": "401857209",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.78,
+    "modelProbability": 0.65,
+    "legs": 1,
+    "players": [
+      "Natasha Howard"
+    ],
+    "markets": [
+      "points"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857209:safe:Natasha Howard over 17.5 points + rebounds",
+    "suggestionId": "safe-ec9ed925",
+    "gameId": "401857209",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.86,
+    "modelProbability": 0.6,
+    "legs": 1,
+    "players": [
+      "Natasha Howard"
+    ],
+    "markets": [
+      "pr"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857209:safe:Natasha Howard over 10.5 points"
+  },
+  {
+    "ledgerId": "401857209:safe:Natasha Howard over 9.5 points",
+    "suggestionId": "safe-e791e6cf",
+    "gameId": "401857209",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.37,
+    "modelProbability": 0.73,
+    "legs": 1,
+    "players": [
+      "Natasha Howard"
+    ],
+    "markets": [
+      "points"
+    ],
+    "evidenceScore": 100,
+    "confidence": "high",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857209:value:Aliyah Boston under 11.5 rebounds + assists|Makayla Timpson under 6.5 rebounds",
+    "suggestionId": "value-e2cb7974",
+    "gameId": "401857209",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 3.2399,
+    "modelProbability": 0.3616380941292895,
+    "legs": 2,
+    "players": [
+      "Aliyah Boston",
+      "Makayla Timpson"
+    ],
+    "markets": [
+      "ra",
+      "rebounds"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857209:value:Aliyah Boston under 8.5 rebounds|Makayla Timpson under 6.5 rebounds",
+    "suggestionId": "value-d061fbb3",
+    "gameId": "401857209",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 3.1494,
+    "modelProbability": 0.35980024690534185,
+    "legs": 2,
+    "players": [
+      "Aliyah Boston",
+      "Makayla Timpson"
+    ],
+    "markets": [
+      "rebounds",
+      "rebounds"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857209:value:Aliyah Boston under 11.5 rebounds + assists|Makayla Timpson under 6.5 rebounds"
+  },
+  {
+    "ledgerId": "401857209:value:Caitlin Clark over 22.5 points|Aliyah Boston over 2.5 assists",
+    "suggestionId": "value-1ae1935d",
+    "gameId": "401857209",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 3.2424,
+    "modelProbability": 0.27044917257683215,
+    "legs": 2,
+    "players": [
+      "Caitlin Clark",
+      "Aliyah Boston"
+    ],
+    "markets": [
+      "points",
+      "assists"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "won",
+    "alternativeOf": "401857209:value:Kayla McBride Points + Assists over 19.5|Courtney Williams over 4.5 rebounds"
+  },
+  {
+    "ledgerId": "401857209:value:Kayla McBride Points + Assists over 19.5|Courtney Williams over 4.5 rebounds",
+    "suggestionId": "value-084dfae8",
+    "gameId": "401857209",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 3.9856,
+    "modelProbability": 0.24840000000000004,
+    "legs": 2,
+    "players": [
+      "Kayla McBride",
+      "Courtney Williams"
+    ],
+    "markets": [
+      "pa",
+      "rebounds"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857209:value:Kayla McBride Points + Rebounds + Assists over 19.5|Courtney Williams over 4.5 rebounds",
+    "suggestionId": "value-39f6e53e",
+    "gameId": "401857209",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 3.0528,
+    "modelProbability": 0.3374139030062883,
+    "legs": 2,
+    "players": [
+      "Kayla McBride",
+      "Courtney Williams"
+    ],
+    "markets": [
+      "pra",
+      "rebounds"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857209:value:Kayla McBride Points + Assists over 19.5|Courtney Williams over 4.5 rebounds"
+  },
+  {
+    "ledgerId": "401857209:value:Natasha Howard over 6.5 rebounds|Makayla Timpson under 6.5 rebounds",
+    "suggestionId": "value-30fb9b4c",
+    "gameId": "401857209",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 3.5114,
+    "modelProbability": 0.312728,
+    "legs": 2,
+    "players": [
+      "Natasha Howard",
+      "Makayla Timpson"
+    ],
+    "markets": [
+      "rebounds",
+      "rebounds"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857209:value:Aliyah Boston under 11.5 rebounds + assists|Makayla Timpson under 6.5 rebounds"
+  },
+  {
+    "ledgerId": "401857210:long:Laura Juskaite under 12.5 points|Laura Juskaite under 4.5 rebounds|Laura Juskaite under 1.5 3-pointers made|Kamilla Cardoso under 20.5 points + rebounds|Isabelle Harrison under 13.5 points|Kiki Rice under 3.5 rebounds",
+    "suggestionId": "long-da7cfede",
+    "gameId": "401857210",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 40.209317153280004,
+    "modelProbability": 0.0416061564819651,
+    "legs": 6,
+    "players": [
+      "Laura Juskaite",
+      "Kamilla Cardoso",
+      "Isabelle Harrison",
+      "Kiki Rice"
+    ],
+    "markets": [
+      "points",
+      "rebounds",
+      "threes",
+      "pr",
+      "points",
+      "rebounds"
+    ],
+    "evidenceScore": 88,
+    "confidence": "low",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857210:long:Sydney Taylor under 1.5 3-pointers made|Sydney Taylor under 13.5 points|Kamilla Cardoso under 20.5 points + rebounds|Laura Juskaite under 12.5 points|Laura Juskaite under 1.5 3-pointers made|Isabelle Harrison under 13.5 points"
+  },
+  {
+    "ledgerId": "401857210:long:Sydney Taylor under 1.5 3-pointers made|Sydney Taylor under 13.5 points|Kamilla Cardoso under 20.5 points + rebounds|Laura Juskaite under 12.5 points|Laura Juskaite under 1.5 3-pointers made|Isabelle Harrison under 13.5 points",
+    "suggestionId": "long-9a196c89",
+    "gameId": "401857210",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 39.1436267904,
+    "modelProbability": 0.09929970392052152,
+    "legs": 6,
+    "players": [
+      "Sydney Taylor",
+      "Kamilla Cardoso",
+      "Laura Juskaite",
+      "Isabelle Harrison"
+    ],
+    "markets": [
+      "threes",
+      "points",
+      "pr",
+      "points",
+      "threes",
+      "points"
+    ],
+    "evidenceScore": 88,
+    "confidence": "low",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857210:long:Sydney Taylor under 1.5 3-pointers made|Sydney Taylor under 13.5 points|Kamilla Cardoso under 20.5 points + rebounds|Laura Juskaite under 12.5 points|Laura Juskaite under 4.5 rebounds|Isabelle Harrison under 13.5 points",
+    "suggestionId": "long-64b8c3c8",
+    "gameId": "401857210",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 53.822486836799996,
+    "modelProbability": 0.06418915091415975,
+    "legs": 6,
+    "players": [
+      "Sydney Taylor",
+      "Kamilla Cardoso",
+      "Laura Juskaite",
+      "Isabelle Harrison"
+    ],
+    "markets": [
+      "threes",
+      "points",
+      "pr",
+      "points",
+      "rebounds",
+      "points"
+    ],
+    "evidenceScore": 88,
+    "confidence": "low",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857210:long:Sydney Taylor under 1.5 3-pointers made|Sydney Taylor under 13.5 points|Kamilla Cardoso under 20.5 points + rebounds|Laura Juskaite under 12.5 points|Laura Juskaite under 1.5 3-pointers made|Isabelle Harrison under 13.5 points"
+  },
+  {
+    "ledgerId": "401857210:mid:Kamilla Cardoso under 12.5 points|Isabelle Harrison under 13.5 points|Sydney Taylor under 13.5 points",
+    "suggestionId": "mid-8f8ccd5b",
+    "gameId": "401857210",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 6.748985,
+    "modelProbability": 0.2127670841501241,
+    "legs": 3,
+    "players": [
+      "Kamilla Cardoso",
+      "Isabelle Harrison",
+      "Sydney Taylor"
+    ],
+    "markets": [
+      "points",
+      "points",
+      "points"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857210:mid:Kiki Rice under 8.5 rebounds + assists|Isabelle Harrison under 13.5 points|Sydney Taylor under 13.5 points"
+  },
+  {
+    "ledgerId": "401857210:mid:Kiki Rice under 8.5 rebounds + assists|Isabelle Harrison under 13.5 points|Kamilla Cardoso under 12.5 points",
+    "suggestionId": "mid-9bf9675a",
+    "gameId": "401857210",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 6.07762,
+    "modelProbability": 0.20628877500000004,
+    "legs": 3,
+    "players": [
+      "Kiki Rice",
+      "Isabelle Harrison",
+      "Kamilla Cardoso"
+    ],
+    "markets": [
+      "ra",
+      "points",
+      "points"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857210:mid:Kiki Rice under 8.5 rebounds + assists|Isabelle Harrison under 13.5 points|Sydney Taylor under 13.5 points"
+  },
+  {
+    "ledgerId": "401857210:mid:Kiki Rice under 8.5 rebounds + assists|Isabelle Harrison under 13.5 points|Sydney Taylor under 13.5 points",
+    "suggestionId": "mid-887c3dd9",
+    "gameId": "401857210",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 6.07762,
+    "modelProbability": 0.2177492625,
+    "legs": 3,
+    "players": [
+      "Kiki Rice",
+      "Isabelle Harrison",
+      "Sydney Taylor"
+    ],
+    "markets": [
+      "ra",
+      "points",
+      "points"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857210:moonshot:Laura Juskaite under 1.5 3-pointers made|Laura Juskaite under 4.5 rebounds|Laura Juskaite under 12.5 points|Isabelle Harrison under 13.5 points|Kamilla Cardoso under 7.5 rebounds|Kamilla Cardoso under 12.5 points|Sydney Taylor under 13.5 points|Kiki Rice under 3.5 rebounds",
+    "suggestionId": "moonshot-638266fa",
+    "gameId": "401857210",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "moonshot",
+    "decimal": 152.20811135498917,
+    "modelProbability": 0.031066382179690658,
+    "legs": 8,
+    "players": [
+      "Laura Juskaite",
+      "Isabelle Harrison",
+      "Kamilla Cardoso",
+      "Sydney Taylor",
+      "Kiki Rice"
+    ],
+    "markets": [
+      "threes",
+      "rebounds",
+      "points",
+      "points",
+      "rebounds",
+      "points",
+      "points",
+      "rebounds"
+    ],
+    "evidenceScore": 76,
+    "confidence": "low",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857210:moonshot:Laura Juskaite under 1.5 3-pointers made|Laura Juskaite under 4.5 rebounds|Laura Juskaite under 12.5 points|Isabelle Harrison under 13.5 points|Kamilla Cardoso under 7.5 rebounds|Kamilla Cardoso under 12.5 points|Sydney Taylor under 13.5 points|Sydney Taylor under 1.5 3-pointers made"
+  },
+  {
+    "ledgerId": "401857210:moonshot:Laura Juskaite under 1.5 3-pointers made|Laura Juskaite under 4.5 rebounds|Laura Juskaite under 12.5 points|Isabelle Harrison under 13.5 points|Kamilla Cardoso under 7.5 rebounds|Kamilla Cardoso under 12.5 points|Sydney Taylor under 13.5 points|Sydney Taylor under 1.5 3-pointers made",
+    "suggestionId": "moonshot-05630d5f",
+    "gameId": "401857210",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "moonshot",
+    "decimal": 153.60451604631933,
+    "modelProbability": 0.033048987738624004,
+    "legs": 8,
+    "players": [
+      "Laura Juskaite",
+      "Isabelle Harrison",
+      "Kamilla Cardoso",
+      "Sydney Taylor"
+    ],
+    "markets": [
+      "threes",
+      "rebounds",
+      "points",
+      "points",
+      "rebounds",
+      "points",
+      "points",
+      "threes"
+    ],
+    "evidenceScore": 76,
+    "confidence": "low",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857210:moonshot:Laura Juskaite under 1.5 3-pointers made|Laura Juskaite under 4.5 rebounds|Laura Juskaite under 12.5 points|Isabelle Harrison under 13.5 points|Sydney Taylor under 13.5 points|Sydney Taylor under 1.5 3-pointers made|Kiki Rice under 3.5 rebounds|Kiki Rice under 4.5 assists",
+    "suggestionId": "moonshot-6d76cfab",
+    "gameId": "401857210",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "moonshot",
+    "decimal": 148.0667030135885,
+    "modelProbability": 0.030799496167367425,
+    "legs": 8,
+    "players": [
+      "Laura Juskaite",
+      "Isabelle Harrison",
+      "Sydney Taylor",
+      "Kiki Rice"
+    ],
+    "markets": [
+      "threes",
+      "rebounds",
+      "points",
+      "points",
+      "points",
+      "threes",
+      "rebounds",
+      "assists"
+    ],
+    "evidenceScore": 76,
+    "confidence": "low",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857210:moonshot:Laura Juskaite under 1.5 3-pointers made|Laura Juskaite under 4.5 rebounds|Laura Juskaite under 12.5 points|Isabelle Harrison under 13.5 points|Kamilla Cardoso under 7.5 rebounds|Kamilla Cardoso under 12.5 points|Sydney Taylor under 13.5 points|Sydney Taylor under 1.5 3-pointers made"
+  },
+  {
+    "ledgerId": "401857210:safe:Kiki Rice under 8.5 rebounds + assists",
+    "suggestionId": "safe-1ae9f978",
+    "gameId": "401857210",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.72,
+    "modelProbability": 0.64,
+    "legs": 1,
+    "players": [
+      "Kiki Rice"
+    ],
+    "markets": [
+      "ra"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857210:unbanded:Kiki Rice over 9.5 points"
+  },
+  {
+    "ledgerId": "401857210:safe:Laura Juskaite 3-Pointers Made under 1.5",
+    "suggestionId": "safe-9c0ae6fb",
+    "gameId": "401857210",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.44,
+    "modelProbability": 0.71,
+    "legs": 1,
+    "players": [
+      "Laura Juskaite"
+    ],
+    "markets": [
+      "threes"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857210:unbanded:Kiki Rice over 9.5 points"
+  },
+  {
+    "ledgerId": "401857210:unbanded:Kiki Rice over 9.5 points",
+    "suggestionId": "unbanded-4775797d",
+    "gameId": "401857210",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "unbanded",
+    "decimal": 1.21,
+    "modelProbability": 0.76,
+    "legs": 1,
+    "players": [
+      "Kiki Rice"
+    ],
+    "markets": [
+      "points"
+    ],
+    "evidenceScore": 100,
+    "confidence": "high",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857210:value:Kamilla Cardoso under 12.5 points|Kamilla Cardoso under 7.5 rebounds",
+    "suggestionId": "value-c982b56a",
+    "gameId": "401857210",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 3.6862999999999997,
+    "modelProbability": 0.3930693722714892,
+    "legs": 2,
+    "players": [
+      "Kamilla Cardoso"
+    ],
+    "markets": [
+      "points",
+      "rebounds"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857210:value:Kamilla Cardoso under 20.5 points + rebounds|Sydney Taylor under 13.5 points",
+    "suggestionId": "value-0b8cefa9",
+    "gameId": "401857210",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 3.5526,
+    "modelProbability": 0.319,
+    "legs": 2,
+    "players": [
+      "Kamilla Cardoso",
+      "Sydney Taylor"
+    ],
+    "markets": [
+      "pr",
+      "points"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857210:value:Kamilla Cardoso under 12.5 points|Kamilla Cardoso under 7.5 rebounds"
+  },
+  {
+    "ledgerId": "401857210:value:Kiki Rice under 8.5 rebounds + assists|Isabelle Harrison under 13.5 points",
+    "suggestionId": "value-803c553b",
+    "gameId": "401857210",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 3.182,
+    "modelProbability": 0.35200000000000004,
+    "legs": 2,
+    "players": [
+      "Kiki Rice",
+      "Isabelle Harrison"
+    ],
+    "markets": [
+      "ra",
+      "points"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T00:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857210:value:Kamilla Cardoso under 12.5 points|Kamilla Cardoso under 7.5 rebounds"
+  },
+  {
+    "ledgerId": "401857211:long:Chelsea Gray under 2.5 rebounds|Chelsea Gray under 11.5 points|Chelsea Gray 3-Pointers Made under 1.5|A'ja Wilson under 9.5 rebounds|A'ja Wilson under 25.5 points",
+    "suggestionId": "long-96b2d600",
+    "gameId": "401857211",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 22.67604864,
+    "modelProbability": 0.09232706513736434,
+    "legs": 5,
+    "players": [
+      "Chelsea Gray",
+      "A'ja Wilson"
+    ],
+    "markets": [
+      "rebounds",
+      "points",
+      "threes",
+      "rebounds",
+      "points"
+    ],
+    "evidenceScore": 94,
+    "confidence": "low",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857211:long:Chelsea Gray under 2.5 rebounds|Chelsea Gray under 11.5 points|Chelsea Gray 3-Pointers Made under 1.5|Jackie Young Points + Rebounds under 25.5|Nneka Ogwumike under 17.5 points",
+    "suggestionId": "long-805c97a9",
+    "gameId": "401857211",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 25.105625280000005,
+    "modelProbability": 0.07553561119607154,
+    "legs": 5,
+    "players": [
+      "Chelsea Gray",
+      "Jackie Young",
+      "Nneka Ogwumike"
+    ],
+    "markets": [
+      "rebounds",
+      "points",
+      "threes",
+      "pr",
+      "points"
+    ],
+    "evidenceScore": 94,
+    "confidence": "low",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857211:long:Chelsea Gray under 2.5 rebounds|Chelsea Gray under 11.5 points|Chelsea Gray 3-Pointers Made under 1.5|A'ja Wilson under 9.5 rebounds|A'ja Wilson under 25.5 points"
+  },
+  {
+    "ledgerId": "401857211:long:Chelsea Gray under 3.5 rebounds|Chelsea Gray under 11.5 points|Chelsea Gray 3-Pointers Made under 1.5|A'ja Wilson under 9.5 rebounds|A'ja Wilson under 25.5 points|A'ja Wilson under 3.5 assists",
+    "suggestionId": "long-569d90c1",
+    "gameId": "401857211",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 29.20675064832,
+    "modelProbability": 0.06299591065762013,
+    "legs": 6,
+    "players": [
+      "Chelsea Gray",
+      "A'ja Wilson"
+    ],
+    "markets": [
+      "rebounds",
+      "points",
+      "threes",
+      "rebounds",
+      "points",
+      "assists"
+    ],
+    "evidenceScore": 88,
+    "confidence": "low",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857211:long:Chelsea Gray under 2.5 rebounds|Chelsea Gray under 11.5 points|Chelsea Gray 3-Pointers Made under 1.5|A'ja Wilson under 9.5 rebounds|A'ja Wilson under 25.5 points"
+  },
+  {
+    "ledgerId": "401857211:mid:Nneka Ogwumike Points + Rebounds under 26.5|Nneka Ogwumike 3-Pointers Made under 1.5|Chelsea Gray under 11.5 points",
+    "suggestionId": "mid-a667fb3a",
+    "gameId": "401857211",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 5.321646000000001,
+    "modelProbability": 0.199537506,
+    "legs": 3,
+    "players": [
+      "Nneka Ogwumike",
+      "Chelsea Gray"
+    ],
+    "markets": [
+      "pr",
+      "threes",
+      "points"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857211:mid:Nneka Ogwumike Points + Rebounds under 26.5|Nneka Ogwumike 3-Pointers Made under 1.5|Rae Burrell under 2.5 rebounds|Rae Burrell under 15.5 points"
+  },
+  {
+    "ledgerId": "401857211:mid:Nneka Ogwumike Points + Rebounds under 26.5|Nneka Ogwumike 3-Pointers Made under 1.5|Rae Burrell under 2.5 rebounds|Rae Burrell under 15.5 points",
+    "suggestionId": "mid-ebb28ccf",
+    "gameId": "401857211",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 9.064823130000002,
+    "modelProbability": 0.15242430083197026,
+    "legs": 4,
+    "players": [
+      "Nneka Ogwumike",
+      "Rae Burrell"
+    ],
+    "markets": [
+      "pr",
+      "threes",
+      "rebounds",
+      "points"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "won"
+  },
+  {
+    "ledgerId": "401857211:mid:Rae Burrell under 2.5 rebounds|Rae Burrell under 15.5 points|Jackie Young under 21.5 points",
+    "suggestionId": "mid-82057d86",
+    "gameId": "401857211",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 5.861355,
+    "modelProbability": 0.20654637836538461,
+    "legs": 3,
+    "players": [
+      "Rae Burrell",
+      "Jackie Young"
+    ],
+    "markets": [
+      "rebounds",
+      "points",
+      "points"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "won",
+    "alternativeOf": "401857211:mid:Nneka Ogwumike Points + Rebounds under 26.5|Nneka Ogwumike 3-Pointers Made under 1.5|Rae Burrell under 2.5 rebounds|Rae Burrell under 15.5 points"
+  },
+  {
+    "ledgerId": "401857211:moonshot:Jackie Young under 21.5 points|Jackie Young 3-Pointers Made under 2.5|Jackie Young under 5.5 assists|A'ja Wilson Rebounds + Assists under 12.5|A'ja Wilson under 25.5 points|Rae Burrell Rebounds + Assists under 5.5|Rae Burrell under 15.5 points|Rae Burrell over 1.5 3-Pointers Made",
+    "suggestionId": "moonshot-c45fa0ef",
+    "gameId": "401857211",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "moonshot",
+    "decimal": 167.66408861546284,
+    "modelProbability": 0.01731705894884368,
+    "legs": 8,
+    "players": [
+      "Jackie Young",
+      "A'ja Wilson",
+      "Rae Burrell"
+    ],
+    "markets": [
+      "points",
+      "threes",
+      "assists",
+      "ra",
+      "points",
+      "ra",
+      "points",
+      "threes"
+    ],
+    "evidenceScore": 76,
+    "confidence": "low",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857211:moonshot:Jackie Young under 21.5 points|Jackie Young 3-Pointers Made under 2.5|Jackie Young under 5.5 assists|Nneka Ogwumike Points + Rebounds + Assists under 29.5|Nneka Ogwumike 3-Pointers Made under 1.5|Nneka Ogwumike under 8.5 rebounds|Rae Burrell Rebounds + Assists under 5.5|Rae Burrell under 15.5 points"
+  },
+  {
+    "ledgerId": "401857211:moonshot:Jackie Young under 21.5 points|Jackie Young 3-Pointers Made under 2.5|Jackie Young under 5.5 assists|Nneka Ogwumike Points + Rebounds + Assists under 29.5|Nneka Ogwumike 3-Pointers Made under 1.5|Nneka Ogwumike under 8.5 rebounds|Rae Burrell Rebounds + Assists under 5.5|Rae Burrell under 15.5 points",
+    "suggestionId": "moonshot-8f555a8a",
+    "gameId": "401857211",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "moonshot",
+    "decimal": 131.36525862110355,
+    "modelProbability": 0.023378726891520003,
+    "legs": 8,
+    "players": [
+      "Jackie Young",
+      "Nneka Ogwumike",
+      "Rae Burrell"
+    ],
+    "markets": [
+      "points",
+      "threes",
+      "assists",
+      "pra",
+      "threes",
+      "rebounds",
+      "ra",
+      "points"
+    ],
+    "evidenceScore": 76,
+    "confidence": "low",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857211:moonshot:Nneka Ogwumike Points + Rebounds + Assists under 29.5|Nneka Ogwumike 3-Pointers Made under 1.5|Nneka Ogwumike under 8.5 rebounds|Rae Burrell Rebounds + Assists under 5.5|Rae Burrell under 15.5 points|Rae Burrell over 1.5 3-Pointers Made|A'ja Wilson Rebounds + Assists under 12.5|A'ja Wilson under 25.5 points",
+    "suggestionId": "moonshot-7256a8bf",
+    "gameId": "401857211",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "moonshot",
+    "decimal": 139.80735436149774,
+    "modelProbability": 0.01205978741061299,
+    "legs": 8,
+    "players": [
+      "Nneka Ogwumike",
+      "Rae Burrell",
+      "A'ja Wilson"
+    ],
+    "markets": [
+      "pra",
+      "threes",
+      "rebounds",
+      "ra",
+      "points",
+      "threes",
+      "ra",
+      "points"
+    ],
+    "evidenceScore": 76,
+    "confidence": "low",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857211:moonshot:Jackie Young under 21.5 points|Jackie Young 3-Pointers Made under 2.5|Jackie Young under 5.5 assists|Nneka Ogwumike Points + Rebounds + Assists under 29.5|Nneka Ogwumike 3-Pointers Made under 1.5|Nneka Ogwumike under 8.5 rebounds|Rae Burrell Rebounds + Assists under 5.5|Rae Burrell under 15.5 points"
+  },
+  {
+    "ledgerId": "401857211:safe:A'ja Wilson under 9.5 rebounds",
+    "suggestionId": "safe-46a5d5ff",
+    "gameId": "401857211",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.68,
+    "modelProbability": 0.57,
+    "legs": 1,
+    "players": [
+      "A'ja Wilson"
+    ],
+    "markets": [
+      "rebounds"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857211:safe:Jackie Young under 4.5 rebounds"
+  },
+  {
+    "ledgerId": "401857211:safe:Jackie Young under 4.5 rebounds",
+    "suggestionId": "safe-13f84ab2",
+    "gameId": "401857211",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.72,
+    "modelProbability": 0.6,
+    "legs": 1,
+    "players": [
+      "Jackie Young"
+    ],
+    "markets": [
+      "rebounds"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857211:safe:Nneka Ogwumike under 12.5 rebounds + assists",
+    "suggestionId": "safe-5b26de86",
+    "gameId": "401857211",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.72,
+    "modelProbability": 0.58,
+    "legs": 1,
+    "players": [
+      "Nneka Ogwumike"
+    ],
+    "markets": [
+      "ra"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "won",
+    "alternativeOf": "401857211:safe:Jackie Young under 4.5 rebounds"
+  },
+  {
+    "ledgerId": "401857211:value:Chelsea Gray Points + Rebounds + Assists under 21.5|A'ja Wilson Rebounds + Assists under 12.5",
+    "suggestionId": "value-759d5a0a",
+    "gameId": "401857211",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 3.4475,
+    "modelProbability": 0.33059999999999995,
+    "legs": 2,
+    "players": [
+      "Chelsea Gray",
+      "A'ja Wilson"
+    ],
+    "markets": [
+      "pra",
+      "ra"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857211:value:Chelsea Gray Points + Rebounds + Assists under 21.5|Nneka Ogwumike under 12.5 rebounds + assists",
+    "suggestionId": "value-a1d4b427",
+    "gameId": "401857211",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 3.01,
+    "modelProbability": 0.35322,
+    "legs": 2,
+    "players": [
+      "Chelsea Gray",
+      "Nneka Ogwumike"
+    ],
+    "markets": [
+      "pra",
+      "ra"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857211:value:Chelsea Gray Points + Rebounds + Assists under 21.5|A'ja Wilson Rebounds + Assists under 12.5"
+  },
+  {
+    "ledgerId": "401857211:value:Chelsea Gray Rebounds + Assists under 9.5|A'ja Wilson Rebounds + Assists under 12.5",
+    "suggestionId": "value-68edb9ce",
+    "gameId": "401857211",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 3.4672,
+    "modelProbability": 0.3135,
+    "legs": 2,
+    "players": [
+      "Chelsea Gray",
+      "A'ja Wilson"
+    ],
+    "markets": [
+      "ra",
+      "ra"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "won",
+    "alternativeOf": "401857211:value:Chelsea Gray Points + Rebounds + Assists under 21.5|A'ja Wilson Rebounds + Assists under 12.5"
+  },
+  {
+    "ledgerId": "401857212:long:Kayla Thornton under 9.5 points + assists|Kayla Thornton under 4.5 rebounds|Gabby Williams under 2.5 assists|Cecilia Zandalasini under 1.5 3-pointers made|Carla Leite under 1.5 3-pointers made|Megan DiLeo under 1.5 3-pointers made",
+    "suggestionId": "long-d1d9468c",
+    "gameId": "401857212",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 23.95707798528,
+    "modelProbability": 0.08441348639997305,
+    "legs": 6,
+    "players": [
+      "Kayla Thornton",
+      "Gabby Williams",
+      "Cecilia Zandalasini",
+      "Carla Leite",
+      "Megan DiLeo"
+    ],
+    "markets": [
+      "pa",
+      "rebounds",
+      "assists",
+      "threes",
+      "threes",
+      "threes"
+    ],
+    "evidenceScore": 88,
+    "confidence": "low",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857212:long:Veronica Burton under 10.5 rebounds + assists|Kayla Thornton under 9.5 points + assists|Gabby Williams under 2.5 assists|Cecilia Zandalasini under 1.5 3-pointers made|Carla Leite under 1.5 3-pointers made|Janelle Salaun under 12.5 points"
+  },
+  {
+    "ledgerId": "401857212:long:Veronica Burton under 10.5 rebounds + assists|Kayla Thornton under 9.5 points + assists|Gabby Williams under 2.5 assists|Cecilia Zandalasini under 1.5 3-pointers made|Carla Leite under 1.5 3-pointers made|Janelle Salaun under 12.5 points",
+    "suggestionId": "long-11657244",
+    "gameId": "401857212",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 30.63070419552,
+    "modelProbability": 0.05554138168749125,
+    "legs": 6,
+    "players": [
+      "Veronica Burton",
+      "Kayla Thornton",
+      "Gabby Williams",
+      "Cecilia Zandalasini",
+      "Carla Leite",
+      "Janelle Salaun"
+    ],
+    "markets": [
+      "ra",
+      "pa",
+      "assists",
+      "threes",
+      "threes",
+      "points"
+    ],
+    "evidenceScore": 88,
+    "confidence": "low",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857212:long:Veronica Burton under 10.5 rebounds + assists|Kayla Thornton under 9.5 points + assists|Gabby Williams under 2.5 assists|Cecilia Zandalasini under 1.5 3-pointers made|Carla Leite under 1.5 3-pointers made|Megan DiLeo under 1.5 3-pointers made",
+    "suggestionId": "long-61cce3a7",
+    "gameId": "401857212",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 25.604127096768,
+    "modelProbability": 0.10510192014570266,
+    "legs": 6,
+    "players": [
+      "Veronica Burton",
+      "Kayla Thornton",
+      "Gabby Williams",
+      "Cecilia Zandalasini",
+      "Carla Leite",
+      "Megan DiLeo"
+    ],
+    "markets": [
+      "ra",
+      "pa",
+      "assists",
+      "threes",
+      "threes",
+      "threes"
+    ],
+    "evidenceScore": 88,
+    "confidence": "low",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857212:long:Veronica Burton under 10.5 rebounds + assists|Kayla Thornton under 9.5 points + assists|Gabby Williams under 2.5 assists|Cecilia Zandalasini under 1.5 3-pointers made|Carla Leite under 1.5 3-pointers made|Janelle Salaun under 12.5 points"
+  },
+  {
+    "ledgerId": "401857212:mid:Kayla Thornton under 9.5 points + assists|Cecilia Zandalasini under 1.5 3-pointers made|Megan DiLeo under 1.5 3-pointers made",
+    "suggestionId": "mid-98950f42",
+    "gameId": "401857212",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 5.2515339999999995,
+    "modelProbability": 0.2189447140633109,
+    "legs": 3,
+    "players": [
+      "Kayla Thornton",
+      "Cecilia Zandalasini",
+      "Megan DiLeo"
+    ],
+    "markets": [
+      "pa",
+      "threes",
+      "threes"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857212:mid:Veronica Burton under 10.5 rebounds + assists|Kayla Thornton under 9.5 points + assists|Gabby Williams under 2.5 assists"
+  },
+  {
+    "ledgerId": "401857212:mid:Veronica Burton under 10.5 rebounds + assists|Kayla Thornton under 9.5 points + assists|Cecilia Zandalasini under 1.5 3-pointers made",
+    "suggestionId": "mid-56482fc0",
+    "gameId": "401857212",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 5.509278,
+    "modelProbability": 0.2476955711383778,
+    "legs": 3,
+    "players": [
+      "Veronica Burton",
+      "Kayla Thornton",
+      "Cecilia Zandalasini"
+    ],
+    "markets": [
+      "ra",
+      "pa",
+      "threes"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857212:mid:Veronica Burton under 10.5 rebounds + assists|Kayla Thornton under 9.5 points + assists|Gabby Williams under 2.5 assists"
+  },
+  {
+    "ledgerId": "401857212:mid:Veronica Burton under 10.5 rebounds + assists|Kayla Thornton under 9.5 points + assists|Gabby Williams under 2.5 assists",
+    "suggestionId": "mid-39e403c3",
+    "gameId": "401857212",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 6.128298,
+    "modelProbability": 0.2791839250591545,
+    "legs": 3,
+    "players": [
+      "Veronica Burton",
+      "Kayla Thornton",
+      "Gabby Williams"
+    ],
+    "markets": [
+      "ra",
+      "pa",
+      "assists"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857212:safe:Carla Leite under 1.5 3-pointers made",
+    "suggestionId": "safe-508f6f69",
+    "gameId": "401857212",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.44,
+    "modelProbability": 0.72,
+    "legs": 1,
+    "players": [
+      "Carla Leite"
+    ],
+    "markets": [
+      "threes"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "won",
+    "alternativeOf": "401857212:safe:Veronica Burton under 10.5 rebounds + assists"
+  },
+  {
+    "ledgerId": "401857212:safe:Megan DiLeo under 1.5 3-pointers made",
+    "suggestionId": "safe-b0803202",
+    "gameId": "401857212",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.63,
+    "modelProbability": 0.6,
+    "legs": 1,
+    "players": [
+      "Megan DiLeo"
+    ],
+    "markets": [
+      "threes"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "won",
+    "alternativeOf": "401857212:safe:Veronica Burton under 10.5 rebounds + assists"
+  },
+  {
+    "ledgerId": "401857212:safe:Veronica Burton under 10.5 rebounds + assists",
+    "suggestionId": "safe-75dbf0de",
+    "gameId": "401857212",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.71,
+    "modelProbability": 0.63,
+    "legs": 1,
+    "players": [
+      "Veronica Burton"
+    ],
+    "markets": [
+      "ra"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857212:value:Carla Leite over 17.5 points",
+    "suggestionId": "value-09393ccd",
+    "gameId": "401857212",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 3.01,
+    "modelProbability": 0.38,
+    "legs": 1,
+    "players": [
+      "Carla Leite"
+    ],
+    "markets": [
+      "points"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "won",
+    "alternativeOf": "401857212:value:Megan DiLeo over 7.5 points|Carla Leite over 17.5 points"
+  },
+  {
+    "ledgerId": "401857212:value:Megan DiLeo over 7.5 points|Carla Leite over 17.5 points",
+    "suggestionId": "value-13de0f98",
+    "gameId": "401857212",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 3.5216999999999996,
+    "modelProbability": 0.3199518936997198,
+    "legs": 2,
+    "players": [
+      "Megan DiLeo",
+      "Carla Leite"
+    ],
+    "markets": [
+      "points",
+      "points"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "won"
+  },
+  {
+    "ledgerId": "401857212:value:Megan DiLeo over 7.5 points|Gabby Williams under 2.5 assists",
+    "suggestionId": "value-c2c35911",
+    "gameId": "401857212",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 2.3165999999999998,
+    "modelProbability": 0.46172,
+    "legs": 2,
+    "players": [
+      "Megan DiLeo",
+      "Gabby Williams"
+    ],
+    "markets": [
+      "points",
+      "assists"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "401857212:value:Megan DiLeo over 7.5 points|Carla Leite over 17.5 points"
+  },
+  {
+    "ledgerId": "slate:401857208+401857209+401857210+401857211+401857212:long:Shakira Austin under 20.5 pontos + assistências|Courtney Williams under 13.5 pontos|Sydney Taylor under 14.5 pontos|A'ja Wilson under 12.5 rebotes + assistências|Veronica Burton under 22.5 pontos + rebotes + assistências",
+    "suggestionId": "long-f0baa125",
+    "gameId": "slate:401857208+401857209+401857210+401857211+401857212",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 21.9645045984,
+    "modelProbability": 0.05945139200000001,
+    "legs": 5,
+    "players": [
+      "Shakira Austin",
+      "Courtney Williams",
+      "Sydney Taylor",
+      "A'ja Wilson",
+      "Veronica Burton"
+    ],
+    "markets": [
+      "pa",
+      "points",
+      "points",
+      "ra",
+      "pra"
+    ],
+    "evidenceScore": 94,
+    "confidence": "low",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "slate:401857208+401857209+401857210+401857211+401857212:long:Sonia Citron under 4.5 assistências|Courtney Williams under 13.5 pontos|Kiki Rice under 3.5 rebotes|A'ja Wilson under 12.5 rebotes + assistências|Veronica Burton under 22.5 pontos + rebotes + assistências"
+  },
+  {
+    "ledgerId": "slate:401857208+401857209+401857210+401857211+401857212:long:Sonia Citron under 4.5 assistências|Aliyah Boston under 11.5 rebotes + assistências|Kiki Rice under 3.5 rebotes|Chelsea Gray under 14.5 pontos + rebotes|Veronica Burton under 22.5 pontos + rebotes + assistências",
+    "suggestionId": "long-5f8d9f07",
+    "gameId": "slate:401857208+401857209+401857210+401857211+401857212",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 27.363477196800005,
+    "modelProbability": 0.0456456,
+    "legs": 5,
+    "players": [
+      "Sonia Citron",
+      "Aliyah Boston",
+      "Kiki Rice",
+      "Chelsea Gray",
+      "Veronica Burton"
+    ],
+    "markets": [
+      "assists",
+      "ra",
+      "rebounds",
+      "pr",
+      "pra"
+    ],
+    "evidenceScore": 94,
+    "confidence": "low",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost",
+    "alternativeOf": "slate:401857208+401857209+401857210+401857211+401857212:long:Sonia Citron under 4.5 assistências|Courtney Williams under 13.5 pontos|Kiki Rice under 3.5 rebotes|A'ja Wilson under 12.5 rebotes + assistências|Veronica Burton under 22.5 pontos + rebotes + assistências"
+  },
+  {
+    "ledgerId": "slate:401857208+401857209+401857210+401857211+401857212:long:Sonia Citron under 4.5 assistências|Courtney Williams under 13.5 pontos|Kiki Rice under 3.5 rebotes|A'ja Wilson under 12.5 rebotes + assistências|Veronica Burton under 22.5 pontos + rebotes + assistências",
+    "suggestionId": "long-90072b12",
+    "gameId": "slate:401857208+401857209+401857210+401857211+401857212",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 29.689634860800005,
+    "modelProbability": 0.04391296,
+    "legs": 5,
+    "players": [
+      "Sonia Citron",
+      "Courtney Williams",
+      "Kiki Rice",
+      "A'ja Wilson",
+      "Veronica Burton"
+    ],
+    "markets": [
+      "assists",
+      "points",
+      "rebounds",
+      "ra",
+      "pra"
+    ],
+    "evidenceScore": 94,
+    "confidence": "low",
+    "startsAt": "2026-09-23T02:00Z",
+    "day": "2026-09-22",
+    "outcome": "lost"
+  },
+  {
+    "ledgerId": "401857213:long:Angel Reese Points + Rebounds + Assists over 34.5|Jordin Canada Points + Assists over 19.5|Rhyne Howard Points + Assists over 19.5|Naz Hillmon Rebounds over 3.5",
+    "suggestionId": "long-9e10f57b",
+    "gameId": "401857213",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 25.790918400000006,
+    "modelProbability": 0.0506166810810811,
+    "legs": 4,
+    "players": [
+      "Angel Reese",
+      "Jordin Canada",
+      "Rhyne Howard",
+      "Naz Hillmon"
+    ],
+    "markets": [
+      "pra",
+      "pa",
+      "pa",
+      "rebounds"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-24T00:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending",
+    "alternativeOf": "401857213:mid:Jordin Canada Points + Rebounds over 12.5|Rhyne Howard Points + Assists over 19.5|Allisha Gray Points + Rebounds + Assists over 22.5|Angel Reese Rebounds over 11.5|Naz Hillmon Rebounds over 3.5"
+  },
+  {
+    "ledgerId": "401857213:long:Jordin Canada Points + Rebounds over 12.5|Allisha Gray Points + Rebounds + Assists over 22.5|Naz Hillmon Rebounds over 3.5|Pauline Astier Points over 7.5|Leonie Fiebich 3-Pointers Made over 1.5",
+    "suggestionId": "long-fada08b5",
+    "gameId": "401857213",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 22.62922816,
+    "modelProbability": 0.07104683472530418,
+    "legs": 5,
+    "players": [
+      "Jordin Canada",
+      "Allisha Gray",
+      "Naz Hillmon",
+      "Pauline Astier",
+      "Leonie Fiebich"
+    ],
+    "markets": [
+      "pr",
+      "pra",
+      "rebounds",
+      "points",
+      "threes"
+    ],
+    "evidenceScore": 94,
+    "confidence": "low",
+    "startsAt": "2026-09-24T00:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending",
+    "alternativeOf": "401857213:mid:Jordin Canada Points + Rebounds over 12.5|Rhyne Howard Points + Assists over 19.5|Allisha Gray Points + Rebounds + Assists over 22.5|Angel Reese Rebounds over 11.5|Naz Hillmon Rebounds over 3.5"
+  },
+  {
+    "ledgerId": "401857213:mid:Allisha Gray Points + Rebounds + Assists over 22.5|Angel Reese Rebounds + Assists over 13.5|Pauline Astier Points over 7.5",
+    "suggestionId": "mid-a7aa5516",
+    "gameId": "401857213",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 5.41552,
+    "modelProbability": 0.21035700000000002,
+    "legs": 3,
+    "players": [
+      "Allisha Gray",
+      "Angel Reese",
+      "Pauline Astier"
+    ],
+    "markets": [
+      "pra",
+      "ra",
+      "points"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-24T00:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending",
+    "alternativeOf": "401857213:mid:Rhyne Howard Points + Assists over 19.5|Allisha Gray Points + Rebounds + Assists over 22.5|Angel Reese Rebounds + Assists over 13.5"
+  },
+  {
+    "ledgerId": "401857213:mid:Jordin Canada Points + Rebounds over 12.5|Rhyne Howard Points + Assists over 19.5|Allisha Gray Points + Rebounds + Assists over 22.5|Angel Reese Rebounds over 11.5|Naz Hillmon Rebounds over 3.5",
+    "suggestionId": "mid-3dbee117",
+    "gameId": "401857213",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 19.5150942,
+    "modelProbability": 0.0634474605704082,
+    "legs": 5,
+    "players": [
+      "Jordin Canada",
+      "Rhyne Howard",
+      "Allisha Gray",
+      "Angel Reese",
+      "Naz Hillmon"
+    ],
+    "markets": [
+      "pr",
+      "pa",
+      "pra",
+      "rebounds",
+      "rebounds"
+    ],
+    "evidenceScore": 94,
+    "confidence": "low",
+    "startsAt": "2026-09-24T00:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending"
+  },
+  {
+    "ledgerId": "401857213:mid:Rhyne Howard Points + Assists over 19.5|Allisha Gray Points + Assists over 19.5|Naz Hillmon Rebounds over 3.5",
+    "suggestionId": "mid-866dd190",
+    "gameId": "401857213",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 5.75856,
+    "modelProbability": 0.16038000000000002,
+    "legs": 3,
+    "players": [
+      "Rhyne Howard",
+      "Allisha Gray",
+      "Naz Hillmon"
+    ],
+    "markets": [
+      "pa",
+      "pa",
+      "rebounds"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-24T00:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending",
+    "alternativeOf": "401857213:mid:Rhyne Howard Points + Assists over 19.5|Allisha Gray Points + Rebounds + Assists over 22.5|Angel Reese Rebounds + Assists over 13.5"
+  },
+  {
+    "ledgerId": "401857213:mid:Rhyne Howard Points + Assists over 19.5|Allisha Gray Points + Rebounds + Assists over 22.5|Angel Reese Rebounds + Assists over 13.5",
+    "suggestionId": "mid-325f489a",
+    "gameId": "401857213",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 5.5386,
+    "modelProbability": 0.17172,
+    "legs": 3,
+    "players": [
+      "Rhyne Howard",
+      "Allisha Gray",
+      "Angel Reese"
+    ],
+    "markets": [
+      "pa",
+      "pra",
+      "ra"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-24T00:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending"
+  },
+  {
+    "ledgerId": "401857213:moonshot:Allisha Gray Points + Rebounds + Assists over 22.5|Allisha Gray Assists over 2.5|Pauline Astier Points over 7.5|Pauline Astier Points + Assists over 11.5|Leonie Fiebich 3-Pointers Made over 1.5|Leonie Fiebich Points + Rebounds + Assists over 12.5|Sabrina Ionescu Rebounds + Assists under 8.5",
+    "suggestionId": "moonshot-42aa8180",
+    "gameId": "401857213",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "moonshot",
+    "decimal": 105.9620028977664,
+    "modelProbability": 0.02286059701383141,
+    "legs": 7,
+    "players": [
+      "Allisha Gray",
+      "Pauline Astier",
+      "Leonie Fiebich",
+      "Sabrina Ionescu"
+    ],
+    "markets": [
+      "pra",
+      "assists",
+      "points",
+      "pa",
+      "threes",
+      "pra",
+      "ra"
+    ],
+    "evidenceScore": 82,
+    "confidence": "low",
+    "startsAt": "2026-09-24T00:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending",
+    "alternativeOf": "401857213:moonshot:Jordin Canada Points + Rebounds over 12.5|Rhyne Howard Points + Assists over 19.5|Allisha Gray Points + Rebounds + Assists over 22.5|Angel Reese Points + Rebounds + Assists over 29.5|Naz Hillmon Rebounds over 3.5|Pauline Astier Points over 7.5|Leonie Fiebich 3-Pointers Made over 1.5|Sabrina Ionescu Rebounds + Assists under 8.5"
+  },
+  {
+    "ledgerId": "401857213:moonshot:Jordin Canada Points + Rebounds over 12.5|Rhyne Howard Points + Assists over 19.5|Allisha Gray Points + Rebounds + Assists over 22.5|Angel Reese Points + Rebounds + Assists over 29.5|Naz Hillmon Rebounds over 3.5|Pauline Astier Points over 7.5|Leonie Fiebich 3-Pointers Made over 1.5|Sabrina Ionescu Rebounds + Assists under 8.5",
+    "suggestionId": "moonshot-6b5d2cde",
+    "gameId": "401857213",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "moonshot",
+    "decimal": 129.77409765196802,
+    "modelProbability": 0.012674180741102705,
+    "legs": 8,
+    "players": [
+      "Jordin Canada",
+      "Rhyne Howard",
+      "Allisha Gray",
+      "Angel Reese",
+      "Naz Hillmon",
+      "Pauline Astier",
+      "Leonie Fiebich",
+      "Sabrina Ionescu"
+    ],
+    "markets": [
+      "pr",
+      "pa",
+      "pra",
+      "pra",
+      "rebounds",
+      "points",
+      "threes",
+      "ra"
+    ],
+    "evidenceScore": 76,
+    "confidence": "low",
+    "startsAt": "2026-09-24T00:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending"
+  },
+  {
+    "ledgerId": "401857213:moonshot:Jordin Canada Points + Rebounds over 12.5|Rhyne Howard Points + Assists over 19.5|Allisha Gray Points + Rebounds + Assists over 22.5|Angel Reese Points + Rebounds + Assists over 34.5|Naz Hillmon Rebounds over 3.5|Pauline Astier Points over 7.5|Leonie Fiebich 3-Pointers Made over 1.5",
+    "suggestionId": "moonshot-f7575498",
+    "gameId": "401857213",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "moonshot",
+    "decimal": 127.08574534656,
+    "modelProbability": 0.019280281120455836,
+    "legs": 7,
+    "players": [
+      "Jordin Canada",
+      "Rhyne Howard",
+      "Allisha Gray",
+      "Angel Reese",
+      "Naz Hillmon",
+      "Pauline Astier",
+      "Leonie Fiebich"
+    ],
+    "markets": [
+      "pr",
+      "pa",
+      "pra",
+      "pra",
+      "rebounds",
+      "points",
+      "threes"
+    ],
+    "evidenceScore": 82,
+    "confidence": "low",
+    "startsAt": "2026-09-24T00:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending",
+    "alternativeOf": "401857213:moonshot:Jordin Canada Points + Rebounds over 12.5|Rhyne Howard Points + Assists over 19.5|Allisha Gray Points + Rebounds + Assists over 22.5|Angel Reese Points + Rebounds + Assists over 29.5|Naz Hillmon Rebounds over 3.5|Pauline Astier Points over 7.5|Leonie Fiebich 3-Pointers Made over 1.5|Sabrina Ionescu Rebounds + Assists under 8.5"
+  },
+  {
+    "ledgerId": "401857213:safe:Angel Reese Rebounds + Assists over 13.5",
+    "suggestionId": "safe-dced7483",
+    "gameId": "401857213",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.7,
+    "modelProbability": 0.6,
+    "legs": 1,
+    "players": [
+      "Angel Reese"
+    ],
+    "markets": [
+      "ra"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-24T00:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending",
+    "alternativeOf": "401857213:safe:Jordin Canada Points + Rebounds over 12.5"
+  },
+  {
+    "ledgerId": "401857213:safe:Jordin Canada Points + Rebounds over 12.5",
+    "suggestionId": "safe-41660a7c",
+    "gameId": "401857213",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.75,
+    "modelProbability": 0.62,
+    "legs": 1,
+    "players": [
+      "Jordin Canada"
+    ],
+    "markets": [
+      "pr"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-24T00:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending"
+  },
+  {
+    "ledgerId": "401857213:safe:Jordin Canada Points over 7.5",
+    "suggestionId": "safe-8a190cd3",
+    "gameId": "401857213",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.39,
+    "modelProbability": 0.77,
+    "legs": 1,
+    "players": [
+      "Jordin Canada"
+    ],
+    "markets": [
+      "points"
+    ],
+    "evidenceScore": 100,
+    "confidence": "high",
+    "startsAt": "2026-09-24T00:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending",
+    "alternativeOf": "401857213:safe:Jordin Canada Points + Rebounds over 12.5"
+  },
+  {
+    "ledgerId": "401857213:value:Naz Hillmon Rebounds over 3.5|Rhyne Howard Rebounds + Assists over 6.5",
+    "suggestionId": "value-e84bf3ff",
+    "gameId": "401857213",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 2.9583999999999997,
+    "modelProbability": 0.30800000000000005,
+    "legs": 2,
+    "players": [
+      "Naz Hillmon",
+      "Rhyne Howard"
+    ],
+    "markets": [
+      "rebounds",
+      "ra"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-24T00:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending",
+    "alternativeOf": "401857213:value:Pauline Astier Points over 7.5|Leonie Fiebich 3-Pointers Made over 1.5"
+  },
+  {
+    "ledgerId": "401857213:value:Pauline Astier Points + Rebounds over 10.5|Leonie Fiebich Points + Rebounds + Assists over 12.5",
+    "suggestionId": "value-ec0f08d2",
+    "gameId": "401857213",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 3.5114,
+    "modelProbability": 0.3021,
+    "legs": 2,
+    "players": [
+      "Pauline Astier",
+      "Leonie Fiebich"
+    ],
+    "markets": [
+      "pr",
+      "pra"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-24T00:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending",
+    "alternativeOf": "401857213:value:Pauline Astier Points over 7.5|Leonie Fiebich 3-Pointers Made over 1.5"
+  },
+  {
+    "ledgerId": "401857213:value:Pauline Astier Points over 7.5|Leonie Fiebich 3-Pointers Made over 1.5",
+    "suggestionId": "value-1faf4ec3",
+    "gameId": "401857213",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 4.1536,
+    "modelProbability": 0.26926451612903224,
+    "legs": 2,
+    "players": [
+      "Pauline Astier",
+      "Leonie Fiebich"
+    ],
+    "markets": [
+      "points",
+      "threes"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-24T00:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending"
+  },
+  {
+    "ledgerId": "401857214:long:Dominique Malonga Rebounds over 7.5|Natisha Hiedeman Assists over 4.5|Flau'jae Johnson Points + Rebounds over 21.5|Paige Bueckers Rebounds + Assists over 9.5|Arike Ogunbowale Points under 16.5",
+    "suggestionId": "long-1e0f632e",
+    "gameId": "401857214",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 24.085839527999998,
+    "modelProbability": 0.04214824225556214,
+    "legs": 5,
+    "players": [
+      "Dominique Malonga",
+      "Natisha Hiedeman",
+      "Flau'jae Johnson",
+      "Paige Bueckers",
+      "Arike Ogunbowale"
+    ],
+    "markets": [
+      "rebounds",
+      "assists",
+      "pr",
+      "ra",
+      "points"
+    ],
+    "evidenceScore": 94,
+    "confidence": "low",
+    "startsAt": "2026-09-24T02:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending",
+    "alternativeOf": "401857214:long:Dominique Malonga Rebounds over 7.5|Natisha Hiedeman Assists over 4.5|Flau'jae Johnson Points + Rebounds over 21.5|Paige Bueckers Rebounds + Assists over 9.5|Paige Bueckers 3-Pointers Made over 1.5"
+  },
+  {
+    "ledgerId": "401857214:long:Dominique Malonga Rebounds over 7.5|Natisha Hiedeman Assists over 4.5|Flau'jae Johnson Points + Rebounds over 21.5|Paige Bueckers Rebounds + Assists over 9.5|Paige Bueckers 3-Pointers Made over 1.5",
+    "suggestionId": "long-286d7c9c",
+    "gameId": "401857214",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 22.346306673199997,
+    "modelProbability": 0.04699946631817938,
+    "legs": 5,
+    "players": [
+      "Dominique Malonga",
+      "Natisha Hiedeman",
+      "Flau'jae Johnson",
+      "Paige Bueckers"
+    ],
+    "markets": [
+      "rebounds",
+      "assists",
+      "pr",
+      "ra",
+      "threes"
+    ],
+    "evidenceScore": 94,
+    "confidence": "low",
+    "startsAt": "2026-09-24T02:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending"
+  },
+  {
+    "ledgerId": "401857214:long:Dominique Malonga Rebounds over 7.5|Natisha Hiedeman Assists over 4.5|Natisha Hiedeman Points over 14.5|Jessica Shepard Assists under 5.5|Jessica Shepard Points under 13.5",
+    "suggestionId": "long-aa863653",
+    "gameId": "401857214",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "long",
+    "decimal": 30.853787606399997,
+    "modelProbability": 0.04209475594522136,
+    "legs": 5,
+    "players": [
+      "Dominique Malonga",
+      "Natisha Hiedeman",
+      "Jessica Shepard"
+    ],
+    "markets": [
+      "rebounds",
+      "assists",
+      "points",
+      "assists",
+      "points"
+    ],
+    "evidenceScore": 94,
+    "confidence": "low",
+    "startsAt": "2026-09-24T02:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending",
+    "alternativeOf": "401857214:long:Dominique Malonga Rebounds over 7.5|Natisha Hiedeman Assists over 4.5|Flau'jae Johnson Points + Rebounds over 21.5|Paige Bueckers Rebounds + Assists over 9.5|Paige Bueckers 3-Pointers Made over 1.5"
+  },
+  {
+    "ledgerId": "401857214:mid:Arike Ogunbowale Points under 16.5|Arike Ogunbowale 3-Pointers Made under 1.5|Jessica Shepard Assists under 5.5",
+    "suggestionId": "mid-95877676",
+    "gameId": "401857214",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 6.4242,
+    "modelProbability": 0.2412098504784241,
+    "legs": 3,
+    "players": [
+      "Arike Ogunbowale",
+      "Jessica Shepard"
+    ],
+    "markets": [
+      "points",
+      "threes",
+      "assists"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-24T02:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending"
+  },
+  {
+    "ledgerId": "401857214:mid:Arike Ogunbowale Points under 16.5|Arike Ogunbowale 3-Pointers Made under 1.5|Jessica Shepard Points + Rebounds + Assists under 30.5",
+    "suggestionId": "mid-a73be436",
+    "gameId": "401857214",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 7.004700000000001,
+    "modelProbability": 0.22763866557458845,
+    "legs": 3,
+    "players": [
+      "Arike Ogunbowale",
+      "Jessica Shepard"
+    ],
+    "markets": [
+      "points",
+      "threes",
+      "pra"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-24T02:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending",
+    "alternativeOf": "401857214:mid:Arike Ogunbowale Points under 16.5|Arike Ogunbowale 3-Pointers Made under 1.5|Jessica Shepard Assists under 5.5"
+  },
+  {
+    "ledgerId": "401857214:mid:Jessica Shepard Points + Rebounds + Assists under 30.5|Flau'jae Johnson Points under 16.5|Flau'jae Johnson 3-Pointers Made under 1.5",
+    "suggestionId": "mid-6e7c335d",
+    "gameId": "401857214",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "mid",
+    "decimal": 7.156197,
+    "modelProbability": 0.18751486780039725,
+    "legs": 3,
+    "players": [
+      "Jessica Shepard",
+      "Flau'jae Johnson"
+    ],
+    "markets": [
+      "pra",
+      "points",
+      "threes"
+    ],
+    "evidenceScore": 100,
+    "confidence": "low",
+    "startsAt": "2026-09-24T02:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending",
+    "alternativeOf": "401857214:mid:Arike Ogunbowale Points under 16.5|Arike Ogunbowale 3-Pointers Made under 1.5|Jessica Shepard Assists under 5.5"
+  },
+  {
+    "ledgerId": "401857214:moonshot:Dominique Malonga Rebounds over 7.5|Natisha Hiedeman Points + Assists over 16.5|Natisha Hiedeman 3-Pointers Made over 1.5|Flau'jae Johnson Rebounds over 4.5|Arike Ogunbowale Points under 16.5|Arike Ogunbowale 3-Pointers Made under 1.5|Jessica Shepard Assists under 5.5|Jessica Shepard Points under 13.5",
+    "suggestionId": "moonshot-ecd62636",
+    "gameId": "401857214",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "moonshot",
+    "decimal": 174.17942062774696,
+    "modelProbability": 0.006851521647377963,
+    "legs": 8,
+    "players": [
+      "Dominique Malonga",
+      "Natisha Hiedeman",
+      "Flau'jae Johnson",
+      "Arike Ogunbowale",
+      "Jessica Shepard"
+    ],
+    "markets": [
+      "rebounds",
+      "pa",
+      "threes",
+      "rebounds",
+      "points",
+      "threes",
+      "assists",
+      "points"
+    ],
+    "evidenceScore": 76,
+    "confidence": "low",
+    "startsAt": "2026-09-24T02:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending",
+    "alternativeOf": "401857214:moonshot:Paige Bueckers Rebounds over 3.5|Paige Bueckers Assists over 5.5|Dominique Malonga Rebounds over 7.5|Natisha Hiedeman Points + Assists over 16.5|Flau'jae Johnson Rebounds over 4.5|Arike Ogunbowale Points under 16.5|Jessica Shepard Assists under 5.5|Jessica Shepard Points + Rebounds under 24.5"
+  },
+  {
+    "ledgerId": "401857214:moonshot:Paige Bueckers Rebounds over 3.5|Paige Bueckers Assists over 5.5|Dominique Malonga Rebounds over 7.5|Natisha Hiedeman Points + Assists over 16.5|Flau'jae Johnson Rebounds over 4.5|Arike Ogunbowale Points under 16.5|Arike Ogunbowale 3-Pointers Made under 1.5|Jessica Shepard Assists under 5.5",
+    "suggestionId": "moonshot-ebf8d37a",
+    "gameId": "401857214",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "moonshot",
+    "decimal": 136.59430093860675,
+    "modelProbability": 0.009711708663254812,
+    "legs": 8,
+    "players": [
+      "Paige Bueckers",
+      "Dominique Malonga",
+      "Natisha Hiedeman",
+      "Flau'jae Johnson",
+      "Arike Ogunbowale",
+      "Jessica Shepard"
+    ],
+    "markets": [
+      "rebounds",
+      "assists",
+      "rebounds",
+      "pa",
+      "rebounds",
+      "points",
+      "threes",
+      "assists"
+    ],
+    "evidenceScore": 76,
+    "confidence": "low",
+    "startsAt": "2026-09-24T02:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending",
+    "alternativeOf": "401857214:moonshot:Paige Bueckers Rebounds over 3.5|Paige Bueckers Assists over 5.5|Dominique Malonga Rebounds over 7.5|Natisha Hiedeman Points + Assists over 16.5|Flau'jae Johnson Rebounds over 4.5|Arike Ogunbowale Points under 16.5|Jessica Shepard Assists under 5.5|Jessica Shepard Points + Rebounds under 24.5"
+  },
+  {
+    "ledgerId": "401857214:moonshot:Paige Bueckers Rebounds over 3.5|Paige Bueckers Assists over 5.5|Dominique Malonga Rebounds over 7.5|Natisha Hiedeman Points + Assists over 16.5|Flau'jae Johnson Rebounds over 4.5|Arike Ogunbowale Points under 16.5|Jessica Shepard Assists under 5.5|Jessica Shepard Points + Rebounds under 24.5",
+    "suggestionId": "moonshot-08eaaaf1",
+    "gameId": "401857214",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "moonshot",
+    "decimal": 120.71124268993154,
+    "modelProbability": 0.006470018188098428,
+    "legs": 8,
+    "players": [
+      "Paige Bueckers",
+      "Dominique Malonga",
+      "Natisha Hiedeman",
+      "Flau'jae Johnson",
+      "Arike Ogunbowale",
+      "Jessica Shepard"
+    ],
+    "markets": [
+      "rebounds",
+      "assists",
+      "rebounds",
+      "pa",
+      "rebounds",
+      "points",
+      "assists",
+      "pr"
+    ],
+    "evidenceScore": 76,
+    "confidence": "low",
+    "startsAt": "2026-09-24T02:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending"
+  },
+  {
+    "ledgerId": "401857214:safe:Arike Ogunbowale Points under 16.5",
+    "suggestionId": "safe-1523627d",
+    "gameId": "401857214",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.8,
+    "modelProbability": 0.55,
+    "legs": 1,
+    "players": [
+      "Arike Ogunbowale"
+    ],
+    "markets": [
+      "points"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-24T02:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending",
+    "alternativeOf": "401857214:safe:Natisha Hiedeman Points + Assists over 16.5"
+  },
+  {
+    "ledgerId": "401857214:safe:Natisha Hiedeman Points + Assists over 16.5",
+    "suggestionId": "safe-c86629b8",
+    "gameId": "401857214",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.86,
+    "modelProbability": 0.6,
+    "legs": 1,
+    "players": [
+      "Natisha Hiedeman"
+    ],
+    "markets": [
+      "pa"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-24T02:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending"
+  },
+  {
+    "ledgerId": "401857214:safe:Paige Bueckers 3-Pointers Made over 1.5",
+    "suggestionId": "safe-f80bf53d",
+    "gameId": "401857214",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "safe",
+    "decimal": 1.67,
+    "modelProbability": 0.56,
+    "legs": 1,
+    "players": [
+      "Paige Bueckers"
+    ],
+    "markets": [
+      "threes"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-24T02:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending",
+    "alternativeOf": "401857214:safe:Natisha Hiedeman Points + Assists over 16.5"
+  },
+  {
+    "ledgerId": "401857214:value:Flau'jae Johnson Rebounds over 4.5|Dominique Malonga Rebounds over 7.5",
+    "suggestionId": "value-40370c81",
+    "gameId": "401857214",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 3.4902999999999995,
+    "modelProbability": 0.2899791019955655,
+    "legs": 2,
+    "players": [
+      "Flau'jae Johnson",
+      "Dominique Malonga"
+    ],
+    "markets": [
+      "rebounds",
+      "rebounds"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-24T02:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending",
+    "alternativeOf": "401857214:value:Paige Bueckers Rebounds over 3.5|Paige Bueckers 3-Pointers Made over 1.5"
+  },
+  {
+    "ledgerId": "401857214:value:Paige Bueckers Rebounds over 3.5|Paige Bueckers 3-Pointers Made over 1.5",
+    "suggestionId": "value-03466aff",
+    "gameId": "401857214",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 2.9726,
+    "modelProbability": 0.3450313141129468,
+    "legs": 2,
+    "players": [
+      "Paige Bueckers"
+    ],
+    "markets": [
+      "rebounds",
+      "threes"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-24T02:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending"
+  },
+  {
+    "ledgerId": "401857214:value:Paige Bueckers Rebounds over 3.5|Paige Bueckers Assists over 5.5",
+    "suggestionId": "value-e241ba69",
+    "gameId": "401857214",
+    "sportKey": "wnba",
+    "scope": "pre",
+    "bandKey": "value",
+    "decimal": 3.2752000000000003,
+    "modelProbability": 0.29359051027818533,
+    "legs": 2,
+    "players": [
+      "Paige Bueckers"
+    ],
+    "markets": [
+      "rebounds",
+      "assists"
+    ],
+    "evidenceScore": 100,
+    "confidence": "medium",
+    "startsAt": "2026-09-24T02:00Z",
+    "day": "2026-09-23",
+    "outcome": "pending",
+    "alternativeOf": "401857214:value:Paige Bueckers Rebounds over 3.5|Paige Bueckers 3-Pointers Made over 1.5"
+  }
+]

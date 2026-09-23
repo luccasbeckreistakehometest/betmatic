@@ -6,7 +6,17 @@ import { landingCopy, LADDER } from "@/lib/landing-copy";
 import { SPORT_LANDINGS } from "@/lib/sport-landing";
 import { PLANS } from "@/lib/plans";
 import { impliedProbability } from "@/lib/odds";
-import type { Lang } from "@/lib/i18n";
+import { t as translate, type DictKey, type Lang } from "@/lib/i18n";
+
+/** Every string "Os bilhetes de hoje" renders. Kept here so a new one cannot skip the scan. */
+export const TODAY_KEYS: DictKey[] = [
+  "navToday", "todayTitle", "todaySubtitle", "todayMeta", "todayMetaOne", "todayFooter", "todayStake", "todayStakeNoMoney",
+  "todayChance", "todayMinOdds", "todayCheckPrice", "todayNoBankroll", "todaySetBankroll", "todaySmallBankroll", "todayWhy",
+  "todayOpenBook", "todayOpenGame", "todayRegister", "todayRegistered", "todayLadder", "todayCapped", "todayAllTickets",
+  "todayLive", "todayLiveReference", "todayLiveMin", "todayLiveAsk", "todayLiveExpired", "todayLiveUnverified",
+  "todayMeasuring", "todayNoneTitle", "todayNoneBody", "todayNoneAll", "todayNoneMethod", "todayPlanBand",
+  "todayUnavailable", "todayStakeRefused",
+];
 
 /**
  * Sales copy is the one place where a claim can outlive the feature it describes. Everything here
@@ -71,6 +81,9 @@ function claims(lang: Lang): { where: string; text: string; href?: string }[] {
     ...c.faq.map((f) => ({ where: "faq", text: `${f.q} ${f.a}` })),
     { where: "final", text: `${c.finalTitle} ${c.finalSub}` },
     ...PLANS.flatMap((p) => p.highlights[lang].map((h) => ({ where: `plan:${p.id}`, text: h }))),
+    // The day's short list is inside the app, but it is still copy a reader acts on: the same
+    // advertising rules apply to it, so it is scanned with the landing.
+    ...TODAY_KEYS.map((key) => ({ where: `today:${key}`, text: translate(key, lang) })),
   ];
   for (const s of SPORT_LANDINGS) {
     out.push({ where: `${s.slug[lang]}:hero`, text: `${s.title[lang]} ${s.sub[lang]} ${s.meta[lang]}` });
@@ -86,6 +99,8 @@ describe("marketing copy points at things that exist", () => {
     expect(ROUTES.has("/")).toBe(true);
     expect(ROUTES.has("/prova")).toBe(true);
     expect(ROUTES.has("/app/bankroll")).toBe(true);
+    // The short list is a real route the copy and the rail both point at.
+    expect(ROUTES.has("/app/hoje")).toBe(true);
     expect(routeExists("/planos?lang=en")).toBe(true);
     expect(routeExists("/nao-existe")).toBe(false);
   });

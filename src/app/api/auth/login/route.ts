@@ -3,6 +3,7 @@ import { z } from "zod";
 import { authenticate } from "@/lib/server/users";
 import { issueSession } from "@/lib/server/session";
 import { apiError, rateLimited, requestLang } from "@/lib/server/api";
+import { appHome } from "@/lib/env";
 import { accountKey, ipKey, peek, record } from "@/lib/server/rate-limit";
 
 export const runtime = "nodejs";
@@ -36,5 +37,5 @@ export async function POST(request: Request) {
     return result.reason === "disabled" ? apiError("account_disabled", lang, 403) : apiError("invalid_credentials", lang, 401);
   }
   await issueSession(result.user);
-  return NextResponse.json({ ok: true, role: result.user.role, mustChangePassword: !!result.user.mustChangePassword });
+  return NextResponse.json({ ok: true, role: result.user.role, mustChangePassword: !!result.user.mustChangePassword, home: appHome() });
 }

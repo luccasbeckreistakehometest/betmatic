@@ -23,6 +23,8 @@ const row = (over: Partial<CalibrationRow> = {}): CalibrationRow => ({
 const report = (rows: CalibrationRow[]): CalibrationReport => ({
   totalSettled: rows.reduce((a, r) => a + r.settled, 0),
   bySource: [],
+  bySide: [],
+  byStat: [],
   byMarket: rows,
   bySport: [],
   generatedAt: "2026-09-23T12:00:00.000Z",
