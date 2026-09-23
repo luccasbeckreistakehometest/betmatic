@@ -404,6 +404,8 @@ export interface CalibrationReport {
   totalSettled: number;
   bySource: CalibrationRow[];
   byMarket: CalibrationRow[];
+  /** The same legs cut by canonical market key (stat-key.ts) — finer than `market`. */
+  byStat: CalibrationRow[];
   bySport: CalibrationRow[];
   /** over vs under. `under` ran 20 points optimistic over 506 legs and nothing showed it. */
   bySide: CalibrationRow[];
