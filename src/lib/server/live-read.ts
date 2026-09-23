@@ -4,6 +4,7 @@ import { getLiveSnapshot, liveTracker } from "@/lib/server/live";
 import { buildBets } from "@/lib/bets/builder";
 import { buildPropCandidates } from "@/lib/props/candidates";
 import { recordPredictions } from "@/lib/ledger/store";
+import { sendTicketMail } from "@/lib/server/ticket-mail";
 import { AiBudgetExceededError, brasiliaDayStart } from "@/lib/server/ai-budget";
 import { reportError } from "@/lib/server/ops-log";
 import { aiConfigured, LIVE_MODEL } from "@/lib/ai/client";
@@ -190,6 +191,7 @@ export async function runLiveRead(user: LivePrincipal, sportKey: string, gameId:
       // Graded like every other ticket, kept out of the public ROI: the live record measures how
       // often a read lands, and the reference prices say nothing about what it would have paid.
       recordPredictions(detail.game, slate.suggestions, { live: { minute, period: snap.period } });
+      void sendTicketMail({ gameId, sportKey, dateKey, matchup: `${detail.game.away.displayName} @ ${detail.game.home.displayName}`, lang, fresh: { kind: "live", period: snap.period, minute } });
       getDb().prepare("UPDATE generation_requests SET status='ok', finishedAt=? WHERE id=?").run(nowIso(), reqId);
       return { status: "ok", read: latestLiveRead(sportKey, gameId, dateKey, lang)!, cached: false };
     } catch (error) {

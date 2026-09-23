@@ -12,6 +12,7 @@ import { getSport } from "@/lib/sports";
 import { lastUsage } from "@/lib/ai/extract";
 import { announceTickets } from "@/lib/server/webhook";
 import { notifyFollowers } from "@/lib/server/telegram";
+import { sendTicketMail } from "@/lib/server/ticket-mail";
 import type { BetSlate } from "@/lib/types";
 import type { Lang } from "@/lib/i18n";
 import { baseUrlOrEmpty } from "@/lib/base-url";
@@ -64,6 +65,8 @@ export async function generateGame(args: { sportKey: string; dateKey: string; de
   // prompt composes, and twice that was the output no thinking budget could finish (22/09/2026).
   const primarySlate = await buildBets({ game: detail.game, detail, props, picks: [], dimers: [], x: null, bands: BANDS, maxPerBand: 1, lang: primary, referee, dvp, roles: candidates?.roles ?? [], minutes: candidates?.minutes ?? [], consensus, lines });
   save(primary, primarySlate, spend());
+  // The operators' running picture of the game, by mail: every pre-game ticket, then every live read.
+  void sendTicketMail({ gameId: detail.game.id, sportKey, dateKey, matchup, lang: primary, fresh: { kind: "pre" } });
   void announceTickets({ gameId: detail.game.id, matchup, sportKey, lang: primary, suggestions: primarySlate.suggestions, base });
   const slates: Partial<Record<Lang, BetSlate>> = { [primary]: primarySlate };
   for (const lang of derived) {
