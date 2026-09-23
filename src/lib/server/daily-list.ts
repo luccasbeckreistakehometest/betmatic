@@ -4,6 +4,7 @@ import { brasiliaDay } from "@/lib/ledger/proof";
 import { calibrationSnapshot } from "@/lib/ledger/calibration-input";
 import { ledgerIdFor } from "@/lib/ledger/store";
 import { marketKeyOf } from "@/lib/ledger/stat-key";
+import { stakePolicyForDay } from "@/lib/ledger/ab";
 import { DEFAULT_CALIBRATION, ladderUnits, selectDaily, type Candidate, type DailySelection, type SelectedItem, type SelectionContext } from "@/lib/bets/selection";
 import { SIZING, type StakeMode } from "@/lib/bets/sizing";
 import type { BetSlate, BetSuggestion } from "@/lib/types";
@@ -151,7 +152,12 @@ export interface DailyListResult {
 export function buildDailyList(day: string, sportKey: string, opts: { now?: number; lang?: Lang } = {}): { selection: DailySelection; candidates: Candidate[] } {
   const now = opts.now ?? Date.now();
   const candidates = candidatesFor(day, sportKey, opts.lang ?? "pt");
-  const selection = selectDaily(candidates, { day, sportKey, now, calibration: selectionCalibration(day), medicaoWeekUsed: medicaoWeekUsed(day, sportKey) });
+  const selection = selectDaily(candidates, {
+    day, sportKey, now,
+    calibration: selectionCalibration(day),
+    medicaoWeekUsed: medicaoWeekUsed(day, sportKey),
+    stakePolicy: stakePolicyForDay(day),
+  });
   return { selection, candidates };
 }
 
@@ -201,11 +207,15 @@ export function runDailyList(opts: { day?: string; sportKey: string; now?: numbe
          oddsDecimal, modelProbability, calibratedProbability, grossEdge, shrunkEdge, units, minDecimal, capped, stakePolicy, ladderUnits, expiresAt, payload)
        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     );
+    // §4.5: which arm of the stake A/B this day belongs to. Both numbers are filed on every row —
+    // the formula's and the owner's ladder — so the comparison is a query over what was actually
+    // recommended, never a re-simulation after the fact, which is how these things get faked.
+    const arm = stakePolicyForDay(day);
     for (const item of [...selection.items, ...selection.live]) {
       const c = item.candidate;
       insert.run(day, opts.sportKey, c.ledgerId, item.rank, c.scope, c.gameId, c.suggestionId, c.bandKey, c.title ?? "", c.matchup ?? "", c.startsAt,
         c.decimal, c.modelProbability, item.calibratedProbability, item.grossEdge, item.shrunkEdge, item.units, item.minAcceptableDecimal,
-        item.capped, "formula", ladderUnits(c.decimal), item.expiresAt ?? null, JSON.stringify({ k: item.k, score: item.score, legs: c.legs, players: c.players, markets: c.markets, evidenceScore: c.evidenceScore, confidence: c.confidence }));
+        item.capped, arm, ladderUnits(c.decimal), item.expiresAt ?? null, JSON.stringify({ k: item.k, score: item.score, legs: c.legs, players: c.players, markets: c.markets, evidenceScore: c.evidenceScore, confidence: c.confidence }));
     }
   }).immediate();
 

@@ -116,6 +116,18 @@ export interface SelectionContext {
   now: number;
   /** Units already spent this week in the measurement regime, so its weekly budget binds. */
   medicaoWeekUsed?: number;
+  /**
+   * Which arm of the stake A/B (§2f, §4.5) sizes this day: the formula, or the owner's band ladder.
+   * It changes only the **size**, never the list — that is the whole point of the comparison, since
+   * what cut 737 u a night down to 3.25 u was the selection, not the arithmetic on top of it.
+   *
+   * It has no effect in `medicao`, and that is deliberate rather than an oversight: the measurement
+   * regime pays the floor by definition, and serving 1.25 u from the ladder while the screen says
+   * "a carteira está em calibração" would be the product contradicting itself in the same card. The
+   * arm is still filed on every row from day one, so the day a slice opens to `carteira` the
+   * comparison starts with its history already in place.
+   */
+  stakePolicy?: "formula" | "escada";
 }
 
 export const DEFAULT_CALIBRATION: CalibrationContext = {
@@ -283,6 +295,7 @@ export function selectDaily(candidates: Candidate[], ctx: SelectionContext): Dai
 
   const caps: Caps = mode === "medicao" ? medicaoCaps(ctx.medicaoWeekUsed ?? 0) : { dayCapU: ctx.caps?.dayCapU, gameCapU: ctx.caps?.gameCapU, playerCapU: ctx.caps?.playerCapU };
 
+  const ladderArm = mode === "carteira" && ctx.stakePolicy === "escada";
   const sized = ranked.map((row) => {
     const s = stakeUnits({
       decimal: row.candidate.decimal,
@@ -292,7 +305,11 @@ export function selectDaily(candidates: Candidate[], ctx: SelectionContext): Dai
       sigmaP: ctx.calibration.sigmaPPre,
       mode,
     });
-    return { row, units: s.units, capped: s.capped, gameId: row.candidate.gameId, players: row.candidate.players };
+    // The ladder arm is sized by the band alone, then meets exactly the same ceilings the formula
+    // does. Comparing a capped policy against an uncapped one would answer a different question.
+    const units = ladderArm ? Math.min(ladderUnits(row.candidate.decimal), SIZING.maxU) : s.units;
+    const capped: CapKind = ladderArm ? (units < ladderUnits(row.candidate.decimal) ? "ticket" : "none") : s.capped;
+    return { row, units, capped, gameId: row.candidate.gameId, players: row.candidate.players };
   });
 
   const capped = applyCaps(sized, caps);
