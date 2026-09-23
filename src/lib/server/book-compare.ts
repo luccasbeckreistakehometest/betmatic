@@ -115,6 +115,9 @@ function rowBehind(rows: BookPrice[], q: LegQuery, quote: Quote): BookPrice | nu
   return best;
 }
 
+/** Shared empty scope, so the groupings memo sees one identity instead of a new array per leg. */
+const NO_PRICES: BookPrice[] = [];
+
 /**
  * Where ONE leg is priced from: the match it belongs to (so "home" and "away" mean the right team)
  * and that match's own rows. A same-game ticket hands every leg the same scope; a cross-game
@@ -177,9 +180,6 @@ export function compareSuggestionsScoped(suggestions: BetSuggestion[], scopeFor:
   }
   return out;
 }
-
-/** Shared empty scope, so the groupings memo sees one identity instead of a new array per leg. */
-const NO_PRICES: BookPrice[] = [];
 
 /** Pure form for one game: every leg of every ticket belongs to the same match. */
 export function compareSuggestionsWith(prices: BookPrice[], suggestions: BetSuggestion[], game: GameTeams, sportKey: string, opts: CompareSuggestionsOptions = {}): TicketPrices[] {

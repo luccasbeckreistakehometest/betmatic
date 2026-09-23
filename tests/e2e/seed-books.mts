@@ -60,7 +60,49 @@ const prices: BookPrice[] = [
   // book published matches the ticket, and the product has to say so instead of inventing a link.
 ];
 
+/**
+ * The CROSS-GAME slate: the mock model builds one ticket with one leg per match (the longest priced
+ * prop in each, which in the fake world is a milestone rung), so the books have to be read across
+ * matches for that ticket to have a link at all. Two books, two answers:
+ *
+ *   Superbet     posts all three lines, and its bets[] names the match per selection → ONE slip
+ *                with three matches in it, at the product of the three prices.
+ *   Betnacional  posts all three too, but its URL scheme opens ONE event page → the honest label is
+ *                "abrir a página", and on a cross-game ticket that page holds a third of the bet.
+ *
+ * The fake world kicks the three games off five, six and seven hours out (tests/e2e/espn-world.ts).
+ */
+const slateGame = (id: string, hours: number, home: Game["home"], away: Game["home"]): Game =>
+  ({ ...game, id, startsAt: new Date(Date.parse(startsAt) + hours * 3_600_000).toISOString(), home, away });
+const g103 = slateGame("990000103", 1, team("9905", "EST", "Estrela Stars"), team("9906", "FAR", "Farol Flames"));
+const g104 = slateGame("990000104", 2, team("9907", "GAR", "Garoa Gulls"), team("9908", "HOR", "Horizonte Hawks"));
+
+const slateEvent = (key: string, home: string, away: string, ids: Record<string, string>, startsAtIso: string): BookEvent =>
+  ({ key, home, away, startsAt: startsAtIso, externalIds: ids, sport: "basketball", league: "WNBA" });
+/** A milestone rung ("25+ pontos") as the store holds it: an over at N − 0,5. */
+const milestone = (book: string, platform: string, ev: BookEvent, player: string, line: number, decimal: number, ref: BookPrice["ref"]): BookPrice =>
+  row(book, platform, ev, { player, stat: "points", line, side: "over", decimal, kind: "milestone", ref });
+
+const sb103 = slateEvent("superbet:superbet:99000103", "Estrela Stars", "Farol Flames", { superbet: "99000103" }, g103.startsAt);
+const sb104 = slateEvent("superbet:superbet:99000104", "Garoa Gulls", "Horizonte Hawks", { superbet: "99000104" }, g104.startsAt);
+const bn101 = slateEvent("betnacional:betnacional:88000101", "Aurora Aces", "Boreal Birds", { betnacional: "88000101" }, startsAt);
+const bn103 = slateEvent("betnacional:betnacional:88000103", "Estrela Stars", "Farol Flames", { betnacional: "88000103" }, g103.startsAt);
+const bn104 = slateEvent("betnacional:betnacional:88000104", "Garoa Gulls", "Horizonte Hawks", { betnacional: "88000104" }, g104.startsAt);
+const bnRef = (eventId: string, outcomeId: string) => ({ eventId, marketId: "77", outcomeId });
+
+const slatePrices: BookPrice[] = [
+  milestone("Superbet", "superbet", sb, "Ana Lima", 24.5, 4.8, superbetRef("5794", "e2e0aaaa-0000-5000-8000-000000000007", "Lima, Ana-24.5")),
+  milestone("Superbet", "superbet", sb103, "Iara Costa", 24.5, 4.7, { eventId: "99000103", marketId: "233565", outcomeId: "5795", uuid: "e2e0aaaa-0000-5000-8000-000000000008", specialBetValue: "Costa, Iara-24.5" }),
+  milestone("Superbet", "superbet", sb104, "Kika Pires", 25.5, 4.9, { eventId: "99000104", marketId: "233565", outcomeId: "5796", uuid: "e2e0aaaa-0000-5000-8000-000000000009", specialBetValue: "Pires, Kika-25.5" }),
+  milestone("Betnacional", "betnacional", bn101, "Ana Lima", 24.5, 4.5, bnRef("88000101", "101")),
+  milestone("Betnacional", "betnacional", bn103, "Iara Costa", 24.5, 4.4, bnRef("88000103", "103")),
+  milestone("Betnacional", "betnacional", bn104, "Kika Pires", 25.5, 4.6, bnRef("88000104", "104")),
+];
+
+// One write for both, because a second call for the same book and event would retire the rows the
+// first one had just stored: `persistPrices` ends by retiring whatever that book did not post this
+// round, which is exactly right for a live read and exactly wrong for a seed in two halves.
 ensureBooksSchema();
-const out = persistPrices(prices, "wnba", [game], now);
-if (out.matched !== 3) throw new Error(`seed-books: expected the three book events to match game 990000101, got ${JSON.stringify(out)}`);
+const out = persistPrices([...prices, ...slatePrices], "wnba", [game, g103, g104], now);
+if (out.events !== 8 || out.matched !== 8) throw new Error(`seed-books: expected eight book events, all matched, got ${JSON.stringify(out)}`);
 console.log(`seed-books: ${out.rows} rows, ${out.events} events, ${out.matched} matched`);
