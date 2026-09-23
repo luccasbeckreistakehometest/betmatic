@@ -358,6 +358,15 @@ export interface LedgerEntry {
   period?: number;
   legs: SettledLeg[];
   outcome: LegOutcome;
+  /*
+   * What produced this ticket. All optional and all written at generation time, so a before/after
+   * is a query rather than an argument: which prompt version wrote it, which model, who asked, and
+   * which version of the selection policy was live when it was written.
+   */
+  promptVersion?: string;
+  modelId?: string;
+  generatedBy?: string;
+  policyVersion?: string;
 }
 
 /** Measured track record for one slice of predictions. */

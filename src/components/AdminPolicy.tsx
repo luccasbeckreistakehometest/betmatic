@@ -6,6 +6,9 @@ import { formatNumber, formatPercent, formatStakeUnits } from "@/lib/format";
 import { formatOdds } from "@/lib/format";
 import type { FactorStat } from "@/lib/ledger/factor-report";
 import type { SliceCalibration } from "@/lib/ledger/calibration-input";
+import type { Hypothesis } from "@/lib/ledger/hypotheses";
+import type { Comparison, StakeArm } from "@/lib/ledger/ab";
+import type { FreezeState } from "@/lib/server/prompts";
 
 /**
  * The policy's own instrument panel. Three questions it answers and nothing else:
@@ -26,7 +29,29 @@ interface Payload {
   unmapped: { legs: number; examples: string[] };
   calibration: { pre: SliceCalibration; live: SliceCalibration; slices: SliceCalibration[] };
   selection: { mode: string; note: string; candidates: number; updatedAt: string; totals: { units: number; games: number }; skipped: { ledgerId: string; reason: string }[]; items: SelectionItem[] } | null;
+  hypotheses: Hypothesis[];
+  versions: {
+    freeze: FreezeState;
+    versions: { id: string; version: number; source: string; createdBy: string; createdAt: string; active: number }[];
+    compare: Comparison | null;
+  };
+  stakeAb: { arms: StakeArm[]; verdict: string };
+  minPerArm: number;
 }
+
+const HYPOTHESIS_STATUS: Record<string, { label: string; tone?: "pos" | "warn" | "neg" }> = {
+  proposed: { label: "proposta" },
+  applied: { label: "aplicada", tone: "pos" },
+  rejected: { label: "duplicata", tone: "warn" },
+  superseded: { label: "substituída", tone: "warn" },
+  blocked: { label: "bloqueada", tone: "warn" },
+};
+
+const HYPOTHESIS_VERDICT: Record<string, string> = {
+  improved: "melhorou", no_change: "sem mudança", worse: "piorou", inconclusive: "amostra insuficiente",
+};
+
+const DIRECTION: Record<string, string> = { lower: "confiar menos", raise: "confiar mais", avoid: "evitar", prefer: "preferir" };
 
 /** Three decimals in the reader's locale — a ratio, a factor and a q-value are read side by side. */
 const num3 = (x: number) => formatNumber(x, "pt", { digits: 3 });
@@ -51,11 +76,25 @@ export function AdminPolicy() {
   }, [sport]);
   useEffect(() => { const id = setTimeout(() => void load(), 0); return () => clearTimeout(id); }, [load]);
 
-  async function run(job: "attribute" | "today") {
+  async function run(job: "attribute" | "today" | "evaluate") {
     setBusy(true); setNote(null);
-    const r = await fetch(`/api/cron/refresh?job=${job}`, { method: "POST" });
+    const r = await fetch(`/api/cron/refresh?job=${job}&force=1`, { method: "POST" });
     const j = await r.json().catch(() => ({}));
-    setNote(j.error ?? (job === "attribute" ? `Atribuição: ${j.legs} pernas, ${j.sole} mortes de perna única, ${j.factors} fatores, ${j.flagged} acesos.` : `Seleção: ${j.items} item(ns) em ${j.sports} esporte(s).`));
+    const done = job === "attribute"
+      ? `Atribuição: ${j.legs} pernas, ${j.sole} mortes de perna única, ${j.factors} fatores, ${j.flagged} acesos.`
+      : job === "today"
+        ? `Seleção: ${j.items} item(ns) em ${j.sports} esporte(s).`
+        : `Verificação: ${j.evaluated} hipótese(s) avaliada(s) — ${j.improved} melhorou, ${j.worse} piorou, ${j.inconclusive} sem amostra.`;
+    setNote(j.error ?? done);
+    setBusy(false); await load();
+  }
+
+  /** A blocked hypothesis contradicts one that is live; only a person decides which of the two wins. */
+  async function unblock(id: string) {
+    setBusy(true); setNote(null);
+    const r = await fetch("/api/admin/policy", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "unblock", id }) });
+    const j = await r.json().catch(() => ({}));
+    setNote(j.error ?? "Hipótese desbloqueada: ela volta a poder ser aplicada.");
     setBusy(false); await load();
   }
 
@@ -194,6 +233,90 @@ export function AdminPolicy() {
           <p className="text-tiny text-fg-dim">{data.unmapped.examples.join(" · ") || "—"}</p>
         </Panel>
       )}
+
+      <Panel
+        title="Política — hipóteses"
+        meta={data ? `${data.hypotheses.length} registrada(s) · ${data.hypotheses.filter((h) => h.status === "applied").length} aplicada(s)` : undefined}
+        action={<Button onClick={() => void run("evaluate")} loading={busy}>Reavaliar</Button>}
+        flush
+      >
+        {data?.hypotheses.length ? (
+          <Table caption="Hipóteses propostas pelo aprendizado">
+            <thead>
+              <tr><Th>Fatia</Th><Th>Direção</Th><Th>Regra</Th><Th>Estado</Th><Th>Veredito</Th><Th /></tr>
+            </thead>
+            <tbody>
+              {data.hypotheses.map((h) => (
+                <Tr key={h.id}>
+                  <Td label="Fatia" className="text-fg">{h.dim}={h.value}{h.bucket ? ` (${h.bucket})` : ""}</Td>
+                  <Td label="Direção">{DIRECTION[h.direction] ?? h.direction}</Td>
+                  <Td label="Regra" className="text-fg-dim">{h.text || "—"}</Td>
+                  <Td label="Estado"><Badge tone={HYPOTHESIS_STATUS[h.status]?.tone}>{HYPOTHESIS_STATUS[h.status]?.label ?? h.status}</Badge></Td>
+                  <Td label="Veredito" className="text-fg-dim">{h.verdict ? HYPOTHESIS_VERDICT[h.verdict] ?? h.verdict : "—"}</Td>
+                  <Td label="">
+                    {h.status === "blocked"
+                      ? <Button onClick={() => void unblock(h.id)} loading={busy}>Desbloquear</Button>
+                      : h.supersedes ? <span className="text-fg-dim">aponta para {h.supersedes}</span> : null}
+                  </Td>
+                </Tr>
+              ))}
+            </tbody>
+          </Table>
+        ) : (
+          <div className="p-(--panel-p)"><Empty rows={3}>Nenhuma hipótese ainda. Elas nascem das lições do aprendizado que citam um fator medido.</Empty></div>
+        )}
+      </Panel>
+
+      <Panel
+        title="Política — versões do prompt"
+        meta={data?.versions.compare ? `mínimo de ${data.minPerArm} bilhetes decididos por braço` : "sem duas versões para comparar ainda"}
+        flush
+      >
+        <div className="p-(--panel-p) pb-0">
+          <p className="text-tiny text-fg-dim">
+            {data?.versions.compare?.note ?? "Uma versão só: o antes e o depois começam a existir quando a segunda for aplicada."}
+          </p>
+          {data?.versions.freeze.frozen && <p className="mt-2 text-tiny text-warn">{data.versions.freeze.note}</p>}
+        </div>
+        {data?.versions.compare ? (
+          <Table caption="Versões comparadas">
+            <thead><tr><Th>Versão</Th><Th numeric>Decididos</Th><Th numeric>Acerto</Th><Th numeric>Previsto</Th><Th numeric>Brier</Th><Th numeric>ROI plano</Th></tr></thead>
+            <tbody>
+              {[data.versions.compare.a, data.versions.compare.b].map((arm) => (
+                <Tr key={arm.key}>
+                  <Td label="Versão" className="text-fg">{arm.key}</Td>
+                  <Td numeric label="Decididos">{formatNumber(arm.decided, "pt")}</Td>
+                  <Td numeric label="Acerto">{Number.isFinite(arm.hitRate) ? pct(arm.hitRate) : "—"}</Td>
+                  <Td numeric label="Previsto">{Number.isFinite(arm.predicted) ? pct(arm.predicted) : "—"}</Td>
+                  <Td numeric label="Brier">{Number.isFinite(arm.brier) ? num3(arm.brier) : "—"}</Td>
+                  <Td numeric label="ROI plano">{Number.isFinite(arm.roi) ? formatPercent(arm.roi, "pt", { digits: 1, signed: true }) : "—"}</Td>
+                </Tr>
+              ))}
+            </tbody>
+          </Table>
+        ) : (
+          <div className="p-(--panel-p)"><Empty rows={2}>Histórico de versões ainda curto.</Empty></div>
+        )}
+      </Panel>
+
+      <Panel title="Política — escada vs fórmula" meta="o A/B do dimensionamento, dia par e dia ímpar" flush>
+        <div className="p-(--panel-p) pb-0"><p className="text-tiny text-fg-dim">{data?.stakeAb.verdict ?? "—"}</p></div>
+        <Table caption="Escada contra fórmula">
+          <thead><tr><Th>Braço</Th><Th numeric>Dias</Th><Th numeric>Decididos</Th><Th numeric>Arriscado</Th><Th numeric>Resultado</Th><Th numeric>Por unidade</Th></tr></thead>
+          <tbody>
+            {(data?.stakeAb.arms ?? []).map((arm) => (
+              <Tr key={arm.key}>
+                <Td label="Braço" className="text-fg">{arm.key === "formula" ? "fórmula (¼ Kelly encolhido)" : "régua de faixa"}</Td>
+                <Td numeric label="Dias">{formatNumber(arm.days, "pt")}</Td>
+                <Td numeric label="Decididos">{formatNumber(arm.bets, "pt")}</Td>
+                <Td numeric label="Arriscado">{formatStakeUnits(arm.units, "pt")}</Td>
+                <Td numeric label="Resultado">{formatStakeUnits(arm.pnl, "pt")}</Td>
+                <Td numeric label="Por unidade">{Number.isFinite(arm.roi) ? formatPercent(arm.roi, "pt", { digits: 1, signed: true }) : "—"}</Td>
+              </Tr>
+            ))}
+          </tbody>
+        </Table>
+      </Panel>
 
       {note && <p className="text-tiny text-fg-muted">{note}</p>}
     </div>

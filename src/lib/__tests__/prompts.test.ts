@@ -120,7 +120,9 @@ describe("prompt versions", () => {
 
   it("refuses a rewrite that came back empty, leaving the active prompt alone", async () => {
     const before = getPrompt("game", "pt");
-    await expect(applyFeedback({ kind: "game", feedback: "qualquer coisa", createdBy: "admin" }, async () => ({ pt: "", en: "", rationale: "" }))).rejects.toThrow(/curto/);
+    // override: the previous test just wrote v1, so the freeze would refuse this before the rewrite
+    // is ever inspected. What is under test here is the empty-rewrite guard, so the freeze is skipped.
+    await expect(applyFeedback({ kind: "game", feedback: "qualquer coisa", createdBy: "admin", override: true }, async () => ({ pt: "", en: "", rationale: "" }))).rejects.toThrow(/curto/);
     expect(getPrompt("game", "pt")).toBe(before);
   });
 

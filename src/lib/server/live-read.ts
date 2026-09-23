@@ -4,6 +4,8 @@ import { getLiveSnapshot, liveTracker } from "@/lib/server/live";
 import { buildBets } from "@/lib/bets/builder";
 import { buildPropCandidates } from "@/lib/props/candidates";
 import { ledgerIdFor, recordPredictions } from "@/lib/ledger/store";
+import { getPromptVersion } from "@/lib/server/prompts";
+import { MODEL } from "@/lib/ai/client";
 import { recordLegPrices } from "@/lib/server/leg-prices";
 import { sendTicketMail } from "@/lib/server/ticket-mail";
 import { AiBudgetExceededError, brasiliaDayStart } from "@/lib/server/ai-budget";
@@ -191,7 +193,10 @@ export async function runLiveRead(user: LivePrincipal, sportKey: string, gameId:
       savePrediction({ scope: "live", sportKey, gameId, dateKey, lang, matchup: `${detail.game.away.displayName} @ ${detail.game.home.displayName}`, startsAt: detail.game.startsAt, slate: { ...slate, minute, period: snap.period } as BetSlate });
       // Graded like every other ticket, kept out of the public ROI: the live record measures how
       // often a read lands, and the reference prices say nothing about what it would have paid.
-      recordPredictions(detail.game, slate.suggestions, { live: { minute, period: snap.period } });
+      recordPredictions(detail.game, slate.suggestions, {
+        live: { minute, period: snap.period },
+        provenance: { promptVersion: getPromptVersion("game", "pt").id, modelId: MODEL, generatedBy: "quarters" },
+      });
       // The price each live leg was written with, recorded as what it is: the pre-game board, not an
       // in-play price. Without this row the live scope has no way to prove it is not quoting a price
       // nobody could have taken — which is the whole reason its return is called a reference.

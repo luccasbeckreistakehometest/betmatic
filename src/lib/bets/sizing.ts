@@ -20,6 +20,13 @@
  * page: this module is the wallet's arithmetic, that one is the ticket's reference number.
  */
 
+/**
+ * Stamped on every ticket as it is written, so "did the policy change help?" is answerable later.
+ * Bump it whenever a constant below changes: a ticket sized under the old numbers and one sized
+ * under the new ones are not the same experiment, and averaging them hides exactly what was learned.
+ */
+export const POLICY_VERSION = "selecao-1";
+
 /** Every constant of the policy in one object, so a change to any of them is one reviewable diff. */
 export const SIZING = {
   /** 1 u = 1 % of the declared bankroll. */

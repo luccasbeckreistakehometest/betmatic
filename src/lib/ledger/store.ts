@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { marketKeyOf } from "@/lib/ledger/stat-key";
+import { POLICY_VERSION } from "@/lib/bets/sizing";
 import type { BetSuggestion, Game, LedgerEntry, SettledLeg } from "@/lib/types";
 
 // Lives under DATA_DIR so it sits on the persistent volume in Docker: this file IS the learning
@@ -71,6 +72,12 @@ export function recordPredictions(
     live?: { minute: number; period?: number };
     /** The game's own context at generation time — the same for every leg, copied onto each. */
     environment?: { blowoutProbability?: number | null; paceDelta?: number | null } | null;
+    /**
+     * What wrote this ticket. All optional, all filed at generation time: which prompt version, which
+     * model, what asked for it, and which selection policy was live. Without these a before/after is
+     * an argument; with them it is a query, and `ledger/ab.ts` is that query.
+     */
+    provenance?: { promptVersion?: string | null; modelId?: string | null; generatedBy?: string | null; policyVersion?: string | null };
   } = {},
 ): number {
   if (!suggestions.length) return 0;
@@ -101,6 +108,10 @@ export function recordPredictions(
       suggestionId: s.id,
       alternativeOf: s.alternativeFor ? ledgerIdOf.get(s.alternativeFor) : undefined,
       ...(opts.live ? { scope: "live" as const, minute: opts.live.minute, ...(opts.live.period !== undefined ? { period: opts.live.period } : {}) } : {}),
+      ...(opts.provenance?.promptVersion ? { promptVersion: opts.provenance.promptVersion } : {}),
+      ...(opts.provenance?.modelId ? { modelId: opts.provenance.modelId } : {}),
+      ...(opts.provenance?.generatedBy ? { generatedBy: opts.provenance.generatedBy } : {}),
+      policyVersion: opts.provenance?.policyVersion ?? POLICY_VERSION,
       outcome: "pending",
       legs: s.legs.map<SettledLeg>((l) => ({
         selection: l.selection,

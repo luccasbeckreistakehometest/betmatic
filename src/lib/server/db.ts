@@ -672,6 +672,32 @@ function migrateRound4(d: Database.Database): void {
       PRIMARY KEY (runId, id)
     );
     CREATE INDEX IF NOT EXISTS idx_factor_stats_latest ON factor_stats(computedAt DESC, flagged);
+
+    -- Rules the learning run proposed, so the same idea is not proposed for the fourth time and an
+    -- idea that reverses a live one is blocked instead of quietly cancelling it. The fingerprint is
+    -- sha1(dim + value + direction + bucket): the same thought in different words hashes the same.
+    CREATE TABLE IF NOT EXISTS rule_hypotheses (
+      id TEXT PRIMARY KEY,
+      fingerprint TEXT NOT NULL,
+      dim TEXT NOT NULL,
+      value TEXT NOT NULL,
+      direction TEXT NOT NULL,                      -- lower | raise | avoid | prefer
+      bucket TEXT NOT NULL DEFAULT '',
+      factorStatId TEXT NOT NULL DEFAULT '',
+      text TEXT NOT NULL DEFAULT '',
+      runId TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'proposed',      -- proposed | applied | rejected | superseded | blocked
+      verdict TEXT,                                 -- improved | no_change | worse | inconclusive
+      verdictNote TEXT NOT NULL DEFAULT '',
+      supersedes TEXT,
+      promptVersionId TEXT,
+      createdBy TEXT NOT NULL DEFAULT '',
+      createdAt TEXT NOT NULL,
+      appliedAt TEXT,
+      evaluatedAt TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_hypotheses_fp ON rule_hypotheses(fingerprint, status);
+    CREATE INDEX IF NOT EXISTS idx_hypotheses_status ON rule_hypotheses(status, createdAt DESC);
   `);
   // A bet logged from the short list keeps the price it was recommended at beside the price the
   // reader actually got: that pair is what makes the wallet's own CLV computable.

@@ -1,12 +1,19 @@
 "use client";
-import { formatUsd } from "@/lib/format";
+import { formatNumber, formatPercent, formatUsd } from "@/lib/format";
 
 import { useCallback, useEffect, useState } from "react";
 import { Panel, buttonClass } from "@/components/ui";
 
 interface Run {
   id: string; status: string; windowStart: string; windowEnd: string; tickets: number; won: number; lost: number; summary: string;
-  report: { wentRight?: string[]; wentWrong?: string[]; lessons?: string[]; confidence?: string; byMarket?: Record<string, { won: number; lost: number }> };
+  report: {
+    wentRight?: string[]; wentWrong?: string[]; lessons?: string[]; confidence?: string; byMarket?: Record<string, { won: number; lost: number }>;
+    /** The measured rows the lessons cited. A lesson with no row behind it never got this far. */
+    factors?: { id: string; dim: string; value: string; scope: string; legs: number; hitRate: number; predicted: number; qValue: number }[];
+    /** What became of each proposal: stored, a repeat of an older one, or blocked for contradicting a live rule. */
+    proposals?: { status: string; note: string; id: string | null; factorStatId: string }[];
+    dropped?: number;
+  };
   promptFeedback: string; applied: number; costUsd: number; note: string; createdAt: string;
 }
 
@@ -65,6 +72,28 @@ export function LearningPanel() {
               <div className="mt-2 grid gap-3 rounded-control border border-line bg-surface-0 p-3 sm:grid-cols-2">
                 <List title="Funcionou" items={r.report.wentRight} /><List title="Falhou" items={r.report.wentWrong} />
                 <div className="sm:col-span-2"><List title="Lições" items={r.report.lessons} /></div>
+                {!!r.report.factors?.length && (
+                  <div className="sm:col-span-2">
+                    <p className="text-micro u-label text-fg-dim">Fatores que sustentaram as lições</p>
+                    <ul className="mt-1 space-y-1">
+                      {r.report.factors.map((f) => (
+                        <li key={f.id} className="nums text-fg-muted">
+                          · {f.dim}={f.value} ({f.scope}) — {formatNumber(f.legs, "pt")} pernas, acerto {formatPercent(f.hitRate, "pt", { digits: 0 })} contra {formatPercent(f.predicted, "pt", { digits: 0 })} previsto, q={formatNumber(f.qValue, "pt", { digits: 3 })}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {!!r.report.proposals?.length && (
+                  <div className="sm:col-span-2">
+                    <p className="text-micro u-label text-fg-dim">Hipóteses registradas</p>
+                    <ul className="mt-1 space-y-1">
+                      {r.report.proposals.map((p, i) => (
+                        <li key={p.id ?? `${p.factorStatId}-${i}`} className="text-fg-muted">· {p.status}{p.note ? ` — ${p.note}` : ""}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
             {r.promptFeedback && (
