@@ -204,7 +204,9 @@ describe("live reads enter the list and never the wallet", () => {
 
 /* ── The regression: the three real nights ─────────────────────────────────────────────────── */
 
-const REAL = fixture as (Candidate & { day: string })[];
+/** The fixture carries each ticket's settled outcome beside the candidate the policy reads. */
+type RealRow = Candidate & { day: string; outcome: "won" | "lost" | "push" | "void" | "pending" };
+const REAL = fixture as RealRow[];
 const nights = [...new Set(REAL.map((c) => c.day))].sort();
 
 function realNight(day: string, calibration: SelectionContext["calibration"]) {
@@ -250,5 +252,93 @@ describe("the three real nights of the production ledger", () => {
   it("never lets an alternative into the wallet", () => {
     const runs = nights.map((d) => realNight(d, { factorPre: 1, factorLive: 1, sigmaPPre: 0.03, sigmaPLive: 0.03, mode: "carteira" }));
     expect(runs.flatMap((r) => r.items).some((i) => i.candidate.alternativeOf)).toBe(false);
+  });
+});
+
+/* ── Where the pre-game money actually went ────────────────────────────────────────────────── */
+
+/**
+ * The cuts of §1.2 are not taste. This block measures the same fixture the policy runs on and
+ * states what the loss is made of, so a future edit that loosens a cut has to argue with a number.
+ *
+ * Everything here is computed from the fixture at run time — no level is written down — because
+ * the fixture is a snapshot that keeps settling. A newer snapshot measured on the server reads
+ * -54.8 % overall against this one's -67.7 %, and the two disagree on the level of every small
+ * slice while agreeing on every slice big enough to have a verdict. That is exactly why the
+ * assertions below are about SIGN and COUNT on samples over the gate, never about a percentage.
+ */
+const decided = REAL.filter((r) => r.outcome === "won" || r.outcome === "lost");
+const roiOf = (rows: RealRow[]) => rows.reduce((a, r) => a + (r.outcome === "won" ? r.decimal : 0), 0) / rows.length - 1;
+const greens = (rows: RealRow[]) => rows.filter((r) => r.outcome === "won").length;
+
+/** The product's own sample gate: nothing concludes under 20 decided. */
+const GATE = 20;
+
+describe("the long tail is where the pre-game loss lives", () => {
+  it("has a sample worth reading at all", () => {
+    expect(decided.length).toBeGreaterThanOrEqual(GATE);
+  });
+
+  it("above 5x there is not one winner, and the odds cut removes every one of them", () => {
+    const longshots = decided.filter((r) => r.decimal > SIZING.maxOdds);
+    expect(longshots.length).toBeGreaterThanOrEqual(GATE);
+    expect(greens(longshots)).toBe(0);
+    expect(roiOf(longshots)).toBe(-1);
+    // Not one of them ever reaches the list, and the cut that removes them is about the PRICE:
+    // for every longshot that is otherwise clean, the single recorded reason is "odds".
+    for (const c of longshots) {
+      const sel = selectDaily([c], ctx({ day: c.day, now: Date.parse(c.startsAt) - 3_600_000 }));
+      expect(sel.items).toEqual([]);
+      const clean = c.evidenceScore === 100 && c.confidence !== "low" && c.legs <= SIZING.maxLegs && !c.alternativeOf;
+      if (clean) expect(reasonOf(sel, c.ledgerId)).toBe("odds");
+    }
+  });
+
+  it("the long and moonshot bands are that same tail wearing a name", () => {
+    const tail = decided.filter((r) => r.bandKey === "long" || r.bandKey === "moonshot");
+    expect(tail.length).toBeGreaterThanOrEqual(GATE);
+    expect(greens(tail)).toBe(0);
+    // They are cut by their PRICE, never by their label: the policy has no list of banned bands,
+    // so a "long" that ever prices inside 1.30-5.00 is judged like anything else.
+    expect(tail.every((r) => r.decimal > SIZING.maxOdds)).toBe(true);
+  });
+
+  it("three linhas or more is a different game, and the leg cut removes it", () => {
+    const many = decided.filter((r) => r.legs > SIZING.maxLegs);
+    expect(many.length).toBeGreaterThanOrEqual(GATE);
+    expect(greens(many)).toBeLessThanOrEqual(1);
+    expect(roiOf(many)).toBeLessThan(-0.8);
+    // Against what survives the cut, on the same nights.
+    const few = decided.filter((r) => r.legs <= SIZING.maxLegs);
+    expect(greens(few) / few.length).toBeGreaterThan(greens(many) / many.length);
+  });
+
+  it("the overconfidence is not in the tail only — it is everywhere, and it grows with the linhas", () => {
+    const gap = (rows: RealRow[]) => greens(rows) / rows.length - rows.reduce((a, r) => a + r.modelProbability, 0) / rows.length;
+    // Every bucket promises more than it delivers, single linhas included.
+    expect(gap(decided.filter((r) => r.legs === 1))).toBeLessThan(0);
+    expect(gap(decided.filter((r) => r.legs >= 3))).toBeLessThan(0);
+    // This is unpriced correlation between the linhas of one ticket, which is precisely what
+    // `p_cal = p_model * c^legs` exists to undo — the compounding, not a flat haircut.
+    expect(SIZING.maxLegs).toBeLessThanOrEqual(3);
+  });
+
+  it("does NOT tighten the ceiling below 5x: neither half of that window has a verdict", () => {
+    const short = decided.filter((r) => r.decimal <= 3);
+    const mid = decided.filter((r) => r.decimal > 3 && r.decimal <= SIZING.maxOdds);
+    // Both sit under the gate on this snapshot, and a newer one reverses which of the two looks
+    // better. Cutting at 3x on that would drop the half that measured better on the other snapshot.
+    expect(Math.min(short.length, mid.length)).toBeLessThan(GATE);
+    expect(SIZING.maxOdds).toBe(5);
+  });
+
+  it("does NOT treat an alternative as a worse ticket: inside the wallet window there is no sample", () => {
+    const inWindow = decided.filter((r) => r.decimal >= SIZING.minOdds && r.decimal <= SIZING.maxOdds && r.legs <= SIZING.maxLegs && r.evidenceScore === 100 && r.confidence !== "low");
+    const main = inWindow.filter((r) => !r.alternativeOf);
+    const alt = inWindow.filter((r) => r.alternativeOf);
+    // 19 decided between them: the cut stands on duplication (one bet per game), never on a claim
+    // that the second option is worse — measured over ALL tickets the two are indistinguishable.
+    expect(inWindow.length).toBeLessThan(GATE);
+    expect(Math.min(main.length, alt.length)).toBeGreaterThan(0);
   });
 });

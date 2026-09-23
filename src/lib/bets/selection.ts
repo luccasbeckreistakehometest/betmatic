@@ -25,13 +25,37 @@ import {
  *   1  pre-game, main ticket (never an alternative), game not under way
  *   2  evidenceScore = 100          (23.8 % hit vs 0 % below 100 on the ledger, p = 0.012)
  *   3  confidence ≠ low             (0 of 27 pre-game, p = 0.002)
- *   4  at most 2 legs
- *   5  odds in [1.30, 5.00]         — what kills the long bands without an ad-hoc rule
+ *   4  at most 2 legs               (3+ linhas: 1 green in 37 decided, ROI -92 %)
+ *   5  odds in [1.30, 5.00]         (above 5x: 0 greens in 37 decided — the whole long tail)
  *   6  raw model edge ≥ 4 %
  *   7  raw model edge ≤ 20 %        (above that: the admin's review queue, not the wallet)
  *   8  calibrated, shrunk edge ≥ 2 % — the wallet's gate, not applied in `medicao` (see below)
  *   9  every market canonically named; "unmapped" never enters
  *  10  at most 1 per game and 2 appearances of the same player in a day
+ *
+ * Cuts 4 and 5 carry almost the whole loss between them. Measured on the fixture the tests run on
+ * (`selecao-3-noites.json`, 64 decided of 123), pre-game overall is -67.7 % and the tail is all of
+ * it: nothing above 5x has ever won (0 of 37), the `long` and `moonshot` bands are that same tail
+ * under a label (0 of 24, every one of them priced above 5x), and three linhas or more is 1 green
+ * in 37. A newer snapshot from the server reads -54.8 % overall with the same shape — the levels
+ * move as tickets settle, the shape does not.
+ *
+ * Two things that evidence does NOT support, recorded here so they are not quietly adopted later:
+ *
+ *   · **A ceiling below 5x.** The window splits into ≤3x and 3-5x at n=15 and n=12 on this
+ *     snapshot and n=21 and n=14 on the newer one, and the two snapshots disagree about which half
+ *     looks better. Both halves are under the 20-decided gate; cutting at 3x would be picking the
+ *     loser on one of the two readings.
+ *   · **Treating an alternative as a worse ticket.** Over all tickets the second option and the
+ *     main are indistinguishable (-54.5 % vs -55.3 % on the newer snapshot). Cut 1 stands on
+ *     DUPLICATION — an alternative is the same bet on the same game — and rule 10 is what enforces
+ *     that. Inside the window the wallet actually bets there are 19 decided tickets between the
+ *     two populations, which is under the gate and settles nothing either way.
+ *
+ * The overconfidence itself is not a tail effect: every leg bucket promises more than it delivers,
+ * single linhas included, and the gap widens with the count. That is unpriced correlation between
+ * the linhas of one ticket, measured independently by the learning run (65 % of linhas landed
+ * against 36 % of tickets), and it is what `p_cal = p_model · c^legs` compounds away per leg.
  */
 
 export type Scope = "pre" | "live";
