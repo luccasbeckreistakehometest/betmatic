@@ -183,11 +183,17 @@ describe("prompt versions", () => {
 });
 
 describe("alternatives rule upgrade", async () => {
-  const { upgradeAlternativesRule, ALTERNATIVES_RULE } = await import("@/lib/server/prompts");
+  const { upgradeAlternativesRule, ALTERNATIVES_RULE, upgradeUnderMarginRule } = await import("@/lib/server/prompts");
   it("replaces the old isAlternative paragraph and leaves current prompts alone", () => {
     const old = "intro\n- ALWAYS pair each main ticket with at least one alternative, flagged with isAlternative, placed\n  immediately after it. blah rather than restating the same bet at a worse price.\nend";
     expect(upgradeAlternativesRule(old)).toBe(`intro\n${ALTERNATIVES_RULE}\nend`);
     expect(upgradeAlternativesRule("edited by hand: use isAlternative")).toContain(ALTERNATIVES_RULE);
     expect(upgradeAlternativesRule("already current")).toBeNull();
+    // A prompt an admin saved before 23/09/2026 has neither of that run's rules; appending is idempotent.
+    const stored = upgradeUnderMarginRule("edited by hand")!;
+    expect(stored).toMatch(/AN UNDER SITTING ON TOP OF THE NUMBER IS NOT A LOCK/);
+    expect(stored).toMatch(/THE CONCENTRATION CAP AND THE AVAILABILITY RULES ARE CHECKED IN CODE/);
+    expect(upgradeUnderMarginRule(stored)).toBeNull();
+    expect(upgradeUnderMarginRule(DEFAULT_PROMPTS.game.pt)).toBeNull();
   });
 });
