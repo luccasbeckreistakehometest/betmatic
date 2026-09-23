@@ -18,13 +18,24 @@
  *
  * `confidence` lives on the served BetSuggestion, in the `predictions` table, and never reaches the
  * ledger. It is not cosmetic — it is cut 3, and it removes 70 of these 123 tickets — so the script
- * refuses to invent it. It is resolved in this order:
+ * refuses to invent it:
  *
- *   1. `--db <path>`, reading `predictions.payload` and matching on the suggestion id;
- *   2. the fixture already on disk, carried forward by ledger id;
+ *   · with `--db <path>` it comes from `predictions.payload`, matched on the suggestion id, and
+ *     the carry-forward is switched OFF. A ticket the database cannot answer for is listed by name
+ *     and the run fails. Falling back quietly would mean a fixture that still depends on its own
+ *     previous version to exist, which is the debt this script exists to clear;
+ *   · `--carry-forward-missing` re-enables it for exactly those named leftovers, printing every
+ *     one. It exists because `predictions` keeps only the LATEST slate per game and language: game
+ *     401857209 was regenerated at 23:57 on 22/09, after twelve of its tickets had already been
+ *     served and written to the ledger, so their suggestion ids are gone from the database and
+ *     matching on ticket identity (game, band, selections) does not find them either. Those twelve
+ *     values are not invented — they are the real served ones, carried from the previous fixture —
+ *     but they can no longer be re-verified against production, and dropping the tickets instead
+ *     would silently change every measurement the suite makes. The flag is the honest middle: you
+ *     have to type it, and it tells you what it did;
+ *   · without `--db` at all it carries everything forward, and says so.
  *
- * and any entry it cannot resolve either way is listed by name and the run fails. Everything else
- * is derived from the ledger, so a re-grade only ever moves outcomes.
+ * Everything else is derived from the ledger, so a re-grade only ever moves outcomes.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -41,7 +52,7 @@ const DRY = process.argv.includes("--dry");
 const OUT = path.join(process.cwd(), "src/lib/__tests__/fixtures/selecao-3-noites.json");
 const LEDGER = arg("--ledger");
 if (!LEDGER) {
-  console.error("usage: build-selecao-fixture.mts --ledger <ledger.jsonl> [--db <betmatic.db>] [--dry]");
+  console.error("usage: build-selecao-fixture.mts --ledger <ledger.jsonl> [--db <betmatic.db>] [--carry-forward-missing] [--dry]");
   process.exit(1);
 }
 
@@ -91,14 +102,23 @@ function confidenceFromFixture(): Map<string, string> {
 }
 
 const dbFile = arg("--db");
+const CARRY = process.argv.includes("--carry-forward-missing");
+// With a database in hand the carry-forward is not a safety net, it is a way to keep an old value
+// alive without noticing. It comes back only when asked for by name, and never quietly.
 const bySuggestion = dbFile ? confidenceFromDb(dbFile) : new Map<string, string>();
-const byLedgerId = confidenceFromFixture();
+const byLedgerId = !dbFile || CARRY ? confidenceFromFixture() : new Map<string, string>();
+console.log(dbFile
+  ? `confidence: from ${path.relative(process.cwd(), dbFile)} (${bySuggestion.size} suggestion ids)${CARRY ? ", carry-forward allowed for what it cannot answer" : ", carry-forward off"}`
+  : "confidence: CARRIED FORWARD from the fixture on disk — pass --db <betmatic.db> for a real rebuild");
 
 const rows: FixtureRow[] = [];
 const unresolved: string[] = [];
+const carried: string[] = [];
 for (const e of pre) {
-  const confidence = bySuggestion.get(e.suggestionId ?? "") ?? byLedgerId.get(e.id);
+  const fromDb = bySuggestion.get(e.suggestionId ?? "");
+  const confidence = fromDb ?? byLedgerId.get(e.id);
   if (!confidence) { unresolved.push(e.id); continue; }
+  if (!fromDb && dbFile) carried.push(e.id);
   rows.push({
     ledgerId: e.id,
     suggestionId: e.suggestionId ?? "",
@@ -127,8 +147,15 @@ for (const e of pre) {
 if (unresolved.length) {
   console.error(`\n${unresolved.length} ticket(s) with no confidence, and it is cut 3 so none of them may be guessed:`);
   for (const id of unresolved.slice(0, 20)) console.error(`  ${id}`);
-  console.error("\nPass --db <betmatic.db> with the predictions table that served them.");
+  console.error(dbFile
+    ? "\nThat database does not hold the slate that served them. Nothing was written."
+    : "\nPass --db <betmatic.db> with the predictions table that served them.");
   process.exit(1);
+}
+
+if (carried.length) {
+  console.log(`\n${carried.length} ticket(s) the database could not answer for, carried forward by name:`);
+  for (const id of carried) console.log(`  ${id.slice(0, 96)}`);
 }
 
 rows.sort((a, b) => a.day.localeCompare(b.day) || a.ledgerId.localeCompare(b.ledgerId));
