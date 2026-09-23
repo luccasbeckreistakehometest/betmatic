@@ -48,6 +48,8 @@ export interface SliceQuery {
   side?: string;
   /** The day being selected — excluded from its own calibration. */
   excludeDay?: string;
+  /** Live reads only: the quarter the read was taken in. A quarter is its own population. */
+  period?: number;
 }
 
 interface Row { p: number; y: number }
@@ -58,6 +60,7 @@ function rowsFor(query: SliceQuery, entries: LedgerEntry[]): Row[] {
     const scope: Scope = entry.scope === "live" ? "live" : entry.alternativeOf ? "pregame-alt" : "pregame-main";
     if (scope !== query.scope) continue;
     if (query.excludeDay && brasiliaDay(entry.settledAt ?? entry.startsAt ?? entry.createdAt) === query.excludeDay) continue;
+    if (query.period !== undefined && (entry.period ?? 0) !== query.period) continue;
     for (const leg of entry.legs) {
       if (!decided(leg)) continue;
       if (query.stat && canonicalMarket(leg, entry.sportKey) !== query.stat) continue;
@@ -106,7 +109,9 @@ export function sigmaFrom(rows: Row[], factor: number): number {
 
 /** One slice's calibration. With no sample at all: factor 1, σ_p at the ceiling, wallet closed. */
 export function sliceCalibration(query: SliceQuery, entries: LedgerEntry[] = readLedger()): SliceCalibration {
-  const key = [query.scope, query.stat ?? "*", query.side ?? "*"].join(":");
+  // The period segment is only appended when there is one, so a market slice keeps the key it has
+  // always had and nothing downstream has to learn a new shape to ask the same question.
+  const key = [query.scope, query.stat ?? "*", query.side ?? "*", ...(query.period === undefined ? [] : [`q${query.period}`])].join(":");
   const rows = rowsFor(query, entries);
   if (!rows.length) return { key, settled: 0, measuredRatio: 1, sigmaP: SIZING.sigmaPCeiling, factor: 1, mode: "medicao", gapPoints: 0, biased: false };
 
@@ -145,6 +150,39 @@ export interface CalibrationSnapshot {
   pre: SliceCalibration;
   live: SliceCalibration;
   slices: SliceCalibration[];
+  /** The live scope one quarter at a time, keyed by period. */
+  livePeriods: Record<number, SliceCalibration>;
+}
+
+/**
+ * Below this many decided legs a quarter has no verdict. Same gate the public page uses
+ * (`PERIOD_MIN_LEGS` in ledger/live-calibration.ts) and the same gate the rest of the product uses:
+ * nothing concludes under 20 decided.
+ */
+export const PERIOD_MIN_LEGS = 20;
+
+/**
+ * Why a quarter is its own population rather than a detail of the live scope.
+ *
+ * Measured at fair price on 22/09 (168 unique decided legs) the live scope promised 93.4 % and
+ * delivered 78.0 %. Split by the quarter the read was taken in, that single number is Q2 -19.5,
+ * Q3 -4.0, Q4 -21.6, and Q1 no verdict at all on 17 legs. Correcting a third-quarter read by the
+ * scope average punishes the one quarter that keeps its promise, and correcting a fourth-quarter
+ * read by it lets through 17 points of optimism. So the wallet asks the quarter, not the scope.
+ *
+ * The ruler here is `predictedProbability` — the chance the ticket was actually served with, which
+ * is what `modelledProbability` is built from and therefore what the stake is computed from. The
+ * public honesty page deliberately measures the other one (`computedProbability`, the props model's
+ * own arithmetic) and reads 5-6 points harsher across the board. Both rulers put the quarters in
+ * the same order and both leave Q1 under the gate, which is the part the policy depends on.
+ */
+export function livePeriodCalibration(opts: { excludeDay?: string } = {}, entries?: LedgerEntry[]): Record<number, SliceCalibration> {
+  const rows = entries ?? mainTickets(readLedger(), true);
+  const out: Record<number, SliceCalibration> = {};
+  for (const period of new Set(rows.filter((e) => e.scope === "live").map((e) => e.period ?? 0))) {
+    out[period] = sliceCalibration({ scope: "live", period, excludeDay: opts.excludeDay }, rows);
+  }
+  return out;
 }
 
 /** Both headline slices plus every market × side slice with a sample — what the admin panel reads. */
@@ -167,7 +205,11 @@ export function calibrationSnapshot(opts: { excludeDay?: string } = {}): Calibra
       slices.push(sliceCalibration({ scope, stat, side: side || undefined, excludeDay: opts.excludeDay }, entries));
     }
   }
-  return { pre, live, slices: slices.filter((s) => s.settled > 0).sort((a, b) => b.settled - a.settled) };
+  return {
+    pre, live,
+    slices: slices.filter((s) => s.settled > 0).sort((a, b) => b.settled - a.settled),
+    livePeriods: livePeriodCalibration({ excludeDay: opts.excludeDay }, entries),
+  };
 }
 
 /** The two numbers the measurement notice on /app/hoje prints. */

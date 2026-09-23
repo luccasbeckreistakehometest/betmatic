@@ -64,7 +64,8 @@ export interface Candidate {
 export type SkipReason =
   | "alternative" | "scope" | "evidence" | "confidence" | "legs" | "odds"
   | "edge_low" | "edge_high" | "shrunk_low" | "unmapped_market"
-  | "game_taken" | "player_cap" | "below_floor" | "day_cap" | "quota";
+  | "game_taken" | "player_cap" | "below_floor" | "day_cap" | "quota"
+  | "period_unmeasured";
 
 export interface SelectedItem {
   candidate: Candidate;
@@ -81,6 +82,12 @@ export interface SelectedItem {
   capped: CapKind;
   /** Live reads only: when the card stops being an answer to anything. */
   expiresAt?: string;
+  /**
+   * Live reads only: the quarter whose own measurement corrected this read's chance, and how far
+   * that quarter's promise sat from what happened. `null` when the scope-wide factor was used
+   * because the quarter has no verdict of its own yet.
+   */
+  periodCalibration?: { period: number; settled: number; gapPoints: number } | null;
 }
 
 export interface DailySelection {
@@ -106,6 +113,12 @@ export interface CalibrationContext {
   sigmaPPre: number;
   sigmaPLive: number;
   mode: StakeMode;
+  /**
+   * The live scope measured one quarter at a time, keyed by period. A live read is corrected by its
+   * OWN quarter, never by the scope average: on the ledger of 22/09 the scope average hides a
+   * 24-point spread between the quarter that keeps its promise and the ones that do not.
+   */
+  livePeriods?: Record<number, { settled: number; factor: number; sigmaP: number; gapPoints: number }>;
 }
 
 export interface SelectionContext {
@@ -227,20 +240,51 @@ function concentrate(
   return kept;
 }
 
+/** Below this many decided legs a quarter has no verdict, so it cannot correct anything. */
+export const PERIOD_MIN_LEGS = 20;
+
 /**
  * Live reads: at most two a night, a higher bar (8 % raw, to cover the in-play margin), a published
  * minimum price and ninety seconds of validity. Never a stake — the recorded price is the pre-game
- * table, and 109 % of the live balance is stale price. Q3 first: 69.8 % hit, CI95 [55; 81], the one
- * cut that repeats across all four quarters of the sample.
+ * board, which by the third quarter no book is still offering, so a return computed from it is a
+ * number nobody could have collected.
+ *
+ * The ordering is no longer "Q3 first" written by hand. Measured at fair price on the ledger of
+ * 22/09 (168 unique decided legs, `ledger-live-20260922.jsonl`), the live scope promised 93.4 % and
+ * delivered 78.0 % — 15.4 points of overconfidence, z = -8.55 — and that average hides the only
+ * thing worth knowing:
+ *
+ *     Q1  n=17  no verdict (under the 20-leg gate)
+ *     Q2  n=48  -19.5 points
+ *     Q3  n=52   -4.0 points   ← the only quarter that roughly keeps its promise
+ *     Q4  n=51  -21.6 points
+ *
+ * The same table on the served chance rather than the computed one reads -15.2 / -14.1 / +1.9 /
+ * -15.1: the levels move with the ruler, the ordering does not. So the rule the code states is the
+ * one the data states — **a read is corrected by its own quarter's measurement, and a quarter with
+ * no verdict yet cannot correct anything** — and on today's sample that elects Q3 on its own,
+ * without Q3 ever being named here. The day Q2 starts keeping its promise, this ranks it.
  */
 function selectLive(
   candidates: Candidate[],
   ctx: SelectionContext,
   skipped: { ledgerId: string; reason: SkipReason }[],
 ): SelectedItem[] {
-  const { factorLive, sigmaPLive } = ctx.calibration;
+  const { factorLive, sigmaPLive, livePeriods } = ctx.calibration;
   const max = ctx.caps?.liveMaxPerNight ?? SIZING.liveMaxPerNight;
-  const rows: Scored[] = [];
+  const rows: (Scored & { period: SelectedItem["periodCalibration"] })[] = [];
+
+  /**
+   * The quarter's own measurement, or null when it has none. A quarter under the gate is not
+   * "probably fine": it is unmeasured, and the read it carries is published with the scope factor
+   * and said to be unmeasured rather than dressed up in a precision nobody has earned.
+   */
+  const periodOf = (q: number | undefined): SelectedItem["periodCalibration"] => {
+    const slice = q === undefined ? undefined : livePeriods?.[q];
+    return slice && slice.settled >= PERIOD_MIN_LEGS
+      ? { period: q!, settled: slice.settled, gapPoints: slice.gapPoints }
+      : null;
+  };
 
   for (const c of candidates) {
     if (c.alternativeOf) { skipped.push({ ledgerId: c.ledgerId, reason: "alternative" }); continue; }
@@ -250,15 +294,21 @@ function selectLive(
     const raw = grossEdge(c.decimal, c.modelProbability);
     if (!(raw >= SIZING.minEdgeGrossLive)) { skipped.push({ ledgerId: c.ledgerId, reason: "edge_low" }); continue; }
     if (!c.markets.length || c.markets.some((m) => !m || m === "unmapped")) { skipped.push({ ledgerId: c.ledgerId, reason: "unmapped_market" }); continue; }
-    const pCal = calibratedProbability(c.modelProbability, c.legs, factorLive);
-    const k = shrinkFactor(c.decimal, sigmaPLive);
+    // The read's own quarter corrects it when that quarter has a verdict; otherwise the scope does,
+    // and `periodCalibration: null` is what the card has to say out loud.
+    const period = periodOf(c.period);
+    const slice = period ? livePeriods![period.period] : undefined;
+    const pCal = calibratedProbability(c.modelProbability, c.legs, slice?.factor ?? factorLive);
+    const k = shrinkFactor(c.decimal, slice?.sigmaP ?? sigmaPLive);
     const shrunk = k * grossEdge(c.decimal, pCal);
-    rows.push({ candidate: c, calibratedProbability: pCal, grossEdge: raw, shrunkEdge: shrunk, k, score: growthScore(c.decimal, shrunk) });
+    rows.push({ candidate: c, calibratedProbability: pCal, grossEdge: raw, shrunkEdge: shrunk, k, score: growthScore(c.decimal, shrunk), period });
   }
 
-  // Q3 first, then growth. A third-quarter read at the same growth always outranks another quarter.
+  // A measured quarter outranks an unmeasured one, then the quarter that keeps its promise best,
+  // then growth. Nothing here names a period: the ledger elects it every night.
   const sorted = [...rows].sort((a, b) =>
-    Number(b.candidate.period === 3) - Number(a.candidate.period === 3) ||
+    Number(!!b.period) - Number(!!a.period) ||
+    Math.abs(a.period?.gapPoints ?? 1) - Math.abs(b.period?.gapPoints ?? 1) ||
     b.score - a.score ||
     a.candidate.decimal - b.candidate.decimal ||
     a.candidate.ledgerId.localeCompare(b.candidate.ledgerId));
@@ -279,6 +329,7 @@ function selectLive(
     minAcceptableDecimal: minAcceptableDecimal(row.calibratedProbability, SIZING.minEdgeGrossLive),
     capped: "none" as CapKind,
     expiresAt: new Date(ctx.now + SIZING.liveValidityMs).toISOString(),
+    periodCalibration: row.period,
   }));
 }
 

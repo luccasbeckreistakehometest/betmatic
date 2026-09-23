@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import fixture from "./fixtures/selecao-3-noites.json";
-import { DEFAULT_CALIBRATION, selectDaily, type Candidate, type SelectionContext } from "@/lib/bets/selection";
+import { DEFAULT_CALIBRATION, PERIOD_MIN_LEGS, selectDaily, type Candidate, type SelectionContext } from "@/lib/bets/selection";
 import { SIZING } from "@/lib/bets/sizing";
 
 /**
@@ -145,15 +145,60 @@ describe("live reads enter the list and never the wallet", () => {
     expect(reasonOf(selectDaily([thin], ctx()), "L2")).toBe("edge_low");
   });
 
-  it("sends at most two a night and puts the third quarter first", () => {
+  /**
+   * The quarters as the ledger of 22/09 measured them at fair price, on the 168 unique decided
+   * legs of `ledger-live-20260922.jsonl`: Q1 has 17 legs and therefore no verdict, Q2 is 19.5
+   * points overconfident, Q3 is 4.0 under, Q4 is 21.6 under. The factor is the gap turned into a
+   * multiplier; what the tests below pin is the ORDER these produce, never the levels.
+   */
+  const PERIODS_2209 = {
+    1: { settled: 17, factor: 0.78, sigmaP: 0.15, gapPoints: -0.202 },
+    2: { settled: 48, factor: 0.79, sigmaP: 0.14, gapPoints: -0.195 },
+    3: { settled: 52, factor: 0.96, sigmaP: 0.08, gapPoints: -0.04 },
+    4: { settled: 51, factor: 0.78, sigmaP: 0.15, gapPoints: -0.216 },
+  };
+  const liveCtx = () => ctx({ calibration: { ...DEFAULT_CALIBRATION, livePeriods: PERIODS_2209 } });
+
+  it("sends at most two a night, and the quarter that keeps its promise goes first", () => {
     const rows = [
       live({ ledgerId: "L1", gameId: "g1", period: 1, decimal: 2.4, modelProbability: 0.62 }),
       live({ ledgerId: "L2", gameId: "g2", period: 3, decimal: 3.6, modelProbability: 0.35 }),
       live({ ledgerId: "L3", gameId: "g3", period: 4, decimal: 2.2, modelProbability: 0.66 }),
     ];
-    const sel = selectDaily(rows, ctx());
+    const sel = selectDaily(rows, liveCtx());
     expect(sel.live).toHaveLength(2);
+    // Q3 wins on its own measurement, not because the code names it.
     expect(sel.live[0].candidate.ledgerId).toBe("L2");
+    expect(sel.live[0].periodCalibration).toMatchObject({ period: 3, settled: 52 });
+  });
+
+  it("elects whichever quarter the ledger says keeps its promise — nothing here is hard-coded to 3", () => {
+    const flipped = { ...PERIODS_2209, 2: { settled: 48, factor: 0.97, sigmaP: 0.08, gapPoints: -0.02 }, 3: { settled: 52, factor: 0.78, sigmaP: 0.15, gapPoints: -0.22 } };
+    const rows = [
+      live({ ledgerId: "L2", gameId: "g2", period: 3, decimal: 3.6, modelProbability: 0.35 }),
+      live({ ledgerId: "L4", gameId: "g4", period: 2, decimal: 2.4, modelProbability: 0.62 }),
+    ];
+    const sel = selectDaily(rows, ctx({ calibration: { ...DEFAULT_CALIBRATION, livePeriods: flipped } }));
+    expect(sel.live[0].candidate.ledgerId).toBe("L4");
+  });
+
+  it("a quarter under the 20-leg gate corrects nothing and says so", () => {
+    const rows = [live({ ledgerId: "L1", gameId: "g1", period: 1, decimal: 2.4, modelProbability: 0.62 })];
+    const sel = selectDaily(rows, liveCtx());
+    expect(sel.live).toHaveLength(1);
+    // Q1 has 17 decided legs on the real ledger: under the gate, so no verdict and no correction.
+    expect(sel.live[0].periodCalibration).toBeNull();
+    expect(PERIODS_2209[1].settled).toBeLessThan(PERIOD_MIN_LEGS);
+  });
+
+  it("corrects a read by its own quarter, so the same ticket is worth less in Q4 than in Q3", () => {
+    const q3 = live({ ledgerId: "Q3", gameId: "g1", period: 3, decimal: 2.2, modelProbability: 0.66 });
+    const q4 = live({ ledgerId: "Q4", gameId: "g2", period: 4, decimal: 2.2, modelProbability: 0.66 });
+    const sel = selectDaily([q3, q4], liveCtx());
+    const of = (id: string) => sel.live.find((l) => l.candidate.ledgerId === id)!;
+    expect(of("Q3").calibratedProbability).toBeGreaterThan(of("Q4").calibratedProbability);
+    // And neither one is ever worth a stake, whatever its quarter measures.
+    expect(sel.live.every((l) => l.units === 0)).toBe(true);
   });
 });
 

@@ -131,6 +131,12 @@ export function selectionCalibration(day?: string): SelectionContext["calibratio
       factorLive: snap.live.settled ? snap.live.factor : DEFAULT_CALIBRATION.factorLive,
       sigmaPPre: snap.pre.settled ? snap.pre.sigmaP : DEFAULT_CALIBRATION.sigmaPPre,
       sigmaPLive: snap.live.settled ? snap.live.sigmaP : DEFAULT_CALIBRATION.sigmaPLive,
+      // Each quarter of the live scope carries its own correction; `selectLive` ignores the ones
+      // under the 20-leg gate rather than pretending the scope average speaks for them.
+      livePeriods: Object.fromEntries(
+        Object.entries(snap.livePeriods).map(([period, slice]) =>
+          [Number(period), { settled: slice.settled, factor: slice.factor, sigmaP: slice.sigmaP, gapPoints: slice.gapPoints }]),
+      ),
       mode: snap.pre.mode,
     };
   } catch {
