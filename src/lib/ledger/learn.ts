@@ -80,12 +80,12 @@ Rules:
     prompt: [
       `PERÍODO: ${summary.tickets} bilhetes liquidados — ${summary.won} ganhos, ${summary.lost} perdidos, ${summary.push} push, ${summary.void} void.`,
       `POR MERCADO: ${JSON.stringify(summary.byMarket)}`, `POR FONTE: ${JSON.stringify(summary.bySource)}`,
-      `PERNAS PERDIDAS:\n${summary.lostLegs.map((l) => `- [${l.matchup}] ${l.selection} (${l.market}, fonte ${l.source}, previsto ${(l.predicted * 100).toFixed(0)}%${l.actual ? `, real: ${l.actual}` : ""})`).join("\n") || "- nenhuma"}`,
+      `LINHAS PERDIDAS:\n${summary.lostLegs.map((l) => `- [${l.matchup}] ${l.selection} (${l.market}, fonte ${l.source}, previsto ${(l.predicted * 100).toFixed(0)}%${l.actual ? `, real: ${l.actual}` : ""})`).join("\n") || "- nenhuma"}`,
       `BILHETES (compacto):\n${entries.slice(0, 40).map((e) => `- ${e.outcome.toUpperCase()} ${e.combinedDecimal.toFixed(2)}x "${e.title}" [${e.matchup}] prev ${(e.modelledProbability * 100).toFixed(0)}% — ${e.legs.map((l) => `${l.outcome}:${l.selection}`).join("; ")}`).join("\n")}`,
       `\nCALIBRAÇÃO ACUMULADA:\n${calibration}`,
       `\nFATORES ACESOS (cite um destes ids em cada lição; nenhum outro id é aceito):\n${
         factors.length
-          ? factors.map((f) => `- ${f.id} | ${f.dim}=${f.value} (${f.scope}) | ${f.legs} pernas, acerto ${(f.hitRate * 100).toFixed(0)}% contra ${(f.predicted * 100).toFixed(0)}% previsto, IC95 [${(f.ciLow * 100).toFixed(0)}; ${(f.ciHigh * 100).toFixed(0)}], q=${f.qValue.toFixed(3)}`).join("\n")
+          ? factors.map((f) => `- ${f.id} | ${f.dim}=${f.value} (${f.scope}) | ${f.legs} linhas, acerto ${(f.hitRate * 100).toFixed(0)}% contra ${(f.predicted * 100).toFixed(0)}% previsto, IC95 [${(f.ciLow * 100).toFixed(0)}; ${(f.ciHigh * 100).toFixed(0)}], q=${f.qValue.toFixed(3)}`).join("\n")
           : "- nenhum fator com amostra suficiente ainda"
       }`,
     ].join("\n\n"),

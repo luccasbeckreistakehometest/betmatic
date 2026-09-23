@@ -18,7 +18,7 @@ const seed = JSON.parse(fs.readFileSync(path.join(process.cwd(), "data", "e2e", 
 const board = `/app/hoje?sport=${seed.sportKey}&lang=pt&day=${seed.day}`;
 
 async function setBankroll(page: import("@playwright/test").Page, bankrollAmount: number | null) {
-  const r = await page.request.post("/api/settings", { data: { bankrollAmount } });
+  const r = await page.request.patch("/api/settings", { data: { bankrollAmount } });
   expect(r.ok(), await r.text()).toBeTruthy();
 }
 
@@ -38,11 +38,10 @@ test.describe("a day with a recommendation", () => {
 
     // The policy is in the measurement regime on a ledger this size, so the stake is the floor.
     // What the spec asserts is the triple itself: never the unit without the share and the money.
+    // pt-BR writes the percent with a non-breaking space before the sign, so the assertion is on the
+    // shape of the triple, not on one spelling of it: the unit, the share and the money, together.
     const stake = card.getByTestId("today-stake");
-    await expect(stake).toContainText("0,25");
-    await expect(stake).toContainText("0,25%");
-    await expect(stake).toContainText("R$");
-    await expect(stake).toContainText("2,50");
+    await expect(stake).toHaveText(/Apostar\s+0,25\s*u\s+·\s+0,25\s*%\s+da sua banca\s+·\s+R\$\s*2,50/);
 
     // The multiplier never appears without the chance beside it (DESIGN.md §13).
     await expect(card).toContainText("1,38");
@@ -62,8 +61,7 @@ test.describe("a day with a recommendation", () => {
     await page.goto(board);
 
     const stake = page.getByTestId("today-card").first().getByTestId("today-stake");
-    await expect(stake).toContainText("0,25");
-    await expect(stake).toContainText("0,25%");
+    await expect(stake).toHaveText(/Apostar\s+0,25\s*u\s+·\s+0,25\s*%\s+da sua banca/);
     await expect(stake).not.toContainText("R$");
     await expect(page.getByRole("link", { name: /definir sua banca|definir banca/i }).first()).toBeVisible();
   });

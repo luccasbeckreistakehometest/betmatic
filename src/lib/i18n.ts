@@ -352,14 +352,14 @@ const DICT = {
   navToday: { pt: "Hoje", en: "Today" },
   todayTitle: { pt: "Os bilhetes de hoje", en: "Today's tickets" },
   todaySubtitle: { pt: "Pesquisa, não garantia de resultado.", en: "Research, not a guarantee of any result." },
-  todayMeta: { pt: "{n} bilhetes · {u} u no total (máximo de 3 por noite)", en: "{n} tickets · {u} u in total (three a night at most)" },
-  todayMetaOne: { pt: "1 bilhete · {u} u (máximo de 3 por noite)", en: "1 ticket · {u} u (three a night at most)" },
+  todayMeta: { pt: "{n} bilhetes · {u} no total (máximo de 3 por noite)", en: "{n} tickets · {u} in total (three a night at most)" },
+  todayMetaOne: { pt: "1 bilhete · {u} (máximo de 3 por noite)", en: "1 ticket · {u} (three a night at most)" },
   todayFooter: {
     pt: "Aposta é entretenimento e envolve risco de perda. Nada aqui é promessa de ganho. 18+. CVV 188.",
     en: "Betting is entertainment and carries a risk of loss. Nothing here is a promise of gain. 18+. CVV 188.",
   },
-  todayStake: { pt: "Apostar {u} u · {pct} da sua banca · {money}", en: "Bet {u} u · {pct} of your bankroll · {money}" },
-  todayStakeNoMoney: { pt: "Apostar {u} u · {pct} da sua banca", en: "Bet {u} u · {pct} of your bankroll" },
+  todayStake: { pt: "Apostar {u} · {pct} da sua banca · {money}", en: "Bet {u} · {pct} of your bankroll · {money}" },
+  todayStakeNoMoney: { pt: "Apostar {u} · {pct} da sua banca", en: "Bet {u} · {pct} of your bankroll" },
   todayChance: { pt: "Chance estimada {p}. O preço paga como {implied}.", en: "Estimated chance {p}. The price pays as {implied}." },
   todayMinOdds: { pt: "Só vale até {odd}. Abaixo disso, passa.", en: "Only worth it down to {odd}. Below that, pass." },
   todayCheckPrice: { pt: "Confira o preço na casa antes: ele muda sozinho.", en: "Check the price at the book first: it moves on its own." },
@@ -374,7 +374,7 @@ const DICT = {
   todayOpenGame: { pt: "Abrir o jogo", en: "Open the game" },
   todayRegister: { pt: "Registrei essa aposta", en: "I placed this one" },
   todayRegistered: { pt: "Registrado. A partir daqui isso conta no seu histórico.", en: "Logged. From here it counts in your record." },
-  todayLadder: { pt: "regra de faixa: {u} u", en: "band rule: {u} u" },
+  todayLadder: { pt: "regra de faixa: {u}", en: "band rule: {u}" },
   todayCapped: { pt: "reduzido pelo teto do dia", en: "trimmed by the day's ceiling" },
   todayAllTickets: { pt: "ver todos os bilhetes de hoje", en: "see every ticket generated today" },
 
@@ -389,7 +389,7 @@ const DICT = {
   todayLiveUnverified: { pt: "Sem preço confirmado. Fica de fora da carteira.", en: "No confirmed price. It stays out of the wallet." },
 
   todayMeasuring: {
-    pt: "A carteira está em calibração. Até a medição fechar, a recomendação sai no tamanho mínimo: 0,25 u. Hoje temos {n} pernas liquidadas neste recorte e um erro medido de {x} pontos entre a chance que estimamos e a que aconteceu.",
+    pt: "A carteira está em calibração. Até a medição fechar, a recomendação sai no tamanho mínimo: 0,25 u. Hoje temos {n} linhas liquidadas neste recorte e um erro medido de {x} pontos entre a chance que estimamos e a que aconteceu.",
     en: "The wallet is being calibrated. Until the measurement closes, every recommendation comes out at the minimum size: 0.25 u. Today this slice has {n} settled legs and a measured gap of {x} points between the chance we estimate and the one that happened.",
   },
   todayNoneTitle: { pt: "Hoje não tem.", en: "Nothing today." },

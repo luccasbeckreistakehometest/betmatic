@@ -78,7 +78,7 @@ export function LearningPanel() {
                     <ul className="mt-1 space-y-1">
                       {r.report.factors.map((f) => (
                         <li key={f.id} className="nums text-fg-muted">
-                          · {f.dim}={f.value} ({f.scope}) — {formatNumber(f.legs, "pt")} pernas, acerto {formatPercent(f.hitRate, "pt", { digits: 0 })} contra {formatPercent(f.predicted, "pt", { digits: 0 })} previsto, q={formatNumber(f.qValue, "pt", { digits: 3 })}
+                          · {f.dim}={f.value} ({f.scope}) — {formatNumber(f.legs, "pt")} linhas, acerto {formatPercent(f.hitRate, "pt", { digits: 0 })} contra {formatPercent(f.predicted, "pt", { digits: 0 })} previsto, q={formatNumber(f.qValue, "pt", { digits: 3 })}
                         </li>
                       ))}
                     </ul>

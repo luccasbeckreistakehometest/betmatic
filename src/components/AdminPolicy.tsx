@@ -58,7 +58,7 @@ const num3 = (x: number) => formatNumber(x, "pt", { digits: 3 });
 
 const REASONS: Record<string, string> = {
   alternative: "alternativa", scope: "fora do escopo", evidence: "evidência < 100", confidence: "confiança baixa",
-  legs: "mais de 2 pernas", odds: "odd fora de 1,30–5,00", edge_low: "edge abaixo de 4%", edge_high: "edge acima de 20%",
+  legs: "mais de 2 linhas", odds: "odd fora de 1,30–5,00", edge_low: "edge abaixo de 4%", edge_high: "edge acima de 20%",
   shrunk_low: "edge encolhida abaixo de 2%", unmapped_market: "mercado sem chave", game_taken: "o jogo já tem um bilhete",
   player_cap: "jogadora já aparece duas vezes", below_floor: "abaixo do piso de 0,25 u", day_cap: "teto do dia", quota: "fora dos três",
 };
@@ -81,7 +81,7 @@ export function AdminPolicy() {
     const r = await fetch(`/api/cron/refresh?job=${job}&force=1`, { method: "POST" });
     const j = await r.json().catch(() => ({}));
     const done = job === "attribute"
-      ? `Atribuição: ${j.legs} pernas, ${j.sole} mortes de perna única, ${j.factors} fatores, ${j.flagged} acesos.`
+      ? `Atribuição: ${j.legs} linhas, ${j.sole} bilhete(s) morto(s) por uma linha só, ${j.factors} fatores, ${j.flagged} acesos.`
       : job === "today"
         ? `Seleção: ${j.items} item(ns) em ${j.sports} esporte(s).`
         : `Verificação: ${j.evaluated} hipótese(s) avaliada(s) — ${j.improved} melhorou, ${j.worse} piorou, ${j.inconclusive} sem amostra.`;
@@ -121,14 +121,14 @@ export function AdminPolicy() {
         {factors.length ? (
           <Table caption="Fatores medidos">
             <thead>
-              <tr><Th>Dimensão</Th><Th>Valor</Th><Th numeric>Pernas</Th><Th numeric>Acerto</Th><Th numeric>Previsto</Th><Th numeric>Diferença</Th><Th>IC 95%</Th><Th numeric>q</Th><Th>Estado</Th></tr>
+              <tr><Th>Dimensão</Th><Th>Valor</Th><Th numeric>Linhas</Th><Th numeric>Acerto</Th><Th numeric>Previsto</Th><Th numeric>Diferença</Th><Th>IC 95%</Th><Th numeric>q</Th><Th>Estado</Th></tr>
             </thead>
             <tbody>
               {factors.slice(0, 40).map((f) => (
                 <Tr key={f.id}>
                   <Td label="Dimensão">{f.dim}</Td>
                   <Td label="Valor" className="text-fg">{f.value}</Td>
-                  <Td numeric label="Pernas">{formatNumber(f.legs, "pt")}</Td>
+                  <Td numeric label="Linhas">{formatNumber(f.legs, "pt")}</Td>
                   <Td numeric label="Acerto">{pct(f.hitRate)}</Td>
                   <Td numeric label="Previsto">{pct(f.predicted)}</Td>
                   <Td numeric label="Diferença">{formatPercent(f.gap, "pt", { digits: 0, signed: true })}</Td>
@@ -140,20 +140,20 @@ export function AdminPolicy() {
             </tbody>
           </Table>
         ) : (
-          <div className="p-(--panel-p)"><Empty rows={3}>Nenhuma fatia atingiu o mínimo de 30 pernas, 3 jogos e 2 dias ainda.</Empty></div>
+          <div className="p-(--panel-p)"><Empty rows={3}>Nenhuma fatia atingiu o mínimo de 30 linhas, 3 jogos e 2 dias ainda.</Empty></div>
         )}
       </Panel>
 
       <Panel title="Política — calibração por fatia" meta="o c e o σ_p que cada fatia está dimensionando (o dia em seleção fica de fora do próprio cálculo)" flush>
         <Table caption="Calibração por fatia">
           <thead>
-            <tr><Th>Fatia</Th><Th numeric>Pernas</Th><Th numeric>Razão medida</Th><Th numeric>c</Th><Th numeric>σ_p</Th><Th numeric>Viés</Th><Th>Regime</Th></tr>
+            <tr><Th>Fatia</Th><Th numeric>Linhas</Th><Th numeric>Razão medida</Th><Th numeric>c</Th><Th numeric>σ_p</Th><Th numeric>Viés</Th><Th>Regime</Th></tr>
           </thead>
           <tbody>
             {[data?.calibration.pre, data?.calibration.live, ...(data?.calibration.slices ?? [])].filter((s): s is SliceCalibration => !!s).slice(0, 24).map((s, i) => (
               <Tr key={`${s.key}-${i}`}>
                 <Td label="Fatia" className="text-fg">{s.key}</Td>
-                <Td numeric label="Pernas">{formatNumber(s.settled, "pt")}</Td>
+                <Td numeric label="Linhas">{formatNumber(s.settled, "pt")}</Td>
                 <Td numeric label="Razão medida">{num3(s.measuredRatio)}</Td>
                 <Td numeric label="c">{num3(s.factor)}</Td>
                 <Td numeric label="σ_p">{num3(s.sigmaP)}</Td>
@@ -229,7 +229,7 @@ export function AdminPolicy() {
       </Panel>
 
       {!!data?.unmapped.legs && (
-        <Panel title="Política — mercados sem chave" meta={`${data.unmapped.legs} perna(s) no balde unmapped — nunca entram na carteira`}>
+        <Panel title="Política — mercados sem chave" meta={`${data.unmapped.legs} linha(s) no balde unmapped — nunca entram na carteira`}>
           <p className="text-tiny text-fg-dim">{data.unmapped.examples.join(" · ") || "—"}</p>
         </Panel>
       )}
