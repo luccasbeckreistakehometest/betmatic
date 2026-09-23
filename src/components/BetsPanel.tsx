@@ -45,7 +45,7 @@ export function expectedLosers(modelledProbability: number): number {
 function EdgeTag({ edgePct, lang }: { edgePct: number | undefined; lang: Lang }) {
   if (edgePct === undefined || !Number.isFinite(edgePct))
     return (
-      <span className="nums text-micro text-fg-dim" title="Alguma perna está sem preço confirmado, então o retorno da múltipla não é calculável">
+      <span className="nums text-micro text-fg-dim" title="Alguma linha está sem preço confirmado, então o retorno da múltipla não é calculável">
         EV —
       </span>
     );

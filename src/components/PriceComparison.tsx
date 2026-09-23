@@ -151,7 +151,7 @@ function candidateLabel(c: BookCandidate, of: number, lang: Lang, t: ReturnType<
 
 /** "falta: Kiki Iriafen menos de 16,5 pontos — a casa não publica essa linha". */
 function missingLabel(c: BookCandidate, legNames: string[], lang: Lang, t: ReturnType<typeof booksCopy>): string {
-  const name = (i: number) => legNames[i] ?? `${lang === "pt" ? "perna" : "leg"} ${i + 1}`;
+  const name = (i: number) => legNames[i] ?? `${lang === "pt" ? "linha" : "leg"} ${i + 1}`;
   const reason = (r: "line" | "market") => t(r === "line" ? "reasonLine" : "reasonMarket");
   const head = c.missing.length === 1 ? t("missing") : t("missingMany");
   const reasons = new Set(c.missing.map((m) => m.reason));
@@ -169,7 +169,7 @@ function NearLineRow({ near, legNames, lang, ctx }: { near: NearLine; legNames: 
   const t = booksCopy(lang);
   // The player alone on a prop — the leg's own text already carries the line, and repeating it
   // ("Bia Souza mais de 6,5 — mais de 7,5 em vez de mais de 6,5") reads as two different bets.
-  const name = near.player ?? legNames[near.index] ?? `${lang === "pt" ? "perna" : "leg"} ${near.index + 1}`;
+  const name = near.player ?? legNames[near.index] ?? `${lang === "pt" ? "linha" : "leg"} ${near.index + 1}`;
   const prices = near.from.decimal
     ? ` (${t("pays")} ${formatOdds(near.to.decimal, lang)} ${t("insteadOf")} ${formatOdds(near.from.decimal, lang)})`
     : ` (${t("pays")} ${formatOdds(near.to.decimal, lang)})`;

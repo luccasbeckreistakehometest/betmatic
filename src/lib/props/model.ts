@@ -292,6 +292,16 @@ export function blendedProbability(model: number, hits: number, of: number, weig
 }
 
 /**
+ * The floor and ceiling every published chance passes through, blended or not. A counting stat in
+ * play has no certainties — an under is one whistle from a push and a made three from a loss — and
+ * the ledger of 22/09/2026 carries 59 live legs stamped at exactly 1.000, of which 11 lost. A
+ * chance of 1.000 in the ledger is always a bug, so the in-play path clamps like the pre-game one.
+ */
+export const PROBABILITY_FLOOR = 0.005;
+export const PROBABILITY_CEILING = 0.995;
+export const clampProbability = (p: number): number => clamp(p, PROBABILITY_FLOOR, PROBABILITY_CEILING);
+
+/**
  * The rate for the rest of a game in play: the PRE-GAME rate, unchanged by tonight's count. That is
  * a measurement, not an assumption — one run, scripts/research/walkforward-live.mts at half-time of
  * the 194 WNBA 2026 games with play-by-play fetched 22/09/2026 (19,465 line predictions), with the

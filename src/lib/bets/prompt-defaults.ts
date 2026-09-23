@@ -1,4 +1,19 @@
 /**
+ * The vocabulary rule for every Portuguese string the model writes. The prompts are in English and
+ * used to say "leg", which a Brazilian model translates spontaneously as "perna" — and the ledger
+ * proves it: "O jogo inteiro de Dallas, seis pernas" is a real stored title. The product now calls
+ * one selection of a ticket "uma linha", which collides with the market line, so the rule has to
+ * carry the disambiguation as well as the word.
+ */
+export const GLOSSARY_RULE = `- PORTUGUESE GLOSSARY, AND IT IS NOT NEGOTIABLE. One selection inside a ticket is "uma linha do
+  bilhete"; the word "perna" is banned from every user-facing string. The betting line itself — the
+  number a market is set at — must never be left bare when the same sentence also counts the
+  ticket's selections: write "a linha de 22,5 pontos", "a linha publicada" or "o número publicado",
+  so that the reader always knows which of the two a "linha" is. Write "3 linhas no bilhete",
+  "cada linha do bilhete", "a linha mais frágil"; never "cada linha vem com o histórico naquela
+  linha". Both nouns are feminine, so articles and adjectives do not change.`;
+
+/**
  * The generation prompts as shipped in code. They are version 0 of the editable prompt history:
  * admins read the active version, give feedback, and the agent rewrites it (see server/prompts.ts).
  * Nothing here is read directly by the builder any more — only through getPrompt().
@@ -169,7 +184,9 @@ For each ticket write:
 - evidence per leg: the measured fact, with its sample size when it has one.`;
 const SYSTEM_PT = `${SYSTEM_EN}
 
-Write every user-facing string (title, background, explanation, evidence, riskNote, dataNote) in Brazilian Portuguese. Keep player names, team names, market names and numbers exactly as supplied.`;
+Write every user-facing string (title, background, explanation, evidence, riskNote, dataNote) in Brazilian Portuguese. Keep player names, team names, market names and numbers exactly as supplied.
+
+${GLOSSARY_RULE}`;
 const SYSTEM_SLATE_EN = `${SYSTEM_EN}
 
 You are building ACROSS SEVERAL GAMES. Extra rules:
@@ -221,7 +238,9 @@ You are building ACROSS SEVERAL GAMES. Extra rules:
 - The longer the ticket, the more the book's margin compounds. Reflect that in the risk note.`;
 const SYSTEM_SLATE_PT = `${SYSTEM_SLATE_EN}
 
-Write every user-facing string in Brazilian Portuguese. Keep names, markets and numbers as supplied.`;
+Write every user-facing string in Brazilian Portuguese. Keep names, markets and numbers as supplied.
+
+${GLOSSARY_RULE}`;
 
 export const DEFAULT_PROMPTS = {
   game: { en: SYSTEM_EN, pt: SYSTEM_PT },

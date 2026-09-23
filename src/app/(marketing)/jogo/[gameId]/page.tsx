@@ -31,10 +31,12 @@ export const dynamic = "force-dynamic";
  */
 const C = {
   pt: {
-    eyebrow: "Palpite", teaser: "Bilhete com mais evidência", noTeaser: "O bilhete deste jogo ainda não foi montado. Ele é gerado com escalações e linhas atualizadas e aparece aqui assim que existir.",
-    legsLocked: (n: number) => `${legsLabel(n, "pt")} — a seleção e a chance real de cada uma abrem com uma conta grátis.`, cta: "Criar conta grátis e ver as pernas", open: "Abrir no app",
+    eyebrow: "Palpite", teaser: "Bilhete com mais evidência", // `line: "Linha"` below is a market table header, where the context resolves it; these two,
+    // beside a CTA that counts the ticket's selections, become "números publicados".
+    noTeaser: "O bilhete deste jogo ainda não foi montado. Ele é gerado com escalações e números atualizados e aparece aqui assim que existir.",
+    legsLocked: (n: number) => `${legsLabel(n, "pt")} — a seleção e a chance real de cada uma abrem com uma conta grátis.`, cta: "Criar conta grátis e ver as linhas do bilhete", open: "Abrir no app",
     legsPaid: (n: number) => `${legsLabel(n, "pt")} — este bilhete está numa faixa dos planos pagos. Com a conta grátis você vê os bilhetes de valor do jogo que escolher.`, ctaPaid: "Ver planos",
-    teaserBody: "Montado com as linhas publicadas, as escalações e o histórico medido de cada jogador. O bilhete completo fica público aqui depois que a bola rolar.",
+    teaserBody: "Montado com os números publicados, as escalações e o histórico medido de cada jogador. O bilhete completo fica público aqui depois que a bola rolar.",
     confidence: "confiança", proof: "Histórico público deste esporte", generated: "gerados", hit: "acerto", roi: "ROI a 1 unidade", all: "ver todos os bilhetes →", kickoff: "Bola rola",
     injuries: "Desfalques e dúvidas", line: "Linha", total: "Total", faq: "Perguntas frequentes", back: "← Betmatic", funnel: "Mais palpites de",
     method: "Todo bilhete gerado é registrado e conferido depois do jogo contra o placar oficial. Os números de acerto aparecem quando a amostra for grande o bastante para dizer alguma coisa.",

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { generateStructured } from "@/lib/ai/extract";
+import { GLOSSARY_RULE } from "@/lib/bets/prompt-defaults";
 import { calibrationPrompt } from "@/lib/ledger/calibrate";
 import { expectedValue, formatAmerican, impliedProbability, parlayDecimal, parseOdds } from "@/lib/odds";
 import type { Lang } from "@/lib/i18n";
@@ -44,7 +45,9 @@ const SYSTEM_EN = `You review a betting slip someone assembled themselves.
 
 const SYSTEM_PT = `${SYSTEM_EN}
 
-Write every field in Brazilian Portuguese. Keep player names, market names and numbers as supplied.`;
+Write every field in Brazilian Portuguese. Keep player names, market names and numbers as supplied.
+
+${GLOSSARY_RULE}`;
 
 export interface SlipAnalysis {
   verdict: string;
@@ -66,7 +69,7 @@ export interface SlipAnalysis {
 export async function analyseSlip(legs: SlipLegInput[], lang: Lang, opts: { context?: string } = {}): Promise<SlipAnalysis> {
   const decimals = legs.map((l) => parseOdds(l.odds));
   const priced = decimals.filter((d) => Number.isFinite(d) && d > 1);
-  if (priced.length < 2) throw new Error("Informe ao menos duas pernas com odds válidas.");
+  if (priced.length < 2) throw new Error("Informe ao menos duas linhas com odds válidas.");
 
   const prompt = [
     "SLIP UNDER REVIEW:",
@@ -86,7 +89,7 @@ export async function analyseSlip(legs: SlipLegInput[], lang: Lang, opts: { cont
     label: opts.context ? "deep_slip" : "analyse_slip",
     mock: () => ({
       verdict: lang === "pt" ? "Análise de teste: bilhete revisado sem IA." : "Test analysis: slip reviewed without AI.",
-      legs: legs.map((_, index) => ({ index, assessment: lang === "pt" ? "Perna conferida no modo de teste." : "Leg checked in test mode.", fairProbability: 0.5, concern: "minor" as const })),
+      legs: legs.map((_, index) => ({ index, assessment: lang === "pt" ? "Linha conferida no modo de teste." : "Leg checked in test mode.", fairProbability: 0.5, concern: "minor" as const })),
       weakestIndex: legs.length - 1,
       swaps: [],
       correlationNote: lang === "pt" ? "independentes" : "independent",

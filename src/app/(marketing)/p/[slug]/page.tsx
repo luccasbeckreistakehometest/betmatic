@@ -18,8 +18,8 @@ import { buttonClass } from "@/components/ui";
 export const dynamic = "force-dynamic";
 
 const C = {
-  pt: { lockedTitle: "Este bilhete abre quando a bola rolar", lockedBody: "Até o jogo começar, as pernas e as odds deste bilhete ficam só para quem tem o plano. Depois do início ele aparece aqui para todo mundo, e o resultado fica registrado, ganhe ou perca.", kickoff: "Início", lockedCta: "Ver planos",
-    back: "← Prova pública", generated: "Gerado em", settled: "Liquidado em", pending: "Aguardando o jogo", predicted: "probabilidade estimada", legs: "Pernas", share: "Compartilhar no WhatsApp", copy: "Este bilhete tem um link fixo: o resultado fica aqui, ganhe ou perca.", cta: "Ver os bilhetes de hoje",
+  pt: { lockedTitle: "Este bilhete abre quando a bola rolar", lockedBody: "Até o jogo começar, as linhas e as odds deste bilhete ficam só para quem tem o plano. Depois do início ele aparece aqui para todo mundo, e o resultado fica registrado, ganhe ou perca.", kickoff: "Início", lockedCta: "Ver planos",
+    back: "← Prova pública", generated: "Gerado em", settled: "Liquidado em", pending: "Aguardando o jogo", predicted: "probabilidade estimada", legs: "Linhas", share: "Compartilhar no WhatsApp", copy: "Este bilhete tem um link fixo: o resultado fica aqui, ganhe ou perca.", cta: "Ver os bilhetes de hoje",
     outcome: { won: "GANHOU", lost: "PERDEU", push: "PUSH", void: "ANULADO", pending: "PENDENTE" }, leg: { won: "✓", lost: "✗", push: "=", void: "–", pending: "·" },
     wa: (t: string, o: string, odds: string, url: string) => `Bilhete Betmatic — ${t}\n${odds} · ${o}\n${url}` },
   en: { lockedTitle: "This ticket opens at kickoff", lockedBody: "Until the game starts, this ticket's legs and odds are for plan members only. Once it kicks off it appears here for everyone, and the result stays on record, win or lose.", kickoff: "Kickoff", lockedCta: "See plans",
@@ -37,7 +37,7 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
     return { title: C[lang].lockedTitle, description: `${scrubText(e.matchup, lang)}. ${C[lang].lockedBody}`, robots: { index: false } };
   }
   const title = `${scrubText(e.title, lang)} — ${C[lang].outcome[e.outcome]}`;
-  const description = `${scrubText(e.matchup, lang)} · ${formatDecimal(e.combinedDecimal, lang)} · ${e.legs.length} ${lang === "pt" ? "pernas" : "legs"}. ${C[lang].copy}`;
+  const description = `${scrubText(e.matchup, lang)} · ${formatDecimal(e.combinedDecimal, lang)} · ${e.legs.length} ${lang === "pt" ? "linhas" : "legs"}. ${C[lang].copy}`;
   const path = `/p/${slug}`;
   return {
     title,

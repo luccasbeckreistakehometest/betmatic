@@ -291,6 +291,8 @@ export interface UnmatchedEvent { key: string; book: string; platform: string; s
 
 /** Book fixtures the matcher could not tie to a game, newest kickoff first — the admin's to-do list. */
 export function listUnmatchedEvents(limit = 60, now = new Date()): UnmatchedEvent[] {
+  // `now` is a parameter, not Date.now() inline, because the window is six hours wide: a test with
+  // a fixed fixture clock was green in the morning and red in the afternoon of the same day.
   return (db().prepare(`SELECT e.*, (SELECT COUNT(*) FROM book_prices p WHERE p.eventKey = e.key AND p.current = 1) AS prices
     FROM book_events e WHERE e.gameId IS NULL AND e.startsAt > ? ORDER BY e.startsAt ASC LIMIT ?`).all(new Date(now.getTime() - 6 * 3_600_000).toISOString(), limit) as (EventRow & { prices: number })[])
     .map((e) => ({ key: e.key, book: e.book, platform: e.platform, sportKey: e.sportKey, home: e.home, away: e.away, startsAt: e.startsAt, league: e.league, externalIds: JSON.parse(e.externalIds || "{}"), lastSeenAt: e.lastSeenAt, prices: e.prices }));

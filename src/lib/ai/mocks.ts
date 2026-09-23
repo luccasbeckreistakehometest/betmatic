@@ -66,7 +66,7 @@ function ticket(legs: RawLeg[], title: string, lang: Lang, extra: Partial<RawSug
     title,
     background: lang === "pt" ? "Bilhete de teste montado a partir das linhas publicadas." : "Test ticket built from the posted lines.",
     legs,
-    riskNote: lang === "pt" ? "Uma perna de jogador depende de minutos." : "A player leg depends on minutes.",
+    riskNote: lang === "pt" ? "Uma linha de jogador depende de minutos." : "A player leg depends on minutes.",
     confidence: "medium",
     ...extra,
   };

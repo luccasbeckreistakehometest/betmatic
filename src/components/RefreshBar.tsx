@@ -8,8 +8,9 @@ interface State { verdict: string; reason: "lineup" | "lines" | null; used?: num
 
 const C = {
   pt: {
-    lineup: "A escalação mexeu em pernas destes bilhetes depois que eles foram montados.",
-    lines: "As linhas mudaram desde que estes bilhetes foram montados, há mais de 6 horas.",
+    // The two notices share one slot: with "linhas" in both, they would read as the same message.
+    lineup: "A escalação mexeu em linhas destes bilhetes depois que eles foram montados.",
+    lines: "Os números publicados mudaram desde que estes bilhetes foram montados, há mais de 6 horas.",
     button: "Atualizar os bilhetes deste jogo", busy: "Remontando com os dados de agora…", used: "{used} de {cap} atualizações hoje",
     done: "Bilhetes atualizados. Os antigos continuam no histórico público.", capUser: "Você já usou as {cap} atualizações de hoje.", capGlobal: "As atualizações de hoje se esgotaram. Amanhã volta.",
     failed: "Não deu para atualizar agora. Nada foi descontado.",

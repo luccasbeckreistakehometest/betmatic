@@ -28,7 +28,7 @@ describe("game page text", () => {
     const faq = gameFaq({ teams: { away: "Valencia", home: "Sevilla" }, league: "La Liga", lang: "pt", teaser: { title: "Aposta simples · faixa Valor", odds: "2.10x", legs: 1 }, proof: { settled: 2, hitRate: 0.5, roi: 0 } });
     expect(faq).toHaveLength(3);
     expect(faq[0].q).toBe("Qual é o palpite para Valencia x Sevilla?");
-    expect(faq[0].a).toContain("1 perna, com odd combinada de 2.10x");
+    expect(faq[0].a).toContain("1 linha, com odd combinada de 2.10x");
     expect(faq[0].a).toContain("conta grátis");
     const paid = gameFaq({ teams: { away: "A", home: "B" }, league: "NBA", lang: "pt", teaser: { title: "x", odds: "8.00x", legs: 3, free: false }, proof: { settled: 0, hitRate: 0, roi: 0 } });
     expect(paid[0].a).toContain("planos pagos");

@@ -4,7 +4,7 @@ import { calibrate, ledgerSummary, specialisation } from "@/lib/ledger/calibrate
 import { readLedger } from "@/lib/ledger/store";
 import { currentUser, requireAdmin } from "@/lib/server/session";
 import { publicEntry } from "@/lib/ledger/public-view";
-import { publicTickets } from "@/lib/ledger/proof";
+import { publicTickets, withinRecordWindow } from "@/lib/ledger/proof";
 import { normaliseLang } from "@/lib/i18n";
 
 export const runtime = "nodejs";
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     const entries = includeEntries ? readLedger().slice(-100).reverse() : undefined;
     return NextResponse.json({ admin: true, summary: ledgerSummary(), calibration: report, specialisation: specialisation(), entries });
   }
-  const entries = includeEntries ? publicTickets(readLedger()).slice(-100).reverse() : undefined;
+  const entries = includeEntries ? publicTickets(withinRecordWindow(readLedger())).slice(-100).reverse() : undefined;
   return NextResponse.json({
     admin: false,
     summary: ledgerSummary(),

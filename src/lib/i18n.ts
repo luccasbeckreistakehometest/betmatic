@@ -73,7 +73,9 @@ const DICT = {
   noGamelog: { pt: "sem histórico", en: "no game log" },
 
   background: { pt: "Contexto", en: "Background" },
-  legs: { pt: "Pernas", en: "Legs" },
+  // `t("legs")` labels ledgerSummary().total, which counts TICKETS, not selections. The old
+  // "Pernas" was already the wrong noun; "linha" would only have made the error louder.
+  legs: { pt: "Bilhetes", en: "Tickets" },
   combined: { pt: "Combinada", en: "Combined" },
   impliedChance: { pt: "Chance implícita", en: "Implied chance" },
   modelledChance: { pt: "Chance estimada", en: "Modelled chance" },
@@ -132,7 +134,7 @@ const DICT = {
     en: "Not enough settled legs to calibrate yet. Build tickets and settle them after the games.",
   },
   noneBySource: {
-    pt: "Nenhuma perna liquidada ainda por fonte de evidência: forma, lesões e confrontos só aparecem aqui depois que os jogos fecham.",
+    pt: "Nenhuma linha de bilhete liquidada ainda por fonte de evidência: forma, lesões e confrontos só aparecem aqui depois que os jogos fecham.",
     en: "No settled legs by evidence source yet: form, injuries and head-to-head show up here once the games close.",
   },
   noneByMarket: {
@@ -152,16 +154,16 @@ const DICT = {
   crossGameLocked: { pt: "Múltiplas entre jogos fazem parte do plano Pro. É o que permite chegar em 100x ou mais.", en: "Cross-game parlays are part of the Pro plan. That is what makes 100x and beyond reachable." },
   seePlans: { pt: "Ver planos", en: "See plans" },
   slipTitle: { pt: "Meu bilhete", en: "My slip" },
-  slipHint: { pt: "Monte o seu bilhete e peça uma análise. A IA aponta a perna frágil e sugere troca — isso consome coins porque é calculado só pra você.", en: "Build your slip and ask for an analysis. The AI flags the weak leg and suggests a swap — this spends coins because it is computed only for you." },
-  addLeg: { pt: "Adicionar perna", en: "Add leg" },
+  slipHint: { pt: "Monte o seu bilhete e peça uma análise. A IA aponta a linha mais frágil do bilhete e sugere troca — isso consome coins porque é calculado só pra você.", en: "Build your slip and ask for an analysis. The AI flags the weak leg and suggests a swap — this spends coins because it is computed only for you." },
+  addLeg: { pt: "Adicionar linha", en: "Add leg" },
   removeLeg: { pt: "remover", en: "remove" },
   selection: { pt: "Seleção", en: "Selection" },
   analyseSlip: { pt: "Analisar bilhete", en: "Analyse slip" },
   analysing: { pt: "Analisando…", en: "Analysing…" },
   costsCoins: { pt: "custa", en: "costs" },
-  slipEmpty: { pt: "Adicione pelo menos duas pernas com odds para analisar.", en: "Add at least two legs with odds to analyse." },
+  slipEmpty: { pt: "Adicione pelo menos duas linhas com odds para analisar.", en: "Add at least two legs with odds to analyse." },
   slipVerdict: { pt: "Veredito", en: "Verdict" },
-  slipWeakest: { pt: "Perna mais frágil", en: "Weakest leg" },
+  slipWeakest: { pt: "Linha mais frágil", en: "Weakest leg" },
   slipSwaps: { pt: "Trocas sugeridas", en: "Suggested swaps" },
   notEnoughCoins: { pt: "Coins insuficientes", en: "Not enough coins" },
   mySlip: { pt: "Meu bilhete", en: "My slip" },
@@ -203,7 +205,7 @@ const DICT = {
     en: "21+ where applicable. If betting stops being fun, that's the signal to stop — 1-800-GAMBLER.",
   },
   longshotWarning: {
-    pt: "Múltiplas longas são de baixa probabilidade e a margem da casa se acumula a cada perna. Os números abaixo mostram isso sem maquiagem.",
+    pt: "Múltiplas longas são de baixa probabilidade e a margem da casa se acumula a cada linha. Os números abaixo mostram isso sem maquiagem.",
     en: "Long parlays are low-probability tickets and the book's margin compounds with every leg. The numbers below show that plainly.",
   },
 
@@ -269,10 +271,10 @@ const DICT = {
   reviewVariance: { pt: "Variância", en: "Variance" },
   reviewError: { pt: "Erro repetível", en: "Repeatable error" },
   reviewMixed: { pt: "Um pouco dos dois", en: "A bit of both" },
-  reviewKeyLeg: { pt: "Perna decisiva", en: "Deciding leg" },
+  reviewKeyLeg: { pt: "Linha decisiva", en: "Deciding leg" },
   reviewWatch: { pt: "No que ficar de olho da próxima vez", en: "What to watch next time" },
   reviewLoading: { pt: "Revisando o bilhete…", en: "Reviewing the ticket…" },
-  reviewUnavailable: { pt: "A explicação por IA está desligada neste servidor. Ficam as pernas liquidadas:", en: "The AI explanation is off on this server. Here are the settled legs:" },
+  reviewUnavailable: { pt: "A explicação por IA está desligada neste servidor. Ficam as linhas liquidadas:", en: "The AI explanation is off on this server. Here are the settled legs:" },
   reviewFailed: { pt: "Não deu para revisar agora.", en: "Couldn't review right now." },
   reviewCached: { pt: "gerada em", en: "generated" },
   // ---- alerts ----

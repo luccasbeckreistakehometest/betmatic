@@ -41,11 +41,11 @@ export const SPORT_LANDINGS: SportLanding[] = [
     sportKeys: ["nba", "wnba"],
     name: { pt: "Basquete", en: "Basketball" },
     title: {
-      pt: "Odd e minutagem em cada perna de jogador.",
+      pt: "Odd e minutagem em cada linha de jogador.",
       en: "A real price and real minutes behind every player leg.",
     },
     sub: {
-      pt: "Na NBA e na WNBA, cada perna de jogador sai com a linha e o preço que a casa publicou e, do lado, quantas vezes ele passou dessa linha. Quem joga pouco nem entra. E no raio-x do jogador você vê como ele rende com e sem o companheiro.",
+      pt: "Na NBA e na WNBA, cada linha de jogador sai com o número e o preço que a casa publicou e, do lado, quantas vezes ele passou dele. Quem joga pouco nem entra. E no raio-x do jogador você vê como ele rende com e sem o companheiro.",
       en: "Across the NBA and WNBA, every player leg comes with the line and price the book posted and, next to it, how often he cleared that line. Players who barely play never make it. And the player deep dive shows how he does with and without a teammate.",
     },
     angle: {
@@ -56,7 +56,7 @@ export const SPORT_LANDINGS: SportLanding[] = [
         },
         {
           title: "Minutagem antes de tudo",
-          body: "Matchup bom não vale nada pra quem fica 12 minutos em quadra. Antes de qualquer perna, a gente confere minutos e papel no time; quem joga pouco sai da lista.",
+          body: "Matchup bom não vale nada pra quem fica 12 minutos em quadra. Antes de qualquer linha, a gente confere minutos e papel no time; quem joga pouco sai da lista.",
         },
         {
           title: "Com e sem o companheiro",
@@ -99,8 +99,8 @@ export const SPORT_LANDINGS: SportLanding[] = [
     stack: {
       pt: [
         {
-          title: "Vigia de lesão nas suas pernas",
-          body: "No basquete não sai escalação publicada, então a gente acompanha o boletim de lesões: quem está na sua perna virou dúvida ou foi descartado, a perna ganha selo vermelho e quem salvou o bilhete recebe o aviso na sua lista de avisos.",
+          title: "Vigia de lesão nas suas linhas",
+          body: "No basquete não sai escalação publicada, então a gente acompanha o boletim de lesões: quem está numa linha sua virou dúvida ou foi descartado, a linha ganha selo vermelho e quem salvou o bilhete recebe o aviso na sua lista de avisos.",
           href: "/app/alerts",
           cta: "Como funcionam os avisos",
         },
@@ -112,7 +112,7 @@ export const SPORT_LANDINGS: SportLanding[] = [
         },
         {
           title: "Manda o print, a gente lê",
-          body: "Apostou na casa? Manda o print: a gente lê as pernas e as odds, confere se elas multiplicam no total que está ali, e o bilhete é liquidado sozinho quando o jogo acaba. A imagem não fica guardada.",
+          body: "Apostou na casa? Manda o print: a gente lê as linhas e as odds, confere se elas multiplicam no total que está ali, e o bilhete é liquidado sozinho quando o jogo acaba. A imagem não fica guardada.",
           href: "/app/bankroll",
           cta: "Ver a banca",
         },
@@ -124,19 +124,19 @@ export const SPORT_LANDINGS: SportLanding[] = [
         },
         {
           title: "Linha de fechamento (CLV)",
-          body: "No apito inicial a gente guarda a odd de fechamento de cada perna, tira a margem da casa e compara com o preço do bilhete. O número sai por mercado na prova pública, a partir de 30 pernas com fechamento.",
+          body: "No apito inicial a gente guarda a odd de fechamento de cada linha, tira a margem da casa e compara com o preço do bilhete. O número sai por mercado na prova pública, a partir de 30 linhas com fechamento.",
           href: "/prova",
           cta: "Ver o CLV medido",
         },
         {
           title: "Com o jogo rolando",
-          body: "Cada perna mostra se já bateu, se caiu ou quanta chance ainda tem, misturando o ritmo da partida com o histórico do jogador. É estimativa, e vem escrito que é. Nos planos Pro e Max entra também a leitura no intervalo: bilhetes novos, montados só com o que já aconteceu, registrados e conferidos numa conta separada.",
+          body: "Cada linha mostra se já bateu, se caiu ou quanta chance ainda tem, misturando o ritmo da partida com o histórico do jogador. É estimativa, e vem escrito que é. Nos planos Pro e Max entra também a leitura no intervalo: bilhetes novos, montados só com o que já aconteceu, registrados e conferidos numa conta separada.",
           href: "/planos",
           cta: "Ver os planos",
         },
         {
           title: "Em qual casa paga mais",
-          body: "Oito casas brasileiras lidas a cada 15 minutos. Em cada perna, quem paga mais e quanto a mais que a pior; no bilhete, onde ele inteiro rende mais; e as linhas de jogador em que uma casa está fora do passo das outras.",
+          body: "Oito casas brasileiras lidas a cada 15 minutos. Em cada linha do bilhete, quem paga mais e quanto a mais que a pior; no bilhete, onde ele inteiro rende mais; e as linhas de jogador em que uma casa está fora do passo das outras.",
           href: "/signup",
           cta: "Ver num jogo",
         },
@@ -213,7 +213,7 @@ export const SPORT_LANDINGS: SportLanding[] = [
     leagues: ["NBA", "WNBA"],
     cta: { pt: "Ver os jogos de hoje", en: "See today's games" },
     meta: {
-      pt: "Palpites de NBA e WNBA com odd publicada em cada perna de jogador, histórico nessa linha, minutagem e o \"com e sem\" o companheiro, e a chance estimada ao lado.",
+      pt: "Palpites de NBA e WNBA com odd publicada em cada linha de jogador, histórico nesse número, minutagem e o \"com e sem\" o companheiro, e a chance estimada ao lado.",
       en: "NBA and WNBA picks with a posted price on every player leg, the record at that line, minutes, and with/without-teammate splits, each with the estimated chance.",
     },
   },
@@ -226,14 +226,14 @@ export const SPORT_LANDINGS: SportLanding[] = [
       en: "A confirmed lineup changes everything, and your slip hears about it first.",
     },
     sub: {
-      pt: "Finalizações, faltas e impedimentos de cada jogador entram no bilhete com a odd que a casa publicou. Uma hora antes do jogo a gente confere a escalação: se quem está na sua perna ficar no banco, você fica sabendo e, quando existe, a alternativa sem ele aparece do lado.",
+      pt: "Finalizações, faltas e impedimentos de cada jogador entram no bilhete com a odd que a casa publicou. Uma hora antes do jogo a gente confere a escalação: se quem está numa linha sua ficar no banco, você fica sabendo e, quando existe, a alternativa sem ele aparece do lado.",
       en: "Each player's shots, fouls and offsides go on the ticket at the price the book posted. An hour before kickoff we check the lineup: if the player on your leg is benched, you hear about it and, when there is one, the backup without him shows up beside it.",
     },
     angle: {
       pt: [
         {
           title: "Vigia de escalação",
-          body: "Quando os times saem, a gente cruza com cada bilhete salvo. Jogador no banco ou fora da lista vira um selo vermelho na perna e um aviso pra quem salvou.",
+          body: "Quando os times saem, a gente cruza com cada bilhete salvo. Jogador no banco ou fora da lista vira um selo vermelho na linha e um aviso pra quem salvou.",
         },
         {
           title: "Cartão é onde a casa menos presta atenção",
@@ -245,7 +245,7 @@ export const SPORT_LANDINGS: SportLanding[] = [
         },
         {
           title: "Finalização com preço e histórico",
-          body: "Muito atacante finaliza bastante e acerta pouco. Cada perna de finalização sai com a odd publicada e quantas vezes ele passou dessa linha.",
+          body: "Muito atacante finaliza bastante e acerta pouco. Cada linha de finalização sai com a odd publicada e quantas vezes ele passou dela.",
         },
       ],
       en: [
@@ -281,7 +281,7 @@ export const SPORT_LANDINGS: SportLanding[] = [
       pt: [
         {
           title: "O aviso de escalação chega onde você está",
-          body: "Quando os onze saem, a gente cruza com cada bilhete salvo. Titular no banco ou fora da lista vira selo vermelho na perna e um aviso pra quem salvou, na sua lista de avisos.",
+          body: "Quando os onze saem, a gente cruza com cada bilhete salvo. Titular no banco ou fora da lista vira selo vermelho na linha e um aviso pra quem salvou, na sua lista de avisos.",
           href: "/app/alerts",
           cta: "Como funcionam os avisos",
         },
@@ -293,7 +293,7 @@ export const SPORT_LANDINGS: SportLanding[] = [
         },
         {
           title: "Manda o print, a gente lê",
-          body: "Apostou na casa? Manda o print: a gente lê as pernas e as odds, confere se elas multiplicam no total que está ali, e o bilhete é liquidado sozinho quando o jogo acaba. A imagem não fica guardada.",
+          body: "Apostou na casa? Manda o print: a gente lê as linhas e as odds, confere se elas multiplicam no total que está ali, e o bilhete é liquidado sozinho quando o jogo acaba. A imagem não fica guardada.",
           href: "/app/bankroll",
           cta: "Ver a banca",
         },
@@ -305,19 +305,19 @@ export const SPORT_LANDINGS: SportLanding[] = [
         },
         {
           title: "Linha de fechamento (CLV)",
-          body: "No apito inicial a gente guarda a odd de fechamento de cada perna, tira a margem da casa e compara com o preço do bilhete. O número sai por mercado na prova pública, a partir de 30 pernas com fechamento.",
+          body: "No apito inicial a gente guarda a odd de fechamento de cada linha, tira a margem da casa e compara com o preço do bilhete. O número sai por mercado na prova pública, a partir de 30 linhas com fechamento.",
           href: "/prova",
           cta: "Ver o CLV medido",
         },
         {
           title: "Com a bola rolando",
-          body: "Cada perna mostra se já bateu, se caiu ou quanta chance ainda tem no tempo que falta. É estimativa, e vem escrito que é. Nos planos Pro e Max entra também a leitura no intervalo: bilhetes novos, montados só com o que já aconteceu, registrados e conferidos numa conta separada.",
+          body: "Cada linha mostra se já bateu, se caiu ou quanta chance ainda tem no tempo que falta. É estimativa, e vem escrito que é. Nos planos Pro e Max entra também a leitura no intervalo: bilhetes novos, montados só com o que já aconteceu, registrados e conferidos numa conta separada.",
           href: "/planos",
           cta: "Ver os planos",
         },
         {
           title: "Em qual casa paga mais",
-          body: "As casas brasileiras que publicam odds abertas são lidas a cada 15 minutos. Em cada perna, quem paga mais e quanto a mais que a pior; no bilhete, onde ele inteiro rende mais.",
+          body: "As casas brasileiras que publicam odds abertas são lidas a cada 15 minutos. Em cada linha do bilhete, quem paga mais e quanto a mais que a pior; no bilhete, onde ele inteiro rende mais.",
           href: "/signup",
           cta: "Ver num jogo",
         },

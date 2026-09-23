@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { readLedger } from "@/lib/ledger/store";
-import { mainTickets, proofMinDecided, proofPublishable, proofStats } from "@/lib/ledger/proof";
+import { mainTickets, proofMinDecided, proofPublishable, proofStats, withinRecordWindow } from "@/lib/ledger/proof";
 import { latestPredictionDateKey, servePredictions } from "@/lib/server/predictions";
 import { getPlan } from "@/lib/plans";
 import { SOLD_SPORTS } from "@/lib/sports";
@@ -18,7 +18,7 @@ import { recentFeaturedIds } from "@/lib/server/featured-store";
  * Nothing here is written by hand, so it can never drift from the product's real record.
  */
 const C = {
-  pt: { method: "Como medimos: todo bilhete gerado fica registrado na hora e é liquidado sozinho contra o placar oficial — ganhou, perdeu ou anulou. Os números de acerto e ROI aparecem aqui quando houver pelo menos {n} bilhetes decididos; antes disso, seria sorte ou azar.", methodTitle: "Prova pública, com método", eyebrow: "Prova ao vivo", generated: "bilhetes gerados", hit: "acerto", roi: "ROI a 1 unidade", all: "ver todos os bilhetes →", today: "Bilhete do dia", latest: "Último bilhete gerado", cta: "Ver as pernas grátis", ctaPaid: "Ver planos", blurb: "As pernas e a chance medida de cada uma ficam no app.", confidence: "confiança", none: "O primeiro bilhete de hoje aparece assim que um jogo for aberto.", gamePage: "página do jogo →" },
+  pt: { method: "Como medimos: todo bilhete gerado fica registrado na hora e é liquidado sozinho contra o placar oficial — ganhou, perdeu ou anulou. Os números de acerto e ROI aparecem aqui quando houver pelo menos {n} bilhetes decididos; antes disso, seria sorte ou azar.", methodTitle: "Prova pública, com método", eyebrow: "Prova ao vivo", generated: "bilhetes gerados", hit: "acerto", roi: "ROI a 1 unidade", all: "ver todos os bilhetes →", today: "Bilhete do dia", latest: "Último bilhete gerado", cta: "Ver as linhas grátis", ctaPaid: "Ver planos", blurb: "As linhas e a chance medida de cada uma ficam no app.", confidence: "confiança", none: "O primeiro bilhete de hoje aparece assim que um jogo for aberto.", gamePage: "página do jogo →" },
   en: { method: "How we measure: every generated ticket is logged the moment it is built and graded automatically against the official score — won, lost or void. Hit rate and ROI appear here once at least {n} tickets are decided; before that, it would be luck.", methodTitle: "Public record, with a method", eyebrow: "Live proof", generated: "tickets generated", hit: "hit rate", roi: "ROI at 1 unit", all: "see every ticket →", today: "Ticket of the day", latest: "Latest ticket", cta: "See the legs for free", ctaPaid: "See plans", blurb: "The legs and each one's measured chance are in the app.", confidence: "confidence", none: "Today's first ticket appears as soon as a game is opened.", gamePage: "game page →" },
 };
 
@@ -49,7 +49,7 @@ function bestToday(lang: Lang, sportKeys?: string[]): { pick: ReturnType<typeof 
 /** `sportKeys` narrows both the numbers and the ticket to one sport funnel. */
 export function ProofStrip({ lang, sportKeys }: { lang: Lang; sportKeys?: string[] }) {
   const c = C[lang];
-  const s = proofStats(mainTickets(readLedger()).filter((e) => !sportKeys || sportKeys.includes(e.sportKey)));
+  const s = proofStats(mainTickets(withinRecordWindow(readLedger())).filter((e) => !sportKeys || sportKeys.includes(e.sportKey)));
   const { pick: top, isToday } = bestToday(lang, sportKeys);
   const pct = (n: number, signed = false) => formatPercent(n, lang, { signed });
   const publish = proofPublishable(s);
