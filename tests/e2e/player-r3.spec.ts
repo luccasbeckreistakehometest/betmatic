@@ -44,7 +44,7 @@ test("player deep dive: line drag, with/without split, a read paid once and shar
   expect(await coins(page)).toBe(15);
 
   // A free user: the same player (their one of the day) shows the stored read at no cost; a second player is capped.
-  const ctx = await browser.newContext({ baseURL: "http://localhost:3300", locale: "pt-BR" });
+  const ctx = await browser.newContext({ baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3300", locale: "pt-BR" });
   const other = await ctx.newPage();
   await registerUser(other, "divefree");
   await skipTour(other);

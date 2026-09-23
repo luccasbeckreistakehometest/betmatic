@@ -43,6 +43,14 @@ export interface DeepLinkScheme {
   kind: DeepLinkKind | "none";
   /** Whether one link can carry every leg of a ticket. */
   multi: boolean;
+  /**
+   * Whether that multi-selection form carries legs from DIFFERENT matches — what a cross-game
+   * múltipla needs. It is a separate question from `multi`: a scheme can take several selections
+   * and still name the event once, and then a cross-game slip built from it would silently be a
+   * slip for one game. False here means the book falls back to partial coverage or to a page, never
+   * to an invented URL.
+   */
+  multiEvent: boolean;
   verified: boolean;
   /** The URL form, with the ids it needs. */
   scheme: string;
@@ -56,16 +64,16 @@ const OBSERVED = "observed on 2026-09-22";
 /** Documented so nobody re-derives a scheme — or trusts one this list says was never opened. */
 export const DEEP_LINK_REGISTRY: DeepLinkScheme[] = [
   {
-    platform: "superbet", book: "Superbet", kind: "betslip", multi: true, verified: true,
+    platform: "superbet", book: "Superbet", kind: "betslip", multi: true, multiEvent: true, verified: true,
     scheme: "https://superbet.bet.br/betslip?bets[]=<eventId>,<outcomeId>,<specialBetValue>,0,<oddUuid>[&bets[]=…]&type=simple&target_screen=soccer_event_details",
     source: `the site's own share-ticket builder in its public bundle (static/js/async/bootstrap.*.js: addSelectionsFromUrl reads bets[] as "matchId,oddId,specialBetValue,fix,oddUuid" on the /betslip route; target_screen=soccer_event_details then lands on the event page); event URL form from https://superbet.bet.br/sitemap/events.xml; ${OBSERVED}`,
-    notes: "verified with one and with two selections (the slip listed both and priced the double); the event page /odds/<sport>/<slug>-<eventId> renders whatever the slug says",
+    notes: "verified with one and with two selections (the slip listed both and priced the double); verified again on 2026-09-23 with two selections from TWO DIFFERENT WNBA games — each bets[] entry carries its own matchId, the slip listed both games and priced the double at 8.17 = 1.72 × 4.75, the plain product; the event page /odds/<sport>/<slug>-<eventId> renders whatever the slug says",
   },
   {
-    platform: "kambi", book: "KTO", kind: "betslip", multi: true, verified: false,
+    platform: "kambi", book: "KTO", kind: "betslip", multi: true, multiEvent: true, verified: false,
     scheme: "https://www.kto.bet.br/app/esportes/#?coupon=combination|<outcomeId>[,<outcomeId>…]|0|replace",
     source: `KTO's own promo cards in Kambi's public startup settings (https://settings-api.kambicdn.com/ktobr__startup.json, read ${OBSERVED.replace("observed on ", "")}: ".../app/esportes/#?coupon=combination|<outcomeId>|10|replace"), the form FDJ United's "Sportsbook deeplinking" guide documents for the Kambi client (developer.kindredgroup.com: coupon=<type>|<outcomeIds, comma-separated>|<stake>|replace)`,
-    notes: "NOT verified: www.kto.bet.br answers a Cloudflare challenge to a plain client and its robots.txt disallows /app/*, so the link was never opened; the outcome ids are Kambi's own, read from the same CDN the site reads",
+    notes: "NOT verified: www.kto.bet.br answers a Cloudflare challenge to a plain client and its robots.txt disallows /app/*, so the link was never opened; the outcome ids are Kambi's own, read from the same CDN the site reads. Cross-event is claimed from the scheme only: a Kambi outcome id is unique across the whole offering and \"combination\" is Kambi's own word for an accumulator over several events, so the form needs no event id — but nothing here was opened, and the link stays marked unverified for one selection and for several alike",
   },
   // The five Altenar tenants share one widget (sb2wsdk-altenar2.biahosted.com/altenarWSDK.js) whose
   // content only renders after a token-validation script (wsdk-core: ZW5jb2RlZF9zY3JpcHQv1.min.js)
@@ -73,50 +81,50 @@ export const DEEP_LINK_REGISTRY: DeepLinkScheme[] = [
   // none is guessed. The widget's JS API takes `oddIds` (an operator page can pre-fill the slip from
   // it), but no tenant exposed a URL parameter that reaches it.
   {
-    platform: "altenar:lotogreen", book: "LotoGreen", kind: "none", multi: false, verified: false,
+    platform: "altenar:lotogreen", book: "LotoGreen", kind: "none", multi: false, multiEvent: false, verified: false,
     scheme: "", source: `the site's own anchors stop at the sport and championship pages (/sports/<sport>/s-<sportId>, /sports/<sport>/<country>/c-<champId>), ${OBSERVED}`,
     notes: "no event page route was exposed to a plain client; no link is built rather than a guessed one",
   },
   {
-    platform: "altenar:estrelabet", book: "EstrelaBet", kind: "none", multi: false, verified: false,
+    platform: "altenar:estrelabet", book: "EstrelaBet", kind: "none", multi: false, multiEvent: false, verified: false,
     scheme: "", source: `/aposta-esportiva rendered for a plain client (the site's front door answered a Cloudflare challenge on an earlier day) but its widget exposed no event anchors, ${OBSERVED}`,
     notes: "no link is built rather than a guessed one",
   },
   {
-    platform: "altenar:apostaganha", book: "Aposta Ganha", kind: "none", multi: false, verified: false,
+    platform: "altenar:apostaganha", book: "Aposta Ganha", kind: "none", multi: false, multiEvent: false, verified: false,
     scheme: "", source: `/esportes/home#/overview rendered its shell only (the widget stayed on "Carregando…"), ${OBSERVED}`,
     notes: "no link is built rather than a guessed one",
   },
   {
-    platform: "altenar:betpix365", book: "BetPix365", kind: "none", multi: false, verified: false,
+    platform: "altenar:betpix365", book: "BetPix365", kind: "none", multi: false, multiEvent: false, verified: false,
     scheme: "", source: `/sports rendered its shell only, no event anchors, ${OBSERVED}`,
     notes: "no link is built rather than a guessed one",
   },
   {
-    platform: "altenar:vaidebet", book: "Vaidebet", kind: "none", multi: false, verified: false,
+    platform: "altenar:vaidebet", book: "Vaidebet", kind: "none", multi: false, multiEvent: false, verified: false,
     scheme: "", source: `/sports rendered its shell only, no event anchors, ${OBSERVED}`,
     notes: "no link is built rather than a guessed one",
   },
   {
-    platform: "betfair-exchange", book: "Betfair Exchange", kind: "market", multi: false, verified: true,
+    platform: "betfair-exchange", book: "Betfair Exchange", kind: "market", multi: false, multiEvent: false, verified: true,
     scheme: "https://www.betfair.bet.br/exchange/plus/<basketball|football>/market/<marketId>",
     source: `the exchange's own event page: its market anchors are href="basketball/market/<marketId>" under <base href="/exchange/plus/">, ${OBSERVED}`,
     notes: "an exchange has no pre-filled back or lay by URL; the market page opens with the runners on screen",
   },
   {
-    platform: "sportingbet", book: "Sportingbet", kind: "betslip", multi: true, verified: true,
+    platform: "sportingbet", book: "Sportingbet", kind: "betslip", multi: true, multiEvent: true, verified: true,
     scheme: "https://www.sportingbet.bet.br/pt-br/sports?options=<fixtureId>-<gameId>-<resultId>[,…]&type=single|combo",
     source: `Entain's public deep-link documents (https://sportsapi.bwin.com/restapi/elementsdeeplink.html and .../generatedeeplink.html: options=<fixtureId>-<marketId>-<optionId>, triplets comma-separated, type=combo, on /<culture>/sports); the ids are the ones the CDS fixture list prints (V1 fixtures, no "2:" prefix); ${OBSERVED}`,
-    notes: "verified with one and with two selections; the event page (/pt-br/sports/eventos/<slug>-<fixtureId>) drops the query on its canonical-slug redirect, so the slip link is the sports-home form",
+    notes: "verified with one and with two selections; verified again on 2026-09-23 with two selections from TWO DIFFERENT WNBA games — each triplet carries its own fixtureId, the cupom read \"Aposta Múltipla · 2 Múltipla · Seleções (2)\" with both games and priced it at the product (1.57 × 4.75, plus the site's own +2% multiple boost); the event page (/pt-br/sports/eventos/<slug>-<fixtureId>) drops the query on its canonical-slug redirect, so the slip link is the sports-home form",
   },
   {
-    platform: "betnacional", book: "Betnacional", kind: "event", multi: false, verified: true,
+    platform: "betnacional", book: "Betnacional", kind: "event", multi: false, multiEvent: false, verified: true,
     scheme: "https://betnacional.bet.br/event/<sportId 2=basketball,1=football>/0/<eventId>",
     source: `the site's Next.js build manifest (/event/[sportId]/[isLive]/[eventId]) and its home page's own anchors (/event/1/0/<eventId>), ${OBSERVED}`,
     notes: "the page's title and breadcrumb named the event; its odds body answered 503 to the plain client at verification time",
   },
   {
-    platform: "betano", book: "Betano", kind: "none", multi: false, verified: false,
+    platform: "betano", book: "Betano", kind: "none", multi: false, multiEvent: false, verified: false,
     scheme: "", source: "no Betano prices are read (Cloudflare challenge on the site and 403 on its odds API), so there is no event or selection id to link",
   },
 ];
@@ -251,12 +259,19 @@ export function deepLinkFor(price: BookPrice, opts: DeepLinkOptions = {}): DeepL
  * Every leg of a ticket in one betslip at one book. Only the platforms whose scheme takes several
  * selections (Superbet, KTO, Sportingbet) can; the rows must all be that book's, and each must
  * carry its ids. One row is the single-selection link.
+ *
+ * The rows may span several matches — that is a cross-game múltipla — but only where the platform's
+ * scheme names the event per selection (`multiEvent` in the registry). A scheme that takes several
+ * selections inside ONE event gets no link here rather than a slip that is quietly missing a game:
+ * the caller then falls back to the single selection or to the book's page, which is the honest
+ * smaller promise.
  */
 export function ticketDeepLinkFor(prices: BookPrice[], opts: DeepLinkOptions = {}): DeepLink | null {
   if (!prices.length) return null;
   const [first] = prices;
   if (prices.some((p) => p.book !== first.book || p.platform !== first.platform)) return null;
   if (prices.length === 1) return deepLinkFor(first, opts);
+  if (new Set(prices.map((p) => p.event.key)).size > 1 && !supportsCrossEventTicketLink(first.platform)) return null;
   const n = prices.length;
   switch (first.platform) {
     case "superbet":
@@ -273,6 +288,16 @@ export function ticketDeepLinkFor(prices: BookPrice[], opts: DeepLinkOptions = {
 /** Whether one link at this platform can carry a whole ticket. */
 export function supportsTicketLink(platform: string): boolean {
   return platform === "superbet" || platform === "kambi" || platform === "sportingbet";
+}
+
+/**
+ * Whether that whole-ticket link can hold legs from DIFFERENT matches, which is what a cross-game
+ * múltipla asks for. Read off the registry, so the answer and the evidence for it live in one
+ * place: today all three whole-ticket schemes name the event (or the globally unique outcome) per
+ * selection, and the first two were opened with two games in them on 23/09/2026.
+ */
+export function supportsCrossEventTicketLink(platform: string): boolean {
+  return supportsTicketLink(platform) && DEEP_LINK_REGISTRY.some((s) => s.platform === platform && s.multiEvent);
 }
 
 /** A link, and exactly which of the selections it was asked for the URL itself pre-fills. */

@@ -62,6 +62,13 @@ const COPY = {
   otherBet: { pt: "é outra aposta, não a do bilhete", en: "a different bet, not the ticket's" },
   otherBooks: { pt: "outras casas", en: "other books" },
   noSlip: { pt: "nenhuma casa lida tem essas linhas: não há link para montar esse bilhete", en: "no book we read has these lines: there is no link that builds this ticket" },
+  // A cross-game múltipla: the one place the product of the books' prices is not an optimistic
+  // number. Books reprice legs that share a scoreboard and multiply legs that do not, so the line
+  // claims the METHOD, not the figure — the odds themselves can move between our read and the tap.
+  crossGameProduct: {
+    pt: "jogos diferentes: a casa multiplica as odds em vez de descontar a combinação, então esse é o preço do bilhete lá — se nenhuma odd tiver mudado desde a leitura",
+    en: "different games: the book multiplies the prices instead of discounting the combination, so that is the ticket's price there — if no price has moved since we read it",
+  },
   slipReady: { pt: "bilhete pronto", en: "slip ready" },
   gamePage: { pt: "página do jogo", en: "game page" },
   marketPage: { pt: "página do mercado", en: "market page" },

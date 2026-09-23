@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { booksCopy, candidateLabel, reachNote } from "@/components/books-copy";
 import { NEAR_MAX_LINE_MOVE, NEAR_MAX_PROBABILITY_GAP, ticketSlip, type BookCandidate, type SlipLeg } from "@/lib/sources/br-books/coverage";
 import type { LegQuery } from "@/lib/sources/br-books/compare";
+import { DEEP_LINK_REGISTRY, linkForSelections, supportsCrossEventTicketLink, supportsTicketLink, ticketDeepLinkFor } from "@/lib/sources/br-books/deeplinks";
 import type { BookEvent, BookPrice } from "@/lib/sources/br-books/types";
 
 /**
@@ -353,5 +354,132 @@ describe("nothing matches", () => {
   it("an empty ticket and an empty book list both come back empty", () => {
     expect(ticketSlip([], legs([q.ml, 1.6]))).toMatchObject({ kind: "none", best: null });
     expect(ticketSlip([row("Superbet", "superbet", SB, { side: "home", decimal: 1.6 })], [])).toMatchObject({ kind: "none", legs: 0 });
+  });
+});
+
+/**
+ * A cross-game múltipla: one leg per match. Two things have to hold that a same-game ticket never
+ * asked for — a leg may only be priced off its OWN match's rows, and a slip link may only claim to
+ * carry legs from several matches where the book's URL scheme actually names the match per
+ * selection. Verified against the real books on 23/09/2026: see DEEP_LINK_REGISTRY.
+ */
+describe("a ticket that spans two games", () => {
+  // The same three books, a second time, on a second match: the ids differ, the words do not.
+  const SB2 = event("superbet", "5002");
+  const SPB2 = event("sportingbet", "6002");
+  const BN2 = event("betnacional", "7002");
+
+  const gameA = [
+    row("Superbet", "superbet", SB, { side: "home", decimal: 1.62 }),
+    row("Sportingbet", "sportingbet", SPB, { side: "home", decimal: 1.75 }),
+    row("Betnacional", "betnacional", BN, { side: "home", decimal: 1.7 }),
+  ];
+  const gameB = [
+    row("Superbet", "superbet", SB2, { side: "home", decimal: 2.4 }),
+    row("Sportingbet", "sportingbet", SPB2, { side: "home", decimal: 2.2 }),
+    row("Betnacional", "betnacional", BN2, { side: "home", decimal: 2.3 }),
+  ];
+  /** The ticket as the slate builds it: leg 0 in match A, leg 1 in match B, each scoped to its own. */
+  const crossLegs: SlipLeg[] = [
+    { query: q.ml, decimal: 1.6, prices: gameA },
+    { query: q.ml, decimal: 2.3, prices: gameB },
+  ];
+
+  it("carries one leg from each game into one slip, at the product of the two prices", () => {
+    const slip = ticketSlip([], crossLegs);
+    expect(slip.kind).toBe("full");
+    const best = slip.best!;
+    expect(best).toMatchObject({ book: "Superbet", covered: [0, 1], carried: [0, 1], full: true });
+    expect(best.carriedDecimal).toBe(Number((1.62 * 2.4).toFixed(2)));
+    // Two bets in the URL, and each one names a DIFFERENT match: that is what makes it a múltipla
+    // and not two copies of one game's bet.
+    const bets = new URL(best.link.url).searchParams.getAll("bets[]");
+    expect(bets).toHaveLength(2);
+    expect(bets.map((b) => b.split(",")[0])).toEqual(["5001", "5002"]);
+    expect(candidateLabel(best, 2, "pt")).toBe("Abrir o bilhete inteiro na Superbet");
+  });
+
+  it("builds Sportingbet's combo out of two fixtures", () => {
+    const slip = ticketSlip([], [
+      { query: q.ml, decimal: 1.6, prices: [gameA[1]] },
+      { query: q.ml, decimal: 2.3, prices: [gameB[1]] },
+    ]);
+    const url = new URL(slip.best!.link.url);
+    expect(url.searchParams.get("type")).toBe("combo");
+    expect(url.searchParams.get("options")!.split(",").map((t) => t.split("-")[0])).toEqual(["6001", "6002"]);
+  });
+
+  /**
+   * The reason every leg carries its own rows. "Vencedor da casa" is the same query in both matches
+   * — `selectionKey` is the market name for anything but a player prop — so a flat list of the two
+   * games' rows lets match A's price answer for match B's leg. The first expectation is the bug,
+   * written down so it cannot come back; the second is the fix.
+   */
+  it("will not let one game's price cover another game's leg", () => {
+    const onlyA = gameA.filter((p) => p.book === "Superbet");
+    expect(ticketSlip(onlyA, legs([q.ml, 1.6], [q.ml, 2.3]))).toMatchObject({ kind: "full" });
+    const scoped = ticketSlip([], [
+      { query: q.ml, decimal: 1.6, prices: onlyA },
+      { query: q.ml, decimal: 2.3, prices: [] },
+    ]);
+    expect(scoped.kind).toBe("partial");
+    expect(scoped.best).toMatchObject({ book: "Superbet", covered: [0], missing: [{ index: 1, reason: "market" }] });
+    expect(candidateLabel(scoped.best!, 2, "pt")).toBe("Abrir na Superbet com 1 das 2 linhas");
+  });
+
+  /**
+   * A book with no multi-event scheme is the case where the honest link is nearly worthless:
+   * Betnacional prices both games and its URL opens ONE of them. It is still ranked below the books
+   * that carry the slip, and it still says "abrir a página" rather than naming a ticket.
+   */
+  it("drops a book whose URL names one event to its page, and never lets it outrank a real slip", () => {
+    const slip = ticketSlip([], [
+      { query: q.ml, decimal: 1.6, prices: gameA },
+      { query: q.ml, decimal: 2.3, prices: gameB },
+    ]);
+    const bn = [slip.best!, ...slip.others].find((c) => c.book === "Betnacional")!;
+    expect(bn).toMatchObject({ covered: [0, 1], carried: [], carriedDecimal: null });
+    expect(bn.link).toMatchObject({ kind: "event", selections: 0 });
+    expect(candidateLabel(bn, 2, "pt")).toBe("Abrir a página na Betnacional");
+    expect(reachNote(bn, 2, "pt")).toBe("a casa cota as 2 linhas, mas o link só abre a página: o bilhete tem que ser montado lá");
+    expect(slip.best!.book).toBe("Superbet");
+  });
+
+  it("looks for a close line inside the leg's own match, never in the other one", () => {
+    const aLine = row("Superbet", "superbet", SB, prop("Ana Lima", "points", 17.5, "over", 1.95));
+    const bLine = row("Superbet", "superbet", SB2, prop("Bia Souza", "rebounds", 7.5, "over", 1.8));
+    const slip = ticketSlip([], [
+      { query: q.lima, decimal: 1.9, prices: [aLine] },
+      { query: q.souza, decimal: 1.85, prices: [bLine] },
+    ]);
+    // Leg 0 is covered at its own line; leg 1 is not posted at 6,5 and its close rung comes from
+    // match B's ladder — the only ladder that could ever answer for it.
+    expect(slip.best).toMatchObject({ covered: [0], missing: [{ index: 1, reason: "line" }] });
+    expect(slip.nearLines).toHaveLength(1);
+    expect(slip.nearLines[0]).toMatchObject({ index: 1, book: "Superbet", to: { line: 7.5, decimal: 1.8 } });
+    // Handed only match A's rows, leg 1 has nothing to be near to: nothing is invented for it.
+    expect(ticketSlip([], [
+      { query: q.lima, decimal: 1.9, prices: [aLine] },
+      { query: q.souza, decimal: 1.85, prices: [aLine] },
+    ]).nearLines).toEqual([]);
+  });
+});
+
+describe("which schemes may carry several matches", () => {
+  it("answers off the registry, and only a whole-ticket scheme can claim it", () => {
+    for (const s of DEEP_LINK_REGISTRY) {
+      expect(supportsCrossEventTicketLink(s.platform)).toBe(supportsTicketLink(s.platform) && s.multiEvent);
+      // A scheme that cannot carry two selections cannot carry two matches either.
+      if (s.multiEvent) expect(s.multi).toBe(true);
+    }
+    expect(DEEP_LINK_REGISTRY.filter((s) => s.multiEvent).map((s) => s.platform).sort()).toEqual(["kambi", "sportingbet", "superbet"]);
+  });
+
+  it("refuses to build a cross-match slip on a scheme that does not claim one", () => {
+    const a = row("Betnacional", "betnacional", BN, { side: "home", decimal: 1.7 });
+    const b = row("Betnacional", "betnacional", event("betnacional", "7002"), { side: "home", decimal: 2.3 });
+    expect(ticketDeepLinkFor([a, b])).toBeNull();
+    // And the caller's fallback is the page of the FIRST leg's match, carrying nothing.
+    expect(linkForSelections([a, b])).toMatchObject({ carried: [], link: { kind: "event", selections: 0 } });
   });
 });

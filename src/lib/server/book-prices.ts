@@ -261,14 +261,24 @@ function toPrice(r: PriceRow, ev: EventRow): BookPrice {
 }
 
 /**
- * Every current price the books post on one ESPN game, sides already in ESPN's home/away frame.
- * A game that has kicked off has no current price: the books' pre-game numbers are references at
- * best, and nothing here is read in play.
+ * Every current price the books post on SEVERAL ESPN games, one row set per game, sides already in
+ * ESPN's home/away frame. A game that has kicked off has no current price: the books' pre-game
+ * numbers are references at best, and nothing here is read in play.
+ *
+ * Grouped per game, and never flattened, because the comparison layer's own vocabulary cannot tell
+ * two games apart: `selectionKey` in compare.ts is the market name for everything but a player prop,
+ * so "total mais de 220,5" in one match and the same words in another land in the same bucket, and
+ * `sameSelection` would then price a cross-game ticket's second leg off the first game's rows. A
+ * cross-game ticket has one leg per match, so every caller here scopes each leg to ITS game's rows.
  */
-export function pricesForGame(gameId: string, now = new Date()): BookPrice[] {
+export function pricesForGames(gameIds: string[], now = new Date()): Map<string, BookPrice[]> {
+  const out = new Map<string, BookPrice[]>();
+  const ids = [...new Set(gameIds.filter(Boolean))];
+  if (!ids.length) return out;
   const d = db();
-  const events = d.prepare("SELECT * FROM book_events WHERE gameId = ? AND startsAt > ?").all(gameId, now.toISOString()) as EventRow[];
-  if (!events.length) return [];
+  const events = d.prepare(`SELECT * FROM book_events WHERE gameId IN (${ids.map(() => "?").join(",")}) AND startsAt > ?`).all(...ids, now.toISOString()) as EventRow[];
+  for (const id of ids) out.set(id, []);
+  if (!events.length) return out;
   // Ordered, because callers reduce these rows and one scan stamps a whole ladder with the same
   // `fetchedAt`: with no ORDER BY, "the newest wins" ties and the survivor is whatever SQLite
   // happened to return, so the same database could answer differently between reads. Two bugs on
@@ -276,13 +286,34 @@ export function pricesForGame(gameId: string, now = new Date()): BookPrice[] {
   // stops the answer from being luck.
   const rows = d.prepare(`SELECT * FROM book_prices WHERE current = 1 AND eventKey IN (${events.map(() => "?").join(",")}) ORDER BY book, market, COALESCE(player,''), COALESCE(stat,''), COALESCE(side,''), COALESCE(line,0), fetchedAt`).all(...events.map((e) => e.key)) as PriceRow[];
   const byKey = new Map(events.map((e) => [e.key, e]));
-  return rows.map((r) => toPrice(r, byKey.get(r.eventKey)!));
+  for (const r of rows) {
+    const ev = byKey.get(r.eventKey);
+    if (!ev?.gameId) continue;
+    out.get(ev.gameId)!.push(toPrice(r, ev));
+  }
+  return out;
+}
+
+/**
+ * Every current price the books post on one ESPN game, sides already in ESPN's home/away frame.
+ * A game that has kicked off has no current price: the books' pre-game numbers are references at
+ * best, and nothing here is read in play.
+ */
+export function pricesForGame(gameId: string, now = new Date()): BookPrice[] {
+  return pricesForGames([gameId], now).get(gameId) ?? [];
+}
+
+/** Which books priced these games and when they were last read — the union across all of them. */
+export function booksForGames(gameIds: string[], now = new Date()): { books: string[]; fetchedAt: string | null } {
+  const ids = [...new Set(gameIds.filter(Boolean))];
+  if (!ids.length) return { books: [], fetchedAt: null };
+  const rows = db().prepare(`SELECT p.book, MAX(p.seenAt) AS seenAt FROM book_prices p JOIN book_events e ON e.key = p.eventKey WHERE e.gameId IN (${ids.map(() => "?").join(",")}) AND e.startsAt > ? AND p.current = 1 GROUP BY p.book`).all(...ids, now.toISOString()) as { book: string; seenAt: string }[];
+  return { books: rows.map((r) => r.book).sort(), fetchedAt: rows.length ? rows.map((r) => r.seenAt).sort().pop()! : null };
 }
 
 /** Which books priced a game and when they were last read. */
 export function booksForGame(gameId: string, now = new Date()): { books: string[]; fetchedAt: string | null } {
-  const rows = db().prepare(`SELECT p.book, MAX(p.seenAt) AS seenAt FROM book_prices p JOIN book_events e ON e.key = p.eventKey WHERE e.gameId = ? AND e.startsAt > ? AND p.current = 1 GROUP BY p.book`).all(gameId, now.toISOString()) as { book: string; seenAt: string }[];
-  return { books: rows.map((r) => r.book).sort(), fetchedAt: rows.length ? rows.map((r) => r.seenAt).sort().pop()! : null };
+  return booksForGames([gameId], now);
 }
 
 /** The price trail of one selection at one book: opening first, current last. */

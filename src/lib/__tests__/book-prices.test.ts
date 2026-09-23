@@ -11,8 +11,8 @@ fs.rmSync(DIR, { recursive: true, force: true });
 import type { BookAdapter, BookPrice } from "@/lib/sources/br-books/types";
 import type { Game } from "@/lib/types";
 
-const { activeAdapters, assignEventGame, booksForGame, booksStats, cleanupBooks, ensureBooksSchema, listAdapterStatus, listCoverage, listUnmatchedEvents, persistPrices, priceHistory, pricesForGame, runBooksJob, setAdapterEnabled, upcomingGames } = await import("@/lib/server/book-prices");
-const { gamePrices, resetGamePricesMemo } = await import("@/lib/server/book-compare");
+const { activeAdapters, assignEventGame, booksForGame, booksForGames, booksStats, cleanupBooks, ensureBooksSchema, listAdapterStatus, listCoverage, listUnmatchedEvents, persistPrices, priceHistory, pricesForGame, pricesForGames, runBooksJob, setAdapterEnabled, upcomingGames } = await import("@/lib/server/book-prices");
+const { gamePrices, slatePrices, resetGamePricesMemo } = await import("@/lib/server/book-compare");
 const { getDb } = await import("@/lib/server/db");
 const { BookWallError } = await import("@/lib/sources/br-books/types");
 
@@ -265,5 +265,97 @@ describe("runBooksJob", () => {
     // The default env enables nobody: the same skip, without a single request.
     const unset = await runBooksJob({ now: NOW, sports: ["wnba"], slate, env: {} });
     expect(unset.status).toBe("skipped");
+  });
+});
+
+/**
+ * The cross-game path: a múltipla holds one leg per match, so the store has to answer for several
+ * matches at once and the answer has to stay split by match — a flat list of two games' rows would
+ * let one game's "vencedor da casa" answer for the other's.
+ */
+describe("a slate's prices", () => {
+  const START = "2026-09-27T23:30:00Z";
+  const NIGHT = new Date("2026-09-27T12:00:00Z");
+  const A: Game = { ...GAME, id: "cross-a", startsAt: START, home: team("11", "NYL", "New York Liberty"), away: team("12", "ATL", "Atlanta Dream") };
+  const B: Game = { ...GAME, id: "cross-b", startsAt: START, home: team("13", "SEA", "Seattle Storm"), away: team("14", "DAL", "Dallas Wings") };
+  const evA = event("superbet:superbet:cross-a", "New York Liberty", "Atlanta Dream", { superbet: "14033560" }, START);
+  const evB = event("superbet:superbet:cross-b", "Seattle Storm", "Dallas Wings", { superbet: "14033558" }, START);
+  // No eventId on the row: Superbet's link builder reads the match's own id off the event, which is
+  // exactly how a cross-game slip ends up naming two different matches.
+  const ref = (outcome: string, uuid: string) => ({ marketId: "759", outcomeId: outcome, uuid });
+  const ml = (ev: ReturnType<typeof event>, decimal: number, outcome: string, uuid: string) =>
+    ({ ...price("Superbet", ev, { market: "moneyline" as const, side: "home" as const, decimal, ref: ref(outcome, uuid), fetchedAt: NIGHT.toISOString() }), platform: "superbet" });
+
+  const leg = (gameId: string, abbr: string, decimal: number) => ({
+    selection: abbr, market: "ml", odds: String(decimal), oddsDecimal: decimal, explanation: "", evidence: "", fairProbability: 1 / decimal,
+    gameId, settlement: { type: "moneyline" as const, teamAbbreviation: abbr, sourceBasis: "" },
+  });
+  const ticket = {
+    id: "x1", kind: "parlay" as const, bandKey: "value", title: "", background: "", combinedDecimal: 8.17, combinedAmerican: "+717",
+    impliedProbability: 0.12, modelledProbability: 0.14, edgePct: 1, riskNote: "", confidence: "medium" as const, evidenceScore: 50, evidenceNotes: [],
+    legs: [leg("cross-a", "NYL", 1.72), leg("cross-b", "SEA", 4.75)],
+  };
+  const teams = new Map([
+    ["cross-a", { home: A.home, away: A.away }],
+    ["cross-b", { home: B.home, away: B.away }],
+  ]);
+
+  beforeAll(() => {
+    persistPrices([ml(evA, 1.72, "2182", "9ba38a44-eb49-51af-a13d-e09bddd8878d")], "wnba", [A, B], NIGHT);
+    persistPrices([ml(evB, 4.75, "2182", "7c1d895e-1387-55aa-aa53-ec75230fe0c4")], "wnba", [A, B], NIGHT);
+  });
+
+  it("reads several matches in one go and keeps each match's rows to itself", () => {
+    const byGame = pricesForGames(["cross-a", "cross-b", "no-such-game"], NIGHT);
+    expect([...byGame.keys()].sort()).toEqual(["cross-a", "cross-b", "no-such-game"]);
+    expect(byGame.get("cross-a")!.map((p) => p.decimal)).toEqual([1.72]);
+    expect(byGame.get("cross-b")!.map((p) => p.decimal)).toEqual([4.75]);
+    expect(byGame.get("no-such-game")).toEqual([]);
+    // Each row still knows its own match, which is what the link builders name the event with.
+    expect(byGame.get("cross-a")![0].event.externalIds.superbet).toBe("14033560");
+    expect(pricesForGame("cross-a", NIGHT)).toEqual(byGame.get("cross-a"));
+    expect(booksForGames(["cross-a", "cross-b"], NIGHT)).toEqual({ books: ["Superbet"], fetchedAt: NIGHT.toISOString() });
+    expect(booksForGames([], NIGHT)).toEqual({ books: [], fetchedAt: null });
+  });
+
+  it("prices a cross-game ticket into one slip, and says the product is the price", () => {
+    resetGamePricesMemo();
+    const prices = slatePrices([ticket], teams, "wnba", NIGHT);
+    expect(prices.books).toEqual(["Superbet"]);
+    // No prop signals on a slate: that question belongs to a game page (see slatePrices).
+    expect(prices.signals).toEqual([]);
+    const t = prices.tickets[0];
+    expect(t.crossGame).toBe(true);
+    expect(t.bestSingleBook).toMatchObject({ book: "Superbet", decimal: Number((1.72 * 4.75).toFixed(2)) });
+    const best = t.slip.best!;
+    expect(best).toMatchObject({ book: "Superbet", covered: [0, 1], carried: [0, 1], full: true });
+    // The number the reader is shown — and the one the real Superbet slip showed on 23/09/2026.
+    expect(best.carriedDecimal).toBe(8.17);
+    const bets = new URL(best.link.url).searchParams.getAll("bets[]");
+    expect(bets.map((b) => b.split(",")[0])).toEqual(["14033560", "14033558"]);
+  });
+
+  it("leaves a leg whose match was not read unpriced instead of reading it off the other game", () => {
+    resetGamePricesMemo();
+    const t = slatePrices([ticket], new Map([["cross-a", teams.get("cross-a")!]]), "wnba", NIGHT).tickets[0];
+    // The second leg names a game that is not in the slate's map: it is named on screen and covered
+    // nowhere, and the link says one of two.
+    expect(t.legs[1]).toBeNull();
+    expect(t.slip.best).toMatchObject({ book: "Superbet", covered: [0], missing: [{ index: 1, reason: "market" }] });
+    expect(t.bestSingleBook).toBeNull();
+  });
+
+  it("answers the next view from memory until the books are read again", () => {
+    resetGamePricesMemo();
+    const a = slatePrices([ticket], teams, "wnba", NIGHT);
+    expect(slatePrices([ticket], teams, "wnba", new Date(NIGHT.getTime() + 10_000))).toBe(a);
+    const later = new Date(NIGHT.getTime() + 20_000);
+    persistPrices([{ ...ml(evA, 1.8, "2182", "9ba38a44-eb49-51af-a13d-e09bddd8878d"), fetchedAt: later.toISOString() }], "wnba", [A, B], later);
+    expect(slatePrices([ticket], teams, "wnba", later).tickets[0].slip.best!.carriedDecimal).toBe(Number((1.8 * 4.75).toFixed(2)));
+  });
+
+  it("is empty when no leg names a match that was read", () => {
+    expect(slatePrices([{ ...ticket, legs: [leg("nope", "NYL", 1.72)] }], teams, "wnba", NIGHT))
+      .toEqual({ books: [], fetchedAt: null, tickets: [], signals: [] });
   });
 });

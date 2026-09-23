@@ -100,6 +100,16 @@ export interface SlipLeg {
   query: LegQuery | null;
   /** The price printed on the ticket, the one a near line is compared against. */
   decimal: number | null;
+  /**
+   * The rows this leg may be priced from, for a ticket that spans several matches. A cross-game
+   * múltipla holds one leg per game, and the vocabulary a leg is matched with does not name the
+   * match: `selectionKey` is the market name for everything but a player prop, so "mais de 220,5"
+   * in one game and the same words in another fall in the same bucket and `sameSelection` would
+   * happily price the second leg off the first game's rows. Passing each leg ITS game's rows is
+   * what keeps a cross-game ticket honest. Absent = the shared `prices` argument, which is the
+   * same-game case and the only one there was before.
+   */
+  prices?: BookPrice[];
 }
 
 export interface SlipOptions extends DeepLinkOptions {
@@ -190,7 +200,7 @@ function rank(a: BookCandidate, b: BookCandidate): number {
 function nearLinesFor(
   legs: SlipLeg[],
   indices: number[],
-  rowsFor: (q: LegQuery) => BookPrice[],
+  rowsFor: (q: LegQuery, index: number) => BookPrice[],
   preferBook: string | null,
   opts: SlipOptions,
 ): NearLine[] {
@@ -202,7 +212,7 @@ function nearLinesFor(
     if (!q || q.line === undefined || q.side === undefined) continue;
     const cap = NEAR_MAX_LINE_MOVE[q.market];
     if (cap === undefined) continue;
-    const rows = rowsFor(q);
+    const rows = rowsFor(q, index);
     // Every rung the books post inside the points cap, ONE ROW PER BOOK PER LINE. A book's ladder
     // has to arrive here whole: the question is which of its rungs sits nearest the reader's
     // number, and a list already reduced to one row per book cannot answer it.
@@ -271,28 +281,39 @@ function nearLinesFor(
  * `legs` is the ticket's OWN leg list, in order and complete: a leg whose settlement descriptor
  * could not be named is passed with a null query and counts as missing everywhere, because a link
  * that quietly left it out would be a link to a shorter ticket than the one on screen.
+ *
+ * `prices` is the row set every leg is priced from, unless the leg brings its own (`SlipLeg.prices`)
+ * — which a ticket spanning several matches must, one game's rows per leg.
  */
 export function ticketSlip(prices: BookPrice[], legs: SlipLeg[], opts: SlipOptions = {}): TicketSlip {
   const empty: TicketSlip = { kind: "none", best: null, others: [], nearLines: [], legs: legs.length };
   if (!legs.length) return empty;
-  const groups = groupBySelection(prices);
-  const rowsFor = (q: LegQuery) => groups.get(selectionKey({ market: q.market, player: q.player, stat: q.stat })) ?? [];
+  // One grouping per distinct row set: the shared one for a same-game ticket, and one per game for
+  // a cross-game one. Keyed by the array itself, so a slate whose legs share a game group it once.
+  const grouped = new Map<BookPrice[], Map<string, BookPrice[]>>();
+  const groupsOf = (rows: BookPrice[]) => {
+    let g = grouped.get(rows);
+    if (!g) { g = groupBySelection(rows); grouped.set(rows, g); }
+    return g;
+  };
+  const rowsFor = (q: LegQuery, index: number) =>
+    groupsOf(legs[index]?.prices ?? prices).get(selectionKey({ market: q.market, player: q.player, stat: q.stat })) ?? [];
 
   // Per leg: the newest row per book AT THE TICKET'S LINE (coverage), and every book that prices the
   // selection at any line (so a miss can say whether the book skips the line or the whole market).
-  const atLine = legs.map((l) => {
+  const atLine = legs.map((l, i) => {
     const m = new Map<string, BookPrice>();
     const q = l.query;
     if (!q) return m;
-    const rows = rowsFor(q).filter((p) => p.platform !== EXCHANGE_PLATFORM && sameSelection(p, q) && (q.market === "moneyline" || sameLine(p.line, q.line)));
+    const rows = rowsFor(q, i).filter((p) => p.platform !== EXCHANGE_PLATFORM && sameSelection(p, q) && (q.market === "moneyline" || sameLine(p.line, q.line)));
     for (const r of latestPerBook(rows)) m.set(r.book, r);
     return m;
   });
-  const anyLine = legs.map((l) => {
+  const anyLine = legs.map((l, i) => {
     const s = new Set<string>();
     const q = l.query;
     if (!q) return s;
-    for (const p of rowsFor(q)) if (p.platform !== EXCHANGE_PLATFORM && sameSelection(p, q)) s.add(p.book);
+    for (const p of rowsFor(q, i)) if (p.platform !== EXCHANGE_PLATFORM && sameSelection(p, q)) s.add(p.book);
     return s;
   });
 
@@ -318,6 +339,20 @@ export function ticketSlip(prices: BookPrice[], legs: SlipLeg[], opts: SlipOptio
       platform: rows[0].platform,
       covered,
       missing,
+      // The product of the book's own prices on the covered legs. What that number MEANS depends on
+      // whether the legs share a match, and the difference is not this module's to hide:
+      //
+      //   CROSS-GAME  it is the price, full stop. A book prices each match on its own and combines
+      //               them by multiplying — verified on 23/09/2026 by opening one built link per
+      //               book with two selections from two different WNBA games: Superbet's slip
+      //               priced the double at 8.17 = 1.72 × 4.75, Sportingbet's at 1.57 × 4.75.
+      //   SAME-GAME   it is an upper bound. A book that offers the pair at all reprices it (the
+      //               "criar aposta" / SGP counter), and the reprice is lower than the product
+      //               whenever the legs lean the same way.
+      //
+      // Either way this is the number the BOOK quotes per leg, multiplied, so it is the right thing
+      // to rank books by; it is the caller that knows which of the two readings its ticket has, and
+      // the one that gets to say so on screen (see `crossGame` in server/book-compare.ts).
       decimal: round2(rows.reduce((p, r) => p * r.decimal, 1)),
       carried,
       carriedDecimal: picked.carried.length ? round2(picked.carried.reduce((p, i) => p * rows[i].decimal, 1)) : null,

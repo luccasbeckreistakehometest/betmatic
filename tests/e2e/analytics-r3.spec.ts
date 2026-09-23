@@ -18,7 +18,7 @@ test("analytics: a WhatsApp visit that signs up and opens a game shows in the ad
   // An unknown event name is refused.
   expect((await page.request.post("/api/e", { data: { name: "drop_everything" } })).status()).toBe(400);
 
-  const ctx = await browser.newContext({ baseURL: "http://localhost:3300", locale: "pt-BR" });
+  const ctx = await browser.newContext({ baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3300", locale: "pt-BR" });
   const admin = await ctx.newPage();
   await loginAdmin(admin);
   await admin.goto("/admin");

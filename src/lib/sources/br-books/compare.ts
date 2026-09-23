@@ -327,8 +327,15 @@ export function compareLeg(prices: BookPrice[], q: LegQuery, opts: CompareOption
   };
 }
 
-export function compareTicket(prices: BookPrice[], legs: { query: LegQuery; decimal: number | null }[], opts: CompareOptions = {}): TicketComparison {
-  const compared = legs.map((l) => compareLeg(prices, l.query, opts));
+/**
+ * A ticket against the books. `prices` is the row set the legs are read from; a leg that brings its
+ * own `prices` is read from those instead, which is what a ticket spanning several matches needs —
+ * the leg vocabulary here does not name the match (`selectionKey` is the market name for everything
+ * but a player prop), so one flat list of two games' rows would let a "mais de 220,5" in one game
+ * answer for the same words in the other.
+ */
+export function compareTicket(prices: BookPrice[], legs: { query: LegQuery; decimal: number | null; prices?: BookPrice[] }[], opts: CompareOptions = {}): TicketComparison {
+  const compared = legs.map((l) => compareLeg(l.prices ?? prices, l.query, opts));
   const books = [...new Set(compared.flatMap((c) => c.quotes.map((q) => q.book)))].sort();
   const perBook: BookTotal[] = books.map((book) => {
     let decimal = 1, priced = 0;
