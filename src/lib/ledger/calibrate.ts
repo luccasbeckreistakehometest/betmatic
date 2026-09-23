@@ -1,4 +1,7 @@
 import { readLedger } from "@/lib/ledger/store";
+import { canonicalMarket } from "@/lib/ledger/stat-key";
+import { factorPromptLines } from "@/lib/ledger/factor-report";
+import { latestFactorStats } from "@/lib/server/factors-job";
 import { clvPromptLine } from "@/lib/server/leg-prices";
 import { getSport } from "@/lib/sports";
 import type { CalibrationReport, CalibrationRow, LedgerEntry, SettledLeg } from "@/lib/types";
@@ -103,17 +106,25 @@ export function modelRaceLine(race: ModelRace = modelRace()): string {
  * Grades the model against its own past calls. Legs are the unit, not tickets — a parlay losing
  * tells you little, but the individual legs inside it are clean evidence about each source.
  */
-export function calibrate(minSample = 5): CalibrationReport {
-  const entries = readLedger({ excludeLive: true }).filter((e) => e.outcome !== "pending");
+export function calibrate(minSample = 5, opts: { mainOnly?: boolean } = {}): CalibrationReport {
+  // Pre-game only, and — when asked — main tickets only. 95 of the 172 settled pre-game legs come
+  // from alternatives, so a global pre-game average is mostly a population nobody was served.
+  const all = readLedger({ excludeLive: true }).filter((e) => e.outcome !== "pending");
+  const entries = opts.mainOnly ? all.filter((e) => !e.alternativeOf) : all;
   const bySource = new Map<string, Bucket>();
   const byMarket = new Map<string, Bucket>();
   const bySport = new Map<string, Bucket>();
+  const bySide = new Map<string, Bucket>();
 
   for (const entry of entries) {
     for (const leg of entry.legs) {
       addLeg(bySource, leg.sourceBasis, leg.sourceBasis, leg);
-      addLeg(byMarket, leg.market, leg.market, leg);
+      // The canonical market, not settlement.type: `player_prop` is one bucket holding 1,098 of the
+      // ledger's 1,099 legs, and a table with one row is not a table (ledger/stat-key.ts).
+      const market = leg.marketKey ?? canonicalMarket(leg, entry.sportKey) ?? "unmapped";
+      addLeg(byMarket, market, market, leg);
       addLeg(bySport, entry.sportKey, getSport(entry.sportKey).label.en, leg);
+      if (leg.settlement?.side) addLeg(bySide, leg.settlement.side, leg.settlement.side, leg);
     }
   }
 
@@ -127,6 +138,7 @@ export function calibrate(minSample = 5): CalibrationReport {
     bySource: summarise(bySource, minSample),
     byMarket: summarise(byMarket, minSample),
     bySport: summarise(bySport, minSample),
+    bySide: summarise(bySide, minSample),
     generatedAt: new Date().toISOString(),
   };
 }
@@ -151,8 +163,18 @@ function safeClvLine(): string {
   try { return clvPromptLine(); } catch { return ""; }
 }
 
+/**
+ * The factors that are lit right now, each with the id of the row that lit it. Every lesson the
+ * post-mortem writes has to cite one of these ids, which is what stops a run from proposing a rule
+ * about something nobody measured (ledger/hypotheses.ts).
+ */
+function safeFactorLines(): string {
+  try { return factorPromptLines(latestFactorStats(40)); } catch { return ""; }
+}
+
 export function calibrationPrompt(): string {
-  const report = calibrate();
+  // Main pre-game tickets only: an alternative is a different population and never served alone.
+  const report = calibrate(5, { mainOnly: true });
   if (report.totalSettled < 10) {
     return `TRACK RECORD: only ${report.totalSettled} legs settled so far — not enough to calibrate against. Do not claim any source has a proven edge.`;
   }
@@ -178,7 +200,9 @@ export function calibrationPrompt(): string {
     "",
     `By evidence source:\n${fmt(report.bySource) || "- no slice has a large enough sample yet"}`,
     "",
-    `By market type:\n${fmt(report.byMarket) || "- no slice has a large enough sample yet"}`,
+    `By market (canonical names):\n${fmt(report.byMarket) || "- no slice has a large enough sample yet"}`,
+    "",
+    `By side:\n${fmt(report.bySide) || "- no slice has a large enough sample yet"}`,
     spec.length
       ? `\nStrongest source/market combinations measured so far:\n${spec
           .slice(0, 6)
@@ -186,6 +210,7 @@ export function calibrationPrompt(): string {
           .join("\n")}`
       : "",
     "",
+    safeFactorLines(),
     safeClvLine(),
     modelRaceLine(),
     "Apply this honestly: where a source is measured OVERCONFIDENT, lower your fairProbability for legs leaning on it. Where a slice has no sample, say so instead of assuming it is good.",

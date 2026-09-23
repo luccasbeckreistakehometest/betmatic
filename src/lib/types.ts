@@ -287,6 +287,8 @@ export interface BetLeg {
   modelNote?: string;
   /** The model's own estimate before it was anchored to computedProbability; the ledger races the two. */
   rawProbability?: number;
+  /** Minutes the projection gives this player — the number every counting-stat leg stands on. */
+  projectedMinutes?: number;
 }
 
 export type LegOutcome = "won" | "lost" | "push" | "void" | "pending";
@@ -305,6 +307,20 @@ export interface SettledLeg {
   oddsDecimal: number;
   outcome: LegOutcome;
   actual?: string;
+  /*
+   * Copied from the generation payload so a slice of the ledger can be cut by something other than
+   * the price. All optional: a row written before they existed reads exactly as it did before.
+   */
+  athleteId?: string;
+  /** The canonical market key at the time of writing (ledger/stat-key.ts). */
+  marketKey?: string;
+  /** Season hit rate measured at this exact line, from the game log. */
+  measuredRate?: number;
+  projectedMinutes?: number;
+  /** The game's own context at generation time, the same for every leg of the ticket. */
+  blowoutProbability?: number;
+  paceDelta?: number;
+  modelNote?: string;
 }
 
 export interface LedgerEntry {
@@ -361,6 +377,8 @@ export interface CalibrationReport {
   bySource: CalibrationRow[];
   byMarket: CalibrationRow[];
   bySport: CalibrationRow[];
+  /** over vs under. `under` ran 20 points optimistic over 506 legs and nothing showed it. */
+  bySide: CalibrationRow[];
   generatedAt: string;
 }
 

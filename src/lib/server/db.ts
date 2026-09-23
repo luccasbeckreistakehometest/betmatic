@@ -624,6 +624,55 @@ function migrateRound4(d: Database.Database): void {
     );
     CREATE INDEX IF NOT EXISTS idx_daily_items_day ON daily_selection_items(day, sportKey, scope, rank);
   `);
+  d.exec(`
+    -- Which leg killed the ticket. 94 of the 131 lost tickets in the production ledger died on
+    -- exactly one leg, so this is the normal case, not the rare one. Rebuilt from the ledger by
+    -- job=attribute on every tick: the ledger is the source, this table is only an index of it.
+    CREATE TABLE IF NOT EXISTS leg_attribution (
+      ledgerId TEXT NOT NULL,
+      legIndex INTEGER NOT NULL,
+      gameId TEXT NOT NULL,
+      sportKey TEXT NOT NULL,
+      scope TEXT NOT NULL DEFAULT 'pre',
+      alternative INTEGER NOT NULL DEFAULT 0,
+      marketKey TEXT NOT NULL DEFAULT 'unmapped',
+      side TEXT NOT NULL DEFAULT '',
+      athleteId TEXT NOT NULL DEFAULT '',
+      outcome TEXT NOT NULL,
+      sole INTEGER NOT NULL DEFAULT 0,
+      predicted REAL NOT NULL DEFAULT 0,
+      oddsDecimal REAL NOT NULL DEFAULT 0,
+      day TEXT NOT NULL DEFAULT '',
+      PRIMARY KEY (ledgerId, legIndex)
+    );
+    CREATE INDEX IF NOT EXISTS idx_leg_attr_market ON leg_attribution(scope, marketKey, outcome);
+
+    -- The calibration of every slice with a real sample, one row per (run, scope, dimension, value).
+    -- flagged = the Wilson interval excluded the prediction AND Benjamini-Hochberg kept it.
+    CREATE TABLE IF NOT EXISTS factor_stats (
+      runId TEXT NOT NULL,
+      id TEXT NOT NULL,
+      scope TEXT NOT NULL,
+      dim TEXT NOT NULL,
+      value TEXT NOT NULL,
+      legs INTEGER NOT NULL DEFAULT 0,
+      won INTEGER NOT NULL DEFAULT 0,
+      games INTEGER NOT NULL DEFAULT 0,
+      days INTEGER NOT NULL DEFAULT 0,
+      hitRate REAL NOT NULL DEFAULT 0,
+      predicted REAL NOT NULL DEFAULT 0,
+      gap REAL NOT NULL DEFAULT 0,
+      ciLow REAL NOT NULL DEFAULT 0,
+      ciHigh REAL NOT NULL DEFAULT 0,
+      pValue REAL NOT NULL DEFAULT 1,
+      qValue REAL NOT NULL DEFAULT 1,
+      flagged INTEGER NOT NULL DEFAULT 0,
+      computedAt TEXT NOT NULL,
+      codeVersion TEXT NOT NULL DEFAULT '',
+      PRIMARY KEY (runId, id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_factor_stats_latest ON factor_stats(computedAt DESC, flagged);
+  `);
   // A bet logged from the short list keeps the price it was recommended at beside the price the
   // reader actually got: that pair is what makes the wallet's own CLV computable.
   addColumn(d, "bankroll_entries", "recommendedDecimal", "REAL");

@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { marketKeyOf } from "@/lib/ledger/stat-key";
 import type { BetSuggestion, Game, LedgerEntry, SettledLeg } from "@/lib/types";
 
 // Lives under DATA_DIR so it sits on the persistent volume in Docker: this file IS the learning
@@ -62,7 +63,16 @@ export const ledgerIdFor = (gameId: string, s: Pick<BetSuggestion, "bandKey" | "
  * `startsAt` overrides the game's kickoff (a cross-game ticket goes public when its last game starts).
  * `live` records the tickets of an in-play read under the live scope, at the minute they were built.
  */
-export function recordPredictions(game: Game, suggestions: BetSuggestion[], opts: { startsAt?: string; live?: { minute: number; period?: number } } = {}): number {
+export function recordPredictions(
+  game: Game,
+  suggestions: BetSuggestion[],
+  opts: {
+    startsAt?: string;
+    live?: { minute: number; period?: number };
+    /** The game's own context at generation time — the same for every leg, copied onto each. */
+    environment?: { blowoutProbability?: number | null; paceDelta?: number | null } | null;
+  } = {},
+): number {
   if (!suggestions.length) return 0;
   const existing = readLedger();
   const seen = new Set(existing.map((e) => e.id));
@@ -103,6 +113,15 @@ export function recordPredictions(game: Game, suggestions: BetSuggestion[], opts
         oddsDecimal: l.oddsDecimal,
         outcome: "pending",
         actual: undefined,
+        // Copied from the generation payload so the factor report can cut the ledger by something
+        // other than the price. Every one is optional; an older row simply does not carry them.
+        ...(l.athleteId ? { athleteId: l.athleteId } : {}),
+        ...(marketKeyOf(l, game.sportKey) !== "unmapped" ? { marketKey: marketKeyOf(l, game.sportKey) } : {}),
+        ...(l.measured?.rate !== undefined && Number.isFinite(l.measured.rate) ? { measuredRate: Number(l.measured.rate.toFixed(3)) } : {}),
+        ...(l.projectedMinutes !== undefined ? { projectedMinutes: l.projectedMinutes } : {}),
+        ...(l.modelNote ? { modelNote: l.modelNote.slice(0, 240) } : {}),
+        ...(opts.environment?.blowoutProbability !== undefined && opts.environment?.blowoutProbability !== null ? { blowoutProbability: Number(opts.environment.blowoutProbability.toFixed(3)) } : {}),
+        ...(opts.environment?.paceDelta !== undefined && opts.environment?.paceDelta !== null ? { paceDelta: Number(opts.environment.paceDelta.toFixed(2)) } : {}),
       })),
     });
   }

@@ -501,7 +501,7 @@ export async function buildBets(args: BuildArgs): Promise<BetSlate> {
   // TODO(ui): BetSuggestion.correlation (factor, independent probability, note) is carried on every
   // same-game ticket and nothing renders it yet; the ticket card should print it beside the chance.
   if (record) {
-    recordPredictions(game, suggestions);
+    recordPredictions(game, suggestions, { environment: environment ? { blowoutProbability: environment.blowoutProbability, paceDelta: environment.paceDelta } : null });
     recordLegPrices(suggestions.flatMap((s) => s.legs.map((leg, legIndex) => ({
       ledgerId: ledgerIdFor(game.id, s), legIndex, gameId: game.id, sportKey: game.sportKey, startsAt: game.startsAt, homeAbbr: game.home.abbreviation, leg,
     }))));
