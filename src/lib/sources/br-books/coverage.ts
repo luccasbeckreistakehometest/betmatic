@@ -208,7 +208,14 @@ function nearLinesFor(
       return [{ row, gap, from, to, basis: (bothFair ? "fair" : "implied") as NearLine["basis"] }];
     });
     if (!offers.length) continue;
-    offers.sort((a, b) => Number(b.row.book === preferBook) - Number(a.row.book === preferBook) || a.gap - b.gap || b.row.decimal - a.row.decimal);
+    // The book the reader is already being sent to first, so the whole thing can be placed in one
+    // place; then a rung we can actually open (a book with no URL scheme can still be named, but a
+    // link the reader can tap is worth more); then the closest rung, then the better price.
+    offers.sort((a, b) =>
+      Number(b.row.book === preferBook) - Number(a.row.book === preferBook)
+      || Number(!!deepLinkFor(b.row, opts)) - Number(!!deepLinkFor(a.row, opts))
+      || a.gap - b.gap
+      || b.row.decimal - a.row.decimal);
     const pick = offers[0];
     out.push({
       index,

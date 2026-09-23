@@ -137,12 +137,14 @@ function lineLabel(side: NearLine["side"], line: number, lang: Lang): string {
 }
 
 /**
- * "Abrir o bilhete inteiro na Superbet" when the book carries every leg; "Abrir na Superbet com 3
- * das 4 linhas" when it carries part of it. The number is never rounded up and never implied: a
- * reader must not be able to read "abrir o bilhete" off a link that carries three quarters of one.
+ * "Abrir o bilhete inteiro na Superbet" when the book carries every leg AND its URL puts every leg
+ * in the slip; "Abrir na Superbet com 3 das 4 linhas" otherwise. The number is never rounded up and
+ * never implied: a reader must not be able to read "abrir o bilhete" off a link that carries three
+ * quarters of one — nor off a link that only opens the book's game page, where the ticket still has
+ * to be built by hand.
  */
 function candidateLabel(c: BookCandidate, of: number, lang: Lang, t: ReturnType<typeof booksCopy>): string {
-  if (c.full) return `${t("openTicketAt")} ${c.book}`;
+  if (c.full && c.link.kind === "betslip") return `${t("openTicketAt")} ${c.book}`;
   const n = formatNumber(c.covered.length, lang, { digits: 0 });
   return `${t("openAt")} ${c.book} ${t("withLines")} ${n} ${t("ofTotal")} ${formatNumber(of, lang, { digits: 0 })} ${of === 1 ? t("ofOne") : t("ofLines")}`;
 }
