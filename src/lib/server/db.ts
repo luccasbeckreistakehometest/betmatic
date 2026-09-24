@@ -698,6 +698,48 @@ function migrateRound4(d: Database.Database): void {
     );
     CREATE INDEX IF NOT EXISTS idx_hypotheses_fp ON rule_hypotheses(fingerprint, status);
     CREATE INDEX IF NOT EXISTS idx_hypotheses_status ON rule_hypotheses(status, createdAt DESC);
+
+    -- The approval queue. A post-mortem no longer changes anything by itself: it writes a row here,
+    -- an admin reads the exact text it would put live and clicks. Nothing is ever deleted — a
+    -- refusal keeps its reason (that reason is data: it is fed to the next post-mortem) and an
+    -- automatic reversion keeps the numbers that caused it.
+    --
+    -- contentPt/contentEn hold the rewritten prompt, computed when the proposal is written rather
+    -- than when it is approved, so the diff the operator reads IS the diff that lands. basePromptId
+    -- is the version it was written against: if the active prompt moved in the meantime the row goes
+    -- stale instead of silently undoing whatever moved it.
+    CREATE TABLE IF NOT EXISTS learning_proposals (
+      id TEXT PRIMARY KEY,
+      runId TEXT NOT NULL DEFAULT '',
+      gameId TEXT NOT NULL DEFAULT '',
+      matchup TEXT NOT NULL DEFAULT '',
+      sportKey TEXT NOT NULL DEFAULT '',
+      kind TEXT NOT NULL DEFAULT 'game',            -- the prompt kind the change would land on
+      channel TEXT NOT NULL DEFAULT 'prompt',       -- prompt | code_gate
+      gate TEXT NOT NULL DEFAULT '',                -- which code gate, when channel='code_gate'
+      status TEXT NOT NULL DEFAULT 'pending',       -- pending | under_gate | code_gate | rejected | applied | reverted | stale
+      feedback TEXT NOT NULL DEFAULT '',            -- what the post-mortem asks to change, in words
+      rationale TEXT NOT NULL DEFAULT '',           -- the rewriter's own account of what it changed
+      contentPt TEXT NOT NULL DEFAULT '',
+      contentEn TEXT NOT NULL DEFAULT '',
+      basePromptId TEXT NOT NULL DEFAULT '',        -- '' means it was written against the code default
+      factorStatId TEXT NOT NULL DEFAULT '',
+      evidence TEXT NOT NULL DEFAULT '{}',
+      decided INTEGER NOT NULL DEFAULT 0,           -- decided legs behind the cited factor
+      tickets INTEGER NOT NULL DEFAULT 0,           -- settled tickets of the game it came from
+      hypothesisId TEXT,
+      promptVersionId TEXT,                         -- the pt version this became, once applied
+      promptBatch TEXT NOT NULL DEFAULT '',
+      reason TEXT NOT NULL DEFAULT '',              -- why refused, why under the gate, why reverted
+      decidedBy TEXT NOT NULL DEFAULT '',
+      costUsd REAL NOT NULL DEFAULT 0,
+      createdAt TEXT NOT NULL,
+      decidedAt TEXT,
+      appliedAt TEXT,
+      revertedAt TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_proposals_status ON learning_proposals(status, createdAt DESC);
+    CREATE INDEX IF NOT EXISTS idx_proposals_game ON learning_proposals(gameId, createdAt DESC);
   `);
   d.exec(`
     -- The box score exactly as a live read saw it, one row per game and per period boundary. It is
@@ -724,6 +766,10 @@ function migrateRound4(d: Database.Database): void {
   `);
   // A bet logged from the short list keeps the price it was recommended at beside the price the
   // reader actually got: that pair is what makes the wallet's own CLV computable.
+  // The post-mortem now runs per GAME, so a run says which game it read. The daily sweep leaves both
+  // empty, which is exactly what it means: that run was a window, not a game.
+  addColumn(d, "learning_runs", "gameId", "TEXT NOT NULL DEFAULT ''");
+  addColumn(d, "learning_runs", "matchup", "TEXT NOT NULL DEFAULT ''");
   addColumn(d, "bankroll_entries", "recommendedDecimal", "REAL");
   addColumn(d, "bankroll_entries", "recommendedAt", "TEXT");
 }

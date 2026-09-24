@@ -8,6 +8,7 @@ import { Empty, KPI, PageHead, Panel, Table, Td, Th, Tr, buttonClass } from "@/c
 import { formatMoney, formatNumber } from "@/lib/format";
 import { PromptPanel } from "@/components/PromptPanel";
 import { LearningPanel } from "@/components/LearningPanel";
+import { LearningQueue } from "@/components/LearningQueue";
 import { AdminPolicy } from "@/components/AdminPolicy";
 import { AdminUsers } from "@/components/AdminUsers";
 import { AdminHealth, AdminInbox, AdminPayments, type OpsPayload } from "@/components/AdminOps";
@@ -139,6 +140,8 @@ export function AdminDashboard() {
       <AdminPayments />
 
       <AdminPolicy />
+
+      <LearningQueue />
 
       <LearningPanel />
 

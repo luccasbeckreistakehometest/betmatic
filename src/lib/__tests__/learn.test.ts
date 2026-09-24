@@ -6,8 +6,9 @@ import type { LedgerEntry } from "@/lib/types";
 const DIR = path.join(process.cwd(), "data", "unit-learn");
 process.env.DATA_DIR = DIR; process.env.AUTH_SECRET = "test-secret-that-is-long-enough";
 fs.rmSync(DIR, { recursive: true, force: true });
-const { settledInWindow, summariseWindow, runLearning, listLearningRuns, applyLearningRun } = await import("@/lib/ledger/learn");
-const { getPrompt } = await import("@/lib/server/prompts");
+const { settledInWindow, summariseWindow, runLearning, listLearningRuns } = await import("@/lib/ledger/learn");
+const { getPrompt, listPromptVersions } = await import("@/lib/server/prompts");
+const { listProposals } = await import("@/lib/ledger/proposals");
 
 const entry = (id: string, outcome: LedgerEntry["outcome"], settledAt: string, legs: [string, string, "won" | "lost"][]): LedgerEntry => ({
   id, gameId: "g1", sportKey: "soccer-bra", matchup: "A @ B", createdAt: settledAt, settledAt, bandKey: "value", kind: "parlay", title: id,
@@ -44,22 +45,27 @@ describe("runLearning", () => {
     const r = await runLearning({ now: new Date(now), minTickets: 10 }, async () => { throw new Error("must not be called"); });
     expect(r.status).toBe("skipped");
   });
-  it("stores the post-mortem as a proposal and applies it on the admin's click", async () => {
+  it("files the post-mortem in the operator's queue and changes nothing by itself", async () => {
+    const before = getPrompt("game", "pt");
     const r = await runLearning({ now: new Date(now) }, async ({ summary }) => ({
       summary: `${summary.lost} perdidos por cartão`, wentRight: ["book line 2/2"], wentWrong: ["cartões pelo árbitro 0/2"],
       lessons: [{ factorStatId: "", text: "ancorar cartões nas taxas dos times" }], promptFeedback: "Não use média do árbitro sozinha para cartões.",
       promptFeedbackFactorStatId: "", confidence: "medium",
-    }));
+    }), async () => { throw new Error("must not be called"); });
+
     expect(r.status).toBe("ok"); expect(r.applied).toBe(0);
     expect(listLearningRuns().some((x) => x.id === r.id)).toBe(true);
-    const before = getPrompt("game", "pt");
-    // the apply path calls the rewrite model; here the default aiRewrite would hit the network, so the
-    // route-level behaviour is covered by prompts.test — this checks the guard rails only
-    await expect(applyLearningRun("nope", "admin")).resolves.toEqual({ ok: false, error: "Esta run não tem proposta de feedback." });
+    // no factor has a sample on this ledger, so the proposal is filed under the gate rather than
+    // offered — and the rewrite is never called, because a proposal nobody can approve costs nothing
+    const filed = listProposals().find((p) => p.runId === r.id)!;
+    expect(filed.status).toBe("under_gate");
+    expect(filed.matchup).toBe("janela de 24h");
     expect(getPrompt("game", "pt")).toBe(before);
+    expect(listPromptVersions("game")).toEqual([]);
   });
-  it("auto-applies when asked and the run proposed something", async () => {
-    const r = await runLearning({ now: new Date(now), autoApply: false }, async () => ({ summary: "s", wentRight: [], wentWrong: [], lessons: [], promptFeedback: "", promptFeedbackFactorStatId: "", confidence: "low" }));
+  it("proposes nothing when the post-mortem found nothing to change", async () => {
+    const r = await runLearning({ now: new Date(now) }, async () => ({ summary: "s", wentRight: [], wentWrong: [], lessons: [], promptFeedback: "", promptFeedbackFactorStatId: "", confidence: "low" }));
     expect(r.applied).toBe(0); expect(r.promptFeedback).toBe("");
+    expect(listProposals().filter((p) => p.runId === r.id)).toEqual([]);
   });
 });

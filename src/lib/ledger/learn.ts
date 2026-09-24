@@ -3,9 +3,12 @@ import { getDb, newId, nowIso } from "@/lib/server/db";
 import { readLedger } from "@/lib/ledger/store";
 import { calibrationPrompt } from "@/lib/ledger/calibrate";
 import { generateStructured, lastUsage } from "@/lib/ai/extract";
-import { applyFeedback } from "@/lib/server/prompts";
+import { mockPostMortem } from "@/lib/ai/mocks";
+import { aiRewrite, type RewriteFn } from "@/lib/server/prompts";
+import { filePromptProposal, fileCodeGates } from "@/lib/ledger/file-proposal";
+import { recentRejections } from "@/lib/ledger/proposals";
 import { latestFactorStats } from "@/lib/server/factors-job";
-import { proposeHypothesis, type Direction } from "@/lib/ledger/hypotheses";
+import { proposeFromLesson } from "@/lib/ledger/hypotheses";
 import type { FactorStat } from "@/lib/ledger/factor-report";
 import type { LedgerEntry } from "@/lib/types";
 
@@ -13,8 +16,9 @@ import type { LedgerEntry } from "@/lib/types";
  * The qualitative half of learning. Calibration (calibrate.ts) already feeds hit rates back into
  * every prompt; this reads what actually happened to recent tickets and asks the judgement model
  * for a post-mortem — what worked, what broke and why — and for a concrete change to the prompt.
- * The change is a proposal an admin applies with one click, unless LEARN_AUTO_APPLY=1: a prompt
- * that rewrites itself every night with no one reading drifts.
+ * The change is a proposal an admin applies with one click, and there is no switch that skips the
+ * click: a prompt that rewrites itself every night with no one reading drifts, and the operator has
+ * to see the exact text before it goes live (ledger/file-proposal.ts).
  */
 export interface WindowSummary {
   tickets: number; won: number; lost: number; push: number; void: number;
@@ -63,12 +67,27 @@ const PostMortemSchema = z.object({
   confidence: z.enum(["high", "medium", "low"]).describe("Quão sustentadas pelos dados estão as lições — amostra pequena = low."),
 });
 export type PostMortem = z.infer<typeof PostMortemSchema>;
-export type PostMortemFn = (args: { summary: WindowSummary; entries: LedgerEntry[]; calibration: string; factors: FactorStat[] }) => Promise<PostMortem>;
+export interface PostMortemArgs {
+  summary: WindowSummary;
+  entries: LedgerEntry[];
+  calibration: string;
+  factors: FactorStat[];
+  /**
+   * What the operator already turned down, and why. The cheapest supervision the loop has: without
+   * it the agent proposes the same refused idea every night, and the refusal teaches nothing.
+   */
+  rejections?: { feedback: string; reason: string }[];
+  /** One line naming the population, so a per-game post-mortem does not write as if it read a week. */
+  scope?: string;
+}
+export type PostMortemFn = (args: PostMortemArgs) => Promise<PostMortem>;
 
-export const aiPostMortem: PostMortemFn = async ({ summary, entries, calibration, factors }) =>
+export const aiPostMortem: PostMortemFn = async ({ summary, entries, calibration, factors, rejections, scope }) =>
   generateStructured({
     schema: PostMortemSchema,
     maxTokens: 6000,
+    label: "post-mortem",
+    mock: () => mockPostMortem({ summary, factors }),
     system: `You are the post-mortem analyst for a betting-ticket generator. You get the tickets it produced that settled recently, with every leg graded, plus its running calibration. Find what the generator should do differently.
 Rules:
 - Ground every claim in the legs given. Name the leg, the market, the evidence source and the predicted probability. Never invent a cause.
@@ -78,6 +97,7 @@ Rules:
 - Every lesson MUST cite one factorStatId from the FATORES ACESOS list, verbatim, and so must promptFeedback (in promptFeedbackFactorStatId). A lesson that cites nothing is dropped before it is stored — that list is the only measured evidence you have, and a rule with no measurement behind it cannot be evaluated later.
 - Never write about stake, unit, bankroll or how much to bet. That is computed in code and is none of your business here: describe the game, not the wager size.`,
     prompt: [
+      scope ? `POPULAÇÃO: ${scope}` : "",
       `PERÍODO: ${summary.tickets} bilhetes liquidados — ${summary.won} ganhos, ${summary.lost} perdidos, ${summary.push} push, ${summary.void} void.`,
       `POR MERCADO: ${JSON.stringify(summary.byMarket)}`, `POR FONTE: ${JSON.stringify(summary.bySource)}`,
       `LINHAS PERDIDAS:\n${summary.lostLegs.map((l) => `- [${l.matchup}] ${l.selection} (${l.market}, fonte ${l.source}, previsto ${(l.predicted * 100).toFixed(0)}%${l.actual ? `, real: ${l.actual}` : ""})`).join("\n") || "- nenhuma"}`,
@@ -88,37 +108,35 @@ Rules:
           ? factors.map((f) => `- ${f.id} | ${f.dim}=${f.value} (${f.scope}) | ${f.legs} linhas, acerto ${(f.hitRate * 100).toFixed(0)}% contra ${(f.predicted * 100).toFixed(0)}% previsto, IC95 [${(f.ciLow * 100).toFixed(0)}; ${(f.ciHigh * 100).toFixed(0)}], q=${f.qValue.toFixed(3)}`).join("\n")
           : "- nenhum fator com amostra suficiente ainda"
       }`,
-    ].join("\n\n"),
+      rejections?.length
+        ? `\nPROPOSTAS JÁ RECUSADAS PELO OPERADOR (não proponha de novo a mesma coisa; o motivo diz o que ele não aceita):\n${
+            rejections.map((r) => `- "${r.feedback.slice(0, 200)}" → recusada porque: ${r.reason.slice(0, 200)}`).join("\n")
+          }`
+        : "",
+    ].filter(Boolean).join("\n\n"),
   });
 
 export interface LearningRunRow {
   id: string; status: string; windowStart: string; windowEnd: string; tickets: number; won: number; lost: number; summary: string;
   report: string; promptFeedback: string; applied: number; appliedBatch: string; costUsd: number; note: string; createdAt: string;
+  /** Empty on the daily window sweep; the game a per-game post-mortem read. */
+  gameId: string; matchup: string;
 }
 
 /** Old stored reports and hand-written mocks carry plain strings; both shapes are read here. */
 const asLesson = (l: Lesson | string): Lesson => (typeof l === "string" ? { factorStatId: "", text: l } : l);
 const countLessons = (lessons: (Lesson | string)[] | undefined): number => (lessons ?? []).length;
-const citedLessons = (lessons: (Lesson | string)[] | undefined, byId: Map<string, FactorStat>): Lesson[] =>
+export const citedLessons = (lessons: (Lesson | string)[] | undefined, byId: Map<string, FactorStat>): Lesson[] =>
   (lessons ?? []).map(asLesson).filter((l) => l.text.trim() && (!byId.size || byId.has(l.factorStatId)));
 
 /**
- * Which way a lit factor points is not the model's opinion: a slice whose real hit rate sits below
- * what was predicted is one the generator should lean away from, and above is one it should lean
- * into. Deriving the direction from the measurement is what lets `contradicts()` recognise the
- * reversal later — two sentences arguing opposite things about the same slice collide by fingerprint
- * instead of quietly cancelling each other inside the prompt.
+ * The daily window sweep, kept beside the per-game loop because a rule that only shows up across
+ * several nights is invisible to a single game. What changed is the ending: it no longer applies
+ * anything, with or without an environment switch. It files its proposal in the same queue, through
+ * the same door, under the same brakes (ledger/file-proposal.ts) — two ways into the prompt would
+ * mean two sets of rules, and the weaker one would decide.
  */
-function proposeFromLesson(lesson: Lesson, factor: FactorStat, runId: string) {
-  const direction: Direction = factor.gap > 0 ? "lower" : "raise";
-  const out = proposeHypothesis(
-    { dim: factor.dim, value: factor.value, direction, bucket: factor.scope, factorStatId: factor.id, text: lesson.text, runId },
-    new Set([factor.id]),
-  );
-  return { status: out.status, note: out.note, id: out.hypothesis?.id ?? null, previous: out.previous?.id ?? null, factorStatId: factor.id, text: lesson.text };
-}
-
-export async function runLearning(opts: { sinceHours?: number; minTickets?: number; autoApply?: boolean; now?: Date } = {}, model: PostMortemFn = aiPostMortem): Promise<LearningRunRow> {
+export async function runLearning(opts: { sinceHours?: number; minTickets?: number; now?: Date } = {}, model: PostMortemFn = aiPostMortem, rewrite: RewriteFn = aiRewrite): Promise<LearningRunRow> {
   const db = getDb();
   const now = opts.now ?? new Date();
   const windowEnd = now.toISOString();
@@ -144,42 +162,48 @@ export async function runLearning(opts: { sinceHours?: number; minTickets?: numb
   }
   try {
     const factors = latestFactorStats(200);
-    const pm = await model({ summary, entries, calibration: calibrationPrompt(), factors });
-    const cost = lastUsage?.costUsd ?? 0;
+    const pm = await model({ summary, entries, calibration: calibrationPrompt(), factors, rejections: recentRejections(8) });
+    let cost = lastUsage?.costUsd ?? 0;
 
     // The citation rule binds only when there is something to cite. On a ledger too small for any
     // factor to have a sample, demanding a citation would silence the post-mortem entirely — which
     // would delete a feature to enforce a rule about a table that does not exist yet.
     const byId = new Map(factors.map((f) => [f.id, f]));
     const cited = citedLessons(pm.lessons, byId);
-    const supported = !byId.size || byId.has(pm.promptFeedbackFactorStatId ?? "");
-    const feedback = pm.promptFeedback.trim() && supported ? pm.promptFeedback : "";
     const dropped = countLessons(pm.lessons) - cited.length;
 
-    const proposals = byId.size ? cited.map((l) => proposeFromLesson(l, byId.get(l.factorStatId)!, id)) : [];
+    // The queue, not the prompt. `windowStart → windowEnd` is the origin instead of a game, and the
+    // panel reads the empty gameId for exactly what it means: this run was a window, not a match.
+    const origin = { gameId: "", matchup: `janela de ${opts.sinceHours ?? 24}h` };
+    const filed = await filePromptProposal({ pm, factors: byId, runId: id, origin, tickets: summary.tickets, rewrite });
+    cost += filed.costUsd;
+    const feedback = filed.proposal?.channel === "prompt" ? filed.proposal.feedback : "";
 
-    let applied = 0, batch = "";
-    if (feedback && (opts.autoApply ?? process.env.LEARN_AUTO_APPLY === "1")) {
-      const out = await applyFeedback({ kind: "game", feedback, createdBy: "agente (aprendizado)" });
-      applied = 1; batch = out.batch;
-    }
+    const proposals = byId.size ? cited.map((l) => proposeFromLesson(l, byId.get(l.factorStatId)!, id)) : [];
+    const gates = fileCodeGates({
+      lessons: cited, factors: byId, runId: id, origin, tickets: summary.tickets,
+      hypothesisIdFor: (factorStatId) => proposals.find((h) => h.factorStatId === factorStatId)?.id ?? null,
+      alreadyFiled: gateAlreadyFiled,
+    });
+
     const report = {
       ...pm,
       // Stored as prose, the way the panel has always read it; the measured rows travel beside it.
       lessons: cited.map((l) => l.text),
       factors: cited.map((l) => byId.get(l.factorStatId)!),
       proposals,
+      queued: [filed.proposal, ...gates].filter(Boolean).map((p) => ({ id: p!.id, channel: p!.channel, gate: p!.gate, status: p!.status, decided: p!.decided })),
       dropped,
       byMarket: summary.byMarket,
       bySource: summary.bySource,
     };
     const note = [
       dropped ? `${dropped} lição(ões) descartada(s) por não citar um fator medido.` : "",
-      pm.promptFeedback.trim() && !supported ? "A proposta de prompt foi descartada: não citou um fator medido." : "",
+      filed.note,
       byId.size ? "" : "Nenhum fator tinha amostra suficiente nesta rodada, então a citação não foi exigida.",
     ].filter(Boolean).join(" ");
     db.prepare("INSERT INTO learning_runs (id,status,windowStart,windowEnd,tickets,won,lost,summary,report,promptFeedback,applied,appliedBatch,costUsd,note,createdAt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
-      .run(id, "ok", windowStart, windowEnd, summary.tickets, summary.won, summary.lost, pm.summary, JSON.stringify(report), feedback, applied, batch, cost, note, nowIso());
+      .run(id, "ok", windowStart, windowEnd, summary.tickets, summary.won, summary.lost, pm.summary, JSON.stringify(report), feedback, 0, "", cost, note, nowIso());
   } catch (error) {
     db.prepare("INSERT INTO learning_runs (id,status,windowStart,windowEnd,tickets,won,lost,note,createdAt) VALUES (?,?,?,?,?,?,?,?,?)")
       .run(id, "error", windowStart, windowEnd, summary.tickets, summary.won, summary.lost, error instanceof Error ? error.message : "failed", nowIso());
@@ -191,12 +215,9 @@ export function listLearningRuns(limit = 20): LearningRunRow[] {
   return getDb().prepare("SELECT * FROM learning_runs ORDER BY createdAt DESC, rowid DESC LIMIT ?").all(limit) as LearningRunRow[];
 }
 
-/** The admin's one click: the run's proposed feedback goes through the same path as typed feedback. */
-export async function applyLearningRun(id: string, createdBy: string): Promise<{ ok: boolean; rationale?: string; error?: string }> {
-  const run = getDb().prepare("SELECT * FROM learning_runs WHERE id=?").get(id) as LearningRunRow | undefined;
-  if (!run || !run.promptFeedback.trim()) return { ok: false, error: "Esta run não tem proposta de feedback." };
-  if (run.applied) return { ok: false, error: "Já aplicada." };
-  const out = await applyFeedback({ kind: "game", feedback: run.promptFeedback, createdBy }, undefined);
-  getDb().prepare("UPDATE learning_runs SET applied=1, appliedBatch=? WHERE id=?").run(out.batch, id);
-  return { ok: true, rationale: out.rationale };
+/** A gate already in the queue for the same measured slice is not filed twice every night. */
+function gateAlreadyFiled(gate: string, factorStatId: string): boolean {
+  return !!getDb().prepare(
+    "SELECT 1 FROM learning_proposals WHERE channel='code_gate' AND gate=? AND factorStatId=? AND status IN ('code_gate','rejected') LIMIT 1",
+  ).get(gate, factorStatId);
 }

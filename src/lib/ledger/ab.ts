@@ -50,13 +50,16 @@ export function armStats(key: string, entries: LedgerEntry[]): ArmStats {
   };
 }
 
+/** Below this much Brier difference the two arms are the same arm, and saying otherwise is noise. */
+export const BRIER_TIE = 0.005;
+
 /** Lower Brier wins, and only when both arms are big enough for the answer to mean anything. */
-function judge(a: ArmStats, b: ArmStats, minPerArm: number): Pick<Comparison, "verdict" | "note"> {
+export function judge(a: ArmStats, b: ArmStats, minPerArm: number): Pick<Comparison, "verdict" | "note"> {
   if (a.decided < minPerArm || b.decided < minPerArm) {
     return { verdict: "insufficient", note: `amostra insuficiente: ${a.decided} e ${b.decided} bilhetes decididos, mínimo de ${minPerArm} por braço.` };
   }
   const delta = b.brier - a.brier;
-  if (Math.abs(delta) < 0.005) return { verdict: "tie", note: "empate dentro do ruído: a diferença de Brier é menor que 0,005." };
+  if (Math.abs(delta) < BRIER_TIE) return { verdict: "tie", note: `empate dentro do ruído: a diferença de Brier é menor que ${BRIER_TIE.toFixed(3)}.` };
   return { verdict: delta > 0 ? "a" : "b", note: `${delta > 0 ? a.key : b.key} tem o Brier menor por ${Math.abs(delta).toFixed(3)}.` };
 }
 

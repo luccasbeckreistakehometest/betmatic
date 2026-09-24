@@ -10,7 +10,8 @@ services:
       - ./browser-profiles:/app/.browser-profiles   # Betano session survives restarts
     shm_size: "1gb"                                   # Chromium needs more than Docker's 64MB default
 
-  # Scheduler: settles finished games every hour (no tokens), runs the learning post-mortem daily,
+  # Scheduler: settles finished games every hour (no tokens), runs the learning post-mortem at the
+  # end of every game and once a day over the window,
   # builds the day's múltiplas entre jogos once a day,
   # watches lineups and closing prices every tick, writes the Monday discipline report,
   # the optional background refresh every 4h (off unless CRON_ENABLED=1), and asks for the Telegram
@@ -34,6 +35,12 @@ services:
           # zero with the container and never reached 95, so the product ran zero post-mortems.
           curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=learn" >/dev/null || true
           curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=evaluate" >/dev/null || true
+          # The learning loop, every tick: it first rolls back any applied prompt version already
+          # measured worse than the one it replaced (arithmetic, zero tokens), then reads whichever
+          # finished games have not been read yet — up to LEARN_GAME_MAX_PER_TICK and never past the
+          # day's AI ceiling. Nothing it finds reaches the live prompt: it fills the admin's approval
+          # queue. LEARN_PER_GAME=0 switches it off without a deploy.
+          curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=learn-game" >/dev/null || true
           # Round 3: lineup watch and closing prices every tick, the weekly report hourly (it writes on
           # Mondays), the analytics cleanup daily. Their JSON summaries go to the log.
           curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=lineups"; echo
