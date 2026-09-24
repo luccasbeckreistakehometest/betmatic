@@ -38,18 +38,25 @@ export async function generateGame(args: { sportKey: string; dateKey: string; de
   // Priced player legs, gated by minutes/role before the prompt; a failing feed falls back to
   // unpriced candidates (which the builder never lets into a ticket).
   const sportDefinition = getSport(sportKey);
-  const candidates = await buildPropCandidates(detail).catch(() => null);
+  // The Brazilian books' current prices on this game (stored by the books job), read BEFORE the
+  // candidates so the players they priced can be measured too. Until 24/09/2026 this was read after,
+  // and the consequence was the product's main complaint: the books published lines on players whose
+  // game logs were never fetched, so a priced line had no measured history to stand on and could not
+  // carry a leg. `pricesForGame` on an empty store returns nothing and the behaviour is unchanged.
+  const bookPrices = (() => { try { return pricesForGame(detail.game.id); } catch { return []; } })();
+  const bookPlayers = [...new Set(bookPrices.map((p) => (p.player ?? "").trim()).filter(Boolean))];
+  const candidates = await buildPropCandidates(detail, { alsoMeasure: bookPlayers }).catch(() => null);
   const props = candidates?.props ?? [];
   const lines = await getGameLines(sportKey, detail.game.id).catch(() => []);
   if (candidates?.dropped.length) info.push(`role gate dropped: ${candidates.dropped.join(", ")}`);
   // The guard only ever fires on a game already under way; saying so in the run note makes a stale
   // feed visible in the ops log instead of silently thinning the candidates.
   if (candidates?.staleDropped.length) info.push(`stale line guard dropped: ${candidates.staleDropped.join(" | ")}`);
-  // The Brazilian books' current prices on this game (stored by the books job), so the model can
-  // shop the line and name the book that pays most; an empty store changes nothing.
-  const bookPrices = (() => { try { return pricesForGame(detail.game.id); } catch { return []; } })();
   const consensus = consensusWithBooks(props, sportDefinition.group === "soccer" ? lines : [], { home: detail.game.home.displayName, away: detail.game.away.displayName }, bookPrices, sportKey);
   if (bookPrices.length) info.push(`book prices: ${bookPrices.length} rows from ${new Set(bookPrices.map((p) => p.book)).size} books`);
+  // Said out loud in the run note, because "how many of the books' players did we manage to measure"
+  // is the number that decides how much material a night has.
+  if (bookPlayers.length) info.push(`book players offered for measurement: ${bookPlayers.length}`);
   const referee = sportDefinition.group === "soccer"
     ? await refereeForMatch(detail.game.home.displayName, detail.game.away.displayName, dateKey).catch(() => null)
     : null;
