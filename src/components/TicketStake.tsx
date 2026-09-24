@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Button, buttonClass, chipClass } from "@/components/ui";
-import { formatMoney, formatNumber, formatStakeUnits } from "@/lib/format";
+import { formatMoney, formatStakeUnits } from "@/lib/format";
 import { kellyFraction } from "@/lib/odds";
 import { makeT, type Lang } from "@/lib/i18n";
 import type { BetSuggestion } from "@/lib/types";
@@ -63,17 +63,18 @@ export function TicketStake({ bet, lang, gameId, onSaved }: { bet: BetSuggestion
   function start() {
     setOpen(true);
     setSaved("idle");
-    if (!amount && kellyUnits > 0) setAmount(formatNumber(kellyUnits, lang, { digits: 2 }));
-    // The field is the point of the button: land in it.
+    // The field is the point of the button: land in it. It starts empty on purpose — the quarter
+    // Kelly is printed under it as a suggestion, and a suggestion typed into the box for the reader
+    // is not a suggestion any more. This product never puts a size in a stake field by itself.
     setTimeout(() => field.current?.focus(), 0);
   }
 
   function switchTo(next: Mode) {
     if (next === mode) return;
     setMode(next);
-    // A number typed as units is not the same number in reais. Rather than convert behind the
-    // reader's back, the field starts again — except for the one default the product owns.
-    setAmount(next === "units" && kellyUnits > 0 ? formatNumber(kellyUnits, lang, { digits: 2 }) : "");
+    // A number typed as units is not the same number in reais: rather than convert behind the
+    // reader's back, the field starts again.
+    setAmount("");
     setSaved("idle");
   }
 
@@ -159,7 +160,7 @@ export function TicketStake({ bet, lang, gameId, onSaved }: { bet: BetSuggestion
           value={amount}
           onChange={(e) => { setAmount(e.target.value); setSaved("idle"); }}
           onKeyDown={(e) => { if (e.key === "Enter") void save(); }}
-          placeholder={mode === "units" ? "1,00" : "10,00"}
+          placeholder={t("stake")}
           inputMode="decimal"
           enterKeyHint="done"
           size={6}
@@ -181,9 +182,9 @@ export function TicketStake({ bet, lang, gameId, onSaved }: { bet: BetSuggestion
       </div>
 
       {/* What the amount is worth and what it pays back, recomputed as the reader types. */}
-      <p className="flex flex-wrap items-baseline gap-x-2 text-tiny text-fg-dim" data-testid="ticket-return">
-        {mode === "units" && (
-          <span className="nums">
+      <p className="flex flex-wrap items-baseline gap-x-2 text-tiny text-fg-muted" data-testid="ticket-return">
+        {mode === "units" && units > 0 && (
+          <span className="nums text-fg-dim">
             {formatStakeUnits(units, lang)}
             {unitMoney > 0 ? ` = ${formatMoney(unitMoney, lang)}` : ""}
           </span>
@@ -192,14 +193,12 @@ export function TicketStake({ bet, lang, gameId, onSaved }: { bet: BetSuggestion
           {t("potentialReturn")}:{" "}
           <span className="nums text-fg">{ready ? formatMoney(stake * bet.combinedDecimal, lang) : "—"}</span>
         </span>
-        <span className="text-fg-dim">· {t("potentialReturnHint")}</span>
       </p>
-      {mode === "units" && (
-        <p className="text-micro text-fg-dim">
-          {t("stakeUnitWorth")}
-          {kellyUnits > 0 && <> · {formatStakeUnits(kellyUnits, lang)} (¼ Kelly)</>}
-        </p>
-      )}
+      <p className="text-micro text-fg-dim">
+        {t("potentialReturnHint")}
+        {mode === "units" && <> · {t("stakeUnitWorth")}</>}
+        {mode === "units" && kellyUnits > 0 && <> · {formatStakeUnits(kellyUnits, lang)} (¼ Kelly)</>}
+      </p>
 
       {/* No bankroll on file: ask for it instead of pricing a unit at a number nobody chose. */}
       {askBankroll && (

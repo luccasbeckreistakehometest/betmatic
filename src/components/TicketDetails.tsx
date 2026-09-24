@@ -5,7 +5,7 @@ import { track } from "@/lib/track";
 
 import { Badge, Chip, Odds, cx } from "@/components/ui";
 import { Modal } from "@/components/Modal";
-import { formatNumber, formatPercent as pctOf } from "@/lib/format";
+import { formatNumber, formatOdds, formatPercent as pctOf } from "@/lib/format";
 import { legDiff } from "@/lib/bets/alternatives-view";
 import { formatDecimal, getBand } from "@/lib/odds";
 import { makeT, type Lang } from "@/lib/i18n";
@@ -123,7 +123,7 @@ export function TicketDetails({ open, onClose, bet, lang, gameId, sportKey, aler
                 ) : (
                   <span className="text-tiny font-medium text-fg">{leg.selection}</span>
                 )}
-                <span className="nums text-tiny text-fg-muted">{leg.odds}</span>
+                <span className="nums text-tiny text-fg-muted">{Number.isFinite(leg.oddsDecimal) ? formatOdds(leg.oddsDecimal, lang) : leg.odds}</span>
                 {leg.book && <span className="text-micro text-fg-dim">{leg.book}</span>}
                 {alerts.filter((a) => a.legIndex === i).map((a) => (
                   <span key={a.kind} className="rounded-control bg-neg-tint px-1.5 py-0.5 text-micro font-semibold text-neg" data-testid="leg-alert">{ALERT_LABEL[a.kind][lang]}</span>

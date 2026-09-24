@@ -185,7 +185,7 @@ const DICT = {
   stakeHowMuch: { pt: "Quanto entra neste bilhete", en: "How much goes on this ticket" },
   stakeUnitWorth: { pt: "1 u = 1% da sua banca", en: "1 u = 1% of your bankroll" },
   potentialReturn: { pt: "Retorno potencial", en: "Potential return" },
-  potentialReturnHint: { pt: "valor × odd combinada, se todas as linhas entrarem", en: "stake × combined price, if every line lands" },
+  potentialReturnHint: { pt: "só se todas as linhas do bilhete entrarem", en: "only if every line of the ticket lands" },
   cancel: { pt: "Cancelar", en: "Cancel" },
   bankrollUndeclared: { pt: "Você ainda não disse qual é a sua banca, então não dá para transformar unidade em reais.", en: "You have not told us your bankroll yet, so a unit cannot be turned into reais." },
   bankrollAsk: { pt: "Sua banca (R$)", en: "Your bankroll (R$)" },
