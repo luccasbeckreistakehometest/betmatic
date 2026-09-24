@@ -46,7 +46,7 @@ describe("book_prices store", () => {
     const r = spawnSync(process.execPath, [path.join(process.cwd(), "node_modules", "tsx", "dist", "cli.mjs"), script], { encoding: "utf8", cwd: process.cwd(), timeout: 60_000 });
     expect(r.stdout.trim(), r.stderr).toBe("ok");
     const indexes = (getDb().prepare("SELECT name FROM sqlite_master WHERE type='index' AND name LIKE 'idx_book_%'").all() as { name: string }[]).map((t) => t.name).sort();
-    expect(indexes).toEqual(["idx_book_events_game", "idx_book_events_starts", "idx_book_prices_current", "idx_book_prices_event", "idx_book_prices_key2"]);
+    expect(indexes).toEqual(["idx_book_events_game", "idx_book_events_starts", "idx_book_prices_current", "idx_book_prices_event", "idx_book_prices_key3", "idx_book_prices_live"]);
   }, 60_000);
 
   it("matches events to the slate, keeps history only when a price moves, and retires pulled lines", () => {

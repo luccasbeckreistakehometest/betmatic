@@ -72,8 +72,12 @@ describe("br-books registry", () => {
   });
 
   it("keeps the tunables inside sane bounds", () => {
-    expect(booksConfig({})).toEqual({ dispersionPct: 7, horizonHours: 48, adapterTimeoutMs: 90_000, jobBudgetMs: 480_000, retentionDays: 14 });
-    expect(booksConfig({ BOOKS_DISPERSION_PCT: "0", BOOKS_HORIZON_HOURS: "12", BOOKS_ADAPTER_TIMEOUT_MS: "10", BOOKS_JOB_BUDGET_MS: "1", BOOKS_RETENTION_DAYS: "400" })).toEqual({ dispersionPct: 1, horizonHours: 12, adapterTimeoutMs: 5_000, jobBudgetMs: 30_000, retentionDays: 90 });
+    expect(booksConfig({})).toEqual({ dispersionPct: 7, horizonHours: 48, adapterTimeoutMs: 90_000, jobBudgetMs: 480_000, retentionDays: 14, liveAdapterTimeoutMs: 25_000, liveJobBudgetMs: 90_000, liveStaleMinutes: 30 });
+    expect(booksConfig({ BOOKS_DISPERSION_PCT: "0", BOOKS_HORIZON_HOURS: "12", BOOKS_ADAPTER_TIMEOUT_MS: "10", BOOKS_JOB_BUDGET_MS: "1", BOOKS_RETENTION_DAYS: "400" })).toEqual({ dispersionPct: 1, horizonHours: 12, adapterTimeoutMs: 5_000, jobBudgetMs: 30_000, retentionDays: 90, liveAdapterTimeoutMs: 25_000, liveJobBudgetMs: 90_000, liveStaleMinutes: 30 });
+    // The in-play clock has its own floors, for the reason registry.ts gives: a deadline longer than
+    // the life of the price it fetches is not a deadline.
+    expect(booksConfig({ BOOKS_LIVE_ADAPTER_TIMEOUT_MS: "1", BOOKS_LIVE_JOB_BUDGET_MS: "1", BOOKS_LIVE_STALE_MINUTES: "0" })).toMatchObject({ liveAdapterTimeoutMs: 5_000, liveJobBudgetMs: 10_000, liveStaleMinutes: 1 });
+    expect(booksConfig({ BOOKS_LIVE_ADAPTER_TIMEOUT_MS: "30000", BOOKS_LIVE_STALE_MINUTES: "10" })).toMatchObject({ liveAdapterTimeoutMs: 30_000, liveStaleMinutes: 10 });
   });
 
   it("declares the hosts every adapter talks to, so a wall on one skips its sharers", () => {

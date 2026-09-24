@@ -96,5 +96,14 @@ export function booksConfig(env: Record<string, string | undefined> = process.en
     jobBudgetMs: Math.max(30_000, num(env.BOOKS_JOB_BUDGET_MS, 8 * 60_000)),
     /** Days of price history kept after kickoff; older games are deleted with their rows. */
     retentionDays: Math.max(1, Math.min(90, num(env.BOOKS_RETENTION_DAYS, 14))),
+    /**
+     * The in-play round's own clock. It is short on purpose: a live price is worth nothing a minute
+     * after it was read, so an adapter that cannot answer inside its deadline is dropped for this
+     * tick rather than allowed to hold the round past the life of the numbers it is fetching.
+     */
+    liveAdapterTimeoutMs: Math.max(5_000, num(env.BOOKS_LIVE_ADAPTER_TIMEOUT_MS, 25_000)),
+    liveJobBudgetMs: Math.max(10_000, num(env.BOOKS_LIVE_JOB_BUDGET_MS, 90_000)),
+    /** An in-play price nobody has confirmed for this long stops being current (the market was pulled, or the game ended). */
+    liveStaleMinutes: Math.max(1, num(env.BOOKS_LIVE_STALE_MINUTES, 30)),
   };
 }
