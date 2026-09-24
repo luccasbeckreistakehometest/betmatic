@@ -191,6 +191,18 @@ export interface BuildArgs {
   roles?: RoleProfile[];
   /** Present once the match has kicked off; changes the question from 90 minutes to what is left. */
   live?: LiveState | null;
+  /**
+   * Whether this build is a read taken with the game under way, whatever the sport.
+   *
+   * `live` above carries SOCCER state and is null for a basketball quarter read, whose in-play
+   * context travels in `extraContext` — so `!!live` answers "is this soccer, in play", never "is
+   * this in play". On 23/09/2026 the availability gate read `!!live`, decided a half-time read was
+   * a pre-game build, and applied the 20-minute floor to minutes that were the REMAINDER of the
+   * game: every ticket of the Q2 read was dropped and the read published nothing. The flag is
+   * explicit so a sport without a structured live slot cannot be mistaken for a game that has not
+   * started.
+   */
+  inPlay?: boolean;
   /** Open/current/close game lines: anchor prices and show movement. */
   lines?: ProviderLines[];
   /** Live reads and previews are not logged to the public ledger. */
@@ -490,6 +502,10 @@ export async function buildBets(args: BuildArgs): Promise<BetSlate> {
         .join("\n")
     : "- no book lines published";
 
+  // A basketball quarter read has no `live` state (that field is soccer's), and reading `!!live` for
+  // "is the game under way" is what made the gate treat a half-time read as a pre-game build.
+  const inPlay = args.inPlay ?? !!live;
+
   const prompt = [
     `GAME: ${game.away.displayName} at ${game.home.displayName}`,
     game.tournament ? `TOURNAMENT: ${game.tournament} — ${game.round ?? ""}` : "",
@@ -538,15 +554,15 @@ export async function buildBets(args: BuildArgs): Promise<BetSlate> {
     prompt,
     maxTokens: JUDGEMENT_MAX_TOKENS,
     effort,
-    label: live ? "live" : "game",
+    label: inPlay ? "live" : "game",
     model: args.model,
     mock: () => mockGameSlate({ game, detail, props, lang, bands, live: !!live }),
   });
 
   const suggestions = priceAll(result.suggestions, { props, sportKey: game.sportKey, game, lines }, {
-    live: !!live,
+    live: inPlay,
     // A dropped ticket leaves a line behind: without it the only visible trace is a shorter slate.
-    onDrop: (drop) => logEvent("bets.gate.dropped", { ...drop, gameId: game.id, sportKey: game.sportKey, scope: live ? "live" : "pre" }),
+    onDrop: (drop) => logEvent("bets.gate.dropped", { ...drop, gameId: game.id, sportKey: game.sportKey, scope: inPlay ? "live" : "pre" }),
   });
 
   // Log every ticket at generation time so it can be graded once the game finishes. The ledger keeps
