@@ -189,7 +189,9 @@ export async function runLiveRead(user: LivePrincipal, sportKey: string, gameId:
       const slate = await buildBets({
         game: detail.game, detail, props: candidates?.props ?? [], roles: candidates?.roles ?? [], minutes: candidates?.minutes ?? [], picks: [], dimers: [], x: null,
         bands: LIVE_BANDS, maxPerBand: LIVE_MAX_PER_BAND, lang, record: false, model: LIVE_MODEL, effort: liveEffortOf(),
-        live: snap.sportGroup === "soccer" ? soccerState(snap) : null, extraContext,
+        // `live` is the SOCCER state and is null for a basketball read; `inPlay` is the sport-neutral
+        // answer to "is the game under way", which the emission gates need.
+        live: snap.sportGroup === "soccer" ? soccerState(snap) : null, inPlay: true, extraContext,
       });
       const minute = Math.round(snap.minute);
       const clockLeft = snap.clockLeft ?? undefined;
