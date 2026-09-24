@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { EMPTY_QUARTERS, narrationTotals, parseQuarterProfiles, playClock, quartersBySubtraction, reconcileQuarters, type StoredSnapshot } from "@/lib/live/quarters";
+import { EMPTY_QUARTERS, narrationTotals, parseQuarterProfiles, playClock, quartersBySubtraction, quartersPrompt, reconcileQuarters, type StoredSnapshot } from "@/lib/live/quarters";
 import summary from "./fixtures/espn-summary-wnba-401857206-plays.json";
 
 /**
@@ -211,5 +211,46 @@ describe("the subtraction, and whether it agrees with the narration", () => {
     const agreement = reconcileQuarters(profiles, wrong);
     expect(agreement.agreed).toBeLessThan(agreement.compared);
     expect(agreement.notes.join(" ")).toContain("Jonquel Jones Q2 PTS: narration 7, subtraction 96");
+  });
+});
+
+describe("the block the model reads", () => {
+  const block = quartersPrompt(profiles, { lastComplete: 2 });
+
+  it("gives each player the trajectory and then the total, and never only the total", () => {
+    expect(block).toContain("- Pauline Astier (NY, starter): Q1 10pt 1rb 1as 2pf 7.3min · Q2 2pt 0rb 0as 8.6min → accumulated 12pt 1rb 1as 15.9min");
+    expect(block).toContain("- DeWanna Bonner (ATL, bench):");
+    // Ten players, one line each: the block sits beside the others in the prompt, it does not bury them.
+    expect(block.split("\n").filter((l) => l.startsWith("- ") && l.includes("accumulated"))).toHaveLength(10);
+  });
+
+  it("says which quarter has just ended, so current is not read as history", () => {
+    expect(block).toContain("THE QUARTER THAT HAS JUST ENDED IS Q2");
+  });
+
+  it("names who changed, with the two rates it is claiming", () => {
+    expect(block).toContain("Pauline Astier went quiet: 1.37pts/min before Q2, 0.23 in it");
+    // A player who was scoreless has no rate to double, and is not described as if he had one.
+    expect(block).toContain("Rhyne Howard woke up: scoreless before Q2, 4pt at 0.40/min in it");
+    expect(block).not.toMatch(/accelerated: 0\.00pts\/min/);
+  });
+
+  it("marks a quarter still in play as partial rather than as a finished one", () => {
+    expect(quartersPrompt(profiles, { lastComplete: 1 })).toContain("Q2 2pt 0rb 0as 8.6min SO FAR (still in play)");
+  });
+
+  it("says plainly when the minutes are not measured, and does not let them read as zero", () => {
+    const doctored = structuredClone(fixture);
+    doctored.plays.find((p) => p.period.number === 2 && p.type.id !== "584" && p.participants?.length)!.participants = [{ athlete: { id: "4790258" } }];
+    const partial = quartersPrompt(parseQuarterProfiles(doctored, 10), { lastComplete: 2 });
+    expect(partial).toContain("Q2 2pt 0rb 0as min not measured");
+    expect(partial).toContain("MINUTES ARE NOT MEASURED BEYOND Q1");
+    expect(partial).toContain("was not narrated");
+    // With no minutes there is no rate, so nothing is claimed about who changed.
+    expect(partial).not.toContain("WHAT CHANGED");
+  });
+
+  it("says it has nothing rather than inventing a block, when ESPN has not narrated the game", () => {
+    expect(quartersPrompt(EMPTY_QUARTERS, { lastComplete: 2 })).toBe("QUARTER BY QUARTER: not computed — ESPN has published no play-by-play for this game.");
   });
 });

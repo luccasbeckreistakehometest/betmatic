@@ -395,3 +395,73 @@ export function boundaryOf(
   if (snap.period === 1 || slack > maxSlack) return null;
   return { through: snap.period - 1, slack };
 }
+
+/* -------------------------------------------------------------------------------------------- */
+/* The block the model reads.                                                                     */
+/* -------------------------------------------------------------------------------------------- */
+
+/** How much a player produced per minute, or null when the minutes behind it are not measured. */
+const rate = (pts: number, minutes: number | null): number | null => (minutes === null || minutes < 1 ? null : pts / minutes);
+
+const q = (period: number) => (period <= 4 ? `Q${period}` : `OT${period - 4}`);
+
+const cell = (line: QuarterLine): string => {
+  const parts = [`${line.pts}pt`, `${line.reb}rb`, `${line.ast}as`];
+  if (line.pf) parts.push(`${line.pf}pf`);
+  // "not measured" is not "zero minutes": a per-minute rate divided by a zero nobody measured is
+  // the kind of number this product exists not to print.
+  parts.push(line.minutes === null ? "min not measured" : `${line.minutes}min`);
+  return `${q(line.period)} ${parts.join(" ")}`;
+};
+
+/**
+ * The trajectory, quarter by quarter, of the players worth pricing — the one thing the accumulated
+ * box score cannot say. The rest of the live prompt gives the model totals; this block gives it the
+ * shape those totals came from, and names which quarter has just finished so the model can tell what
+ * is current from what is history.
+ *
+ * `lastComplete` is the period that has just ended. The quarter in play, if the read was taken
+ * inside one, is shown as partial and labelled so — a player on 4 points three minutes into a
+ * quarter has not scored 4 points in that quarter, he has scored 4 points so far.
+ */
+export function quartersPrompt(profiles: QuarterProfiles, opts: { lastComplete: number; limit?: number } = { lastComplete: 0 }): string {
+  if (!profiles.players.length) return "QUARTER BY QUARTER: not computed — ESPN has published no play-by-play for this game.";
+  const limit = opts.limit ?? 10;
+  const ranked = [...profiles.players]
+    .map((p) => ({ p, total: narrationTotals(p) }))
+    .filter((r) => r.total.pts + r.total.reb + r.total.ast > 0)
+    .sort((a, b) => b.total.pts + b.total.reb + b.total.ast - (a.total.pts + a.total.reb + a.total.ast))
+    .slice(0, limit);
+  if (!ranked.length) return "QUARTER BY QUARTER: not computed — no player has a line yet.";
+
+  const rows = ranked.map(({ p, total }) => {
+    const trail = p.periods.map((line) => (line.period > opts.lastComplete ? `${cell(line)} SO FAR (still in play)` : cell(line))).join(" · ");
+    const mins = total.minutes === null ? "min not measured" : `${total.minutes}min`;
+    return `- ${p.name} (${p.team}${p.starter ? ", starter" : ", bench"}): ${trail} → accumulated ${total.pts}pt ${total.reb}rb ${total.ast}as ${mins}`;
+  });
+
+  // What changed in the quarter that just ended, against the player's own earlier quarters. It is
+  // arithmetic on exact counts, not a judgement: the model is told the numbers and the direction.
+  const moved: string[] = [];
+  for (const { p } of ranked) {
+    const last = p.periods.find((line) => line.period === opts.lastComplete);
+    const before = p.periods.filter((line) => line.period < opts.lastComplete);
+    if (!last || !before.length) continue;
+    const now = rate(last.pts, last.minutes);
+    const then = rate(before.reduce((n, l) => n + l.pts, 0), before.reduce((n, l): number | null => (n === null || l.minutes === null ? null : n + l.minutes), 0 as number | null));
+    if (now === null || then === null) continue;
+    if (then === 0 && last.pts >= 4) moved.push(`${p.name} woke up: scoreless before ${q(opts.lastComplete)}, ${last.pts}pt at ${now.toFixed(2)}/min in it`);
+    else if (now >= 2 * then && then > 0 && last.pts >= 4) moved.push(`${p.name} accelerated: ${then.toFixed(2)}pts/min before ${q(opts.lastComplete)}, ${now.toFixed(2)} in it`);
+    else if (then >= 2 * now && before.reduce((n, l) => n + l.pts, 0) >= 4) moved.push(`${p.name} went quiet: ${then.toFixed(2)}pts/min before ${q(opts.lastComplete)}, ${now.toFixed(2)} in it`);
+  }
+
+  return [
+    `QUARTER BY QUARTER — the trajectory behind the accumulated figures above, read off ESPN's ${profiles.plays} narrated plays. The counting stats are exact: each one is a play the feed named.\n${rows.join("\n")}`,
+    opts.lastComplete ? `THE QUARTER THAT HAS JUST ENDED IS ${q(opts.lastComplete)}. Everything before it is history; it is the most recent evidence of what each player is doing NOW.` : "",
+    moved.length ? `WHAT CHANGED IN ${q(opts.lastComplete)}:\n${moved.map((m) => `- ${m}`).join("\n")}` : "",
+    profiles.minutesThrough < (profiles.periods.at(-1) ?? 0)
+      ? `MINUTES ARE NOT MEASURED BEYOND ${q(profiles.minutesThrough)}: ESPN's narration stopped sustaining the rotation (${profiles.notes[0] ?? "reason not recorded"}). Where a quarter says "min not measured", do not treat it as few minutes or as many — reason from the counting stats alone and say the minutes are unknown if you lean on them.`
+      : "",
+    "USE THE SHAPE, NOT ONLY THE TOTAL. A player on 14 points who scored 12 of them in the first quarter and 2 in the second is not the same bet as one who scored 7 and 7: the first has a total the line is chasing and a current rate that no longer supports it, and the second is producing at the rate the line still needs. A player whose minutes have shrunk quarter on quarter is losing his role whatever the total says, and a bench player whose minutes have grown is the one the pre-game line was never written for.",
+  ].filter(Boolean).join("\n\n");
+}
