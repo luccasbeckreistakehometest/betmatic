@@ -1,4 +1,5 @@
 import { readLedger } from "@/lib/ledger/store";
+import { fitPlatt, type PlattPoint } from "@/lib/ledger/platt";
 import { canonicalMarket } from "@/lib/ledger/stat-key";
 import { factorPromptLines } from "@/lib/ledger/factor-report";
 import { latestFactorStats } from "@/lib/server/factors-job";
@@ -11,6 +12,12 @@ interface Bucket {
   settled: number;
   won: number;
   predictedSum: number;
+  /**
+   * Every settled leg of the slice, kept because the average cannot answer the question that
+   * matters: does the error GROW with the claim? Fitting a slope needs the legs one by one
+   * (ledger/platt.ts). The ledger is ~1,100 legs, so this is a rounding error in memory.
+   */
+  points: PlattPoint[];
 }
 
 function summarise(buckets: Map<string, Bucket>, minSample: number): CalibrationRow[] {
@@ -18,6 +25,7 @@ function summarise(buckets: Map<string, Bucket>, minSample: number): Calibration
     .map(([key, b]) => {
       const hitRate = b.settled > 0 ? b.won / b.settled : NaN;
       const averagePredicted = b.settled > 0 ? b.predictedSum / b.settled : NaN;
+      const fit = fitPlatt(b.points);
       return {
         key,
         label: b.label,
@@ -27,6 +35,7 @@ function summarise(buckets: Map<string, Bucket>, minSample: number): Calibration
         averagePredicted,
         // Positive means the model claimed more confidence than the results justified.
         calibrationError: averagePredicted - hitRate,
+        fit: { slope: fit.slope, intercept: fit.intercept, spread: fit.spread, interceptOnly: fit.interceptOnly },
       };
     })
     .filter((row) => row.settled >= minSample)
@@ -35,10 +44,11 @@ function summarise(buckets: Map<string, Bucket>, minSample: number): Calibration
 
 function addLeg(buckets: Map<string, Bucket>, key: string, label: string, leg: SettledLeg) {
   if (leg.outcome !== "won" && leg.outcome !== "lost") return;
-  const bucket = buckets.get(key) ?? { label, settled: 0, won: 0, predictedSum: 0 };
+  const bucket = buckets.get(key) ?? { label, settled: 0, won: 0, predictedSum: 0, points: [] };
   bucket.settled += 1;
   if (leg.outcome === "won") bucket.won += 1;
   bucket.predictedSum += leg.predictedProbability;
+  bucket.points.push({ predicted: leg.predictedProbability, won: leg.outcome === "won" ? 1 : 0 });
   buckets.set(key, bucket);
 }
 
