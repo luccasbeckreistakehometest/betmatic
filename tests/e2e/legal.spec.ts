@@ -65,7 +65,12 @@ test("the contact form lands in the admin inbox with a status", async ({ page, c
   await page.goto("/admin");
   const inbox = page.getByTestId("admin-inbox");
   await expect(inbox).toContainText(marker);
+  // Wait for the PATCH the select fires. Without this the assertion below races it and loses every
+  // time: the test's own request goes straight out over HTTP while the browser is still inside the
+  // React handler, so it reads the inbox from before the status changed.
+  const patched = page.waitForResponse((r) => r.url().includes("/api/admin/contact") && r.request().method() === "PATCH");
   await inbox.locator("li", { hasText: marker }).getByRole("combobox", { name: "Status" }).selectOption("answered");
+  expect((await patched).ok()).toBeTruthy();
   const answered = await page.request.get("/api/admin/contact?status=answered").then((r) => r.json());
   expect(answered.messages.some((m: { message: string }) => m.message.includes(marker))).toBe(true);
 });
