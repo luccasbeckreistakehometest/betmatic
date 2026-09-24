@@ -1,7 +1,8 @@
 import { matchAthlete, resolveStatLabels } from "@/lib/props/history";
 import { getSport } from "@/lib/sports";
+import { liveQuoteFor, type LiveBoard } from "@/lib/props/live-prices";
 import type { ProviderLines } from "@/lib/sources/espn-props";
-import type { BetLeg, Game, PropRow } from "@/lib/types";
+import type { BetLeg, Game, PropRow, Settlement } from "@/lib/types";
 
 /**
  * Deterministic work on the model's legs. The model names a selection; the price, the opening price
@@ -17,7 +18,19 @@ export interface LegKey {
   settlementTeam: string | null;
 }
 
-export interface EnrichContext { props: PropRow[]; sportKey: string; game?: Game; lines?: ProviderLines[] }
+export interface EnrichContext {
+  props: PropRow[];
+  sportKey: string;
+  game?: Game;
+  lines?: ProviderLines[];
+  /**
+   * The in-play board, present only on a read taken with the game under way and only while it is
+   * fresh. When it prices a leg it WINS, over the prop feed and over the posted game line alike:
+   * both of those stopped moving at the tip, and a number from before the tip is not this ticket's
+   * price. Absent, everything below behaves exactly as it did before there was an in-play round.
+   */
+  liveBoard?: LiveBoard;
+}
 
 const sameLabels = (a: string[] | null, b: string[] | null) => !!a && !!b && a.length === b.length && a.every((x, i) => x === b[i]);
 
@@ -68,8 +81,32 @@ export function matchGameLine(leg: LegKey, ctx: EnrichContext): { current: numbe
   return null;
 }
 
-/** The authoritative price for a raw leg: the posted one when the feed has it, else the model's text. */
+/** A leg's settlement rebuilt from the key the model's ticket was parsed into. */
+const settlementOf = (leg: LegKey): Settlement => ({
+  type: leg.settlementType as Settlement["type"],
+  player: leg.settlementPlayer ?? undefined,
+  stat: leg.settlementStat ?? undefined,
+  line: leg.settlementLine ?? undefined,
+  side: (leg.settlementSide ?? undefined) as Settlement["side"],
+  teamAbbreviation: leg.settlementTeam ?? undefined,
+  sourceBasis: "",
+});
+
+/** The live price on a leg, when the game is under way and a book posts that exact line right now. */
+export function matchLivePrice(leg: LegKey, ctx: EnrichContext): { book: string; decimal: number; fetchedAt: string } | null {
+  if (!ctx.liveBoard) return null;
+  return liveQuoteFor(settlementOf(leg), ctx.game?.home.abbreviation ?? null, ctx.liveBoard);
+}
+
+/**
+ * The authoritative price for a raw leg: the in-play price when a book is posting this line right
+ * now, else the posted pre-game one when the feed has it, else the model's text. The order is the
+ * point — pre-game feeds stop moving at the tip, so once a live board exists it is the only source
+ * that can answer "what does this cost now".
+ */
 export function anchoredOdds(leg: LegKey & { odds: string }, ctx: EnrichContext): string {
+  const live = matchLivePrice(leg, ctx);
+  if (live) return live.decimal.toFixed(2);
   const prop = matchCandidate(leg, ctx);
   if (prop?.decimal) return prop.decimal.toFixed(2);
   const line = matchGameLine(leg, ctx);

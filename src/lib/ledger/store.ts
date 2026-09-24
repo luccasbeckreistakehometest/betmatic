@@ -88,6 +88,11 @@ export function recordPredictions(
      * an argument; with them it is a query, and `ledger/ab.ts` is that query.
      */
     provenance?: { promptVersion?: string | null; modelId?: string | null; generatedBy?: string | null; policyVersion?: string | null };
+    /**
+     * Suggestion ids whose EVERY leg was priced from a book's in-play feed. Only these carry
+     * `priceBasis: "live_book"`, and only they may ever show a return — see LedgerEntry.priceBasis.
+     */
+    livePriced?: Set<string>;
   } = {},
 ): number {
   if (!suggestions.length) return 0;
@@ -119,6 +124,7 @@ export function recordPredictions(
       // this is a selection cut: losing it silently changes which tickets the wallet would take.
       ...(s.confidence ? { confidence: s.confidence } : {}),
       suggestionId: s.id,
+      ...(opts.livePriced?.has(s.id) ? { priceBasis: "live_book" as const } : {}),
       // Recorded so a ticket's price can be rebuilt from its legs — which is what re-pricing a
       // ticket over its surviving legs, after one is voided, needs.
       correlationFactor: s.correlation?.factor,

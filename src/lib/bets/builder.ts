@@ -24,6 +24,7 @@ import { splitsPrompt, type PlayerSplits } from "@/lib/signals/splits";
 import { teamSeasonPrompt, type TeamSeasonMatchup } from "@/lib/signals/team-season";
 import { consensusPrompt, type ConsensusProp } from "@/lib/props/consensus";
 import { livePrompt, type LiveState } from "@/lib/live/state";
+import type { LiveBoard } from "@/lib/props/live-prices";
 import { rolePrompt, type RoleProfile } from "@/lib/props/role";
 import { anchoredOdds, enrichLeg, type EnrichContext } from "@/lib/bets/enrich";
 import { calibratorFor, type Calibrator } from "@/lib/ledger/recalibrate";
@@ -125,14 +126,34 @@ export const SlateSchema = z.object({
 
 
 /**
- * Said once, above the lines, whenever the game is already under way: the posted prices are
- * pre-game references. ESPN's prop feed does not move after tip-off and there is no live odds
- * source wired in, so a price here is a reference, never something to quote as available now. The
- * legs the box score had already decided are gone before this point (props/stale.ts); the ones that
- * remain carry what they still need.
+ * Said once, above the lines, whenever the game is already under way — and it says one of two very
+ * different things, because the difference is the difference between a number a reader can act on
+ * and a number that only looks like one.
+ *
+ * With no in-play price on the board the note is what it always was: every price below is a
+ * PRE-GAME REFERENCE, because ESPN's prop feed stops moving at the tip. With in-play prices the
+ * note says so, names the books and the age of the read, and keeps the reference marking for the
+ * rows the books are not posting in play — the two can sit in one list only because every row says
+ * which it is. The legs the box score had already decided are gone before this point
+ * (props/stale.ts); the ones that remain carry what they still need.
  */
-const IN_PLAY_NOTE =
+export const IN_PLAY_NOTE =
   "IN PLAY — this game has already started. Every price below is a PRE-GAME REFERENCE: the prop feed does not update once the ball is up and no live odds source is configured, so treat the numbers as references and say so. Legs the box score has already decided were removed; each line carries what it still needs and how much of regulation is left.";
+
+export function inPlayNote(props: PropRow[], now = new Date()): string {
+  const live = props.filter((p) => p.livePrice);
+  if (!live.length) return IN_PLAY_NOTE;
+  const books = [...new Set(live.map((p) => p.livePrice!.book))].sort();
+  const newest = live.map((p) => p.livePrice!.fetchedAt).sort().pop()!;
+  const age = Math.max(0, Math.round((now.getTime() - Date.parse(newest)) / 1000));
+  const stale = props.length - live.length;
+  return [
+    `IN PLAY — this game has already started, and ${live.length} of the ${props.length} lines below carry a LIVE PRICE read from the book's own in-play feed ${age} second${age === 1 ? "" : "s"} ago (${books.join(", ")}). Those are marked LIVE PRICE and they are prices a reader could take right now.`,
+    stale > 0 ? `The other ${stale} carry a PRE-GAME REFERENCE, marked as one: no book is posting that exact line in play. Never present a reference as an available price, and prefer a live-priced leg when both would do.` : "",
+    "A live price moves between plays: describe what changed, never urge the reader to hurry.",
+    "Legs the box score has already decided were removed; each line carries what it still needs and how much of regulation is left.",
+  ].filter(Boolean).join(" ");
+}
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
@@ -163,7 +184,7 @@ export function describeModel(p: PropRow): string {
 }
 
 /** Exported for the stale-line tests: the in-play marker has to reach the model, not just exist. */
-export function describeProps(props: PropRow[]): string {
+export function describeProps(props: PropRow[], now = new Date()): string {
   if (!props.length) return "- none gathered";
   const lines = props
     .map((p) => {
@@ -174,9 +195,12 @@ export function describeProps(props: PropRow[]): string {
       const liveText = p.live
         ? ` | LIVE: ${p.live.current} so far, ${p.side === "under" ? `room for ${p.live.remaining} more` : `${p.live.remaining} to go`}, ~${p.live.minutesLeft} min of regulation left`
         : "";
-      return `- ${p.player} ${p.market} ${p.side ?? ""} ${p.line ?? "?"} @ ${p.odds ?? "no price"} (${p.book ?? "?"})${p.note ? ` [${p.note}]` : ""}${p.projection !== undefined ? ` toolProj ${p.projection}` : ""}${p.edgePct !== undefined ? ` toolEdge ${p.edgePct}%` : ""}${measuredText}${liveText}${describeModel(p)}`;
+      // Per row, because the note above cannot be trusted to carry it: a list where one line is
+      // takeable and the next is a memory has to say which is which on the line itself.
+      const priceTag = p.livePrice ? " [LIVE PRICE]" : p.live ? " [pre-game reference]" : "";
+      return `- ${p.player} ${p.market} ${p.side ?? ""} ${p.line ?? "?"} @ ${p.odds ?? "no price"} (${p.book ?? "?"})${priceTag}${p.note ? ` [${p.note}]` : ""}${p.projection !== undefined ? ` toolProj ${p.projection}` : ""}${p.edgePct !== undefined ? ` toolEdge ${p.edgePct}%` : ""}${measuredText}${liveText}${describeModel(p)}`;
     });
-  return props.some((p) => p.live) ? [IN_PLAY_NOTE, ...lines].join("\n") : lines.join("\n");
+  return props.some((p) => p.live) ? [inPlayNote(props, now), ...lines].join("\n") : lines.join("\n");
 }
 
 export interface BuildArgs {
@@ -219,6 +243,11 @@ export interface BuildArgs {
   record?: boolean;
   /** Defaults to the judgement model. */
   model?: string;
+  /**
+   * The in-play board behind the prices above, when the collector has one. It is what makes a live
+   * ticket's price its own: `priceAll` anchors every leg to it before anything else (bets/enrich.ts).
+   */
+  liveBoard?: LiveBoard;
   /** In-play context that has no structured slot (the basketball live read). */
   extraContext?: string;
   /** Thinking effort for the judgement call; the live read asks for less, the auto-adjust ladder lowers it further on a cut. */
@@ -583,7 +612,7 @@ export async function buildBets(args: BuildArgs): Promise<BetSlate> {
     mock: () => mockGameSlate({ game, detail, props, lang, bands, live: !!live }),
   });
 
-  const suggestions = priceAll(result.suggestions, { props, sportKey: game.sportKey, game, lines }, {
+  const suggestions = priceAll(result.suggestions, { props, sportKey: game.sportKey, game, lines, liveBoard: args.liveBoard }, {
     live: inPlay,
     // A dropped ticket leaves a line behind: without it the only visible trace is a shorter slate.
     onDrop: (drop) => logEvent("bets.gate.dropped", { ...drop, gameId: game.id, sportKey: game.sportKey, scope: inPlay ? "live" : "pre" }),

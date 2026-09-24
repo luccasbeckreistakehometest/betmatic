@@ -10,12 +10,18 @@ export { brasiliaDay };
  * automatically; this turns that into the numbers a sceptical bettor asks for first — how many, how
  * many hit, and what a flat one-unit stake on all of them would have returned. Nothing is curated.
  *
- * The money is PRE-GAME ONLY. A live read is priced off the pre-game board, a price no book is
- * still offering by the third quarter, so a unit staked on one is a unit staked at a price that did
- * not exist: on 22/09/2026 the pre-game tickets lost 13.98u and the live reads "won" 177.23u, which
- * is to say 109% of the day's profit came from a price nobody could have taken. Live reads are
- * counted, graded and measured — `liveCalibration` says how often they land against the chance they
- * themselves gave — and they never touch a unit, a return or an ROI.
+ * The headline money is PRE-GAME ONLY, and it stays that way. A live read priced off the pre-game
+ * board is a unit staked at a price that did not exist: on 22/09/2026 the pre-game tickets lost
+ * 13.98u and the live reads "won" 177.23u, which is to say 109% of the day's profit came from a
+ * price nobody could have taken. Those reads are counted, graded and measured — `liveCalibration`
+ * says how often they land against the chance they themselves gave — and they never touch a unit.
+ *
+ * A live ticket every leg of which was struck at a book's IN-PLAY price is a different thing, and
+ * it is kept as a different thing: `priceBasis: "live_book"` on the entry, its own row in
+ * `byScope`, its own ROI. It is not folded into the headline — that number means "what the pre-game
+ * record did", and quietly widening what it counts would change its meaning without saying so —
+ * and it is never applied backwards: an entry written before the in-play round existed carries no
+ * priceBasis, so no published number can turn collectable after the fact.
  */
 export interface ProofStats {
   generated: number; settled: number; won: number; lost: number; push: number; void: number; pending: number;
@@ -23,8 +29,12 @@ export interface ProofStats {
   byMarket: { key: string; settled: number; won: number; roi: number }[];
   bySport: { key: string; settled: number; won: number; roi: number }[];
   byBand: { key: string; settled: number; won: number; roi: number }[];
-  /** Pre-game tickets against live reads: both count, and the reader can see which carried what. */
-  byScope: { key: "pregame" | "live"; settled: number; won: number; roi?: number }[];
+  /**
+   * Pre-game against live, with live split by what priced it: `live_priced` carries an ROI because
+   * every leg was struck at a live price, and `live` carries counts only because its price was a
+   * pre-game reference. The reader can see which carried what.
+   */
+  byScope: { key: "pregame" | "live" | "live_priced"; settled: number; won: number; roi?: number }[];
   /** The balance per Brasília day, newest first: what a flat unit on every decided PRE-GAME ticket did that day. */
   byDay: DayBalance[];
   /** The live reads measured against their own chances. Never money. */
@@ -85,14 +95,18 @@ function slice(entries: LedgerEntry[], keyOf: (e: LedgerEntry) => string) {
   return [...m.entries()].map(([key, b]) => ({ key, settled: b.settled, won: b.won, roi: b.pnl / b.settled })).sort((a, b) => b.settled - a.settled);
 }
 
+/** A live ticket struck entirely at in-play prices — the only live population with a return. */
+export const isLivePriced = (e: LedgerEntry) => e.scope === "live" && e.priceBasis === "live_book";
+
 /**
- * Pre-game against live. The pre-game line carries its ROI; the live one carries counts and no ROI
- * at all, because there is no price behind it to compute one from.
+ * Pre-game against live. Pre-game carries its ROI. A live read priced off the pre-game board
+ * carries counts and no ROI at all, because there is no takeable price behind it to compute one
+ * from. A live read struck at in-play prices carries its own ROI, in its own row, next to neither.
  */
 function scopeSlice(entries: LedgerEntry[]) {
   const m = new Map<string, { settled: number; won: number; pnl: number }>();
   for (const e of entries.filter(decided)) {
-    const k = e.scope === "live" ? "live" : "pregame";
+    const k = isLivePriced(e) ? "live_priced" : e.scope === "live" ? "live" : "pregame";
     const b = m.get(k) ?? { settled: 0, won: 0, pnl: 0 };
     b.settled += 1; if (e.outcome === "won") b.won += 1; b.pnl += unitResult(e); m.set(k, b);
   }
