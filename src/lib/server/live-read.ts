@@ -19,6 +19,8 @@ import { SPORTS } from "@/lib/sports";
 import { logEvent } from "@/lib/server/ops-log";
 import { budgetState } from "@/lib/server/ai-budget";
 import type { LiveState } from "@/lib/live/state";
+import { boundaryOf, quartersPrompt, reconcileQuarters } from "@/lib/live/quarters";
+import { recordLiveReadSnapshot, subtractedQuarters } from "@/lib/server/live-quarters";
 import type { LiveSnapshot } from "@/lib/live/snapshot";
 import type { BetSlate, BetSuggestion, Game, PropRow } from "@/lib/types";
 import type { PublicUser } from "@/lib/server/users";
@@ -137,7 +139,7 @@ export function projectionLines(props: PropRow[]): string {
   }).join("\n");
 }
 
-export function liveContext(snap: LiveSnapshot, parts: { leaders: string; trackerText: string; projections?: string }): string {
+export function liveContext(snap: LiveSnapshot, parts: { leaders: string; trackerText: string; projections?: string; quarters?: string }): string {
   const margin = Math.abs(snap.home.score - snap.away.score);
   const minutesLeft = Math.round(snap.regulationMinutes - snap.minute);
   return [
@@ -148,7 +150,9 @@ export function liveContext(snap: LiveSnapshot, parts: { leaders: string; tracke
     snap.sportGroup === "basketball"
       ? "THIS IS A QUARTER READ. In basketball a read is taken at every quarter break — end of Q1, half-time, end of Q3 — and each one prices the remainder from that point. The later the read, the less variance is left, so the same requirement per minute is worth more late and a stretched line is worth less. Never carry a ticket from an earlier read across unchanged: re-price every leg against this remainder or drop it."
       : "",
-    parts.leaders ? `LIVE PLAYER LINES:\n${parts.leaders}` : "",
+    parts.leaders ? `LIVE PLAYER LINES — ACCUMULATED, for the whole game so far:\n${parts.leaders}` : "",
+    // Straight after the accumulated lines, because it is what those lines cannot say.
+    parts.quarters ?? "",
     parts.projections ? `REMAINING-GAME PROJECTIONS — computed per line: the requirement per remaining minute, the rate produced tonight, the pre-game rate, and the chance of the final landing (minutes left already carry the fouls and the scoreboard):\n${parts.projections}` : "",
     parts.trackerText ? `PRE-MATCH TICKETS, TRACKED NOW:\n${parts.trackerText}` : "",
     `THE MARGIN IS KNOWN, SO USE IT. ${margin <= CONTESTED_MARGIN
@@ -195,7 +199,26 @@ export async function runLiveRead(user: LivePrincipal, sportKey: string, gameId:
       const trackerText = tracked.tickets.slice(0, 4).map((t) => `- ${t.title}: ${t.legs.map((l) => `${l.selection} → ${l.state}${l.probability !== null ? ` ${Math.round(l.probability * 100)}%` : ""} (${l.reason})`).join("; ")}`).join("\n");
       const leaders = snap.players.filter((p) => (p.stats.PTS ?? p.stats.SHOT ?? 0) > 0).slice(0, 10)
         .map((p) => `${p.name} (${p.team}): ${Object.entries(p.stats).filter(([k]) => ["MIN", "PTS", "REB", "AST", "PF", "SHOT", "SOG", "FC", "YC"].includes(k)).map(([k, v]) => `${k} ${v}`).join(", ")}`).join("\n");
-      const extraContext = liveContext(snap, { leaders, trackerText, projections: projectionLines(props) });
+      // The narration came in the same payload as the box score above; nothing here fetches again.
+      // Its figures are also kept, so a later quarter can be had by subtracting two stored reads —
+      // the cheap route, and the one that survives a game ESPN never narrates.
+      const periodMinutes = snap.regulationMinutes / 4;
+      recordLiveReadSnapshot(snap, { sportKey, dateKey, periodMinutes });
+      const lastComplete = boundaryOf(snap, periodMinutes)?.through ?? Math.max(0, snap.period - 1);
+      const quarters = snap.sportGroup === "basketball" ? quartersPrompt(snap.quarters, { lastComplete }) : "";
+      if (snap.quarters.players.length) {
+        // Both routes to the same split, compared every read. The narration is the one the model is
+        // given; this says out loud whether the cheap route agreed with it, and names the cells where
+        // it did not, so a drift in either is visible in the log before it is visible in a ticket.
+        const agreement = reconcileQuarters(snap.quarters, subtractedQuarters(gameId));
+        logEvent("live.quarters", {
+          gameId, sportKey, period: snap.period, lastComplete, plays: snap.quarters.plays,
+          minutesThrough: snap.quarters.minutesThrough, players: snap.quarters.players.length,
+          compared: agreement.compared, agreed: agreement.agreed,
+          disagreements: agreement.notes.slice(0, 3).join(" | "), walk: snap.quarters.notes[0] ?? "",
+        });
+      }
+      const extraContext = liveContext(snap, { leaders, trackerText, projections: projectionLines(props), quarters });
       // The books' live rows as a consensus block, so the model can see which book pays most for a
       // line right now — the same shopping the pre-game read does, on prices that are current.
       const consensus = board && liveBoardSize(board)

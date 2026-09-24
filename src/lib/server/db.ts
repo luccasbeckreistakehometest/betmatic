@@ -699,6 +699,29 @@ function migrateRound4(d: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_hypotheses_fp ON rule_hypotheses(fingerprint, status);
     CREATE INDEX IF NOT EXISTS idx_hypotheses_status ON rule_hypotheses(status, createdAt DESC);
   `);
+  d.exec(`
+    -- The box score exactly as a live read saw it, one row per game and per period boundary. It is
+    -- what makes a quarter computable by subtraction: 12 points stored at the end of Q1 and 14 at
+    -- the end of Q2 means Q2 was 2, which the accumulated figure alone can never say.
+    --
+    -- The key is the period the snapshot is the END of, not the period the clock was showing: a read
+    -- taken twenty seconds into Q3 is the end of Q2, and slackMinutes records exactly how far past the
+    -- buzzer it was taken so nothing has to pretend it was on it. One row per boundary, and the row
+    -- kept is the one taken closest to it.
+    CREATE TABLE IF NOT EXISTS live_read_snapshots (
+      gameId TEXT NOT NULL,
+      throughPeriod INTEGER NOT NULL,
+      sportKey TEXT NOT NULL DEFAULT '',
+      dateKey TEXT NOT NULL DEFAULT '',
+      slackMinutes REAL NOT NULL DEFAULT 0,
+      minute REAL NOT NULL DEFAULT 0,
+      homeScore INTEGER NOT NULL DEFAULT 0,
+      awayScore INTEGER NOT NULL DEFAULT 0,
+      players TEXT NOT NULL DEFAULT '[]',
+      takenAt TEXT NOT NULL,
+      PRIMARY KEY (gameId, throughPeriod)
+    );
+  `);
   // A bet logged from the short list keeps the price it was recommended at beside the price the
   // reader actually got: that pair is what makes the wallet's own CLV computable.
   addColumn(d, "bankroll_entries", "recommendedDecimal", "REAL");

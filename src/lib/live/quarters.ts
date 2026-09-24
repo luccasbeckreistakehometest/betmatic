@@ -1,0 +1,467 @@
+/**
+ * Per-quarter profiles read off ESPN's play-by-play. Pure.
+ *
+ * The live read used to receive the box score ACCUMULATED: at half-time the model saw "14 points"
+ * and could not see that 12 of them came in the first quarter and 2 in the second. That difference
+ * is the whole reason a live read exists — who accelerated, who went quiet, whose role changed —
+ * and it never reached the model.
+ *
+ * The same `summary` payload the snapshot already reads carries a `plays` array (roughly 200 plays
+ * at half-time, 400 in a finished game), each play stamped with `period.number` and
+ * `clock.displayValue`. Walking it reconstructs, per player and per period, what actually happened.
+ * Nothing here fetches: one payload serves the whole game.
+ *
+ * Counting stats are exact — every one of them is a play ESPN narrated. Minutes are NOT: they are
+ * reconstructed by following the substitutions, and that walk rests on an assumption ESPN never
+ * confirms (see `walkMinutes`). When the assumption breaks, the minutes are reported as `null` —
+ * not measured — rather than as a number nobody can stand behind.
+ */
+
+// ESPN's summary JSON is undocumented; accesses are optional-chained.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Json = Record<string, any>;
+
+/** ESPN's play type for a substitution. Its text is "<in> enters the game for <out>". */
+const SUBSTITUTION = "584";
+
+/** The counting stats the narration sustains, each verified against the box score it must equal. */
+export interface QuarterStats { pts: number; reb: number; ast: number; pf: number; stl: number; tov: number; blk: number }
+
+export interface QuarterLine extends QuarterStats {
+  period: number;
+  /** Minutes on the floor in this period. `null` when the substitution walk does not sustain it. */
+  minutes: number | null;
+}
+
+export interface QuarterProfile {
+  id: string;
+  name: string;
+  team: string;
+  starter: boolean;
+  /** One line per period the narration covers, ascending. */
+  periods: QuarterLine[];
+}
+
+export interface QuarterProfiles {
+  /** Periods the narration covers, ascending. Empty when ESPN published no plays yet. */
+  periods: number[];
+  players: QuarterProfile[];
+  /** Plays read. Zero is a normal answer: ESPN publishes the narration late on some games. */
+  plays: number;
+  /**
+   * The last period whose minutes the walk sustains, 0 when none do. Periods after it carry
+   * `minutes: null`: the walk is sequential, so a break in Q2 makes Q3 and Q4 unmeasurable too.
+   */
+  minutesThrough: number;
+  /** Why the walk stopped. Empty when it never broke. Surfaced in the log, never in a number. */
+  notes: string[];
+}
+
+export const EMPTY_QUARTERS: QuarterProfiles = { periods: [], players: [], plays: 0, minutesThrough: 0, notes: [] };
+
+const zero = (): QuarterStats => ({ pts: 0, reb: 0, ast: 0, pf: 0, stl: 0, tov: 0, blk: 0 });
+
+/**
+ * A play's clock, in minutes remaining in the period. ESPN prints "9:42" for most of a period and
+ * drops to "34.6" — bare seconds — inside the last minute. Both appear in the same game.
+ */
+export function playClock(value: unknown): number | null {
+  const s = String(value ?? "").trim();
+  const mmss = s.match(/^(\d+):(\d{1,2})(?:\.\d+)?$/);
+  if (mmss) return Number(mmss[1]) + Number(mmss[2]) / 60;
+  const seconds = s.match(/^(\d+(?:\.\d+)?)$/);
+  return seconds ? Number(seconds[1]) / 60 : null;
+}
+
+interface Roster { id: string; name: string; team: string; teamId: string; starter: boolean; played: boolean }
+
+/** Who is on the floor and who could be: the box score names the starters, the narration moves them. */
+function rosterOf(summary: Json): Roster[] {
+  const out: Roster[] = [];
+  for (const group of (summary?.boxscore?.players ?? []) as Json[]) {
+    const team = String(group.team?.abbreviation ?? "");
+    const teamId = String(group.team?.id ?? "");
+    for (const a of (group.statistics?.[0]?.athletes ?? []) as Json[]) {
+      const id = String(a.athlete?.id ?? "");
+      if (!id) continue;
+      out.push({
+        id,
+        name: String(a.athlete?.displayName ?? ""),
+        team,
+        teamId,
+        // A player listed as a starter but marked DNP never took the floor: seeding him into the
+        // opening five would hand him a quarter of minutes he did not play.
+        starter: a.starter === true && a.didNotPlay !== true,
+        played: a.didNotPlay !== true && Array.isArray(a.stats) && a.stats.length > 0,
+      });
+    }
+  }
+  return out;
+}
+
+interface Play { period: number; clock: number | null; typeId: string; text: string; participants: string[]; scoringPlay: boolean; scoreValue: number }
+
+function playsOf(summary: Json): Play[] {
+  return ((summary?.plays ?? []) as Json[]).map((p) => ({
+    period: Number(p.period?.number ?? 0),
+    clock: playClock(p.clock?.displayValue),
+    typeId: String(p.type?.id ?? ""),
+    // ESPN wraps some play texts across a newline ("Bad Pass\nTurnover"); the matching below is
+    // done on the flattened text so a line break never silently drops a stat.
+    text: String(p.text ?? "").replace(/\s+/g, " ").trim(),
+    participants: ((p.participants ?? []) as Json[]).map((x) => String(x.athlete?.id ?? "")).filter(Boolean),
+    scoringPlay: p.scoringPlay === true,
+    scoreValue: Number(p.scoreValue ?? 0),
+  })).filter((p) => p.period > 0);
+}
+
+/**
+ * The counting stats, per player per period. Every one is a narrated play, so these are exact: on
+ * the game this was built against all seven stats matched the box score for all 17 players who
+ * played. Which participant carries which stat is fixed by ESPN's own shape:
+ *   - a scoring play credits `participants[0]`, and the assister is `participants[1]` when the text
+ *     says "(X assists)";
+ *   - a rebound, a foul and a turnover credit `participants[0]`;
+ *   - a steal and a block credit `participants[1]`, because `participants[0]` is the victim.
+ */
+function countStats(plays: Play[]): Map<string, Map<number, QuarterStats>> {
+  const out = new Map<string, Map<number, QuarterStats>>();
+  const add = (id: string | undefined, period: number, key: keyof QuarterStats, by = 1) => {
+    if (!id) return;
+    const byPeriod = out.get(id) ?? new Map<number, QuarterStats>();
+    const line = byPeriod.get(period) ?? zero();
+    line[key] += by;
+    byPeriod.set(period, line);
+    out.set(id, byPeriod);
+  };
+  for (const p of plays) {
+    const [first, second] = p.participants;
+    if (p.scoringPlay && p.scoreValue > 0) {
+      add(first, p.period, "pts", p.scoreValue);
+      if (/\bassists\b/i.test(p.text)) add(second, p.period, "ast");
+    }
+    // A technical is not a personal foul and never enters the box score's PF column.
+    if (/\bfoul\b/i.test(p.text) && !/\btechnical\b/i.test(p.text)) add(first, p.period, "pf");
+    if (/\brebound\b/i.test(p.text)) add(first, p.period, "reb");
+    if (/\bturnover\b/i.test(p.text)) add(first, p.period, "tov");
+    if (/\bsteals\b/i.test(p.text)) add(second, p.period, "stl");
+    if (/\bblocks\b/i.test(p.text)) add(second, p.period, "blk");
+  }
+  return out;
+}
+
+/**
+ * Minutes on the floor, per player per period, by following the substitutions.
+ *
+ * The walk starts from the five the box score marks as starters and moves a player on or off at the
+ * clock the substitution carries. Everything in it is narrated EXCEPT one thing: ESPN never says who
+ * takes the floor to open a period after the first. The walk assumes the five that finished a period
+ * start the next one — which is what usually happens, and is exactly what a coach may not do at
+ * half-time.
+ *
+ * So the walk checks itself, and stops at the first period it cannot stand behind:
+ *   - a side that does not have exactly five players on the floor when a period tips;
+ *   - a substitution taking off a player the walk does not have on the floor;
+ *   - a player recording a narrated play while the walk has him on the bench — the tell that a
+ *     change happened between periods and was never narrated;
+ *   - a substitution whose clock will not parse.
+ * Every period from the break onward is reported as not measured. Reporting a number there would be
+ * inventing one, and a minutes figure is what every per-minute rate in the live read is divided by.
+ */
+function walkMinutes(plays: Play[], roster: Roster[], periods: number[], minutesFor: (period: number) => number) {
+  const minutes = new Map<string, Map<number, number>>();
+  const notes: string[] = [];
+  const byId = new Map(roster.map((r) => [r.id, r]));
+  const teams = [...new Set(roster.map((r) => r.teamId))];
+  const floor = new Map<string, Set<string>>(teams.map((t) => [t, new Set(roster.filter((r) => r.teamId === t && r.starter).map((r) => r.id))]));
+  /** Clock at which each player on the floor began his current stint. */
+  const since = new Map<string, number>();
+  let through = 0;
+
+  const credit = (id: string, period: number, mins: number) => {
+    const byPeriod = minutes.get(id) ?? new Map<number, number>();
+    byPeriod.set(period, (byPeriod.get(period) ?? 0) + Math.max(0, mins));
+    minutes.set(id, byPeriod);
+  };
+
+  for (const period of periods) {
+    const full = minutesFor(period);
+    for (const [teamId, set] of floor) {
+      if (set.size !== 5) {
+        notes.push(`P${period}: ${teamId} has ${set.size} on the floor at the tip, not 5`);
+        return { minutes, notes, through };
+      }
+      for (const id of set) since.set(id, full);
+    }
+    for (const play of plays.filter((p) => p.period === period)) {
+      if (play.typeId !== SUBSTITUTION) {
+        // A player acting from the bench means the floor is wrong, and it is wrong because a change
+        // between periods went unnarrated. Substitutions and team plays carry no such claim.
+        const actor = play.participants[0];
+        if (actor && byId.has(actor) && !floor.get(byId.get(actor)!.teamId)?.has(actor)) {
+          notes.push(`P${period}: ${byId.get(actor)!.name} appears in a play while off the floor — a change between periods was not narrated`);
+          return { minutes, notes, through };
+        }
+        continue;
+      }
+      if (play.clock === null) {
+        notes.push(`P${period}: a substitution carries no readable clock`);
+        return { minutes, notes, through };
+      }
+      const [inId, outId] = play.participants;
+      if (!inId || !outId) {
+        notes.push(`P${period}: a substitution names ${play.participants.length} player(s), not 2`);
+        return { minutes, notes, through };
+      }
+      const teamId = byId.get(outId)?.teamId ?? byId.get(inId)?.teamId;
+      const set = teamId ? floor.get(teamId) : undefined;
+      if (!set || !set.has(outId)) {
+        notes.push(`P${period}: ${byId.get(outId)?.name ?? outId} left the floor without being on it`);
+        return { minutes, notes, through };
+      }
+      credit(outId, period, (since.get(outId) ?? full) - play.clock);
+      set.delete(outId);
+      since.delete(outId);
+      set.add(inId);
+      since.set(inId, play.clock);
+    }
+    // The period ends: everyone still on the floor runs to 0:00, and carries into the next period.
+    for (const set of floor.values()) for (const id of set) credit(id, period, since.get(id) ?? full);
+    through = period;
+  }
+  return { minutes, notes, through };
+}
+
+/**
+ * Per-player, per-period profiles from one `summary` payload. `periodMinutes` is regulation (10 in
+ * the WNBA, 12 in the NBA); overtime is five minutes in both.
+ */
+export function parseQuarterProfiles(summary: Json, periodMinutes = 12, overtimeMinutes = 5): QuarterProfiles {
+  const plays = playsOf(summary);
+  if (!plays.length) return EMPTY_QUARTERS;
+  const roster = rosterOf(summary);
+  if (!roster.length) return { ...EMPTY_QUARTERS, plays: plays.length };
+  const periods = [...new Set(plays.map((p) => p.period))].sort((a, b) => a - b);
+  const stats = countStats(plays);
+  const walk = walkMinutes(plays, roster, periods, (period) => (period <= 4 ? periodMinutes : overtimeMinutes));
+
+  const players = roster
+    .filter((r) => r.played || stats.has(r.id))
+    .map((r) => ({
+      id: r.id,
+      name: r.name,
+      team: r.team,
+      starter: r.starter,
+      periods: periods.map((period): QuarterLine => {
+        const mins = walk.minutes.get(r.id)?.get(period);
+        return {
+          period,
+          ...(stats.get(r.id)?.get(period) ?? zero()),
+          minutes: period <= walk.through ? Math.round((mins ?? 0) * 10) / 10 : null,
+        };
+      }),
+    }));
+  return { periods, players, plays: plays.length, minutesThrough: walk.through, notes: walk.notes };
+}
+
+/** The game-long total the narration accounts for, per player: the check against the box score. */
+export function narrationTotals(profile: QuarterProfile): QuarterStats & { minutes: number | null } {
+  const total = { ...zero(), minutes: 0 as number | null };
+  for (const line of profile.periods) {
+    for (const key of ["pts", "reb", "ast", "pf", "stl", "tov", "blk"] as const) total[key] += line[key];
+    if (line.minutes === null) total.minutes = null;
+    else if (total.minutes !== null) total.minutes += line.minutes;
+  }
+  if (typeof total.minutes === "number") total.minutes = Math.round(total.minutes * 10) / 10;
+  return total;
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* The subtraction: the same split, from the retained box score of each read.                     */
+/* -------------------------------------------------------------------------------------------- */
+
+/**
+ * The second route to the same number, and the owner's own idea: keep the box score of every read,
+ * and the quarter is the difference between two of them. 12 points at the end of Q1, 14 at the end
+ * of Q2 — Q2 was 2. It costs nothing, since the payload is already read, and it survives a game
+ * ESPN never narrates.
+ *
+ * It is coarser than the narration in one way that matters: ESPN publishes MIN as a whole number, so
+ * a subtracted minutes figure carries up to a minute of rounding either way. It is kept as the check
+ * and the fallback; where the two disagree the narration wins and the disagreement is logged.
+ */
+export interface SnapshotLine { id: string; name: string; team: string; stats: Record<string, number> }
+export interface StoredSnapshot { period: number; players: SnapshotLine[] }
+
+export interface SubtractedLine extends QuarterStats { period: number; minutes: number | null }
+export interface SubtractedProfile { id: string; name: string; team: string; periods: SubtractedLine[] }
+
+/** ESPN's box-score labels → the names the quarter profile uses. */
+const LABELS: Record<keyof QuarterStats, string> = { pts: "PTS", reb: "REB", ast: "AST", pf: "PF", stl: "STL", tov: "TO", blk: "BLK" };
+
+export function quartersBySubtraction(snapshots: StoredSnapshot[]): SubtractedProfile[] {
+  const byPeriod = new Map<number, Map<string, SnapshotLine>>();
+  for (const snap of snapshots) byPeriod.set(snap.period, new Map(snap.players.map((p) => [p.id, p])));
+  const periods = [...byPeriod.keys()].sort((a, b) => a - b);
+  const known = new Map<string, SnapshotLine>();
+  for (const period of periods) for (const [id, line] of byPeriod.get(period)!) known.set(id, line);
+
+  const out: SubtractedProfile[] = [];
+  for (const [id, seed] of known) {
+    const lines: SubtractedLine[] = [];
+    for (const period of periods) {
+      const now = byPeriod.get(period)!.get(id);
+      // A period whose baseline was never stored cannot be isolated: everything up to it is lumped
+      // into one figure, which is not a quarter. Only the first period may bank on a zero baseline.
+      const before = period === 1 ? { stats: {} as Record<string, number> } : byPeriod.get(period - 1)?.get(id);
+      if (!now || !before) continue;
+      const diff = (label: string) => Math.max(0, (now.stats[label] ?? 0) - (before.stats[label] ?? 0));
+      const minutes = now.stats.MIN === undefined ? null : Math.max(0, now.stats.MIN - (before.stats.MIN ?? 0));
+      lines.push({
+        period, minutes,
+        pts: diff(LABELS.pts), reb: diff(LABELS.reb), ast: diff(LABELS.ast),
+        pf: diff(LABELS.pf), stl: diff(LABELS.stl), tov: diff(LABELS.tov), blk: diff(LABELS.blk),
+      });
+    }
+    if (lines.length) out.push({ id, name: seed.name, team: seed.team, periods: lines });
+  }
+  return out;
+}
+
+export interface Reconciliation {
+  /** (player, period, stat) cells both routes had a figure for. */
+  compared: number;
+  agreed: number;
+  /** Named, so a disagreement is read rather than counted. Capped: the log is not the place for 400. */
+  notes: string[];
+}
+
+/**
+ * Do the two routes tell the same story? Counting stats must match exactly — both are counting the
+ * same events. Minutes are allowed a minute of slack, which is ESPN's own rounding of MIN and not a
+ * tolerance invented here.
+ */
+export function reconcileQuarters(narration: QuarterProfiles, subtraction: SubtractedProfile[], limit = 8): Reconciliation {
+  const bySub = new Map(subtraction.map((p) => [p.id, new Map(p.periods.map((q) => [q.period, q]))]));
+  let compared = 0;
+  let agreed = 0;
+  const notes: string[] = [];
+  for (const player of narration.players) {
+    const sub = bySub.get(player.id);
+    if (!sub) continue;
+    for (const line of player.periods) {
+      const other = sub.get(line.period);
+      if (!other) continue;
+      for (const key of Object.keys(LABELS) as (keyof QuarterStats)[]) {
+        compared += 1;
+        if (line[key] === other[key]) agreed += 1;
+        else if (notes.length < limit) notes.push(`${player.name} Q${line.period} ${LABELS[key]}: narration ${line[key]}, subtraction ${other[key]}`);
+      }
+      if (line.minutes !== null && other.minutes !== null) {
+        compared += 1;
+        if (Math.abs(line.minutes - other.minutes) <= 1) agreed += 1;
+        else if (notes.length < limit) notes.push(`${player.name} Q${line.period} MIN: narration ${line.minutes}, subtraction ${other.minutes}`);
+      }
+    }
+  }
+  return { compared, agreed, notes };
+}
+
+/**
+ * Which period a snapshot of the box score is the END of, and how far past that end it was taken.
+ *
+ * This matters because a read is almost never taken exactly on the buzzer. The quarters job fires on
+ * the first cron tick after ESPN advances the period, so a "half-time" read typically lands a few
+ * seconds into Q3 — and the box score it carries already holds those seconds. Storing it as the end
+ * of Q2 without saying so would quietly move a play from one quarter into another.
+ *
+ * `slack` is the minutes of the following period already played when the snapshot was taken. Zero on
+ * the buzzer. A snapshot taken deep inside a period is not the end of anything and returns null: it
+ * is better to have no row for that boundary than a row that says something untrue.
+ */
+export const BOUNDARY_SLACK_MINUTES = 3;
+
+export function boundaryOf(
+  snap: { state: "pre" | "in" | "post"; period: number; clockLeft: number | null },
+  periodMinutes: number,
+  maxSlack = BOUNDARY_SLACK_MINUTES,
+): { through: number; slack: number } | null {
+  if (snap.period <= 0) return null;
+  if (snap.state === "post") return { through: snap.period, slack: 0 };
+  if (snap.state !== "in" || snap.clockLeft === null) return null;
+  // The buzzer: this period is complete and nothing of the next one has been played.
+  if (snap.clockLeft <= 0) return { through: snap.period, slack: 0 };
+  const slack = Math.round((periodMinutes - snap.clockLeft) * 10) / 10;
+  if (snap.period === 1 || slack > maxSlack) return null;
+  return { through: snap.period - 1, slack };
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* The block the model reads.                                                                     */
+/* -------------------------------------------------------------------------------------------- */
+
+/** How much a player produced per minute, or null when the minutes behind it are not measured. */
+const rate = (pts: number, minutes: number | null): number | null => (minutes === null || minutes < 1 ? null : pts / minutes);
+
+const q = (period: number) => (period <= 4 ? `Q${period}` : `OT${period - 4}`);
+
+const cell = (line: QuarterLine): string => {
+  const parts = [`${line.pts}pt`, `${line.reb}rb`, `${line.ast}as`];
+  if (line.pf) parts.push(`${line.pf}pf`);
+  // "not measured" is not "zero minutes": a per-minute rate divided by a zero nobody measured is
+  // the kind of number this product exists not to print.
+  parts.push(line.minutes === null ? "min not measured" : `${line.minutes}min`);
+  return `${q(line.period)} ${parts.join(" ")}`;
+};
+
+/**
+ * The trajectory, quarter by quarter, of the players worth pricing — the one thing the accumulated
+ * box score cannot say. The rest of the live prompt gives the model totals; this block gives it the
+ * shape those totals came from, and names which quarter has just finished so the model can tell what
+ * is current from what is history.
+ *
+ * `lastComplete` is the period that has just ended. The quarter in play, if the read was taken
+ * inside one, is shown as partial and labelled so — a player on 4 points three minutes into a
+ * quarter has not scored 4 points in that quarter, he has scored 4 points so far.
+ */
+export function quartersPrompt(profiles: QuarterProfiles, opts: { lastComplete: number; limit?: number } = { lastComplete: 0 }): string {
+  if (!profiles.players.length) return "QUARTER BY QUARTER: not computed — ESPN has published no play-by-play for this game.";
+  const limit = opts.limit ?? 10;
+  const ranked = [...profiles.players]
+    .map((p) => ({ p, total: narrationTotals(p) }))
+    .filter((r) => r.total.pts + r.total.reb + r.total.ast > 0)
+    .sort((a, b) => b.total.pts + b.total.reb + b.total.ast - (a.total.pts + a.total.reb + a.total.ast))
+    .slice(0, limit);
+  if (!ranked.length) return "QUARTER BY QUARTER: not computed — no player has a line yet.";
+
+  const rows = ranked.map(({ p, total }) => {
+    const trail = p.periods.map((line) => (line.period > opts.lastComplete ? `${cell(line)} SO FAR (still in play)` : cell(line))).join(" · ");
+    const mins = total.minutes === null ? "min not measured" : `${total.minutes}min`;
+    return `- ${p.name} (${p.team}${p.starter ? ", starter" : ", bench"}): ${trail} → accumulated ${total.pts}pt ${total.reb}rb ${total.ast}as ${mins}`;
+  });
+
+  // What changed in the quarter that just ended, against the player's own earlier quarters. It is
+  // arithmetic on exact counts, not a judgement: the model is told the numbers and the direction.
+  const moved: string[] = [];
+  for (const { p } of ranked) {
+    const last = p.periods.find((line) => line.period === opts.lastComplete);
+    const before = p.periods.filter((line) => line.period < opts.lastComplete);
+    if (!last || !before.length) continue;
+    const now = rate(last.pts, last.minutes);
+    const then = rate(before.reduce((n, l) => n + l.pts, 0), before.reduce((n, l): number | null => (n === null || l.minutes === null ? null : n + l.minutes), 0 as number | null));
+    if (now === null || then === null) continue;
+    if (then === 0 && last.pts >= 4) moved.push(`${p.name} woke up: scoreless before ${q(opts.lastComplete)}, ${last.pts}pt at ${now.toFixed(2)}/min in it`);
+    else if (now >= 2 * then && then > 0 && last.pts >= 4) moved.push(`${p.name} accelerated: ${then.toFixed(2)}pts/min before ${q(opts.lastComplete)}, ${now.toFixed(2)} in it`);
+    else if (then >= 2 * now && before.reduce((n, l) => n + l.pts, 0) >= 4) moved.push(`${p.name} went quiet: ${then.toFixed(2)}pts/min before ${q(opts.lastComplete)}, ${now.toFixed(2)} in it`);
+  }
+
+  return [
+    `QUARTER BY QUARTER — the trajectory behind the accumulated figures above, read off ESPN's ${profiles.plays} narrated plays. The counting stats are exact: each one is a play the feed named.\n${rows.join("\n")}`,
+    opts.lastComplete ? `THE QUARTER THAT HAS JUST ENDED IS ${q(opts.lastComplete)}. Everything before it is history; it is the most recent evidence of what each player is doing NOW.` : "",
+    moved.length ? `WHAT CHANGED IN ${q(opts.lastComplete)}:\n${moved.map((m) => `- ${m}`).join("\n")}` : "",
+    profiles.minutesThrough < (profiles.periods.at(-1) ?? 0)
+      ? `${profiles.minutesThrough ? `MINUTES ARE NOT MEASURED BEYOND ${q(profiles.minutesThrough)}` : "MINUTES ARE NOT MEASURED AT ALL FOR THIS GAME"}: ESPN's narration does not sustain the rotation (${profiles.notes[0] ?? "reason not recorded"}). Where a quarter says "min not measured", do not treat it as few minutes or as many — reason from the counting stats alone, and say the minutes are unknown if you lean on them.`
+      : "",
+    "USE THE SHAPE, NOT ONLY THE TOTAL. A player on 14 points who scored 12 of them in the first quarter and 2 in the second is not the same bet as one who scored 7 and 7: the first has a total the line is chasing and a current rate that no longer supports it, and the second is producing at the rate the line still needs. A player whose minutes have shrunk quarter on quarter is losing his role whatever the total says, and a bench player whose minutes have grown is the one the pre-game line was never written for.",
+  ].filter(Boolean).join("\n\n");
+}
