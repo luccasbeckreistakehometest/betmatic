@@ -63,9 +63,22 @@ const PostMortemSchema = z.object({
   confidence: z.enum(["high", "medium", "low"]).describe("Quão sustentadas pelos dados estão as lições — amostra pequena = low."),
 });
 export type PostMortem = z.infer<typeof PostMortemSchema>;
-export type PostMortemFn = (args: { summary: WindowSummary; entries: LedgerEntry[]; calibration: string; factors: FactorStat[] }) => Promise<PostMortem>;
+export interface PostMortemArgs {
+  summary: WindowSummary;
+  entries: LedgerEntry[];
+  calibration: string;
+  factors: FactorStat[];
+  /**
+   * What the operator already turned down, and why. The cheapest supervision the loop has: without
+   * it the agent proposes the same refused idea every night, and the refusal teaches nothing.
+   */
+  rejections?: { feedback: string; reason: string }[];
+  /** One line naming the population, so a per-game post-mortem does not write as if it read a week. */
+  scope?: string;
+}
+export type PostMortemFn = (args: PostMortemArgs) => Promise<PostMortem>;
 
-export const aiPostMortem: PostMortemFn = async ({ summary, entries, calibration, factors }) =>
+export const aiPostMortem: PostMortemFn = async ({ summary, entries, calibration, factors, rejections, scope }) =>
   generateStructured({
     schema: PostMortemSchema,
     maxTokens: 6000,
@@ -78,6 +91,7 @@ Rules:
 - Every lesson MUST cite one factorStatId from the FATORES ACESOS list, verbatim, and so must promptFeedback (in promptFeedbackFactorStatId). A lesson that cites nothing is dropped before it is stored — that list is the only measured evidence you have, and a rule with no measurement behind it cannot be evaluated later.
 - Never write about stake, unit, bankroll or how much to bet. That is computed in code and is none of your business here: describe the game, not the wager size.`,
     prompt: [
+      scope ? `POPULAÇÃO: ${scope}` : "",
       `PERÍODO: ${summary.tickets} bilhetes liquidados — ${summary.won} ganhos, ${summary.lost} perdidos, ${summary.push} push, ${summary.void} void.`,
       `POR MERCADO: ${JSON.stringify(summary.byMarket)}`, `POR FONTE: ${JSON.stringify(summary.bySource)}`,
       `LINHAS PERDIDAS:\n${summary.lostLegs.map((l) => `- [${l.matchup}] ${l.selection} (${l.market}, fonte ${l.source}, previsto ${(l.predicted * 100).toFixed(0)}%${l.actual ? `, real: ${l.actual}` : ""})`).join("\n") || "- nenhuma"}`,
@@ -88,7 +102,12 @@ Rules:
           ? factors.map((f) => `- ${f.id} | ${f.dim}=${f.value} (${f.scope}) | ${f.legs} linhas, acerto ${(f.hitRate * 100).toFixed(0)}% contra ${(f.predicted * 100).toFixed(0)}% previsto, IC95 [${(f.ciLow * 100).toFixed(0)}; ${(f.ciHigh * 100).toFixed(0)}], q=${f.qValue.toFixed(3)}`).join("\n")
           : "- nenhum fator com amostra suficiente ainda"
       }`,
-    ].join("\n\n"),
+      rejections?.length
+        ? `\nPROPOSTAS JÁ RECUSADAS PELO OPERADOR (não proponha de novo a mesma coisa; o motivo diz o que ele não aceita):\n${
+            rejections.map((r) => `- "${r.feedback.slice(0, 200)}" → recusada porque: ${r.reason.slice(0, 200)}`).join("\n")
+          }`
+        : "",
+    ].filter(Boolean).join("\n\n"),
   });
 
 export interface LearningRunRow {
@@ -99,7 +118,7 @@ export interface LearningRunRow {
 /** Old stored reports and hand-written mocks carry plain strings; both shapes are read here. */
 const asLesson = (l: Lesson | string): Lesson => (typeof l === "string" ? { factorStatId: "", text: l } : l);
 const countLessons = (lessons: (Lesson | string)[] | undefined): number => (lessons ?? []).length;
-const citedLessons = (lessons: (Lesson | string)[] | undefined, byId: Map<string, FactorStat>): Lesson[] =>
+export const citedLessons = (lessons: (Lesson | string)[] | undefined, byId: Map<string, FactorStat>): Lesson[] =>
   (lessons ?? []).map(asLesson).filter((l) => l.text.trim() && (!byId.size || byId.has(l.factorStatId)));
 
 /**
@@ -109,7 +128,7 @@ const citedLessons = (lessons: (Lesson | string)[] | undefined, byId: Map<string
  * reversal later — two sentences arguing opposite things about the same slice collide by fingerprint
  * instead of quietly cancelling each other inside the prompt.
  */
-function proposeFromLesson(lesson: Lesson, factor: FactorStat, runId: string) {
+export function proposeFromLesson(lesson: Lesson, factor: FactorStat, runId: string) {
   const direction: Direction = factor.gap > 0 ? "lower" : "raise";
   const out = proposeHypothesis(
     { dim: factor.dim, value: factor.value, direction, bucket: factor.scope, factorStatId: factor.id, text: lesson.text, runId },

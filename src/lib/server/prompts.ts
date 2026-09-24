@@ -128,6 +128,48 @@ export function revertPrompt(id: string, createdBy: string): PromptVersion | nul
   return savePrompt({ kind: row.kind, lang: row.lang, content: row.content, source: "revert", rationale: `Reversão para a v${row.version}`, createdBy });
 }
 
+/** The version that was active immediately before this one, for its (kind, lang). */
+export function previousVersion(kind: PromptKind, lang: Lang, version: number): PromptVersion | null {
+  return (getDb().prepare("SELECT * FROM prompt_versions WHERE kind=? AND lang=? AND version<? ORDER BY version DESC LIMIT 1").get(kind, lang, version) as PromptVersion | undefined) ?? null;
+}
+
+/**
+ * Undoes one applied change, in both languages, by restoring what stood before it.
+ *
+ * This is the automatic reversion's hands (ledger/revert.ts). It takes the id of any version in the
+ * batch a change wrote, finds the sibling version of every other language in that same batch, and
+ * re-saves each one's predecessor as a NEW version carrying `reason` — the measured sentence that
+ * caused the rollback. Nothing is deleted: the version that lost is still in the history, and so is
+ * the reason it left, which is the only way an operator can later ask why the prompt looks like this.
+ *
+ * A version with no predecessor was the first one ever written over the code default, so its
+ * predecessor IS the code default and that is what comes back.
+ *
+ * It never consults `promptFreeze`. The freeze exists so two changes cannot be applied in one
+ * measurement window and make each other unreadable; undoing a change that has already been measured
+ * is the opposite of that, and a safety net that can be frozen shut is not a safety net.
+ */
+export function revertToPrevious(versionId: string, reason: string, createdBy: string): PromptVersion[] {
+  const db = getDb();
+  const row = db.prepare("SELECT * FROM prompt_versions WHERE id=?").get(versionId) as PromptVersion | undefined;
+  if (!row) return [];
+  const siblings = (row.batch
+    ? db.prepare("SELECT * FROM prompt_versions WHERE batch=?").all(row.batch) as PromptVersion[]
+    : [row]);
+
+  return siblings.map((sibling) => {
+    const previous = previousVersion(sibling.kind, sibling.lang, sibling.version);
+    return savePrompt({
+      kind: sibling.kind,
+      lang: sibling.lang,
+      content: previous?.content ?? DEFAULT_PROMPTS[sibling.kind][sibling.lang],
+      source: "revert",
+      rationale: `Reversão automática da v${sibling.version} para a ${previous ? `v${previous.version}` : "v0 (prompt do código)"}: ${reason}`,
+      createdBy,
+    });
+  });
+}
+
 export function resetToDefault(kind: PromptKind, createdBy: string): void {
   for (const lang of ["pt", "en"] as Lang[]) savePrompt({ kind, lang, content: DEFAULT_PROMPTS[kind][lang], source: "revert", rationale: "Reversão para o prompt original do código (v0)", createdBy });
 }
@@ -199,20 +241,38 @@ export function promptFreeze(kind: PromptKind, now = new Date()): FreezeState {
   };
 }
 
+/**
+ * Activates a rewrite that already exists, in both languages, as one batch.
+ *
+ * Split out of `applyFeedback` because the learning loop now computes its rewrite when it writes the
+ * proposal, not when the proposal is approved: the operator has to be shown the exact text before
+ * clicking, and a rewrite produced after the click is by definition a text nobody read. Both paths
+ * end here, so "what applying a change does" has one implementation and one history.
+ */
+export function applyRewrite(input: {
+  kind: PromptKind; pt: string; en: string; feedback: string; rationale: string; createdBy: string; override?: boolean;
+}): { batch: string; rationale: string; versions: PromptVersion[]; freeze: FreezeState } {
+  const freeze = promptFreeze(input.kind);
+  if (freeze.frozen && !input.override) throw new Error(freeze.note);
+  if (input.pt.trim().length < 200 || input.en.trim().length < 200) throw new Error("O agente devolveu um prompt curto demais; nada foi alterado.");
+  const batch = newId("pb");
+  // An override is part of the history, not a footnote: whoever skipped the freeze signs the version.
+  const createdBy = freeze.frozen ? `${input.createdBy} (override do congelamento)` : input.createdBy;
+  const content: Record<Lang, string> = { pt: input.pt, en: input.en };
+  const versions = (["pt", "en"] as Lang[]).map((lang) =>
+    savePrompt({ kind: input.kind, lang, content: content[lang], source: "feedback", feedback: input.feedback, rationale: input.rationale, batch, createdBy }));
+  return { batch, rationale: input.rationale, versions, freeze };
+}
+
 /** Feedback → both languages rewritten and activated in one batch; the rationale is what the admin sees. */
 export async function applyFeedback(
   input: { kind: PromptKind; feedback: string; createdBy: string; override?: boolean },
   rewrite: RewriteFn = aiRewrite,
 ): Promise<{ batch: string; rationale: string; versions: PromptVersion[]; freeze: FreezeState }> {
-  const freeze = promptFreeze(input.kind);
-  if (freeze.frozen && !input.override) throw new Error(freeze.note);
+  // Read before the rewrite so a frozen prompt costs nothing: the model call is the expensive part.
+  const early = promptFreeze(input.kind);
+  if (early.frozen && !input.override) throw new Error(early.note);
   const current = { pt: getPrompt(input.kind, "pt"), en: getPrompt(input.kind, "en") };
   const out = await rewrite({ kind: input.kind, current, feedback: input.feedback });
-  if (out.pt.trim().length < 200 || out.en.trim().length < 200) throw new Error("O agente devolveu um prompt curto demais; nada foi alterado.");
-  const batch = newId("pb");
-  // An override is part of the history, not a footnote: whoever skipped the freeze signs the version.
-  const createdBy = freeze.frozen ? `${input.createdBy} (override do congelamento)` : input.createdBy;
-  const versions = (["pt", "en"] as Lang[]).map((lang) =>
-    savePrompt({ kind: input.kind, lang, content: out[lang], source: "feedback", feedback: input.feedback, rationale: out.rationale, batch, createdBy }));
-  return { batch, rationale: out.rationale, versions, freeze };
+  return applyRewrite({ ...input, pt: out.pt, en: out.en, rationale: out.rationale });
 }
