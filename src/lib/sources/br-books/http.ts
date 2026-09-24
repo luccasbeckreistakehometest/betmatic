@@ -158,14 +158,18 @@ const looksLikeChallenge = (status: number, contentType: string, body: string) =
 export interface BookJsonResult<T> { data: T; status: number; fromCache: boolean; ms: number }
 
 /**
- * GET a JSON document politely. `ttlMs` widens the cache for slow-moving documents (a league tree,
- * a struct file); it never goes below the 60 s floor, and only those slow documents reach the disk
- * cache — a per-event body is kept in memory for its TTL (plus a while for its ETag) and nowhere else.
+ * GET a JSON document politely. `ttlMs` sets this document's cache window: left out it is the 60 s
+ * default, a large value widens it for a slow-moving document (a league tree, a struct file) and
+ * reaches the disk cache, and a SMALL value narrows it — which is what an in-play read passes,
+ * because a live price's only value is that it is current and a minute-old number is the very
+ * thing this product refuses to print. Narrowing the cache does not make us impolite: the one
+ * request per second per host still holds, and a document that has not changed still comes back
+ * as a free 304 through its ETag.
  */
 export async function bookJson<T = unknown>(url: string, opts: { ttlMs?: number; headers?: Record<string, string>; signal?: AbortSignal } = {}): Promise<BookJsonResult<T>> {
   if (!networkAllowed()) throw new Error(`network disabled for book adapters (${url})`);
   throwIfAborted(opts.signal);
-  const ttl = Math.max(HTTP_POLICY.cacheMs, opts.ttlMs ?? 0);
+  const ttl = opts.ttlMs === undefined ? HTTP_POLICY.cacheMs : Math.max(0, opts.ttlMs);
   const onDisk = ttl > HTTP_POLICY.cacheMs;
   const parsed = new URL(url);
   const origin = `${parsed.protocol}//${parsed.host}`;

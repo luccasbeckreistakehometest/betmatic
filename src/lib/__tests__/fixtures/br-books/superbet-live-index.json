@@ -1,0 +1,326 @@
+{
+ "events": [
+  {
+   "event_id": 15091084,
+   "increment_id": 314,
+   "fixture": {
+    "uuid": "5456c904-5627-5baf-9b2f-be3c1f8a939f",
+    "betradar_id": "74717818",
+    "away_team_id": "188828",
+    "category_id": 36,
+    "home_team_id": "187702",
+    "event_code": 3036,
+    "event_date": "2026-09-24 05:00:00",
+    "event_name": "Rodniki Izhevsk·Tobolsk",
+    "event_tags": "v2",
+    "sport_id": 4,
+    "tournament_id": 2401,
+    "utc_date": "2026-09-24T05:00:00Z",
+    "event_promoted_in_play_order": 10000,
+    "tournament_promoted_in_play_order": 10000,
+    "offer_state_status": {
+     "2": 1
+    },
+    "unix_date_millis": 1790226000000
+   },
+   "inplay_stats": {
+    "away_team_score": "32",
+    "home_team_score": "41",
+    "periods": [
+     {
+      "away_team_score": "17",
+      "home_team_score": "25",
+      "num": 1,
+      "type": 1
+     },
+     {
+      "away_team_score": "15",
+      "home_team_score": "14",
+      "num": 2,
+      "type": 1
+     },
+     {
+      "away_team_score": "0",
+      "home_team_score": "2",
+      "num": 3,
+      "type": 1
+     }
+    ],
+    "minutes": "22"
+   },
+   "inplay_stats_metadata": {
+    "event_status_label": "3Q",
+    "period_status": "3Q",
+    "status": "STARTED",
+    "counts": {
+     "markets": {
+      "1": 0,
+      "2": 13
+     },
+     "odds": {
+      "1": 0,
+      "2": 29
+     }
+    },
+    "market_count": 13
+   },
+   "markets": [
+    {
+     "name": "Vencedor (Inc. prorrogação)",
+     "id": 759,
+     "metadata": {
+      "tags": "preselected",
+      "market_group_order": 2
+     },
+     "odds": [
+      {
+       "uuid": "470043ea-4290-5574-b43d-81439568eeb0",
+       "price": 1.02,
+       "status": 1,
+       "display": true,
+       "metadata": {
+        "outcome_id": 2182,
+        "info": "Rodniki Izhevsk vence (Inc. prorrogação)",
+        "name": "1",
+        "code": "1",
+        "market_line_uuid": "ea62504e-9355-5588-9ac6-db49d8ba36a6",
+        "is_preselected": true,
+        "offer_state_id": 2,
+        "tags": "BPWM,Pre-selected market,pm_boostable_market,v2,void_service"
+       }
+      },
+      {
+       "uuid": "9b3bd90d-aefb-554f-ac32-b7e9f4dfc382",
+       "price": 8.5,
+       "status": 1,
+       "display": true,
+       "metadata": {
+        "outcome_id": 2183,
+        "info": "Tobolsk vence (Inc. prorrogação)",
+        "name": "2",
+        "code": "2",
+        "market_line_uuid": "ea62504e-9355-5588-9ac6-db49d8ba36a6",
+        "is_preselected": true,
+        "offer_state_id": 2,
+        "tags": "BPWM,Pre-selected market,pm_boostable_market,v2,void_service"
+       }
+      }
+     ]
+    }
+   ],
+   "is_full_market_update": true
+  },
+  {
+   "event_id": 15127637,
+   "increment_id": 917,
+   "fixture": {
+    "uuid": "cbd93472-fa44-5f4d-9fa9-d53f7502711c",
+    "away_team_id": "299981",
+    "category_id": 34,
+    "home_team_id": "285934",
+    "event_code": 9691,
+    "event_date": "2026-09-24 05:00:00",
+    "event_name": "Alligators·Lions",
+    "event_tags": "v2",
+    "sport_id": 4,
+    "tournament_id": 89188,
+    "utc_date": "2026-09-24T05:00:00Z",
+    "event_promoted_in_play_order": 10000,
+    "tournament_promoted_in_play_order": 10000,
+    "streams": {
+     "11": "44657722&type=s"
+    },
+    "offer_state_status": {
+     "2": 1
+    },
+    "unix_date_millis": 1790226000000
+   },
+   "inplay_stats": {
+    "away_team_score": "51",
+    "home_team_score": "40",
+    "periods": [
+     {
+      "away_team_score": "21",
+      "home_team_score": "11",
+      "num": 1,
+      "type": 4
+     },
+     {
+      "away_team_score": "14",
+      "home_team_score": "17",
+      "num": 2,
+      "type": 4
+     },
+     {
+      "away_team_score": "16",
+      "home_team_score": "12",
+      "num": 3,
+      "type": 4
+     }
+    ]
+   },
+   "inplay_stats_metadata": {
+    "event_status_label": "3B",
+    "period_status": "3B",
+    "status": "STARTED",
+    "counts": {
+     "markets": {
+      "1": 0,
+      "2": 9
+     },
+     "odds": {
+      "1": 0,
+      "2": 26
+     }
+    },
+    "market_count": 9
+   }
+  },
+  {
+   "event_id": 14033558,
+   "increment_id": 1002168,
+   "fixture": {
+    "uuid": "eb11807c-27f1-5a90-8d8f-e3e52bf802c8",
+    "betradar_id": "68096202",
+    "away_team_id": "33614",
+    "category_id": 61,
+    "home_team_id": "33598",
+    "event_code": 1196,
+    "event_date": "2026-09-24 02:00:00",
+    "event_name": "Seattle Storm (F)·Dallas Wings (F)",
+    "event_tags": "v2",
+    "sport_id": 4,
+    "tournament_id": 2174,
+    "utc_date": "2026-09-24T02:00:00Z",
+    "event_promoted_in_play_order": 2,
+    "tournament_promoted_in_play_order": 10000,
+    "streams": {
+     "2": "av:stream:32237679"
+    },
+    "offer_state_status": {
+     "1": 2,
+     "2": 2
+    },
+    "unix_date_millis": 1790215200000
+   },
+   "inplay_stats": {
+    "away_team_score": "103",
+    "home_team_score": "91",
+    "periods": [
+     {
+      "away_team_score": "29",
+      "home_team_score": "12",
+      "num": 1,
+      "type": 4
+     },
+     {
+      "away_team_score": "20",
+      "home_team_score": "30",
+      "num": 2,
+      "type": 4
+     },
+     {
+      "away_team_score": "27",
+      "home_team_score": "21",
+      "num": 3,
+      "type": 4
+     },
+     {
+      "away_team_score": "27",
+      "home_team_score": "28",
+      "num": 4,
+      "type": 4
+     }
+    ]
+   },
+   "inplay_stats_metadata": {
+    "event_status_label": "END",
+    "period_status": "END",
+    "status": "FINISHED",
+    "counts": {
+     "markets": {
+      "1": 0,
+      "2": 0
+     },
+     "odds": {
+      "1": 0,
+      "2": 0
+     }
+    }
+   }
+  },
+  {
+   "event_id": 14033560,
+   "increment_id": 1002316,
+   "fixture": {
+    "uuid": "4bd8c613-91b4-526a-84ef-391b8145b1f8",
+    "betradar_id": "68096422",
+    "away_team_id": "33609",
+    "category_id": 61,
+    "home_team_id": "33600",
+    "event_code": 8075,
+    "event_date": "2026-09-24 00:00:00",
+    "event_name": "New York Liberty (F)·Atlanta Dream (F)",
+    "event_tags": "superLive,v2",
+    "sport_id": 4,
+    "tournament_id": 2174,
+    "utc_date": "2026-09-24T00:00:00Z",
+    "event_promoted_in_play_order": 1,
+    "tournament_promoted_in_play_order": 10000,
+    "streams": {
+     "2": "av:stream:32237473"
+    },
+    "offer_state_status": {
+     "1": 2,
+     "2": 2
+    },
+    "unix_date_millis": 1790208000000
+   },
+   "inplay_stats": {
+    "away_team_score": "83",
+    "home_team_score": "65",
+    "periods": [
+     {
+      "away_team_score": "18",
+      "home_team_score": "19",
+      "num": 1,
+      "type": 4
+     },
+     {
+      "away_team_score": "23",
+      "home_team_score": "7",
+      "num": 2,
+      "type": 4
+     },
+     {
+      "away_team_score": "17",
+      "home_team_score": "18",
+      "num": 3,
+      "type": 4
+     },
+     {
+      "away_team_score": "25",
+      "home_team_score": "21",
+      "num": 4,
+      "type": 4
+     }
+    ]
+   },
+   "inplay_stats_metadata": {
+    "event_status_label": "END",
+    "period_status": "END",
+    "status": "FINISHED",
+    "counts": {
+     "markets": {
+      "1": 0,
+      "2": 0
+     },
+     "odds": {
+      "1": 0,
+      "2": 0
+     }
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,879 @@
+{
+ "betOffers": [
+  {
+   "id": 2694818107,
+   "criterion": {
+    "id": 1001159551,
+    "label": "Vencedor da partida",
+    "englishLabel": "Match Odds",
+    "order": [
+     1
+    ]
+   },
+   "betOfferType": {
+    "id": 2,
+    "name": "Jogo",
+    "englishName": "Match"
+   },
+   "eventId": 1029221084,
+   "outcomes": [
+    {
+     "id": 4345685236,
+     "label": "Sho Shimabukuro",
+     "englishLabel": "Sho Shimabukuro",
+     "odds": 3550,
+     "participant": "Sho Shimabukuro",
+     "type": "OT_ONE",
+     "betOfferId": 2694818107,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "participantId": 1003145722,
+     "oddsFractional": "5/2",
+     "oddsAmerican": "255",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 0
+    },
+    {
+     "id": 4345685237,
+     "label": "Hugo Gaston",
+     "englishLabel": "Hugo Gaston",
+     "odds": 1270,
+     "participant": "Hugo Gaston",
+     "type": "OT_TWO",
+     "betOfferId": 2694818107,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "participantId": 1002859264,
+     "oddsFractional": "27/100",
+     "oddsAmerican": "-375",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 1
+    }
+   ],
+   "tags": [
+    "OFFERED_PREMATCH",
+    "OFFERED_LIVE",
+    "BET_BUILDER",
+    "MAIN"
+   ],
+   "cashOutStatus": "ENABLED"
+  },
+  {
+   "id": 2694818108,
+   "criterion": {
+    "id": 1001419385,
+    "label": "Handicap de Set",
+    "englishLabel": "Set Handicap",
+    "order": [
+     1
+    ]
+   },
+   "betOfferType": {
+    "id": 1,
+    "name": "Desvantagem",
+    "englishName": "Handicap"
+   },
+   "eventId": 1029221084,
+   "outcomes": [
+    {
+     "id": 4345685238,
+     "label": "Sho Shimabukuro",
+     "englishLabel": "Sho Shimabukuro",
+     "odds": 2050,
+     "line": 1500,
+     "participant": "Sho Shimabukuro",
+     "type": "OT_ONE",
+     "betOfferId": 2694818108,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "participantId": 1003145722,
+     "oddsFractional": "21/20",
+     "oddsAmerican": "105",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 0
+    },
+    {
+     "id": 4345685239,
+     "label": "Hugo Gaston",
+     "englishLabel": "Hugo Gaston",
+     "odds": 1670,
+     "line": -1500,
+     "participant": "Hugo Gaston",
+     "type": "OT_TWO",
+     "betOfferId": 2694818108,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "participantId": 1002859264,
+     "oddsFractional": "4/6",
+     "oddsAmerican": "-150",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 1
+    }
+   ],
+   "tags": [
+    "OFFERED_PREMATCH",
+    "OFFERED_LIVE",
+    "MAIN_LINE",
+    "BET_BUILDER"
+   ],
+   "cashOutStatus": "ENABLED"
+  },
+  {
+   "id": 2694818111,
+   "criterion": {
+    "id": 1001427539,
+    "label": "Handicap de Game",
+    "englishLabel": "Game Handicap",
+    "order": [
+     1
+    ]
+   },
+   "betOfferType": {
+    "id": 1,
+    "name": "Desvantagem",
+    "englishName": "Handicap"
+   },
+   "eventId": 1029221084,
+   "outcomes": [
+    {
+     "id": 4345685244,
+     "label": "Sho Shimabukuro",
+     "englishLabel": "Sho Shimabukuro",
+     "odds": 1790,
+     "line": 3500,
+     "participant": "Sho Shimabukuro",
+     "type": "OT_ONE",
+     "betOfferId": 2694818111,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "participantId": 1003145722,
+     "oddsFractional": "10/13",
+     "oddsAmerican": "-127",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 0
+    },
+    {
+     "id": 4345685245,
+     "label": "Hugo Gaston",
+     "englishLabel": "Hugo Gaston",
+     "odds": 1910,
+     "line": -3500,
+     "participant": "Hugo Gaston",
+     "type": "OT_TWO",
+     "betOfferId": 2694818111,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "participantId": 1002859264,
+     "oddsFractional": "10/11",
+     "oddsAmerican": "-110",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 1
+    }
+   ],
+   "tags": [
+    "OFFERED_PREMATCH",
+    "OFFERED_LIVE",
+    "BET_BUILDER"
+   ],
+   "cashOutStatus": "ENABLED"
+  },
+  {
+   "id": 2694818114,
+   "criterion": {
+    "id": 1001159891,
+    "label": "Total de Games",
+    "englishLabel": "Total Games",
+    "order": [
+     1
+    ]
+   },
+   "betOfferType": {
+    "id": 6,
+    "name": "Mais de/Menos de",
+    "englishName": "Over/Under"
+   },
+   "eventId": 1029221084,
+   "outcomes": [
+    {
+     "id": 4345685250,
+     "label": "Mais",
+     "englishLabel": "Over",
+     "odds": 2140,
+     "line": 25500,
+     "type": "OT_OVER",
+     "betOfferId": 2694818114,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "oddsFractional": "57/50",
+     "oddsAmerican": "114",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 0
+    },
+    {
+     "id": 4345685251,
+     "label": "Menos",
+     "englishLabel": "Under",
+     "odds": 1640,
+     "line": 25500,
+     "type": "OT_UNDER",
+     "betOfferId": 2694818114,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "oddsFractional": "16/25",
+     "oddsAmerican": "-157",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 1
+    }
+   ],
+   "tags": [
+    "OFFERED_PREMATCH",
+    "OFFERED_LIVE",
+    "BET_BUILDER"
+   ],
+   "cashOutStatus": "ENABLED"
+  },
+  {
+   "id": 2694829815,
+   "criterion": {
+    "id": 1001159846,
+    "label": "Vencedor - Set 2",
+    "englishLabel": "Set 2",
+    "order": [
+     2
+    ]
+   },
+   "betOfferType": {
+    "id": 2,
+    "name": "Jogo",
+    "englishName": "Match"
+   },
+   "eventId": 1029221084,
+   "outcomes": [
+    {
+     "id": 4345671191,
+     "label": "Sho Shimabukuro",
+     "englishLabel": "Sho Shimabukuro",
+     "odds": 2070,
+     "participant": "Sho Shimabukuro",
+     "type": "OT_ONE",
+     "betOfferId": 2694829815,
+     "changedDate": "2026-09-24T06:04:02Z",
+     "participantId": 1003145722,
+     "oddsFractional": "21/20",
+     "oddsAmerican": "107",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 0
+    },
+    {
+     "id": 4345671192,
+     "label": "Hugo Gaston",
+     "englishLabel": "Hugo Gaston",
+     "odds": 1680,
+     "participant": "Hugo Gaston",
+     "type": "OT_TWO",
+     "betOfferId": 2694829815,
+     "changedDate": "2026-09-24T06:04:02Z",
+     "participantId": 1002859264,
+     "oddsFractional": "4/6",
+     "oddsAmerican": "-148",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 1
+    }
+   ],
+   "tags": [
+    "OFFERED_PREMATCH",
+    "OFFERED_LIVE",
+    "BET_BUILDER"
+   ],
+   "cashOutStatus": "ENABLED"
+  },
+  {
+   "id": 2694829817,
+   "criterion": {
+    "id": 1001159758,
+    "label": "Total de sets",
+    "englishLabel": "Total Sets",
+    "order": [
+     1
+    ]
+   },
+   "betOfferType": {
+    "id": 6,
+    "name": "Mais de/Menos de",
+    "englishName": "Over/Under"
+   },
+   "eventId": 1029221084,
+   "outcomes": [
+    {
+     "id": 4345671197,
+     "label": "Mais",
+     "englishLabel": "Over",
+     "odds": 2070,
+     "line": 2500,
+     "type": "OT_OVER",
+     "betOfferId": 2694829817,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "oddsFractional": "21/20",
+     "oddsAmerican": "107",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 0
+    },
+    {
+     "id": 4345671198,
+     "label": "Menos",
+     "englishLabel": "Under",
+     "odds": 1680,
+     "line": 2500,
+     "type": "OT_UNDER",
+     "betOfferId": 2694829817,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "oddsFractional": "4/6",
+     "oddsAmerican": "-148",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 1
+    }
+   ],
+   "tags": [
+    "OFFERED_PREMATCH",
+    "OFFERED_LIVE",
+    "MAIN_LINE",
+    "BET_BUILDER"
+   ],
+   "cashOutStatus": "ENABLED"
+  },
+  {
+   "id": 2694829821,
+   "criterion": {
+    "id": 1001427539,
+    "label": "Handicap de Game",
+    "englishLabel": "Game Handicap",
+    "order": [
+     1
+    ]
+   },
+   "betOfferType": {
+    "id": 1,
+    "name": "Desvantagem",
+    "englishName": "Handicap"
+   },
+   "eventId": 1029221084,
+   "outcomes": [
+    {
+     "id": 4345671207,
+     "label": "Sho Shimabukuro",
+     "englishLabel": "Sho Shimabukuro",
+     "odds": 3050,
+     "line": 500,
+     "participant": "Sho Shimabukuro",
+     "type": "OT_ONE",
+     "betOfferId": 2694829821,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "participantId": 1003145722,
+     "oddsFractional": "41/20",
+     "oddsAmerican": "205",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 0
+    },
+    {
+     "id": 4345671208,
+     "label": "Hugo Gaston",
+     "englishLabel": "Hugo Gaston",
+     "odds": 1320,
+     "line": -500,
+     "participant": "Hugo Gaston",
+     "type": "OT_TWO",
+     "betOfferId": 2694829821,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "participantId": 1002859264,
+     "oddsFractional": "8/25",
+     "oddsAmerican": "-315",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 1
+    }
+   ],
+   "tags": [
+    "OFFERED_PREMATCH",
+    "OFFERED_LIVE",
+    "BET_BUILDER"
+   ],
+   "cashOutStatus": "ENABLED"
+  },
+  {
+   "id": 2694829822,
+   "criterion": {
+    "id": 1001159891,
+    "label": "Total de Games",
+    "englishLabel": "Total Games",
+    "order": [
+     1
+    ]
+   },
+   "betOfferType": {
+    "id": 6,
+    "name": "Mais de/Menos de",
+    "englishName": "Over/Under"
+   },
+   "eventId": 1029221084,
+   "outcomes": [
+    {
+     "id": 4345671209,
+     "label": "Mais",
+     "englishLabel": "Over",
+     "odds": 2050,
+     "line": 23500,
+     "type": "OT_OVER",
+     "betOfferId": 2694829822,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "oddsFractional": "21/20",
+     "oddsAmerican": "105",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 0
+    },
+    {
+     "id": 4345671210,
+     "label": "Menos",
+     "englishLabel": "Under",
+     "odds": 1670,
+     "line": 23500,
+     "type": "OT_UNDER",
+     "betOfferId": 2694829822,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "oddsFractional": "4/6",
+     "oddsAmerican": "-150",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 1
+    }
+   ],
+   "tags": [
+    "OFFERED_PREMATCH",
+    "OFFERED_LIVE",
+    "MAIN_LINE",
+    "BET_BUILDER"
+   ],
+   "cashOutStatus": "ENABLED"
+  },
+  {
+   "id": 2694829823,
+   "criterion": {
+    "id": 1001159891,
+    "label": "Total de Games",
+    "englishLabel": "Total Games",
+    "order": [
+     1
+    ]
+   },
+   "betOfferType": {
+    "id": 6,
+    "name": "Mais de/Menos de",
+    "englishName": "Over/Under"
+   },
+   "eventId": 1029221084,
+   "outcomes": [
+    {
+     "id": 4345671211,
+     "label": "Mais",
+     "englishLabel": "Over",
+     "odds": 2080,
+     "line": 24500,
+     "type": "OT_OVER",
+     "betOfferId": 2694829823,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "oddsFractional": "27/25",
+     "oddsAmerican": "108",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 0
+    },
+    {
+     "id": 4345671212,
+     "label": "Menos",
+     "englishLabel": "Under",
+     "odds": 1660,
+     "line": 24500,
+     "type": "OT_UNDER",
+     "betOfferId": 2694829823,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "oddsFractional": "13/20",
+     "oddsAmerican": "-152",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 1
+    }
+   ],
+   "tags": [
+    "OFFERED_PREMATCH",
+    "OFFERED_LIVE",
+    "BET_BUILDER"
+   ],
+   "cashOutStatus": "ENABLED"
+  },
+  {
+   "id": 2694829824,
+   "criterion": {
+    "id": 1001427539,
+    "label": "Handicap de Game",
+    "englishLabel": "Game Handicap",
+    "order": [
+     1
+    ]
+   },
+   "betOfferType": {
+    "id": 1,
+    "name": "Desvantagem",
+    "englishName": "Handicap"
+   },
+   "eventId": 1029221084,
+   "outcomes": [
+    {
+     "id": 4345671213,
+     "label": "Sho Shimabukuro",
+     "englishLabel": "Sho Shimabukuro",
+     "odds": 2380,
+     "line": 2500,
+     "participant": "Sho Shimabukuro",
+     "type": "OT_ONE",
+     "betOfferId": 2694829824,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "participantId": 1003145722,
+     "oddsFractional": "11/8",
+     "oddsAmerican": "138",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 0
+    },
+    {
+     "id": 4345671214,
+     "label": "Hugo Gaston",
+     "englishLabel": "Hugo Gaston",
+     "odds": 1520,
+     "line": -2500,
+     "participant": "Hugo Gaston",
+     "type": "OT_TWO",
+     "betOfferId": 2694829824,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "participantId": 1002859264,
+     "oddsFractional": "13/25",
+     "oddsAmerican": "-195",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 1
+    }
+   ],
+   "tags": [
+    "OFFERED_PREMATCH",
+    "OFFERED_LIVE",
+    "BET_BUILDER"
+   ],
+   "cashOutStatus": "ENABLED"
+  },
+  {
+   "id": 2694832476,
+   "criterion": {
+    "id": 1001512920,
+    "label": "Placar exato em sets",
+    "englishLabel": "Set Betting",
+    "order": [
+     1
+    ]
+   },
+   "betOfferType": {
+    "id": 3,
+    "name": "Resultado",
+    "englishName": "Correct Score"
+   },
+   "eventId": 1029221084,
+   "outcomes": [
+    {
+     "id": 4345656606,
+     "label": "2-1",
+     "englishLabel": "2-1",
+     "odds": 3350,
+     "type": "OT_UNTYPED",
+     "betOfferId": 2694832476,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "oddsFractional": "47/20",
+     "oddsAmerican": "235",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "homeScore": "2",
+     "awayScore": "1",
+     "displayOrder": 0
+    },
+    {
+     "id": 4345656607,
+     "label": "0-2",
+     "englishLabel": "0-2",
+     "odds": 1640,
+     "type": "OT_UNTYPED",
+     "betOfferId": 2694832476,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "oddsFractional": "16/25",
+     "oddsAmerican": "-157",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "homeScore": "0",
+     "awayScore": "2",
+     "displayOrder": 1
+    },
+    {
+     "id": 4345656608,
+     "label": "2-0",
+     "englishLabel": "2-0",
+     "type": "OT_UNTYPED",
+     "betOfferId": 2694832476,
+     "changedDate": "2026-09-24T05:51:25Z",
+     "status": "SUSPENDED",
+     "cashOutStatus": "DISABLED",
+     "homeScore": "2",
+     "awayScore": "0",
+     "displayOrder": 1
+    },
+    {
+     "id": 4345656609,
+     "label": "1-2",
+     "englishLabel": "1-2",
+     "odds": 3950,
+     "type": "OT_UNTYPED",
+     "betOfferId": 2694832476,
+     "changedDate": "2026-09-24T06:03:58Z",
+     "oddsFractional": "29/10",
+     "oddsAmerican": "295",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "homeScore": "1",
+     "awayScore": "2",
+     "displayOrder": 1
+    }
+   ],
+   "tags": [
+    "OFFERED_PREMATCH",
+    "OFFERED_LIVE",
+    "BET_BUILDER"
+   ],
+   "cashOutStatus": "ENABLED"
+  },
+  {
+   "id": 2694832499,
+   "criterion": {
+    "id": 1001427539,
+    "label": "Handicap de Game",
+    "englishLabel": "Game Handicap",
+    "order": [
+     1
+    ]
+   },
+   "betOfferType": {
+    "id": 1,
+    "name": "Desvantagem",
+    "englishName": "Handicap"
+   },
+   "eventId": 1029221084,
+   "outcomes": [
+    {
+     "id": 4345656610,
+     "label": "Sho Shimabukuro",
+     "englishLabel": "Sho Shimabukuro",
+     "odds": 2800,
+     "line": 1500,
+     "participant": "Sho Shimabukuro",
+     "type": "OT_ONE",
+     "betOfferId": 2694832499,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "participantId": 1003145722,
+     "oddsFractional": "9/5",
+     "oddsAmerican": "180",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 0
+    },
+    {
+     "id": 4345656611,
+     "label": "Hugo Gaston",
+     "englishLabel": "Hugo Gaston",
+     "odds": 1370,
+     "line": -1500,
+     "participant": "Hugo Gaston",
+     "type": "OT_TWO",
+     "betOfferId": 2694832499,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "participantId": 1002859264,
+     "oddsFractional": "4/11",
+     "oddsAmerican": "-275",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 1
+    }
+   ],
+   "tags": [
+    "OFFERED_PREMATCH",
+    "OFFERED_LIVE",
+    "MAIN_LINE",
+    "BET_BUILDER"
+   ],
+   "cashOutStatus": "ENABLED"
+  },
+  {
+   "id": 2694832510,
+   "criterion": {
+    "id": 1001159891,
+    "label": "Total de Games",
+    "englishLabel": "Total Games",
+    "order": [
+     1
+    ]
+   },
+   "betOfferType": {
+    "id": 6,
+    "name": "Mais de/Menos de",
+    "englishName": "Over/Under"
+   },
+   "eventId": 1029221084,
+   "outcomes": [
+    {
+     "id": 4345656620,
+     "label": "Mais",
+     "englishLabel": "Over",
+     "odds": 1670,
+     "line": 22500,
+     "type": "OT_OVER",
+     "betOfferId": 2694832510,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "oddsFractional": "4/6",
+     "oddsAmerican": "-150",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 0
+    },
+    {
+     "id": 4345656621,
+     "label": "Menos",
+     "englishLabel": "Under",
+     "odds": 2070,
+     "line": 22500,
+     "type": "OT_UNDER",
+     "betOfferId": 2694832510,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "oddsFractional": "21/20",
+     "oddsAmerican": "107",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 1
+    }
+   ],
+   "tags": [
+    "OFFERED_PREMATCH",
+    "OFFERED_LIVE",
+    "BET_BUILDER"
+   ],
+   "cashOutStatus": "ENABLED"
+  },
+  {
+   "id": 2694832512,
+   "criterion": {
+    "id": 1001159891,
+    "label": "Total de Games",
+    "englishLabel": "Total Games",
+    "order": [
+     1
+    ]
+   },
+   "betOfferType": {
+    "id": 6,
+    "name": "Mais de/Menos de",
+    "englishName": "Over/Under"
+   },
+   "eventId": 1029221084,
+   "outcomes": [
+    {
+     "id": 4345656622,
+     "label": "Mais",
+     "englishLabel": "Over",
+     "odds": 1500,
+     "line": 21500,
+     "type": "OT_OVER",
+     "betOfferId": 2694832512,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "oddsFractional": "1/2",
+     "oddsAmerican": "-200",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 0
+    },
+    {
+     "id": 4345656623,
+     "label": "Menos",
+     "englishLabel": "Under",
+     "odds": 2400,
+     "line": 21500,
+     "type": "OT_UNDER",
+     "betOfferId": 2694832512,
+     "changedDate": "2026-09-24T06:04:03Z",
+     "oddsFractional": "7/5",
+     "oddsAmerican": "140",
+     "status": "OPEN",
+     "cashOutStatus": "ENABLED",
+     "displayOrder": 1
+    }
+   ],
+   "tags": [
+    "OFFERED_PREMATCH",
+    "OFFERED_LIVE",
+    "BET_BUILDER"
+   ],
+   "cashOutStatus": "ENABLED"
+  }
+ ],
+ "events": [
+  {
+   "id": 1029221084,
+   "name": "Sho Shimabukuro - Hugo Gaston",
+   "nameDelimiter": "-",
+   "englishName": "Sho Shimabukuro - Hugo Gaston",
+   "homeName": "Sho Shimabukuro",
+   "awayName": "Hugo Gaston",
+   "start": "2026-09-24T05:06:00Z",
+   "group": "Hangzhou",
+   "groupId": 2010202904,
+   "path": [
+    {
+     "id": 1000093193,
+     "name": "Tênis",
+     "englishName": "Tennis",
+     "termKey": "tennis"
+    },
+    {
+     "id": 1000093324,
+     "name": "Circuito ATP",
+     "englishName": "ATP",
+     "termKey": "atp"
+    },
+    {
+     "id": 2010202904,
+     "name": "Hangzhou",
+     "englishName": "Hangzhou",
+     "termKey": "hangzhou"
+    }
+   ],
+   "nonLiveBoCount": 26,
+   "liveBoCount": 42,
+   "sport": "TENNIS",
+   "tags": [
+    "OPEN_FOR_LIVE",
+    "BET_BUILDER",
+    "MATCH"
+   ],
+   "state": "STARTED",
+   "groupSortOrder": 2001999000000000000,
+   "prematchEnd": "2026-09-24T05:06:00Z"
+  }
+ ],
+ "prePacks": []
+}

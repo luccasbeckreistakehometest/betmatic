@@ -205,10 +205,17 @@ export interface PropRow {
   priced?: boolean;
   /**
    * Set only while the game is in progress: what the player already has, what the line still needs
-   * and how much of regulation is left. The price itself stays a pre-game reference — ESPN's prop
-   * feed does not move once the ball is up. Legs the box score has already decided never get here.
+   * and how much of regulation is left. Legs the box score has already decided never get here.
    */
   live?: { current: number; remaining: number; minutesLeft: number } | null;
+  /**
+   * Set when a Brazilian book posts THIS exact line on its in-play feed and the collector read it
+   * inside the freshness window: the price above is that one, and it is a price a reader could take
+   * right now. Absent means the row's price is still the pre-game reference ESPN posted before the
+   * tip — the distinction the whole live scope's honesty rests on, so it is carried per row rather
+   * than assumed for the read.
+   */
+  livePrice?: { book: string; decimal: number; fetchedAt: string } | null;
   /** Computed probability for this exact line and side, with the minutes and rate behind it. */
   model?: PropModel | null;
   /** Per-game values of this market, newest first, for measured co-occurrence between legs. */
@@ -363,11 +370,20 @@ export interface LedgerEntry {
   /** Ledger id of the main ticket this one backs up. The public record counts main tickets by default. */
   alternativeOf?: string;
   /**
-   * `live` marks a ticket built while the game was in play. Its prices are pre-game references, so it
-   * is graded like any other ticket but kept out of the public ROI: the live record measures how
-   * often the reads land, never what they would have paid. Absent on every pre-game ticket.
+   * `live` marks a ticket built while the game was in play. Absent on every pre-game ticket.
    */
   scope?: "live";
+  /**
+   * `live_book` marks a live ticket EVERY leg of which was priced from a Brazilian book's own
+   * in-play feed, read seconds before the ticket was written — so its return is collectable and it
+   * is the only live population that may carry one. A live ticket without it was priced off the
+   * pre-game board, which by the third quarter is a price nobody could take; it is graded and
+   * measured like any other read and never contributes a unit.
+   *
+   * It is written once, at generation time, and never backfilled: the ledger is append-only and no
+   * number this product has already published may become collectable after the fact.
+   */
+  priceBasis?: "live_book";
   /** Regulation minute the live read was taken at. */
   minute?: number;
   /** Period (quarter) the live read was taken in — basketball reads are taken at every quarter break. */

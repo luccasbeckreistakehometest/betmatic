@@ -46,8 +46,11 @@ test("the live reads are measured against their own chance, and never paid a pri
   await expect(block).toContainText("abaixo do esperado");
   await expect(block.getByTestId("proof-live-buckets")).toContainText("Linhas");
   await expect(block.getByTestId("proof-live-quarters")).toBeVisible();
-  await expect(block.getByTestId("proof-live-foot")).toContainText("Não publicamos retorno das leituras ao vivo.");
-  // No money anywhere in it, at any depth.
+  // The promise is conditional now, and the footer names the condition instead of denying the case:
+  // a live read shows a return only where every leg was struck at a price a book was quoting in play.
+  await expect(block.getByTestId("proof-live-foot")).toContainText("O retorno só entra quando o preço era pegável");
+  await expect(block.getByTestId("proof-live-foot")).toContainText("no 3º quarto ele já não existe");
+  // No money anywhere in it, at any depth — the seeded reads were all priced off the pre-game board.
   await expect(block).not.toContainText("ROI");
   await expect(block).not.toContainText("retorno de referência");
   await expect(block).not.toContainText(/\d+,\d+u/);

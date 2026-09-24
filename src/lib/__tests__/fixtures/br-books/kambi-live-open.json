@@ -1,0 +1,643 @@
+{
+ "liveEvents": [
+  {
+   "event": {
+    "id": 1029242711,
+    "name": "Solomon Islands - Vanuatu",
+    "nameDelimiter": "-",
+    "englishName": "Solomon Islands - Vanuatu",
+    "homeName": "Solomon Islands",
+    "awayName": "Vanuatu",
+    "start": "2026-09-24T04:01:00Z",
+    "group": "Amistosos Internacionais",
+    "groupId": 1000093570,
+    "path": [
+     {
+      "id": 1000093190,
+      "name": "Futebol",
+      "englishName": "Football",
+      "termKey": "football"
+     },
+     {
+      "id": 1000093570,
+      "name": "Amistosos Internacionais",
+      "englishName": "International Friendly Matches",
+      "termKey": "international_friendly_matches"
+     }
+    ],
+    "nonLiveBoCount": 0,
+    "liveBoCount": 6,
+    "sport": "FOOTBALL",
+    "tags": [
+     "OPEN_FOR_LIVE",
+     "BET_BUILDER",
+     "MATCH"
+    ],
+    "state": "STARTED"
+   },
+   "liveData": {
+    "eventId": 1029242711,
+    "matchClock": {
+     "minute": 95,
+     "second": 24,
+     "period": "2º Tempo",
+     "running": true,
+     "periodId": "SECOND_HALF",
+     "version": 1790229684598
+    },
+    "score": {
+     "home": "3",
+     "away": "3",
+     "who": "HOME",
+     "version": 1790229063179
+    },
+    "statistics": {
+     "football": {
+      "home": {
+       "yellowCards": 2,
+       "redCards": 0,
+       "corners": 4
+      },
+      "away": {
+       "yellowCards": 4,
+       "redCards": 0,
+       "corners": 4
+      }
+     },
+     "version": 1790229494648
+    },
+    "liveStatistics": [
+     {
+      "occurrenceTypeId": "CARDS_RED_HOME",
+      "count": 0
+     },
+     {
+      "occurrenceTypeId": "CARDS_RED_AWAY",
+      "count": 0
+     },
+     {
+      "occurrenceTypeId": "CORNERS_AWAY",
+      "count": 4
+     },
+     {
+      "occurrenceTypeId": "CORNERS_HOME",
+      "count": 4
+     },
+     {
+      "occurrenceTypeId": "CARDS_YELLOW_HOME",
+      "count": 2
+     },
+     {
+      "occurrenceTypeId": "CARDS_YELLOW_AWAY",
+      "count": 4
+     }
+    ]
+   }
+  },
+  {
+   "event": {
+    "id": 1029243448,
+    "name": "Inglaterra (A1ose) - France (Bomb1to)",
+    "nameDelimiter": "-",
+    "englishName": "England (A1ose) - France (Bomb1to)",
+    "homeName": "Inglaterra (A1ose)",
+    "awayName": "France (Bomb1to)",
+    "start": "2026-09-24T05:57:00Z",
+    "group": "eSports Battle World Cup (2x4 min)",
+    "groupId": 2010206883,
+    "path": [
+     {
+      "id": 1000093190,
+      "name": "Futebol",
+      "englishName": "Football",
+      "termKey": "football"
+     },
+     {
+      "id": 2000124075,
+      "name": "|Esports Futebol|",
+      "englishName": "|Esports Football|",
+      "termKey": "esports_football"
+     },
+     {
+      "id": 2010206883,
+      "name": "eSports Battle World Cup (2x4 min)",
+      "englishName": "eSports Battle World Cup (2x4 min)",
+      "termKey": "esports_battle_world_cup__2x4_min_"
+     }
+    ],
+    "nonLiveBoCount": 12,
+    "liveBoCount": 12,
+    "sport": "FOOTBALL",
+    "tags": [
+     "OPEN_FOR_LIVE",
+     "BET_BUILDER",
+     "MATCH"
+    ],
+    "state": "STARTED"
+   },
+   "liveData": {
+    "eventId": 1029243448,
+    "matchClock": {
+     "minute": 4,
+     "second": 21,
+     "minutesLeftInPeriod": 0,
+     "secondsLeftInMinute": 0,
+     "period": "1º Tempo",
+     "running": true,
+     "periodId": "FIRST_HALF",
+     "version": 1790229428341
+    },
+    "score": {
+     "home": "2",
+     "away": "0",
+     "who": "HOME",
+     "version": 1790229562293
+    },
+    "statistics": {
+     "football": {
+      "home": {
+       "yellowCards": 0,
+       "redCards": 0,
+       "corners": 1
+      },
+      "away": {
+       "yellowCards": 0,
+       "redCards": 0,
+       "corners": 2
+      }
+     },
+     "version": 1790229501792
+    },
+    "liveStatistics": [
+     {
+      "occurrenceTypeId": "CARDS_YELLOW_HOME",
+      "count": 0
+     },
+     {
+      "occurrenceTypeId": "CARDS_YELLOW_AWAY",
+      "count": 0
+     },
+     {
+      "occurrenceTypeId": "CARDS_RED_HOME",
+      "count": 0
+     },
+     {
+      "occurrenceTypeId": "CARDS_RED_AWAY",
+      "count": 0
+     },
+     {
+      "occurrenceTypeId": "CORNERS_HOME",
+      "count": 1
+     },
+     {
+      "occurrenceTypeId": "CORNERS_AWAY",
+      "count": 2
+     }
+    ]
+   },
+   "mainBetOffer": {
+    "id": 2695970722,
+    "criterion": {
+     "id": 1001159858,
+     "label": "Resultado Final",
+     "englishLabel": "Full Time",
+     "order": [],
+     "occurrenceType": "GOALS",
+     "lifetime": "FULL_TIME"
+    },
+    "betOfferType": {
+     "id": 2,
+     "name": "Jogo",
+     "englishName": "Match"
+    },
+    "eventId": 1029243448,
+    "outcomes": [
+     {
+      "id": 4349065907,
+      "label": "1",
+      "englishLabel": "1",
+      "odds": 1240,
+      "participant": "Inglaterra (A1ose)",
+      "type": "OT_ONE",
+      "betOfferId": 2695970722,
+      "changedDate": "2026-09-24T06:01:24Z",
+      "participantId": 1030453886,
+      "oddsFractional": "6/25",
+      "oddsAmerican": "-420",
+      "status": "OPEN",
+      "cashOutStatus": "ENABLED",
+      "displayOrder": 0
+     },
+     {
+      "id": 4349065908,
+      "label": "X",
+      "englishLabel": "X",
+      "odds": 4800,
+      "type": "OT_CROSS",
+      "betOfferId": 2695970722,
+      "changedDate": "2026-09-24T06:01:24Z",
+      "oddsFractional": "19/5",
+      "oddsAmerican": "380",
+      "status": "OPEN",
+      "cashOutStatus": "DISABLED",
+      "displayOrder": 1
+     },
+     {
+      "id": 4349065909,
+      "label": "2",
+      "englishLabel": "2",
+      "odds": 7000,
+      "participant": "France (Bomb1to)",
+      "type": "OT_TWO",
+      "betOfferId": 2695970722,
+      "changedDate": "2026-09-24T06:01:24Z",
+      "participantId": 1028388151,
+      "oddsFractional": "6/1",
+      "oddsAmerican": "600",
+      "status": "OPEN",
+      "cashOutStatus": "ENABLED",
+      "displayOrder": 2
+     }
+    ],
+    "tags": [
+     "OFFERED_PREMATCH",
+     "OFFERED_LIVE",
+     "BET_BUILDER",
+     "MAIN"
+    ],
+    "oddsStats": {
+     "unexpectedOddsTrend": false,
+     "outcomeId": 4349065907,
+     "startingOdds": 2230,
+     "startingOddsFractional": "6/5",
+     "startingOddsAmerican": "123"
+    },
+    "cashOutStatus": "ENABLED"
+   }
+  },
+  {
+   "event": {
+    "id": 1029239607,
+    "name": "Dane Sweeny - Taro Daniel",
+    "nameDelimiter": "-",
+    "englishName": "Dane Sweeny - Taro Daniel",
+    "homeName": "Dane Sweeny",
+    "awayName": "Taro Daniel",
+    "start": "2026-09-24T05:05:00Z",
+    "group": "Hangzhou",
+    "groupId": 2010202904,
+    "path": [
+     {
+      "id": 1000093193,
+      "name": "Tênis",
+      "englishName": "Tennis",
+      "termKey": "tennis"
+     },
+     {
+      "id": 1000093324,
+      "name": "Circuito ATP",
+      "englishName": "ATP",
+      "termKey": "atp"
+     },
+     {
+      "id": 2010202904,
+      "name": "Hangzhou",
+      "englishName": "Hangzhou",
+      "termKey": "hangzhou"
+     }
+    ],
+    "nonLiveBoCount": 26,
+    "liveBoCount": 37,
+    "sport": "TENNIS",
+    "tags": [
+     "OPEN_FOR_LIVE",
+     "BET_BUILDER",
+     "MATCH"
+    ],
+    "state": "STARTED"
+   },
+   "liveData": {
+    "eventId": 1029239607,
+    "score": {
+     "home": "15",
+     "away": "15",
+     "who": "HOME",
+     "version": 1790229684268
+    },
+    "statistics": {
+     "sets": {
+      "home": [
+       6,
+       -1,
+       -1
+      ],
+      "away": [
+       5,
+       -1,
+       -1
+      ],
+      "homeServe": true
+     },
+     "version": 1790229684268
+    },
+    "liveStatistics": []
+   },
+   "mainBetOffer": {
+    "id": 2695486294,
+    "criterion": {
+     "id": 1001159551,
+     "label": "Vencedor da partida",
+     "englishLabel": "Match Odds",
+     "order": [
+      1
+     ]
+    },
+    "betOfferType": {
+     "id": 2,
+     "name": "Jogo",
+     "englishName": "Match"
+    },
+    "eventId": 1029239607,
+    "outcomes": [
+     {
+      "id": 4347594897,
+      "label": "Taro Daniel",
+      "englishLabel": "Taro Daniel",
+      "odds": 2650,
+      "participant": "Taro Daniel",
+      "type": "OT_TWO",
+      "betOfferId": 2695486294,
+      "changedDate": "2026-09-24T06:01:24Z",
+      "participantId": 1001125066,
+      "oddsFractional": "33/20",
+      "oddsAmerican": "165",
+      "status": "OPEN",
+      "cashOutStatus": "ENABLED",
+      "displayOrder": 1
+     },
+     {
+      "id": 4347594898,
+      "label": "Dane Sweeny",
+      "englishLabel": "Dane Sweeny",
+      "odds": 1450,
+      "participant": "Dane Sweeny",
+      "type": "OT_ONE",
+      "betOfferId": 2695486294,
+      "changedDate": "2026-09-24T06:01:24Z",
+      "participantId": 1003507480,
+      "oddsFractional": "4/9",
+      "oddsAmerican": "-225",
+      "status": "OPEN",
+      "cashOutStatus": "ENABLED",
+      "displayOrder": 0
+     }
+    ],
+    "tags": [
+     "OFFERED_PREMATCH",
+     "OFFERED_LIVE",
+     "BET_BUILDER",
+     "MAIN"
+    ],
+    "cashOutStatus": "ENABLED"
+   }
+  }
+ ],
+ "group": {
+  "id": 1,
+  "groups": [
+   {
+    "id": 1000093190,
+    "name": "Futebol",
+    "englishName": "Football",
+    "groups": [
+     {
+      "id": 1000093570,
+      "name": "Amistosos Internacionais",
+      "englishName": "International Friendly Matches",
+      "sport": "FOOTBALL",
+      "termKey": "international_friendly_matches",
+      "sortOrder": "1"
+     },
+     {
+      "id": 2000124075,
+      "name": "|Esports Futebol|",
+      "englishName": "|Esports Football|",
+      "groups": [
+       {
+        "id": 2010206883,
+        "name": "eSports Battle World Cup (2x4 min)",
+        "englishName": "eSports Battle World Cup (2x4 min)",
+        "sport": "FOOTBALL",
+        "termKey": "esports_battle_world_cup__2x4_min_",
+        "sortOrder": "1"
+       },
+       {
+        "id": 2010206881,
+        "name": "Copa do Mundo CLA (2x5 min)",
+        "englishName": "CLA World Cup (2x5 min)",
+        "sport": "FOOTBALL",
+        "termKey": "cla_world_cup__2x5_min_",
+        "sortOrder": "2"
+       },
+       {
+        "id": 2000124080,
+        "name": "Esports Battle (2x4min)",
+        "englishName": "Esports Battle (2x4min)",
+        "sport": "FOOTBALL",
+        "termKey": "esports_battle__2x4min_",
+        "sortOrder": "3"
+       },
+       {
+        "id": 2010205703,
+        "name": "Batalha eSports (2x6min)",
+        "englishName": "eSports Battle (2x6min)",
+        "sport": "FOOTBALL",
+        "termKey": "esports_battle__2x6min_",
+        "sortOrder": "4"
+       },
+       {
+        "id": 2010205705,
+        "name": "Cyber Live Arena (2x5 min)",
+        "englishName": "Cyber Live Arena (2x5 min)",
+        "sport": "FOOTBALL",
+        "termKey": "cyber_live_arena__2x5_min_",
+        "sortOrder": "5"
+       }
+      ],
+      "sport": "FOOTBALL",
+      "termKey": "esports_football"
+     }
+    ],
+    "sport": "FOOTBALL",
+    "termKey": "football",
+    "sortOrder": "1"
+   },
+   {
+    "id": 1000093193,
+    "name": "Tênis",
+    "englishName": "Tennis",
+    "groups": [
+     {
+      "id": 1000093324,
+      "name": "Circuito ATP",
+      "englishName": "ATP",
+      "groups": [
+       {
+        "id": 2010202904,
+        "name": "Hangzhou",
+        "englishName": "Hangzhou",
+        "sport": "TENNIS",
+        "termKey": "hangzhou"
+       }
+      ],
+      "sport": "TENNIS",
+      "termKey": "atp",
+      "sortOrder": "1"
+     },
+     {
+      "id": 1000093904,
+      "name": "Circuito WTA",
+      "englishName": "WTA",
+      "groups": [
+       {
+        "id": 1000098121,
+        "name": "Seoul",
+        "englishName": "Seoul",
+        "sport": "TENNIS",
+        "termKey": "seoul",
+        "sortOrder": "114"
+       },
+       {
+        "id": 2010203609,
+        "name": "Singapura",
+        "englishName": "Singapore",
+        "sport": "TENNIS",
+        "termKey": "singapore"
+       }
+      ],
+      "sport": "TENNIS",
+      "termKey": "wta",
+      "sortOrder": "2"
+     },
+     {
+      "id": 2000071266,
+      "name": "ITF Duplas Femininas",
+      "englishName": "ITF Women Doubles",
+      "groups": [
+       {
+        "id": 2000108313,
+        "name": "Nanao",
+        "englishName": "Nanao",
+        "sport": "TENNIS",
+        "termKey": "nanao"
+       }
+      ],
+      "sport": "TENNIS",
+      "termKey": "itf_women_doubles"
+     },
+     {
+      "id": 2000071112,
+      "name": "ITF Duplas Masculinos",
+      "englishName": "ITF Men Doubles",
+      "groups": [
+       {
+        "id": 2000119870,
+        "name": "Yinchuan",
+        "englishName": "Yinchuan",
+        "sport": "TENNIS",
+        "termKey": "yinchuan"
+       }
+      ],
+      "sport": "TENNIS",
+      "termKey": "itf_men_doubles"
+     },
+     {
+      "id": 1000462066,
+      "name": "ITF Feminino",
+      "englishName": "ITF Women",
+      "groups": [
+       {
+        "id": 2010203750,
+        "name": "Maanshan",
+        "englishName": "Maanshan",
+        "sport": "TENNIS",
+        "termKey": "maanshan"
+       }
+      ],
+      "sport": "TENNIS",
+      "termKey": "itf_women"
+     },
+     {
+      "id": 2000054086,
+      "name": "ITF Masculino",
+      "englishName": "ITF Men",
+      "groups": [
+       {
+        "id": 2010207502,
+        "name": "Baku",
+        "englishName": "Baku",
+        "sport": "TENNIS",
+        "termKey": "baku"
+       },
+       {
+        "id": 2000119839,
+        "name": "Yinchuan",
+        "englishName": "Yinchuan",
+        "sport": "TENNIS",
+        "termKey": "yinchuan"
+       }
+      ],
+      "sport": "TENNIS",
+      "termKey": "itf_men"
+     },
+     {
+      "id": 2000125413,
+      "name": "UTR Pro Tennis Series",
+      "englishName": "UTR Pro Tennis Series",
+      "groups": [
+       {
+        "id": 2010206346,
+        "name": "Japão - Saitama",
+        "englishName": "Japan - Saitama",
+        "sport": "TENNIS",
+        "termKey": "japan_-_saitama"
+       }
+      ],
+      "sport": "TENNIS",
+      "termKey": "utr_pro_tennis_series"
+     }
+    ],
+    "sport": "TENNIS",
+    "termKey": "tennis",
+    "sortOrder": "2"
+   },
+   {
+    "id": 1000093215,
+    "name": "Tênis de Mesa",
+    "englishName": "Table Tennis",
+    "groups": [
+     {
+      "id": 2010132603,
+      "name": "Chéquia",
+      "englishName": "Czech Republic",
+      "groups": [
+       {
+        "id": 2010132604,
+        "name": "Czech Liga Pro",
+        "englishName": "Czech Liga Pro",
+        "sport": "TABLE_TENNIS",
+        "termKey": "czech_liga_pro"
+       }
+      ],
+      "sport": "TABLE_TENNIS",
+      "termKey": "czech_republic",
+      "sortOrder": "1"
+     }
+    ],
+    "sport": "TABLE_TENNIS",
+    "termKey": "table_tennis"
+   }
+  ],
+  "sport": "NOT-SPECIFIED"
+ }
+}

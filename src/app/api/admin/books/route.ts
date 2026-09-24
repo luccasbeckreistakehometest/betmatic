@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/server/session";
-import { addTeamAlias, assignEventGame, booksStats, listAdapterStatus, listCoverage, listUnmatchedEvents, runBooksJob, setAdapterEnabled } from "@/lib/server/book-prices";
+import { addTeamAlias, assignEventGame, booksStats, listAdapterStatus, listCoverage, listUnmatchedEvents, livePriceMaxAgeMs, runBooksJob, runLiveBooksJob, setAdapterEnabled } from "@/lib/server/book-prices";
 import { SKIPPED_BOOKS, booksConfig, findAdapter } from "@/lib/sources/br-books/registry";
 import { SOLD_SPORTS } from "@/lib/sports";
 
@@ -19,12 +19,12 @@ export async function GET() {
     coverage: listCoverage(),
     unmatched: listUnmatchedEvents(),
     skipped: SKIPPED_BOOKS,
-    config: booksConfig(),
+    config: { ...booksConfig(), livePriceMaxAgeMs: livePriceMaxAgeMs() },
     sports: SOLD_SPORTS.map((s) => s.key),
   });
 }
 
-/** run | toggle | assign | unassign | alias — the hand tools behind the panel. */
+/** run | run-live | toggle | assign | unassign | alias — the hand tools behind the panel. */
 export async function POST(request: Request) {
   if (!(await requireAdmin())) return forbidden();
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
@@ -32,6 +32,13 @@ export async function POST(request: Request) {
   if (action === "run") {
     const sports = Array.isArray(body.sports) ? body.sports.map(String) : [];
     const result = await runBooksJob({ sports });
+    return NextResponse.json(result, { status: result.status === "error" ? 502 : 200 });
+  }
+  // The in-play round by hand. It is its own action, not a flag on `run`, because it reads a
+  // different population off different endpoints and a mistyped flag must never mix the two.
+  if (action === "run-live") {
+    const sports = Array.isArray(body.sports) ? body.sports.map(String) : [];
+    const result = await runLiveBooksJob({ sports });
     return NextResponse.json(result, { status: result.status === "error" ? 502 : 200 });
   }
   if (action === "toggle") {

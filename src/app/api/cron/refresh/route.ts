@@ -16,7 +16,7 @@ import { runLineupWatch } from "@/lib/server/lineups";
 import { runCloseJob } from "@/lib/server/leg-prices";
 import { runWeeklyReports } from "@/lib/server/weekly-report";
 import { cleanupEvents } from "@/lib/server/analytics-report";
-import { runBooksJob } from "@/lib/server/book-prices";
+import { runBooksJob, runLiveBooksJob } from "@/lib/server/book-prices";
 import { runTodayJob } from "@/lib/server/daily-list";
 import { runAttributeJob } from "@/lib/server/factors-job";
 import { runEvaluateJob } from "@/lib/server/evaluate-job";
@@ -47,6 +47,9 @@ export const dynamic = "force-dynamic";
  *   weekly  — relatório semanal de disciplina; safe every tick, writes on Mondays from 12:00 UTC (force=1 to run now)
  *   cleanup — deletes analytics events older than 180 days; daily
  *   books   — Brazilian books' prices for every game in the next 48 h (pre-game only); every tick
+ *   live-books — the IN-PLAY board of every game under way, from the books that serve one to a plain
+ *             client (Superbet, KTO, the Altenar tenants); every tick, and as often as the scheduler
+ *             can afford, because a live price is worth nothing a minute later
  *   refresh — background generation (off unless CRON_ENABLED=1); every 4h
  * Protected by the x-cron-secret header (constant-time compare), or by an admin session for manual
  * runs from the panel. Every run logs one JSON summary line for `docker compose logs`.
@@ -134,6 +137,11 @@ export async function POST(request: Request) {
     if (job === "books") {
       const sports = (url.searchParams.get("sports") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
       const result = await runBooksJob({ sports });
+      return NextResponse.json({ job, ...result }, { status: result.status === "error" ? 500 : 200 });
+    }
+    if (job === "live-books") {
+      const sports = (url.searchParams.get("sports") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+      const result = await runLiveBooksJob({ sports });
       return NextResponse.json({ job, ...result }, { status: result.status === "error" ? 500 : 200 });
     }
     if (job === "featured") {

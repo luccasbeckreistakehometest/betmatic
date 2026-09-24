@@ -19,6 +19,17 @@ import type { BookAdapter } from "@/lib/sources/br-books/types";
  * anonymous headless sessions of their public pages (scratchpad/books/api-betfair-ex.json,
  * api-sportingbet.json) — every visitor's browser sends them, nobody logged in.
  *
+ * THE SAME TEST DECIDES THE IN-PLAY FEED, and it is asked separately: serving a pre-game list to a
+ * plain client says nothing about whether the live board is open to one. Probed 24/09/2026:
+ * Superbet (`index=live` plus the same per-event document), KTO through Kambi
+ * (`event/live/open.json` plus the same bet-offer document) and the Altenar tenants
+ * (`GetLiveEvents` plus the same `GetEventDetails`) all answer the plain client in play, so they
+ * carry `fetchLiveOdds`. Betnacional, which answered the plain client in September, now returns a
+ * Cloudflare challenge page (403) on its events BFF for pre-game AND live alike — it is skipped by
+ * the rule, not worked around, and its adapter is left in place for the day the wall comes down.
+ * Sportingbet and Betfair Exchange were re-checked on the same day and still answer 403: no live
+ * feed is attempted for either.
+ *
  * Every adapter that passed the test on 22/09/2026 is listed below, and so is every book that did
  * not, with the reason. The env decides which run: `BR_BOOKS=superbet,kambi:kto,altenar:estrelabet`
  * names them, `all` means every adapter, and unset or `none` means none — a deploy that never
@@ -48,6 +59,7 @@ export const SKIPPED_BOOKS: { book: string; reason: string }[] = [
   { book: "Esportes da Sorte", reason: "Sportingtech platform with signed/base64 request bodies — not attempted" },
   { book: "Stake", reason: "same Kambi feed and event ids as KTO; not duplicated" },
   { book: "Betfast / Tivo", reason: "odds served from a private cache API on a third-party host; not attempted" },
+  { book: "Betnacional", reason: "answered a plain client in September; on 24/09/2026 its events BFF returns a Cloudflare challenge (403) for pre-game and live alike — the adapter stays, disabled by the wall" },
   { book: "Brazino777, Blaze, BetVIP, Papigames, BR4, Reals, MC Games, Bateu", reason: "casino-first; no WNBA/NBA player props exposed on their front pages" },
 ];
 
@@ -84,5 +96,14 @@ export function booksConfig(env: Record<string, string | undefined> = process.en
     jobBudgetMs: Math.max(30_000, num(env.BOOKS_JOB_BUDGET_MS, 8 * 60_000)),
     /** Days of price history kept after kickoff; older games are deleted with their rows. */
     retentionDays: Math.max(1, Math.min(90, num(env.BOOKS_RETENTION_DAYS, 14))),
+    /**
+     * The in-play round's own clock. It is short on purpose: a live price is worth nothing a minute
+     * after it was read, so an adapter that cannot answer inside its deadline is dropped for this
+     * tick rather than allowed to hold the round past the life of the numbers it is fetching.
+     */
+    liveAdapterTimeoutMs: Math.max(5_000, num(env.BOOKS_LIVE_ADAPTER_TIMEOUT_MS, 25_000)),
+    liveJobBudgetMs: Math.max(10_000, num(env.BOOKS_LIVE_JOB_BUDGET_MS, 90_000)),
+    /** An in-play price nobody has confirmed for this long stops being current (the market was pulled, or the game ended). */
+    liveStaleMinutes: Math.max(1, num(env.BOOKS_LIVE_STALE_MINUTES, 30)),
   };
 }

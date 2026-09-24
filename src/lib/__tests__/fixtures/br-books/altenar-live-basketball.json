@@ -1,0 +1,193 @@
+{
+ "headers": [
+  {
+   "typeId": 223,
+   "name": "Handicap",
+   "mst": 0,
+   "odds": [
+    {
+     "id": 1714,
+     "name": "1"
+    },
+    {
+     "id": 1715,
+     "name": "2"
+    }
+   ],
+   "specialOdd": {
+    "typeId": 2,
+    "name": "Pontos"
+   }
+  },
+  {
+   "typeId": 225,
+   "name": "Total",
+   "mst": 0,
+   "odds": [
+    {
+     "id": 12,
+     "name": "mais de"
+    },
+    {
+     "id": 13,
+     "name": "menos de"
+    }
+   ],
+   "specialOdd": {
+    "typeId": 2,
+    "name": "Pontos"
+   }
+  }
+ ],
+ "pageCount": 0,
+ "page": 0,
+ "markets": [
+  {
+   "oddIds": [
+    4549277612,
+    4549277613
+   ],
+   "typeId": 223,
+   "sportMarketId": 70798,
+   "sv": "+11.5",
+   "sn": "+11.5",
+   "id": 1747495649,
+   "name": "Handicap (incluindo Prorrogação)"
+  },
+  {
+   "oddIds": [
+    4549328579,
+    4549328580
+   ],
+   "typeId": 225,
+   "sportMarketId": 70802,
+   "sv": "125.5",
+   "sn": "125.5",
+   "id": 1747507886,
+   "name": "Total  (incluindo Prorrogação)"
+  }
+ ],
+ "odds": [
+  {
+   "typeId": 1714,
+   "price": 1.78,
+   "isMB": true,
+   "oddStatus": 0,
+   "competitorId": 458446,
+   "id": 4549277612,
+   "name": "   Alligators (+11.5)"
+  },
+  {
+   "typeId": 1715,
+   "price": 1.84,
+   "isMB": true,
+   "oddStatus": 0,
+   "competitorId": 258301,
+   "id": 4549277613,
+   "name": "   Lions (-11.5)"
+  },
+  {
+   "typeId": 12,
+   "price": 1.72,
+   "isMB": true,
+   "oddStatus": 0,
+   "id": 4549328579,
+   "name": "Mais de 125.5"
+  },
+  {
+   "typeId": 13,
+   "price": 1.9,
+   "isMB": true,
+   "oddStatus": 0,
+   "id": 4549328580,
+   "name": "Menos de 125.5"
+  }
+ ],
+ "events": [
+  {
+   "liveTime": "10'",
+   "ls": "4ª parte",
+   "score": [
+    40,
+    51
+   ],
+   "currentSetScore": [],
+   "timer": {
+    "playtime": 594000,
+    "timeUtc": "2026-09-24T06:02:55Z",
+    "isPaused": false,
+    "timerTemplate": "MM:SS",
+    "lastMinuteTemplate": "MM:SS",
+    "matchPhase": 17,
+    "isTimerCountDown": true,
+    "duration": 600000
+   },
+   "marketIds": [
+    1747495649,
+    1747507886
+   ],
+   "isBooked": true,
+   "isParlay": false,
+   "variant": 2,
+   "hasStream": true,
+   "extId": "fp61_bt:match:01a0cf3c-a7b0-7b51-9192-d4dc5abc98b9",
+   "sc": 0,
+   "mc": 0,
+   "rc": false,
+   "pId": 61,
+   "et": 0,
+   "hasStats": false,
+   "competitorIds": [
+    458446,
+    258301
+   ],
+   "sportId": 67,
+   "catId": 701,
+   "champId": 42008,
+   "status": 1,
+   "startDate": "2026-09-24T05:00:00Z",
+   "id": 17821103,
+   "name": "   Alligators vs.    Lions"
+  }
+ ],
+ "sports": [
+  {
+   "catIds": [
+    701
+   ],
+   "typeId": 12,
+   "iconName": "basketball",
+   "hasLiveEvents": false,
+   "id": 67,
+   "name": "Basquete"
+  }
+ ],
+ "categories": [
+  {
+   "champIds": [
+    42008
+   ],
+   "iso": "UKR",
+   "hasLiveEvents": false,
+   "id": 701,
+   "name": "Ucrânia"
+  }
+ ],
+ "champs": [
+  {
+   "hasLiveEvents": false,
+   "id": 42008,
+   "name": "BSKT CUP"
+  }
+ ],
+ "competitors": [
+  {
+   "id": 458446,
+   "name": "   Alligators"
+  },
+  {
+   "id": 258301,
+   "name": "   Lions"
+  }
+ ]
+}

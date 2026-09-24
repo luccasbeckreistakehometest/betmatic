@@ -53,3 +53,25 @@ services:
           [ $$((t % 96)) -eq 50 ] && { curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=cleanup"; echo; }
           t=$$((t + 1)); sleep 900
         done
+
+  # The in-play board, on its own clock and in its own container.
+  #
+  # It is separate from `cron` for the reason the whole round exists: a live price is worth nothing
+  # a minute after it was read, and the main tick sleeps fifteen. This one asks every 60 s (
+  # LIVE_BOOKS_INTERVAL overrides), which keeps every game under way inside the freshness window the
+  # reader enforces (LIVE_PRICE_MAX_AGE_MS, 90 s by default) — and when nothing is in play the job
+  # costs one cached scoreboard read and returns. If this container stops, no stale price is served:
+  # the reader simply finds nothing fresh and the live read falls back to saying it has no live price.
+  cron-live:
+    image: curlimages/curl:8.10.1
+    depends_on: [app]
+    restart: unless-stopped
+    env_file: .env
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        sleep 120
+        while true; do
+          curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=live-books" >/dev/null || true
+          sleep $${LIVE_BOOKS_INTERVAL:-60}
+        done

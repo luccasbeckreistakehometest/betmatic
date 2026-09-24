@@ -7,6 +7,9 @@ import { ledgerIdFor, recordPredictions } from "@/lib/ledger/store";
 import { getPromptVersion } from "@/lib/server/prompts";
 import { MODEL } from "@/lib/ai/client";
 import { recordLegPrices } from "@/lib/server/leg-prices";
+import { livePricesForGame } from "@/lib/server/book-prices";
+import { consensusWithBooks } from "@/lib/props/consensus";
+import { applyLivePrices, liveBoard, liveBoardSize, liveQuoteFor, type LiveBoard } from "@/lib/props/live-prices";
 import { sendTicketMail } from "@/lib/server/ticket-mail";
 import { AiBudgetExceededError, brasiliaDayStart } from "@/lib/server/ai-budget";
 import { reportError } from "@/lib/server/ops-log";
@@ -181,13 +184,25 @@ export async function runLiveRead(user: LivePrincipal, sportKey: string, gameId:
       // guard drops every line the game has already settled and stamps the survivors with what
       // they still need. Without this the model has no player market to build on at all.
       const candidates = await buildPropCandidates(detail, { maxPlayers: 8, limit: 24 }).catch(() => null);
+      // The in-play board, as the collector read it seconds ago and only while it is still fresh.
+      // Empty is a normal answer — the book pulled the market, the collector missed a beat, the
+      // league has no live feed — and the read then behaves exactly as it did before this existed:
+      // pre-game references, marked as references, and a ledger row that says so.
+      const board = (() => { try { return liveBoard(livePricesForGame(gameId)); } catch { return null; } })();
+      const overlaid = board ? applyLivePrices(candidates?.props ?? [], board) : { props: candidates?.props ?? [], priced: 0 };
+      const props = overlaid.props;
       const tracked = await liveTracker(user as PublicUser, sportKey, gameId, dateKey, lang);
       const trackerText = tracked.tickets.slice(0, 4).map((t) => `- ${t.title}: ${t.legs.map((l) => `${l.selection} → ${l.state}${l.probability !== null ? ` ${Math.round(l.probability * 100)}%` : ""} (${l.reason})`).join("; ")}`).join("\n");
       const leaders = snap.players.filter((p) => (p.stats.PTS ?? p.stats.SHOT ?? 0) > 0).slice(0, 10)
         .map((p) => `${p.name} (${p.team}): ${Object.entries(p.stats).filter(([k]) => ["MIN", "PTS", "REB", "AST", "PF", "SHOT", "SOG", "FC", "YC"].includes(k)).map(([k, v]) => `${k} ${v}`).join(", ")}`).join("\n");
-      const extraContext = liveContext(snap, { leaders, trackerText, projections: projectionLines(candidates?.props ?? []) });
+      const extraContext = liveContext(snap, { leaders, trackerText, projections: projectionLines(props) });
+      // The books' live rows as a consensus block, so the model can see which book pays most for a
+      // line right now — the same shopping the pre-game read does, on prices that are current.
+      const consensus = board && liveBoardSize(board)
+        ? consensusWithBooks(props, [], { home: detail.game.home.displayName, away: detail.game.away.displayName }, livePricesForGame(gameId), sportKey)
+        : [];
       const slate = await buildBets({
-        game: detail.game, detail, props: candidates?.props ?? [], roles: candidates?.roles ?? [], minutes: candidates?.minutes ?? [], picks: [], dimers: [], x: null,
+        game: detail.game, detail, props, roles: candidates?.roles ?? [], minutes: candidates?.minutes ?? [], picks: [], dimers: [], x: null, consensus, liveBoard: board ?? undefined,
         bands: LIVE_BANDS, maxPerBand: LIVE_MAX_PER_BAND, lang, record: false, model: LIVE_MODEL, effort: liveEffortOf(),
         // `live` is the SOCCER state and is null for a basketball read; `inPlay` is the sport-neutral
         // answer to "is the game under way", which the emission gates need.
@@ -195,17 +210,23 @@ export async function runLiveRead(user: LivePrincipal, sportKey: string, gameId:
       });
       const minute = Math.round(snap.minute);
       const clockLeft = snap.clockLeft ?? undefined;
+      // Which tickets a reader could actually have taken at the price printed on them: every leg
+      // anchored to a book's in-play price. Computed once and used by both records below, so the
+      // ledger and leg_prices can never disagree about what was collectable.
+      const priced = liveTicketsPriced(detail.game, slate.suggestions, board);
       savePrediction({ scope: "live", sportKey, gameId, dateKey, lang, matchup: `${detail.game.away.displayName} @ ${detail.game.home.displayName}`, startsAt: detail.game.startsAt, slate: { ...slate, minute, period: snap.period } as BetSlate });
       // Graded like every other ticket, kept out of the public ROI: the live record measures how
       // often a read lands, and the reference prices say nothing about what it would have paid.
       recordPredictions(detail.game, slate.suggestions, {
         live: { minute, period: snap.period, clockLeft },
         provenance: { promptVersion: getPromptVersion("game", "pt").id, modelId: MODEL, generatedBy: "quarters" },
+        livePriced: priced,
       });
       // The price each live leg was written with, recorded as what it is: the pre-game board, not an
       // in-play price. Without this row the live scope has no way to prove it is not quoting a price
       // nobody could have taken — which is the whole reason its return is called a reference.
-      recordLiveLegPrices(detail.game, slate.suggestions, { minute, period: snap.period });
+      recordLiveLegPrices(detail.game, slate.suggestions, { minute, period: snap.period }, board);
+      if (board && liveBoardSize(board)) logEvent("live.priced", { gameId, sportKey, books: board.books, selections: liveBoardSize(board), propsPriced: overlaid.priced, tickets: priced.size, of: slate.suggestions.length, period: snap.period });
       void sendTicketMail({ gameId, sportKey, dateKey, matchup: `${detail.game.away.displayName} @ ${detail.game.home.displayName}`, lang, fresh: { kind: "live", period: snap.period, minute } });
       getDb().prepare("UPDATE generation_requests SET status='ok', finishedAt=? WHERE id=?").run(nowIso(), reqId);
       return { status: "ok", read: latestLiveRead(sportKey, gameId, dateKey, lang)!, cached: false };
@@ -220,19 +241,60 @@ export async function runLiveRead(user: LivePrincipal, sportKey: string, gameId:
 }
 
 /**
- * One `leg_prices` row per live leg, flagged `no_live_price`. It is skipped by the close job (which
- * reads `pending`) and by the public CLV, and it is what lets the admin count how much of the live
- * balance is priced off a stale board — 109 % of it, on the sample that made this necessary.
+ * Is THIS leg carrying a price a reader could have taken? Only when a book posts that exact line in
+ * play and the ticket's own price is that number: a leg the model priced from its own text is not
+ * collectable merely because some book also lists the line.
  */
-export function recordLiveLegPrices(game: Game, suggestions: BetSuggestion[], live: { minute: number; period?: number }): number {
+const legTakenLive = (leg: BetSuggestion["legs"][number], homeAbbr: string, board: LiveBoard | null | undefined): boolean => {
+  const quote = board ? liveQuoteFor(leg.settlement, homeAbbr, board) : null;
+  return !!quote && Math.abs(quote.decimal - leg.oddsDecimal) < 0.005;
+};
+
+/**
+ * The tickets whose EVERY leg was taken at a live price. A parlay with one pre-game reference leg is
+ * not one of them: its printed return is a number nobody could have taken, which is the whole thing
+ * this product refuses to publish.
+ */
+export function liveTicketsPriced(game: Game, suggestions: BetSuggestion[], board: LiveBoard | null | undefined): Set<string> {
+  const out = new Set<string>();
+  if (!board) return out;
+  for (const s of suggestions) {
+    if (s.legs.length && s.legs.every((leg) => legTakenLive(leg, game.home.abbreviation, board))) out.add(s.id);
+  }
+  return out;
+}
+
+/**
+ * One `leg_prices` row per live leg, and the row says which kind of price it holds — per leg, not
+ * per read, because one read now produces both.
+ *
+ * A leg anchored to a book's in-play price is written `basis: "live_book"` with the ordinary
+ * `pending` status: it was a price a reader could have taken, so its return is collectable and its
+ * close is worth computing like any other. A leg with no live price on the board keeps what the
+ * live scope has always written — `basis: "live"`, `status: "no_live_price"` — which is skipped by
+ * the close job and by the public CLV, and is what lets the admin count how much of the live
+ * balance is priced off a stale board (109 % of it, on the sample that made this necessary).
+ *
+ * Nothing here reaches backwards. A row already in the table is never rewritten, so no number the
+ * product has already published can turn collectable after the fact.
+ */
+export function recordLiveLegPrices(game: Game, suggestions: BetSuggestion[], live: { minute: number; period?: number }, board?: LiveBoard | null): number {
   try {
-    return suggestions.reduce((n, s) => n + recordLegPrices(
-      s.legs.map((leg, i) => ({
-        ledgerId: ledgerIdFor(game.id, s, live), legIndex: i, gameId: game.id, sportKey: game.sportKey,
-        startsAt: game.startsAt, homeAbbr: game.home.abbreviation, leg,
-      })),
-      { basis: "live", status: "no_live_price" },
-    ), 0);
+    let n = 0;
+    for (const s of suggestions) {
+      const ledgerId = ledgerIdFor(game.id, s, live);
+      s.legs.forEach((leg, i) => {
+        const row = { ledgerId, legIndex: i, gameId: game.id, sportKey: game.sportKey, startsAt: game.startsAt, homeAbbr: game.home.abbreviation, leg };
+        // `live_taken` rather than `pending`: the close job prices a leg against the PRE-GAME close,
+        // which says nothing about a bet struck in the third quarter, so an in-play row must never
+        // enter it. The status is what lets the panel count the collectable live legs apart from the
+        // ones still priced off a stale board.
+        n += recordLegPrices([row], legTakenLive(leg, game.home.abbreviation, board)
+          ? { basis: "live_book", status: "live_taken" }
+          : { basis: "live", status: "no_live_price" });
+      });
+    }
+    return n;
   } catch (error) {
     reportError("live.leg_prices", error, { gameId: game.id }, "warn");
     return 0;

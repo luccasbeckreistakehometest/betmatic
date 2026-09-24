@@ -1,0 +1,933 @@
+{
+ "id": 17821103,
+ "feedEventId": 23997298,
+ "name": "   Alligators vs.    Lions",
+ "et": 0,
+ "liveTime": "10'",
+ "ls": "4ª parte",
+ "sport": {
+  "typeId": 12,
+  "iconName": "basketball",
+  "hasLiveEvents": false,
+  "id": 67,
+  "name": "Basquete"
+ },
+ "champ": {
+  "hasLiveEvents": false,
+  "id": 42008,
+  "name": "BSKT CUP"
+ },
+ "category": {
+  "iso": "UKR",
+  "hasLiveEvents": false,
+  "id": 701,
+  "name": "Ucrânia"
+ },
+ "competitors": [
+  {
+   "id": 458446,
+   "name": "   Alligators"
+  },
+  {
+   "id": 258301,
+   "name": "   Lions"
+  }
+ ],
+ "marketGroups": [
+  {
+   "type": 0,
+   "marketIds": [
+    1747485437,
+    1747507542,
+    1747485473,
+    1747525234,
+    1747507887,
+    1747485445
+   ],
+   "isBundle": false,
+   "sortOrder": 0,
+   "id": 1,
+   "name": "Popular"
+  },
+  {
+   "type": 0,
+   "marketIds": [
+    1747517935,
+    1747517931,
+    1747517929,
+    1747517933,
+    1747517928,
+    1747517926,
+    1747517930
+   ],
+   "isBundle": false,
+   "sortOrder": 14,
+   "id": 1593,
+   "name": "\t 4º Quarto"
+  }
+ ],
+ "childMarketGroups": [],
+ "markets": [
+  {
+   "shortName": "Handicap (incluindo Prorrogação)",
+   "desktopOddIds": [
+    [
+     4549277612,
+     4549247695,
+     4549247664
+    ],
+    [
+     4549277613,
+     4549247696,
+     4549247665
+    ]
+   ],
+   "mobileOddIds": [
+    [
+     4549277612,
+     4549247695,
+     4549247664
+    ],
+    [
+     4549277613,
+     4549247696,
+     4549247665
+    ]
+   ],
+   "isBB": false,
+   "variant": 8,
+   "so": 6,
+   "typeId": 223,
+   "sportMarketId": 70798,
+   "sv": "+10.5",
+   "id": 1747485437,
+   "name": "Handicap (incluindo Prorrogação)"
+  },
+  {
+   "shortName": "Total  (incluindo Prorrogação)",
+   "desktopOddIds": [
+    [
+     4549384603,
+     4549328579,
+     4549327734
+    ],
+    [
+     4549384604,
+     4549328580,
+     4549327735
+    ]
+   ],
+   "mobileOddIds": [
+    [
+     4549384603,
+     4549328579,
+     4549327734
+    ],
+    [
+     4549384604,
+     4549328580,
+     4549327735
+    ]
+   ],
+   "isBB": false,
+   "variant": 8,
+   "so": 7,
+   "typeId": 225,
+   "sportMarketId": 70802,
+   "sv": "126.5",
+   "id": 1747507542,
+   "name": "Total  (incluindo Prorrogação)"
+  },
+  {
+   "shortName": "1x2",
+   "desktopOddIds": [
+    [
+     4549247772
+    ],
+    [
+     4549247773
+    ],
+    [
+     4549247774
+    ]
+   ],
+   "mobileOddIds": [
+    [
+     4549247772
+    ],
+    [
+     4549247773
+    ],
+    [
+     4549247774
+    ]
+   ],
+   "isBB": false,
+   "so": 14,
+   "typeId": 1,
+   "sportMarketId": 70475,
+   "id": 1747485473,
+   "name": "1x2"
+  },
+  {
+   "shortName": "   Alligators total",
+   "desktopOddIds": [
+    [
+     4549384605,
+     4549382353
+    ],
+    [
+     4549384606,
+     4549382354
+    ]
+   ],
+   "mobileOddIds": [
+    [
+     4549384605,
+     4549382353
+    ],
+    [
+     4549384606,
+     4549382354
+    ]
+   ],
+   "isBB": false,
+   "variant": 8,
+   "so": 33,
+   "typeId": 19,
+   "sportMarketId": 70527,
+   "sv": "57.5",
+   "id": 1747525234,
+   "name": "   Alligators total"
+  },
+  {
+   "shortName": "   Lions total",
+   "desktopOddIds": [
+    [
+     4549357640,
+     4549328581
+    ],
+    [
+     4549357641,
+     4549328582
+    ]
+   ],
+   "mobileOddIds": [
+    [
+     4549357640,
+     4549328581
+    ],
+    [
+     4549357641,
+     4549328582
+    ]
+   ],
+   "isBB": false,
+   "variant": 8,
+   "so": 34,
+   "typeId": 20,
+   "sportMarketId": 70532,
+   "sv": "68.5",
+   "id": 1747507887,
+   "name": "   Lions total"
+  },
+  {
+   "shortName": "Ímpar/Par",
+   "desktopOddIds": [
+    [
+     4549247713
+    ],
+    [
+     4549247712
+    ]
+   ],
+   "mobileOddIds": [
+    [
+     4549247713
+    ],
+    [
+     4549247712
+    ]
+   ],
+   "isBB": false,
+   "so": 45,
+   "typeId": 26,
+   "sportMarketId": 70537,
+   "id": 1747485445,
+   "name": "Ímpar/Par"
+  },
+  {
+   "shortName": "Quarto quarto - handicap",
+   "desktopOddIds": [
+    [
+     4549360682,
+     4549382349
+    ],
+    [
+     4549360683,
+     4549382350
+    ]
+   ],
+   "mobileOddIds": [
+    [
+     4549360682,
+     4549382349
+    ],
+    [
+     4549360683,
+     4549382350
+    ]
+   ],
+   "isBB": false,
+   "variant": 8,
+   "so": 18,
+   "typeId": 303,
+   "sportMarketId": 70884,
+   "sv": "-1.5|4",
+   "id": 1747517935,
+   "name": "Quarto quarto - handicap"
+  },
+  {
+   "shortName": "Quarto quarto - total",
+   "desktopOddIds": [
+    [
+     4549404637,
+     4549402768,
+     4549360673
+    ],
+    [
+     4549404638,
+     4549402769,
+     4549360674
+    ]
+   ],
+   "mobileOddIds": [
+    [
+     4549404637,
+     4549402768,
+     4549360673
+    ],
+    [
+     4549404638,
+     4549402769,
+     4549360674
+    ]
+   ],
+   "isBB": false,
+   "variant": 8,
+   "so": 15,
+   "typeId": 236,
+   "sportMarketId": 70822,
+   "sv": "34.5|4",
+   "id": 1747517931,
+   "name": "Quarto quarto - total"
+  },
+  {
+   "shortName": "Quarto quarto - 1x2",
+   "desktopOddIds": [
+    [
+     4549360668
+    ],
+    [
+     4549360669
+    ],
+    [
+     4549360670
+    ]
+   ],
+   "mobileOddIds": [
+    [
+     4549360668
+    ],
+    [
+     4549360669
+    ],
+    [
+     4549360670
+    ]
+   ],
+   "isBB": false,
+   "so": 14,
+   "typeId": 235,
+   "sportMarketId": 70820,
+   "sv": "4",
+   "id": 1747517929,
+   "name": "Quarto quarto - 1x2"
+  },
+  {
+   "shortName": "Quarto quarto  - corrida para os quinto pontos",
+   "desktopOddIds": [
+    [
+     4549360677
+    ],
+    [
+     4549360679
+    ],
+    [
+     4549360678
+    ]
+   ],
+   "mobileOddIds": [
+    [
+     4549360677,
+     4549360679,
+     4549360678
+    ]
+   ],
+   "isBB": false,
+   "so": 11,
+   "typeId": 1057,
+   "sportMarketId": 72454,
+   "sv": "5|4",
+   "id": 1747517933,
+   "name": "Quarto quarto  - corrida para os quinto pontos"
+  },
+  {
+   "shortName": "Quarto quarto  - corrida para os décimo pontos",
+   "desktopOddIds": [
+    [
+     4549360665
+    ],
+    [
+     4549360667
+    ],
+    [
+     4549360666
+    ]
+   ],
+   "mobileOddIds": [
+    [
+     4549360665,
+     4549360667,
+     4549360666
+    ]
+   ],
+   "isBB": false,
+   "so": 11,
+   "typeId": 1057,
+   "sportMarketId": 72454,
+   "sv": "10|4",
+   "id": 1747517928,
+   "name": "Quarto quarto  - corrida para os décimo pontos"
+  },
+  {
+   "shortName": "Quarto quarto  - corrida para os décimo quinto pontos",
+   "desktopOddIds": [
+    [
+     4549360660
+    ],
+    [
+     4549360662
+    ],
+    [
+     4549360661
+    ]
+   ],
+   "mobileOddIds": [
+    [
+     4549360660,
+     4549360662,
+     4549360661
+    ]
+   ],
+   "isBB": false,
+   "so": 11,
+   "typeId": 1057,
+   "sportMarketId": 72454,
+   "sv": "15|4",
+   "id": 1747517926,
+   "name": "Quarto quarto  - corrida para os décimo quinto pontos"
+  },
+  {
+   "shortName": "Quarto quarto - impar/par",
+   "desktopOddIds": [
+    [
+     4549360672
+    ],
+    [
+     4549360671
+    ]
+   ],
+   "mobileOddIds": [
+    [
+     4549360672
+    ],
+    [
+     4549360671
+    ]
+   ],
+   "isBB": false,
+   "so": 16,
+   "typeId": 304,
+   "sportMarketId": 70886,
+   "sv": "4",
+   "id": 1747517930,
+   "name": "Quarto quarto - impar/par"
+  }
+ ],
+ "childMarkets": [],
+ "odds": [
+  {
+   "typeId": 1714,
+   "price": 1.61,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "+11.5",
+   "competitorId": 458446,
+   "id": 4549277612,
+   "name": "   Alligators (+11.5)"
+  },
+  {
+   "typeId": 1714,
+   "price": 1.79,
+   "isMB": true,
+   "oddStatus": 0,
+   "sv": "+10.5",
+   "competitorId": 458446,
+   "id": 4549247695,
+   "name": "   Alligators (+10.5)"
+  },
+  {
+   "typeId": 1714,
+   "price": 2,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "+9.5",
+   "competitorId": 458446,
+   "id": 4549247664,
+   "name": "   Alligators (+9.5)"
+  },
+  {
+   "typeId": 1715,
+   "price": 2.06,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "+11.5",
+   "competitorId": 258301,
+   "id": 4549277613,
+   "name": "   Lions (-11.5)"
+  },
+  {
+   "typeId": 1715,
+   "price": 1.84,
+   "isMB": true,
+   "oddStatus": 0,
+   "sv": "+10.5",
+   "competitorId": 258301,
+   "id": 4549247696,
+   "name": "   Lions (-10.5)"
+  },
+  {
+   "typeId": 1715,
+   "price": 1.65,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "+9.5",
+   "competitorId": 258301,
+   "id": 4549247665,
+   "name": "   Lions (-9.5)"
+  },
+  {
+   "typeId": 12,
+   "price": 1.69,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "124.5",
+   "id": 4549384603,
+   "name": "Mais de 124.5"
+  },
+  {
+   "typeId": 12,
+   "price": 1.89,
+   "isMB": true,
+   "oddStatus": 0,
+   "sv": "125.5",
+   "id": 4549328579,
+   "name": "Mais de 125.5"
+  },
+  {
+   "typeId": 12,
+   "price": 2.12,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "126.5",
+   "id": 4549327734,
+   "name": "Mais de 126.5"
+  },
+  {
+   "typeId": 13,
+   "price": 1.94,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "124.5",
+   "id": 4549384604,
+   "name": "Menos de 124.5"
+  },
+  {
+   "typeId": 13,
+   "price": 1.74,
+   "isMB": true,
+   "oddStatus": 0,
+   "sv": "125.5",
+   "id": 4549328580,
+   "name": "Menos de 125.5"
+  },
+  {
+   "typeId": 13,
+   "price": 1.58,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "126.5",
+   "id": 4549327735,
+   "name": "Menos de 126.5"
+  },
+  {
+   "typeId": 1,
+   "price": 10.93,
+   "isMB": false,
+   "oddStatus": 0,
+   "competitorId": 458446,
+   "id": 4549247772,
+   "name": "   Alligators"
+  },
+  {
+   "typeId": 2,
+   "price": 17,
+   "isMB": false,
+   "oddStatus": 0,
+   "id": 4549247773,
+   "name": "Empate"
+  },
+  {
+   "typeId": 3,
+   "price": 1.03,
+   "isMB": false,
+   "oddStatus": 7,
+   "competitorId": 258301,
+   "id": 4549247774,
+   "name": "   Lions"
+  },
+  {
+   "typeId": 12,
+   "price": 1.61,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "56.5",
+   "id": 4549384605,
+   "name": "Mais de 56.5"
+  },
+  {
+   "typeId": 12,
+   "price": 1.87,
+   "isMB": true,
+   "oddStatus": 0,
+   "sv": "57.5",
+   "id": 4549382353,
+   "name": "Mais de 57.5"
+  },
+  {
+   "typeId": 13,
+   "price": 2.06,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "56.5",
+   "id": 4549384606,
+   "name": "Menos de 56.5"
+  },
+  {
+   "typeId": 13,
+   "price": 1.75,
+   "isMB": true,
+   "oddStatus": 0,
+   "sv": "57.5",
+   "id": 4549382354,
+   "name": "Menos de 57.5"
+  },
+  {
+   "typeId": 12,
+   "price": 1.73,
+   "isMB": true,
+   "oddStatus": 0,
+   "sv": "67.5",
+   "id": 4549357640,
+   "name": "Mais de 67.5"
+  },
+  {
+   "typeId": 12,
+   "price": 2.02,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "68.5",
+   "id": 4549328581,
+   "name": "Mais de 68.5"
+  },
+  {
+   "typeId": 13,
+   "price": 1.9,
+   "isMB": true,
+   "oddStatus": 0,
+   "sv": "67.5",
+   "id": 4549357641,
+   "name": "Menos de 67.5"
+  },
+  {
+   "typeId": 13,
+   "price": 1.64,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "68.5",
+   "id": 4549328582,
+   "name": "Menos de 68.5"
+  },
+  {
+   "typeId": 70,
+   "price": 1.79,
+   "isMB": false,
+   "oddStatus": 0,
+   "id": 4549247713,
+   "name": "Ímpar"
+  },
+  {
+   "typeId": 72,
+   "price": 1.85,
+   "isMB": false,
+   "oddStatus": 0,
+   "id": 4549247712,
+   "name": "Par"
+  },
+  {
+   "typeId": 1714,
+   "price": 2,
+   "isMB": true,
+   "oddStatus": 0,
+   "sv": "-1.5",
+   "competitorId": 458446,
+   "id": 4549360682,
+   "name": "   Alligators (-1.5)"
+  },
+  {
+   "typeId": 1714,
+   "price": 2.27,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "-2.5",
+   "competitorId": 458446,
+   "id": 4549382349,
+   "name": "   Alligators (-2.5)"
+  },
+  {
+   "typeId": 1715,
+   "price": 1.65,
+   "isMB": true,
+   "oddStatus": 0,
+   "sv": "-1.5",
+   "competitorId": 258301,
+   "id": 4549360683,
+   "name": "   Lions (+1.5)"
+  },
+  {
+   "typeId": 1715,
+   "price": 1.51,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "-2.5",
+   "competitorId": 258301,
+   "id": 4549382350,
+   "name": "   Lions (+2.5)"
+  },
+  {
+   "typeId": 12,
+   "price": 1.56,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "32.5",
+   "id": 4549404637,
+   "name": "Mais de 32.5"
+  },
+  {
+   "typeId": 12,
+   "price": 1.72,
+   "isMB": true,
+   "oddStatus": 0,
+   "sv": "33.5",
+   "id": 4549402768,
+   "name": "Mais de 33.5"
+  },
+  {
+   "typeId": 12,
+   "price": 1.92,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "34.5",
+   "id": 4549360673,
+   "name": "Mais de 34.5"
+  },
+  {
+   "typeId": 13,
+   "price": 2.16,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "32.5",
+   "id": 4549404638,
+   "name": "Menos de 32.5"
+  },
+  {
+   "typeId": 13,
+   "price": 1.91,
+   "isMB": true,
+   "oddStatus": 0,
+   "sv": "33.5",
+   "id": 4549402769,
+   "name": "Menos de 33.5"
+  },
+  {
+   "typeId": 13,
+   "price": 1.71,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "34.5",
+   "id": 4549360674,
+   "name": "Menos de 34.5"
+  },
+  {
+   "typeId": 1,
+   "price": 1.82,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "4",
+   "competitorId": 458446,
+   "id": 4549360668,
+   "name": "   Alligators"
+  },
+  {
+   "typeId": 2,
+   "price": 9.91,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "4",
+   "id": 4549360669,
+   "name": "Empate"
+  },
+  {
+   "typeId": 3,
+   "price": 2.11,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "4",
+   "competitorId": 258301,
+   "id": 4549360670,
+   "name": "   Lions"
+  },
+  {
+   "typeId": 1,
+   "price": 1.67,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "5|4",
+   "competitorId": 458446,
+   "id": 4549360677,
+   "name": "   Alligators"
+  },
+  {
+   "typeId": 3,
+   "price": 2.06,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "5|4",
+   "competitorId": 258301,
+   "id": 4549360679,
+   "name": "   Lions"
+  },
+  {
+   "typeId": 7,
+   "price": 24.16,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "5|4",
+   "id": 4549360678,
+   "name": "Nenhum"
+  },
+  {
+   "typeId": 1,
+   "price": 1.71,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "10|4",
+   "competitorId": 458446,
+   "id": 4549360665,
+   "name": "   Alligators"
+  },
+  {
+   "typeId": 3,
+   "price": 2.02,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "10|4",
+   "competitorId": 258301,
+   "id": 4549360667,
+   "name": "   Lions"
+  },
+  {
+   "typeId": 7,
+   "price": 23.23,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "10|4",
+   "id": 4549360666,
+   "name": "Nenhum"
+  },
+  {
+   "typeId": 1,
+   "price": 1.86,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "15|4",
+   "competitorId": 458446,
+   "id": 4549360660,
+   "name": "   Alligators"
+  },
+  {
+   "typeId": 3,
+   "price": 2.16,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "15|4",
+   "competitorId": 258301,
+   "id": 4549360662,
+   "name": "   Lions"
+  },
+  {
+   "typeId": 7,
+   "price": 7.98,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "15|4",
+   "id": 4549360661,
+   "name": "Nenhum"
+  },
+  {
+   "typeId": 70,
+   "price": 1.82,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "4",
+   "id": 4549360672,
+   "name": "Ímpar"
+  },
+  {
+   "typeId": 72,
+   "price": 1.82,
+   "isMB": false,
+   "oddStatus": 0,
+   "sv": "4",
+   "id": 4549360671,
+   "name": "Par"
+  }
+ ],
+ "boosts": [],
+ "nonBoosts": [],
+ "isParlay": false,
+ "rc": false,
+ "startDate": "2026-09-24T05:00:00Z",
+ "showAll": true
+}
