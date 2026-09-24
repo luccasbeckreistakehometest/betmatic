@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { EMPTY_QUARTERS, narrationTotals, parseQuarterProfiles, playClock } from "@/lib/live/quarters";
+import { EMPTY_QUARTERS, narrationTotals, parseQuarterProfiles, playClock, quartersBySubtraction, reconcileQuarters, type StoredSnapshot } from "@/lib/live/quarters";
 import summary from "./fixtures/espn-summary-wnba-401857206-plays.json";
 
 /**
@@ -141,5 +141,75 @@ describe("what it refuses to sustain", () => {
     const out = parseQuarterProfiles(doctored, 10);
     expect(out.minutesThrough).toBe(0);
     expect(out.notes[0]).toContain("not 5");
+  });
+});
+
+describe("the subtraction, and whether it agrees with the narration", () => {
+  /**
+   * What the product actually stores: the accumulated box score at the moment of each read. The Q1
+   * read stored the Q1 accumulation; the half-time read stored the real box score out of the same
+   * payload — which is ESPN's own number, not one this suite computed. Subtracting the first from
+   * the second must give back the second quarter the narration read off the plays.
+   */
+  const snapshotAt = (period: number): StoredSnapshot => ({
+    period,
+    players: profiles.players.map((p) => {
+      const upto = p.periods.filter((q) => q.period <= period);
+      const sum = (key: "pts" | "reb" | "ast" | "pf" | "stl" | "tov" | "blk") => upto.reduce((n, q) => n + q[key], 0);
+      return {
+        id: p.id, name: p.name, team: p.team,
+        stats: {
+          PTS: sum("pts"), REB: sum("reb"), AST: sum("ast"), PF: sum("pf"), STL: sum("stl"), TO: sum("tov"), BLK: sum("blk"),
+          // ESPN publishes MIN whole, so that is what a stored read holds — rounding and all.
+          MIN: Math.round(upto.reduce((n, q) => n + (q.minutes ?? 0), 0)),
+        },
+      };
+    }),
+  });
+
+  const halfTime: StoredSnapshot = {
+    period: 2,
+    players: profiles.players.map((p) => {
+      const truth = box(p.name);
+      return { id: p.id, name: p.name, team: p.team, stats: { PTS: Number(truth.PTS), REB: Number(truth.REB), AST: Number(truth.AST), PF: Number(truth.PF), STL: Number(truth.STL), TO: Number(truth.TO), BLK: Number(truth.BLK), MIN: Number(truth.MIN) } };
+    }),
+  };
+
+  it("recovers the second quarter from two stored reads, and agrees with the narration on every cell", () => {
+    const subtracted = quartersBySubtraction([snapshotAt(1), halfTime]);
+    expect(subtracted).toHaveLength(17);
+    const astier = subtracted.find((p) => p.name === "Pauline Astier")!;
+    expect(astier.periods.map((q) => q.pts)).toEqual([10, 2]);
+
+    const agreement = reconcileQuarters(profiles, subtracted);
+    expect(agreement.notes).toEqual([]);
+    expect(agreement.agreed).toBe(agreement.compared);
+    // 17 players × 2 periods × (7 counting stats + minutes).
+    expect(agreement.compared).toBe(17 * 2 * 8);
+  });
+
+  it("will not call a period a quarter when the read before it was never stored", () => {
+    // The product joined the game at half-time: one snapshot, at period 2. Q2 alone cannot be
+    // isolated from it — everything up to half-time is one figure — so no period is emitted.
+    expect(quartersBySubtraction([halfTime])).toEqual([]);
+    // With period 1 the baseline is zero, which is a real baseline and not an assumption.
+    expect(quartersBySubtraction([snapshotAt(1)])[0].periods.map((q) => q.period)).toEqual([1]);
+  });
+
+  it("never returns a negative quarter when a read arrives out of order", () => {
+    const late = { period: 2, players: [{ id: "x", name: "X", team: "NY", stats: { PTS: 4, MIN: 6 } }] };
+    const early = { period: 1, players: [{ id: "x", name: "X", team: "NY", stats: { PTS: 9, MIN: 9 } }] };
+    const [player] = quartersBySubtraction([early, late]);
+    expect(player.periods.find((q) => q.period === 2)).toMatchObject({ pts: 0, minutes: 0 });
+  });
+
+  it("reports a disagreement instead of silently preferring one route", () => {
+    const wrong = quartersBySubtraction([snapshotAt(1), {
+      period: 2,
+      players: halfTime.players.map((p) => (p.name === "Jonquel Jones" ? { ...p, stats: { ...p.stats, PTS: 99 } } : p)),
+    }]);
+    const agreement = reconcileQuarters(profiles, wrong);
+    expect(agreement.agreed).toBeLessThan(agreement.compared);
+    expect(agreement.notes.join(" ")).toContain("Jonquel Jones Q2 PTS: narration 7, subtraction 96");
   });
 });

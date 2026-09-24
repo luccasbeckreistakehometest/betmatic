@@ -275,3 +275,94 @@ export function narrationTotals(profile: QuarterProfile): QuarterStats & { minut
   if (typeof total.minutes === "number") total.minutes = Math.round(total.minutes * 10) / 10;
   return total;
 }
+
+/* -------------------------------------------------------------------------------------------- */
+/* The subtraction: the same split, from the retained box score of each read.                     */
+/* -------------------------------------------------------------------------------------------- */
+
+/**
+ * The second route to the same number, and the owner's own idea: keep the box score of every read,
+ * and the quarter is the difference between two of them. 12 points at the end of Q1, 14 at the end
+ * of Q2 — Q2 was 2. It costs nothing, since the payload is already read, and it survives a game
+ * ESPN never narrates.
+ *
+ * It is coarser than the narration in one way that matters: ESPN publishes MIN as a whole number, so
+ * a subtracted minutes figure carries up to a minute of rounding either way. It is kept as the check
+ * and the fallback; where the two disagree the narration wins and the disagreement is logged.
+ */
+export interface SnapshotLine { id: string; name: string; team: string; stats: Record<string, number> }
+export interface StoredSnapshot { period: number; players: SnapshotLine[] }
+
+export interface SubtractedLine extends QuarterStats { period: number; minutes: number | null }
+export interface SubtractedProfile { id: string; name: string; team: string; periods: SubtractedLine[] }
+
+/** ESPN's box-score labels → the names the quarter profile uses. */
+const LABELS: Record<keyof QuarterStats, string> = { pts: "PTS", reb: "REB", ast: "AST", pf: "PF", stl: "STL", tov: "TO", blk: "BLK" };
+
+export function quartersBySubtraction(snapshots: StoredSnapshot[]): SubtractedProfile[] {
+  const byPeriod = new Map<number, Map<string, SnapshotLine>>();
+  for (const snap of snapshots) byPeriod.set(snap.period, new Map(snap.players.map((p) => [p.id, p])));
+  const periods = [...byPeriod.keys()].sort((a, b) => a - b);
+  const known = new Map<string, SnapshotLine>();
+  for (const period of periods) for (const [id, line] of byPeriod.get(period)!) known.set(id, line);
+
+  const out: SubtractedProfile[] = [];
+  for (const [id, seed] of known) {
+    const lines: SubtractedLine[] = [];
+    for (const period of periods) {
+      const now = byPeriod.get(period)!.get(id);
+      // A period whose baseline was never stored cannot be isolated: everything up to it is lumped
+      // into one figure, which is not a quarter. Only the first period may bank on a zero baseline.
+      const before = period === 1 ? { stats: {} as Record<string, number> } : byPeriod.get(period - 1)?.get(id);
+      if (!now || !before) continue;
+      const diff = (label: string) => Math.max(0, (now.stats[label] ?? 0) - (before.stats[label] ?? 0));
+      const minutes = now.stats.MIN === undefined ? null : Math.max(0, now.stats.MIN - (before.stats.MIN ?? 0));
+      lines.push({
+        period, minutes,
+        pts: diff(LABELS.pts), reb: diff(LABELS.reb), ast: diff(LABELS.ast),
+        pf: diff(LABELS.pf), stl: diff(LABELS.stl), tov: diff(LABELS.tov), blk: diff(LABELS.blk),
+      });
+    }
+    if (lines.length) out.push({ id, name: seed.name, team: seed.team, periods: lines });
+  }
+  return out;
+}
+
+export interface Reconciliation {
+  /** (player, period, stat) cells both routes had a figure for. */
+  compared: number;
+  agreed: number;
+  /** Named, so a disagreement is read rather than counted. Capped: the log is not the place for 400. */
+  notes: string[];
+}
+
+/**
+ * Do the two routes tell the same story? Counting stats must match exactly — both are counting the
+ * same events. Minutes are allowed a minute of slack, which is ESPN's own rounding of MIN and not a
+ * tolerance invented here.
+ */
+export function reconcileQuarters(narration: QuarterProfiles, subtraction: SubtractedProfile[], limit = 8): Reconciliation {
+  const bySub = new Map(subtraction.map((p) => [p.id, new Map(p.periods.map((q) => [q.period, q]))]));
+  let compared = 0;
+  let agreed = 0;
+  const notes: string[] = [];
+  for (const player of narration.players) {
+    const sub = bySub.get(player.id);
+    if (!sub) continue;
+    for (const line of player.periods) {
+      const other = sub.get(line.period);
+      if (!other) continue;
+      for (const key of Object.keys(LABELS) as (keyof QuarterStats)[]) {
+        compared += 1;
+        if (line[key] === other[key]) agreed += 1;
+        else if (notes.length < limit) notes.push(`${player.name} Q${line.period} ${LABELS[key]}: narration ${line[key]}, subtraction ${other[key]}`);
+      }
+      if (line.minutes !== null && other.minutes !== null) {
+        compared += 1;
+        if (Math.abs(line.minutes - other.minutes) <= 1) agreed += 1;
+        else if (notes.length < limit) notes.push(`${player.name} Q${line.period} MIN: narration ${line.minutes}, subtraction ${other.minutes}`);
+      }
+    }
+  }
+  return { compared, agreed, notes };
+}
