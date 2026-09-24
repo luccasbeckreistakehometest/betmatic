@@ -3,6 +3,7 @@ import Link from "next/link";
 import { LogoMark } from "@/components/Logo";
 import { MarketingFooter, MarketingHeader } from "@/components/MarketingShell";
 import { ProofStrip } from "@/components/ProofStrip";
+import { Plate } from "@/components/Plate";
 import { DEFAULT_META, langFrom, pageMetadata, type SearchProps } from "@/lib/seo";
 import { formatMoneyBRL, formatPercent } from "@/lib/format";
 import { LinkButton, NumCell, Table, Td, Th, Tr, chanceStep } from "@/components/ui";
@@ -76,6 +77,18 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
 
           {/* ---- the ladder: the product's real output, as the table it is ---- */}
           <div className="border border-line bg-surface-1 lg:col-span-5" data-density="compact">
+            {/* The five columns beside the title are the ladder's, and the ladder is the strongest
+                thing on the page, so the plate becomes the panel's cover rather than displacing it.
+                The one eager image on the site: on a desk it is above the fold, and on a phone it
+                follows the whole left column, so the call to action is never pushed under it. */}
+            <Plate
+              image="/img/plate/hand-phone.webp"
+              alt={c.plates.hero.alt}
+              sizes="(min-width: 1280px) 470px, (min-width: 1024px) 38vw, calc(100vw - 32px)"
+              priority
+              flush
+              className="border-b border-line"
+            />
             <div className="border-b border-line px-4 py-3">
               <h2 className="text-label u-label text-fg">{c.ladderTitle}</h2>
               <p className="mt-1 text-tiny leading-relaxed text-fg-dim">{c.ladderSub}</p>
@@ -123,19 +136,30 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
             {c.dailyTitle}
           </h2>
           <p className="mt-2 max-w-2xl text-base leading-relaxed text-fg-muted">{c.dailySub}</p>
-          <div className="mt-8 grid gap-4 md:grid-cols-2">
-            {c.daily.map((item) => (
-              <div key={item.title} className="flex flex-col rounded-panel border border-line bg-surface-1 p-(--panel-p)">
-                <h3 className="text-body font-semibold text-fg">{item.title}</h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-fg-muted">{item.body}</p>
-                <Link
-                  href={{ pathname: item.href, query: { lang } }}
-                  className="mt-4 self-start text-sm text-fg underline underline-offset-2 decoration-line-control hover:decoration-fg"
-                >
-                  {item.cta} →
-                </Link>
-              </div>
-            ))}
+          {/* The section is about the day's own tickets, so the picture of a handset half photograph
+              half plan leads the row and the two cards stack beside it: at every width the plate is
+              a column, never a full-bleed band that would be 500px tall on a tablet. */}
+          <div className="mt-8 grid gap-6 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:items-start">
+            <Plate
+              image="/img/plate/phone-blueprint.webp"
+              alt={c.plates.daily.alt}
+              ratio="aspect-plate-tall"
+              sizes="(min-width: 1280px) 490px, (min-width: 768px) 40vw, calc(100vw - 32px)"
+            />
+            <div className="grid gap-4">
+              {c.daily.map((item) => (
+                <div key={item.title} className="flex flex-col rounded-panel border border-line bg-surface-1 p-(--panel-p)">
+                  <h3 className="text-body font-semibold text-fg">{item.title}</h3>
+                  <p className="mt-2 flex-1 text-sm leading-relaxed text-fg-muted">{item.body}</p>
+                  <Link
+                    href={{ pathname: item.href, query: { lang } }}
+                    className="mt-4 self-start text-sm text-fg underline underline-offset-2 decoration-line-control hover:decoration-fg"
+                  >
+                    {item.cta} →
+                  </Link>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -143,10 +167,22 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
       {/* ---- honesty ---- */}
       <section className="border-b border-line">
         <div className="mx-auto max-w-shell px-4 py-16 sm:px-6">
-          <h2 className="max-w-xl u-title text-h2 text-fg">
-            {c.honestyTitle}
-          </h2>
-          <p className="mt-2 text-base text-fg-muted">{c.honestySub}</p>
+          {/* A paper slip turning into the record of itself: the argument of the three points below,
+              and the closest thing on the page to what the public ledger actually is. */}
+          <div className="grid gap-8 md:grid-cols-[minmax(0,8fr)_minmax(0,4fr)] md:items-end">
+            <div>
+              <h2 className="max-w-xl u-title text-h2 text-fg">
+                {c.honestyTitle}
+              </h2>
+              <p className="mt-2 text-base text-fg-muted">{c.honestySub}</p>
+            </div>
+            <Plate
+              image="/img/plate/slip-tape.webp"
+              alt={c.plates.honesty.alt}
+              ratio="aspect-plate"
+              sizes="(min-width: 1280px) 375px, (min-width: 768px) 31vw, calc(100vw - 32px)"
+            />
+          </div>
           <div className="mt-10 grid gap-px overflow-hidden rounded-panel border border-line bg-surface-3 md:grid-cols-3">
             {c.honestyPoints.map((point, i) => (
               <div key={point.title} className="flex flex-col bg-surface-1 p-6">
@@ -182,6 +218,20 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
           <h2 className="u-title text-h2 text-fg">
             {c.howTitle}
           </h2>
+          {/* The only place on the page where a falling line is the argument rather than a
+              contradiction: step 04 below says every ticket is graded in public, good or bad. The
+              strip runs the section's width because the drawing is mostly air — in a column it
+              would be a sliver beside a void — and the caption says in words that this is the
+              method and not our own record. On a phone it keeps the wider ratio, or the chart
+              would be 30px tall. */}
+          <Plate
+            image="/img/plate/ledger-line.webp"
+            alt={c.plates.how.alt}
+            caption={c.plates.how.caption}
+            ratio="aspect-plate-wide md:aspect-plate-band"
+            sizes="(min-width: 1288px) 1192px, (min-width: 640px) calc(100vw - 48px), calc(100vw - 32px)"
+            className="mt-8"
+          />
           <ol className="mt-10 flex flex-col gap-px overflow-hidden rounded-panel border border-line bg-surface-3">
             {c.howSteps.map((step) => (
               <li key={step.n} className="grid gap-4 bg-surface-1 p-6 sm:grid-cols-[6rem_1fr_2fr] sm:items-baseline">
@@ -218,6 +268,24 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
                 </div>
               </Link>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ---- who builds it: a real face and a first-person line, right before the price ---- */}
+      <section className="border-b border-line" data-testid="founder">
+        <div className="mx-auto grid max-w-shell gap-8 px-4 py-16 sm:px-6 md:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] md:items-center">
+          <Plate
+            image="/img/plate/founder.webp"
+            alt={c.plates.founder.alt}
+            ratio="aspect-plate"
+            sizes="(min-width: 1280px) 375px, (min-width: 768px) 31vw, calc(100vw - 32px)"
+          />
+          <div>
+            <span className="text-label u-label text-fg-dim">{c.founderEyebrow}</span>
+            <p className="mt-3 u-title text-lead text-fg">{c.founderName}</p>
+            <p className="mt-1 text-sm text-fg-muted">{c.founderRole}</p>
+            <p className="mt-4 max-w-measure text-base leading-relaxed text-fg-muted">{c.founderLine}</p>
           </div>
         </div>
       </section>

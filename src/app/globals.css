@@ -26,6 +26,15 @@
   --fg-faint: #868ea0;
   --fg-inverse: #ffffff;
 
+  /* A plate is a panel that stays dark in both themes. The five landing images are lit for the
+     dark mode, so their frame keeps the dark value on the light page too: there it reads as a panel
+     someone meant to be dark, not as a black rectangle that failed to load. Declared once, on bare
+     :root, and deliberately absent from the two dark blocks below — a plate has no second value.
+     Its edge is the dark rule (#2F3542), not --line: against white the fill already draws the
+     silhouette and a near-white hairline would ring it like a halo. */
+  --plate: #0a0c11;
+  --plate-line: #2f3542;
+
   /* Rules and edges. --line is structure; --line-control is an affordance and stays ≥3:1. */
   --line: #e6e9ef;
   --line-strong: #cfd4de;
@@ -272,6 +281,8 @@
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
   --color-line-control: var(--line-control);
+  --color-plate: var(--plate);
+  --color-plate-line: var(--plate-line);
   --color-action: var(--action);
   --color-action-fg: var(--action-fg);
   --color-action-hover: var(--action-hover);
@@ -370,6 +381,13 @@
   --text-mega--line-height: 1;
   --text-mega--letter-spacing: -0.035em;
   --text-mega--font-weight: 700;
+
+  /* The ratios the plates are cropped to (§8.3). A reserved box is a decision like any other
+     size, so it is a token, not an arbitrary value: aspect-plate-wide / -tall / plate / -band. */
+  --aspect-plate-wide: 16 / 9;
+  --aspect-plate-tall: 4 / 3;
+  --aspect-plate: 3 / 2;
+  --aspect-plate-band: 4 / 1;
 }
 
 /* Custom utilities. Declared with @utility so variants (hover:, md:, print:) still apply. */

@@ -16,6 +16,14 @@ const nextConfig: NextConfig = {
   // Playwright must stay a real Node dependency — bundling it breaks browser launch.
   serverExternalPackages: ["playwright", "playwright-core"],
   images: {
+    // The landing's plates are encoded ahead of time (scripts/build-plates.mjs) and picked by
+    // src/lib/plate-loader.ts, so no image is optimised at request time: `sharp` never has to be in
+    // the runtime image and /_next/image is never hit. The two size lists are narrowed to the
+    // widths that exist on disk, so next/image cannot put a missing file in a srcset.
+    loader: "custom",
+    loaderFile: "./src/lib/plate-loader.ts",
+    deviceSizes: [640, 960, 1280],
+    imageSizes: [384],
     remotePatterns: [{ protocol: "https", hostname: "a.espncdn.com" }],
   },
   async headers() {
