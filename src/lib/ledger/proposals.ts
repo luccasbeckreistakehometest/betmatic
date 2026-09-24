@@ -96,8 +96,6 @@ export interface CreateProposal {
 const byId = (id: string): ProposalRow | null =>
   (getDb().prepare("SELECT * FROM learning_proposals WHERE id=?").get(id) as ProposalRow | undefined) ?? null;
 
-export const getProposal = byId;
-
 /**
  * Files a proposal and decides, once, whether it may ever be offered.
  *
