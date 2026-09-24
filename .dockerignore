@@ -15,6 +15,9 @@ node_modules
 out
 *.tsbuildinfo
 
+# The plates' masters: the encoded WebPs under public/ are what the image needs.
+assets
+
 # Tests and their artefacts.
 test-results
 playwright-report

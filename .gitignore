@@ -48,6 +48,10 @@ next-env.d.ts
 /.browser-profiles
 .env.local
 
+# The plates' masters (1–2 MB PNGs each). A browser never asks for them: what the site serves
+# is the WebP set under public/img/plate, written by scripts/build-plates.mjs and committed.
+/assets
+
 # test artefacts
 /playwright-report
 /test-results

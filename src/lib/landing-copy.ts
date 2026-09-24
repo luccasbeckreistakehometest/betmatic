@@ -63,6 +63,26 @@ export interface LandingCopy {
   finalTitle: string;
   finalSub: string;
   finalCta: string;
+
+  /**
+   * The five plates. `alt` is what a screen reader is told is in the picture — the images carry no
+   * product claim, but a reader who cannot see them should still know what the page is showing.
+   * Only the method plate takes a caption, and it exists to stop a falling line being read as our
+   * own record: a caption describes the picture, never a result.
+   */
+  plates: {
+    hero: { alt: string };
+    daily: { alt: string };
+    honesty: { alt: string };
+    how: { alt: string; caption: string };
+    founder: { alt: string };
+  };
+
+  /** Who builds it: a real person beside the product, in the first person and promising nothing. */
+  founderEyebrow: string;
+  founderName: string;
+  founderRole: string;
+  founderLine: string;
 }
 
 const PT: LandingCopy = {
@@ -242,6 +262,23 @@ const PT: LandingCopy = {
   finalTitle: "Comece pelo grátis",
   finalSub: "Um jogo por dia, sem cartão. Se o número te convencer, você escolhe um plano.",
   finalCta: "Criar conta",
+
+  plates: {
+    hero: { alt: "Foto de uma mão segurando um celular. Do meio para a direita a foto vira o desenho técnico da mesma mão e do mesmo aparelho, com linhas de cota e medidas ao redor." },
+    daily: { alt: "Celular deitado numa mesa escura, visto de cima em ângulo. Metade do aparelho é a foto e metade é a planta técnica dele, com linhas de construção passando por cima da tela." },
+    honesty: { alt: "Uma tira de papel perfurado curvando sobre fundo escuro. A metade da esquerda é papel fotografado; na da direita o papel vira o desenho em linha da mesma tira." },
+    how: {
+      alt: "Esquema: dezenas de marcas verticais verdes e vermelhas sobre uma linha de base, uma por bilhete liquidado, e acima delas a linha do acumulado, que desce da esquerda para a direita.",
+      caption: "Ilustração do método: cada marca é um bilhete já liquidado, verde ou vermelho, e a linha de cima é o acumulado. Não é o nosso histórico — o nosso fica na prova pública.",
+    },
+    founder: { alt: "Luccas Beck, de camisa branca, sentado atrás de um notebook com a luz de uma janela ao lado, olhando para a câmera." },
+  },
+
+  founderEyebrow: "Quem faz",
+  founderName: "Luccas Beck",
+  founderRole: "Desenvolvedor. O Betmatic é feito por mim.",
+  founderLine:
+    "Cansei de grupo que posta o green e apaga o resto. Construí o contrário: todo bilhete que o sistema monta fica registrado na hora e é conferido depois do jogo, tenha dado certo ou não. Quando o número ficar feio, ele vai estar na página de prova do mesmo jeito.",
 };
 
 const EN: LandingCopy = {
@@ -408,6 +445,23 @@ const EN: LandingCopy = {
   finalTitle: "Start on the free tier",
   finalSub: "One game a day, no card. If the numbers convince you, pick a plan.",
   finalCta: "Create account",
+
+  plates: {
+    hero: { alt: "A photograph of a hand holding a phone. From the middle rightwards the photograph turns into a technical drawing of the same hand and the same handset, ringed with dimension lines and measurements." },
+    daily: { alt: "A phone lying on a dark desk, seen from above at an angle. Half the handset is the photograph and half is its technical plan, with construction lines running across the screen." },
+    honesty: { alt: "A strip of punched paper curving over a dark background. The left half is photographed paper; on the right the paper becomes a line drawing of the same strip." },
+    how: {
+      alt: "A schematic: dozens of green and red vertical marks along a baseline, one per settled ticket, and above them the running-total line, falling from left to right.",
+      caption: "An illustration of the method: each mark is a ticket already settled, green or red, and the line above is the running total. It is not our record — ours is on the track-record page.",
+    },
+    founder: { alt: "Luccas Beck in a white shirt, sitting behind a laptop with window light to one side, looking at the camera." },
+  },
+
+  founderEyebrow: "Who builds it",
+  founderName: "Luccas Beck",
+  founderRole: "Developer. Betmatic is built by me.",
+  founderLine:
+    "I got tired of groups that post the winners and delete the rest. So I built the opposite: every ticket the system builds is logged the moment it is built and graded once the game ends, right or wrong. When the numbers look bad, they stay on the track-record page all the same.",
 };
 
 export function landingCopy(lang: Lang): LandingCopy {

@@ -436,6 +436,17 @@ glassmorphism, backdrop blur over content, decorative gradients and blurred colo
 banned. The one gradient permitted in the whole system is the horizontal fade that marks a
 scrollable table's clipped edge (`--surface-1` → transparent, 24 px).
 
+**The plate — the one surface that does not change with the theme.** The marketing page carries
+five commissioned images, all of them photographed or drawn for the dark mode. A dark picture
+dropped on the light page reads as a black rectangle that failed to load, so it is framed instead:
+`--plate #0A0C11` fill and `--plate-line #2F3542` edge, declared once on bare `:root` and
+deliberately absent from the two dark blocks, so a plate has exactly one value in both themes and
+reads on white as a panel someone meant to be dark. The edge is the dark rule and not `--line`,
+because against white the fill already draws the silhouette and a near-white hairline would ring it
+like a halo. Every plate reserves its ratio before a byte arrives (`--aspect-plate-wide 16/9`,
+`-tall 4/3`, `--aspect-plate 3/2`, `-band 4/1`), so an image can never move the page; the component
+is `src/components/Plate.tsx` and the files it serves are written by `scripts/build-plates.mjs`.
+
 ---
 
 ## 9. Motion
@@ -895,6 +906,7 @@ Written after building it, so the doc and the code agree. Branch `feat/design-sy
 | `surface-0…3` | `--surface-0…3` | `bg-surface-1` |
 | `text-primary / secondary / tertiary / disabled / inverse` | `--fg` / `--fg-muted` / `--fg-dim` / `--fg-faint` / `--fg-inverse` | `text-fg-muted` |
 | `border / border-strong / border-control` | `--line` / `--line-strong` / `--line-control` | `border-line-control` |
+| `plate / plate-line` (§8.3) | `--plate` / `--plate-line` | `bg-plate border-plate-line` |
 | `action-bg / action-fg` | `--action` / `--action-fg` (+ `--action-hover`, `--action-active`) | `bg-action text-action-fg` |
 | `focus`, `pos`, `neg`, `warn`, tints | same names | `outline-focus`, `text-pos`, `bg-neg-tint` |
 | `chance-1…5` | same | `data-chance="3"` on the cell (the ramp is a rule, not a text colour) |
