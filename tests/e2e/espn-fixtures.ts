@@ -3,6 +3,85 @@ import { buildWorld, COMMON, CORE, etKey, HOUR, SITE, WEB, writeFile, type FakeG
 const dec = (american: number) => (american > 0 ? 1 + american / 100 : 1 + 100 / Math.abs(american));
 const BB_LABELS = ["MIN", "PTS", "REB", "AST", "STL", "BLK", "TO", "FG", "FG%", "3PT", "3P%", "FT", "FT%", "PF"];
 const FB_LABELS = ["G", "A", "SHOT", "SOG", "FC", "FA", "OF", "YC", "RC"];
+/** ESPN's athlete-splits label row, in its published order. */
+const SPLIT_LABELS = ["GP", "MIN", "FG", "FG%", "3PT", "3P%", "FT", "FT%", "OR", "DR", "REB", "AST", "BLK", "STL", "PF", "TO", "PTS"];
+
+/** One splits row for a player, scaled: `lift` moves her production, `games` is the cut's sample. */
+function splitRow(p: Player, displayName: string, abbreviation: string, games: number, lift: number) {
+  const n = (x: number) => Number((x * lift).toFixed(1));
+  const pts = n(p.base.PTS ?? 0);
+  const three = n(p.base["3PT"] ?? 0);
+  const stats: Record<string, string> = {
+    GP: String(games), MIN: String(n(p.minutes)), FG: `${(pts / 2.4).toFixed(1)}-${(pts / 1.1).toFixed(1)}`, "FG%": "45.0",
+    "3PT": `${three.toFixed(1)}-${(three + 2).toFixed(1)}`, "3P%": "35.0", FT: "2.0-2.4", "FT%": "83.0",
+    OR: "1.0", DR: String(n((p.base.REB ?? 0) * 0.75)), REB: String(n(p.base.REB ?? 0)), AST: String(n(p.base.AST ?? 0)),
+    BLK: String(p.base.BLK ?? 0), STL: String(p.base.STL ?? 0), PF: String(p.base.PF ?? 0), TO: String(p.base.TO ?? 0), PTS: String(pts),
+  };
+  return { displayName, abbreviation, stats: SPLIT_LABELS.map((l) => stats[l]) };
+}
+
+/**
+ * The athlete splits feed, in the shape the REAL endpoint publishes (probed 24/09/2026). Home and
+ * road are half a season each so the venue cut clears the sample gate; the opponent cuts are two
+ * games, which is what the real NBA feed carries and which the gate must refuse — except the one
+ * pairing pinned at the gate itself, so the closed world exercises both sides of it.
+ */
+function athleteSplits(p: Player, opponents: Team[], season: number) {
+  const half = 16;
+  return {
+    displayName: `${season} Splits`,
+    labels: SPLIT_LABELS,
+    names: SPLIT_LABELS,
+    splitCategories: [
+      { name: "split", displayName: "split", splits: [
+        splitRow(p, "All Splits", "Total", half * 2, 1),
+        // A real venue gap, so the block has something to report rather than a rounding difference.
+        splitRow(p, "Home", "Home", half, 1.12),
+        splitRow(p, "Road", "Road", half, 0.88),
+      ] },
+      { name: "byMonth", displayName: "Month", splits: [] },
+      { name: "byResult", displayName: "Result", splits: [] },
+      { name: "byOpponent", displayName: "Opponent", splits: opponents.map((t) =>
+        splitRow(p, t.name, `vs ${t.abbr}`, t.abbr === "BOR" ? 5 : 2, 1.05)) },
+      { name: "byArena", displayName: "Arena", splits: [] },
+    ],
+  };
+}
+
+const ranked = (name: string, abbreviation: string, value: number, rank: number | null) => ({ name, abbreviation, value, rank });
+
+/**
+ * The team season statistics feed, in the core API's shape. `avgPointsAllowed` is included because
+ * the WNBA publishes it — the real NBA feed does not, and the adapter leaves it out there.
+ */
+function teamSeasonStats(t: Team, index: number, season: number) {
+  const scored = 82 + index * 2;
+  return {
+    season: { $ref: `https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/${season}` },
+    team: { $ref: `https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/${season}/teams/${t.id}` },
+    splits: { id: "0", name: "All Splits", abbreviation: "Total", type: "total", categories: [
+      { name: "general", stats: [
+        ranked("gamesPlayed", "GP", 30, null),
+        ranked("avgRebounds", "REB", 33.2 + index, 3 + index),
+        ranked("avgFouls", "PF", 18.5 + index, 6),
+      ] },
+      { name: "defensive", stats: [
+        ranked("avgSteals", "STL", 7 + index * 0.2, 5),
+        ranked("avgBlocks", "BLK", 3.5 + index * 0.1, 8),
+      ] },
+      { name: "offensive", stats: [
+        ranked("avgPoints", "PTS", scored, 1 + index),
+        ranked("avgPointsAllowed", "PAPG", scored - 4, 5 + index),
+        ranked("avgEstimatedPossessions", "EP", 95 + index, 2 + index),
+        ranked("pointsPerEstimatedPossessions", "PPEP", 1.02, null),
+        ranked("avgThreePointFieldGoalsAttempted", "3PA", 25 + index, 7),
+        ranked("threePointPct", "3P%", 35.5, 4),
+        ranked("avgAssists", "AST", 20.5, 9),
+        ranked("avgTurnovers", "TO", 13.1, 8),
+      ] },
+    ] },
+  };
+}
 
 function competitor(team: Team, homeAway: "home" | "away", score?: number) {
   return {
@@ -173,6 +252,10 @@ export function writeEspnFixtures(dir: string, now = Date.now()) {
   writeFile(dir, `${SITE}/soccer/esp.1/teams/sev/roster`, { athletes: [] });
   writeFile(dir, `${SITE}/soccer/esp.1/teams/val/roster`, { athletes: [] });
 
+  // signals/environment.ts derives the season from the TIP-OFF, so a world built on New Year's Eve
+  // can be asked for either side of the boundary; both are written rather than left to the network.
+  const SEASONS = [...new Set(games.map((g) => g.startsAt.getUTCFullYear()).concat(new Date(now).getUTCFullYear()))];
+
   const leagueOf = (t: Team) => (t.players[0].id.startsWith("88") ? { sport: "soccer", league: "bra.1" } : { sport: "basketball", league: "wnba" });
   for (const t of teams) {
     const { sport, league } = leagueOf(t);
@@ -184,6 +267,12 @@ export function writeEspnFixtures(dir: string, now = Date.now()) {
       writeFile(dir, `${COMMON}/${sport}/${league}/athletes/${p.id}/gamelog?season=${new Date(now).getUTCFullYear() - 1}`, { labels: [], events: {}, seasonTypes: [] });
       const starts = p.id === "88003" ? "3 (6)" : p.id === "88002" ? "8 (2)" : "9 (1)";
       writeFile(dir, `${WEB}/${sport}/${league}/athletes/${p.id}`, { athlete: { displayName: p.name, position: { abbreviation: p.pos }, team: { id: t.id, abbreviation: t.abbr }, statsSummary: { displayName: "2026", statistics: [{ name: "starts-subIns", displayValue: starts }] } } });
+      // Season splits, basketball only (signals/splits.ts never asks for any other group). Without
+      // these the closed world would let a generation reach the real ESPN for every candidate.
+      if (sport === "basketball") for (const season of SEASONS) writeFile(dir, `${WEB}/${sport}/${league}/athletes/${p.id}/splits?season=${season}`, athleteSplits(p, teams.filter((x) => x.id !== t.id && !x.players[0].id.startsWith("88")), season));
+    }
+    if (sport === "basketball") {
+      for (const season of SEASONS) writeFile(dir, `${CORE}/${sport}/leagues/${league}/seasons/${season}/types/2/teams/${t.id}/statistics`, teamSeasonStats(t, teams.indexOf(t), season));
     }
   }
 

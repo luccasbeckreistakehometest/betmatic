@@ -8,6 +8,8 @@ import { pricesForGame } from "@/lib/server/book-prices";
 import { getGameLines } from "@/lib/sources/espn-props";
 import { refereeForMatch } from "@/lib/signals/referee";
 import { computeDvp } from "@/lib/signals/dvp";
+import { splitsForGame } from "@/lib/signals/splits";
+import { teamSeasonForGame } from "@/lib/signals/team-season";
 import { getSport } from "@/lib/sports";
 import { lastUsage } from "@/lib/ai/extract";
 import { announceTickets } from "@/lib/server/webhook";
@@ -56,6 +58,26 @@ export async function generateGame(args: { sportKey: string; dateKey: string; de
         away: await computeDvp(sportKey, detail.game.away.id, detail.game.away.abbreviation).catch(() => null) }
     : undefined;
 
+  // Two more cached ESPN reads per team and one per player, all pre-game. Both blocks are season
+  // context and are deliberately NOT handed to the live read, which already has the night's real
+  // production in front of it; adding a season average there would only dilute a longer prompt.
+  const teamSeason = sportDefinition.group === "basketball"
+    ? await teamSeasonForGame({ sportKey, home: detail.game.home, away: detail.game.away, startsAt: detail.game.startsAt }).catch(() => null)
+    : null;
+  // Only the players who survived the role gate, so the requests follow the candidates rather than
+  // the whole roster. Deduped and capped inside splitsForGame.
+  const withProps = new Set(props.map((p) => p.player));
+  const splits = sportDefinition.group === "basketball"
+    ? await splitsForGame({
+        sportKey,
+        homeAbbreviation: detail.game.home.abbreviation,
+        awayAbbreviation: detail.game.away.abbreviation,
+        startsAt: detail.game.startsAt,
+        targets: (candidates?.players ?? []).filter((p) => withProps.has(p.name)).map((p) => ({ athleteId: p.athleteId, player: p.name, team: p.team })),
+      }).catch(() => [])
+    : [];
+  if (splits.length) info.push(`splits: ${splits.length} players, ${splits.filter((s) => s.venueLine && s.otherVenueLine).length} with a usable venue cut`);
+
   const matchup = `${detail.game.away.displayName} @ ${detail.game.home.displayName}`;
   const base = baseUrlOrEmpty();
   const save = (lang: Lang, slate: BetSlate, costUsd: number) =>
@@ -63,7 +85,7 @@ export async function generateGame(args: { sportKey: string; dateKey: string; de
 
   // One main ticket per band, each with its two alternatives: fifteen tickets is the slate the
   // prompt composes, and twice that was the output no thinking budget could finish (22/09/2026).
-  const primarySlate = await buildBets({ game: detail.game, detail, props, picks: [], dimers: [], x: null, bands: BANDS, maxPerBand: 1, lang: primary, referee, dvp, roles: candidates?.roles ?? [], minutes: candidates?.minutes ?? [], consensus, lines });
+  const primarySlate = await buildBets({ game: detail.game, detail, props, picks: [], dimers: [], x: null, bands: BANDS, maxPerBand: 1, lang: primary, referee, dvp, splits, teamSeason, roles: candidates?.roles ?? [], minutes: candidates?.minutes ?? [], consensus, lines });
   save(primary, primarySlate, spend());
   // The operators' running picture of the game, by mail: every pre-game ticket, then every live read.
   void sendTicketMail({ gameId: detail.game.id, sportKey, dateKey, matchup, lang: primary, fresh: { kind: "pre" } });
