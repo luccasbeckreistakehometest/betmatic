@@ -25,7 +25,7 @@ test("the menu holds every door, including the ones the rail does not carry", as
   }
 
   // The doors the rail carries.
-  for (const name of ["Hoje", "Jogos", "Múltiplas", "Meu bilhete", "Minha banca", "Histórico", "Relatório da semana", "Alertas", "Raio-x do tipster", "Ranking", "Ajustes", "Minha conta", "Indique", "Planos"]) {
+  for (const name of ["Hoje", "Jogos", "Múltiplas do dia", "Meu bilhete", "Minha banca", "Histórico", "Relatório da semana", "Alertas", "Raio-x do tipster", "Ranking", "Ajustes", "Minha conta", "Indique", "Planos"]) {
     await expect(menu.getByRole("link", { name }).first()).toBeVisible();
   }
   // The doors it does not: these had no way in from inside the app before the menu.
