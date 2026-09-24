@@ -13,6 +13,7 @@ fs.rmSync(DIR, { recursive: true, force: true });
 
 const { getDb, nowIso } = await import("@/lib/server/db");
 const { runGameLearning, runGameLearningJob, gamesReadyToLearn } = await import("@/lib/ledger/game-learn");
+const { listLearningRuns } = await import("@/lib/ledger/learn");
 const { approveProposal, rejectProposal, listProposals, openProposals, recentRejections, LEARN_MIN_DECIDED } = await import("@/lib/ledger/proposals");
 const { runRevertCheck, measureApplied } = await import("@/lib/ledger/revert");
 const { getPrompt, getPromptVersion, listPromptVersions } = await import("@/lib/server/prompts");
@@ -108,6 +109,21 @@ describe("the per-game trigger", () => {
     await runGameLearningJob(opts, deps);
     await runGameLearningJob(opts, deps);
     expect(calls).toBe(1);
+  });
+
+  it("a game whose post-mortem broke is not written off: the next tick tries it again", async () => {
+    seedLedger([ticket(), ticket(), ticket()]);
+    seedFactor("f1");
+    let calls = 0;
+    const deps = { postMortem: (async () => { calls += 1; throw new Error("modelo fora do ar"); }) as never };
+    const opts = { now: new Date("2026-09-21T02:00:00.000Z") };
+
+    const first = await runGameLearningJob(opts, deps);
+    expect(first.rows[0].status).toBe("error");
+    expect(listLearningRuns().some((r) => r.status === "error" && r.gameId === "g1")).toBe(true);
+
+    await runGameLearningJob(opts, deps);
+    expect(calls).toBe(2);
   });
 
   it("the environment switch stops it dead, without a deploy", async () => {

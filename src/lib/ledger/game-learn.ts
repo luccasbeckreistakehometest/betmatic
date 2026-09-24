@@ -7,7 +7,7 @@ import { aiConfigured, describeAiError } from "@/lib/ai/client";
 import { lastUsage } from "@/lib/ai/extract";
 import { aiRewrite, type RewriteFn } from "@/lib/server/prompts";
 import { keysAlreadyRun, oncePerKey } from "@/lib/server/job-guard";
-import { logEvent } from "@/lib/server/ops-log";
+import { logEvent, reportError } from "@/lib/server/ops-log";
 import { filePromptProposal, fileCodeGates } from "@/lib/ledger/file-proposal";
 import { recentRejections, type ProposalRow } from "@/lib/ledger/proposals";
 import { aiPostMortem, citedLessons, summariseWindow, type LearningRunRow, type Lesson, type PostMortemFn } from "@/lib/ledger/learn";
@@ -207,7 +207,13 @@ export async function runGameLearning(game: GameCandidate, deps: GameLearnDeps =
 
     return { run: db.prepare("SELECT * FROM learning_runs WHERE id=?").get(id) as LearningRunRow, proposals, costUsd: spent };
   } catch (error) {
-    return { run: insertSkipped("error", describeAiError(error) ?? (error instanceof Error ? error.message : "falhou")), proposals: [], costUsd: cost() };
+    // The run is filed with what broke, so the panel shows it — and then it is re-thrown, because
+    // `oncePerKey` must NOT record the game as read. A post-mortem that died on a timeout is a game
+    // nobody has learnt from yet, and swallowing the throw here would retire it in silence. The
+    // retry is bounded by the lookback: once the game falls out of the window it stops being a
+    // candidate, so a game that fails for ever costs a handful of attempts rather than an open tab.
+    const run = insertSkipped("error", describeAiError(error) ?? (error instanceof Error ? error.message : "falhou"));
+    throw Object.assign(error instanceof Error ? error : new Error(run.note), { learningRun: run });
   }
 }
 
@@ -248,7 +254,16 @@ export async function runGameLearningJob(opts: { now?: Date; max?: number; force
       out.note = "Orçamento de IA do dia esgotado; os jogos restantes ficam na fila para o próximo tique.";
       break;
     }
-    const once = await oncePerKey(GAME_LEARN_JOB, game.gameId, () => runGameLearning(game, deps), { force: !!opts.force });
+    // One game's failure is that game's failure: the tick goes on to the next one, and the game it
+    // failed on stays a candidate until the lookback closes.
+    let once: Awaited<ReturnType<typeof oncePerKey<GameLearnResult>>>;
+    try {
+      once = await oncePerKey(GAME_LEARN_JOB, game.gameId, () => runGameLearning(game, deps), { force: !!opts.force });
+    } catch (error) {
+      reportError("job.learn-game", error, { gameId: game.gameId, matchup: game.matchup });
+      out.rows.push({ gameId: game.gameId, matchup: game.matchup, status: "error", proposals: 0 });
+      continue;
+    }
     if (!once.ran || !once.result) continue;
     out.games += 1;
     out.proposals += once.result.proposals.length;
