@@ -2,7 +2,7 @@ import { getGameDetail, getPlayerHistory, getSeasonRole } from "@/lib/sources/es
 import { getPropPrices, PROP_BOOK, type PostedProp, type PropFeed } from "@/lib/sources/espn-props";
 import { getLiveBoxScore, type LiveBoxScore } from "@/lib/props/box-score";
 import { describeDropped, guardProps, type StaleVerdict } from "@/lib/props/stale";
-import { measureProp } from "@/lib/props/history";
+import { matchAthlete, measureProp } from "@/lib/props/history";
 import { blendedProbability, clampProbability, fitRate, liveRate, projectLeg, seriesFor, type LadderRung, type RateFit, type RateSample } from "@/lib/props/model";
 import { listingAvailability, projectMinutes, projectRemainingMinutes, type AbsentTeammate, type MinutesProjection } from "@/lib/props/minutes";
 import { buildRoleFromStarts, buildRoleProfile, volumeSupports, type RoleProfile } from "@/lib/props/role";
@@ -343,9 +343,18 @@ function unpricedRows(sport: SportDef, player: PlayerContext, inputs: ModelInput
  * projection (props/minutes.ts) that reads the injury report and the spread; in play the projection
  * is of the remainder, against the box score.
  */
+/**
+ * How many extra players a game may pick up from the licensed books' published lines.
+ *
+ * Twelve, because the books posted lines on 24 distinct players across five WNBA games on
+ * 24/09/2026 — about five a game — and a blowout night with two deep rosters should not be capped
+ * below what the market actually prices. Each one costs a game-log fetch, not a token.
+ */
+export const BOOK_PLAYER_CAP = 12;
+
 export async function buildPropCandidates(
   detail: GameDetail,
-  opts: { maxPlayers?: number; limit?: number; feed?: PropFeed; box?: LiveBoxScore | null } = {},
+  opts: { maxPlayers?: number; limit?: number; feed?: PropFeed; box?: LiveBoxScore | null; alsoMeasure?: string[] } = {},
 ): Promise<CandidateSet> {
   const sport = getSport(detail.game.sportKey);
   const empty: CandidateSet = { props: [], roles: [], minutes: [], dropped: [], feed: "empty", posted: [], players: [], staleDropped: [], live: null };
@@ -382,6 +391,33 @@ export async function buildPropCandidates(
       for (const a of (r.athletes ?? []).filter((x) => leaderNames.has(x.name)).slice(0, 3)) picks.push({ athleteId: a.id, name: a.name, team: r.teamAbbreviation });
     }
   }
+  // The players the Brazilian books priced, added to the ones ESPN's feed picked.
+  //
+  // This is the bottleneck the ledger found on 24/09/2026. The pick list above is built only from
+  // `feed.props` — ESPN's own prop feed — so the game logs were fetched for whoever ESPN posted.
+  // The licensed books post a DIFFERENT set: in Toronto @ Connecticut ESPN's feed pointed at
+  // Leger-Walker, Allemand, Harrison, Nelson-Ododa and Mabrey while the books had published lines
+  // on Diamond Miller, Aaliyah Edwards, Kiki Rice, Leila Lacan and Jaskaite. One name in common.
+  // Every generation that night said the same thing in its own words — "apenas três jogadoras têm
+  // histórico medido e preço publicado" — because a player with no measured history cannot carry a
+  // leg, and the books' own players were never measured.
+  //
+  // Nothing is relaxed here: these players get game logs like any other, and a line still has to
+  // clear every gate. The change is only WHICH players get measured, so a published price stops
+  // being wasted for want of a history nobody fetched.
+  const extra: typeof picks = [];
+  if (opts.alsoMeasure?.length) {
+    const taken = new Set(picks.map((p) => p.athleteId));
+    for (const name of [...new Set(opts.alsoMeasure)]) {
+      const hit = matchAthlete(name, roster);
+      if (!hit || taken.has(hit.id)) continue;
+      taken.add(hit.id);
+      extra.push({ athleteId: hit.id, name: hit.name, team: byId.get(hit.id)?.team ?? "" });
+      if (extra.length >= BOOK_PLAYER_CAP) break;
+    }
+    picks = [...picks, ...extra];
+  }
+
   if (!picks.length) return { ...empty, feed: feed.status, staleDropped, live: box };
 
   // The absences that free minutes, per team, with their logs where the roster names them.
