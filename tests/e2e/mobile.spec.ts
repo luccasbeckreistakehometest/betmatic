@@ -262,6 +262,57 @@ test("the tickets panel offers 'Ver bilhetes' from the bottom of the page and sc
   expect(await top()).toBeLessThan(200);
 });
 
+test("a ticket reads as a betting slip, and tapping it opens the rest as a bottom sheet", async ({ page }) => {
+  await registerUser(page, "phoneslip");
+  await skipTour(page);
+  await page.goto("/app/game/401882878?sport=soccer-esp&lang=pt");
+  const card = page.getByTestId("ticket").first();
+  await expect(card).toBeVisible({ timeout: 30_000 });
+
+  // The face of the card: the ticket's name, its combined price, one line per selection with its
+  // own price, and the two actions. None of the numbers behind it.
+  const face = card.getByTestId("ticket-face");
+  await expect(card.getByTestId("ticket-line").first()).toBeVisible();
+  await expect(card.getByTestId("ticket-numbers")).toHaveCount(0);
+  await expect(card.getByTestId("ticket-prices")).toHaveCount(0);
+  const combined = Number((await face.locator(".nums").first().innerText()).replace(".", "").replace(",", "."));
+  expect(combined).toBeGreaterThan(1);
+  // A whole card is the touch target, and the row under it holds both actions at a thumb's size.
+  expect((await face.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  for (const control of await card.getByTestId("ticket-bankroll").getByRole("button").all()) {
+    expect((await control.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  }
+
+  // Tapping the slip opens the sheet: anchored to the bottom edge, the full width of the screen.
+  await face.click();
+  const sheet = page.locator("dialog[open]");
+  await expect(sheet.getByTestId("ticket-details")).toBeVisible();
+  const viewport = page.viewportSize()!;
+  const box = (await sheet.boundingBox())!;
+  expect(Math.round(box.x)).toBe(0);
+  expect(Math.round(box.width)).toBe(viewport.width);
+  expect(Math.round(box.y + box.height)).toBe(viewport.height);
+  await expect(sheet.getByTestId("ticket-numbers")).toBeVisible();
+  await expect(sheet.getByTestId("ticket-detail-lines")).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width + 1);
+  // The phone's own back gesture dismisses the sheet instead of leaving the page.
+  await page.goBack();
+  await expect(page.locator("dialog[open]")).toHaveCount(0);
+  await expect(page).toHaveURL(/\/app\/game\/401882878/);
+
+  // "Adicionar à banca": the reader picks the unit and sees what the ticket pays back as they type.
+  await card.getByTestId("ticket-add-open").click();
+  await card.getByTestId("ticket-stake-money").click();
+  await card.getByTestId("ticket-stake").fill("10");
+  const shown = card.getByTestId("ticket-return");
+  await expect(shown).toContainText(/R\$/);
+  // The combined price on the face is rounded to two decimals; the return is computed from the
+  // price itself, so the two agree to the cent, not to the digit.
+  const paid = Number((await shown.innerText()).match(/R\$\s*([\d.]+,\d{2})/)![1].replace(/\./g, "").replace(",", "."));
+  expect(Math.abs(paid - 10 * combined)).toBeLessThanOrEqual(0.1);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width + 1);
+});
+
 test("installed on a phone with a notch, the chrome clears the status bar and the home indicator", async ({ page }) => {
   const { email } = await registerUser(page, "insets");
   await setPlan(email, "pro");

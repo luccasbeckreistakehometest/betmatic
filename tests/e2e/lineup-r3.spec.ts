@@ -1,5 +1,5 @@
 import { request as pwRequest, test, expect, type Page } from "@playwright/test";
-import { registerUser, setPlan, skipTour, withAiMock } from "./helpers";
+import { closeTicket, openTicket, openTicketWith, registerUser, setPlan, skipTour, withAiMock } from "./helpers";
 
 withAiMock();
 
@@ -15,20 +15,33 @@ async function runLineups() {
   return body as { games: number; alerts: number; notified: number };
 }
 
+/**
+ * The ticket the watcher will flag is the one with alternatives behind it, and "behind it" now
+ * means inside its sheet — so the card is found by opening it, and the stake is put on the card
+ * itself. This account has no bankroll on file, which is exactly why the amount is given in reais:
+ * a unit with no bankroll behind it is a number the product refuses to invent.
+ */
 async function saveMainTicket(page: Page) {
   await page.goto(GAME);
-  const main = page.locator("li", { has: page.getByTestId("alternatives") }).first();
-  await expect(main).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByTestId("ticket").first()).toBeVisible({ timeout: 60_000 });
+  const { index } = await openTicketWith(page, '[data-testid="alternatives"]');
+  await closeTicket(page);
+  const main = page.getByTestId("ticket").nth(index);
+  await main.getByTestId("ticket-add-open").click();
+  await expect(main.getByTestId("ticket-bankroll-ask")).toBeVisible();
+  await main.getByTestId("ticket-stake-money").click();
   await main.getByTestId("ticket-stake").fill("10");
+  await expect(main.getByTestId("ticket-return")).toContainText("R$");
   await main.getByTestId("ticket-add").click();
   await expect(main.getByText("✓")).toBeVisible();
+  return index;
 }
 
 test("lineup watcher: a benched player flags the leg, the backup without him, the bankroll entry, and alerts savers once", async ({ page, browser }) => {
   const { email } = await registerUser(page, "lineup");
   await setPlan(email, "pro");
   await skipTour(page);
-  await saveMainTicket(page);
+  const main = await saveMainTicket(page);
 
   // A second saver who then pauses: nothing reaches them.
   const ctx = await browser.newContext({ baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3300", locale: "pt-BR" });
@@ -44,9 +57,12 @@ test("lineup watcher: a benched player flags the leg, the backup without him, th
 
   await page.goto(GAME);
   await expect(page.getByTestId("lineup-banner")).toContainText("Téo Lins começa no banco", { timeout: 30_000 });
-  await expect(page.getByTestId("leg-alert").first()).toContainText("em risco: no banco");
-  const alts = page.locator("li", { has: page.getByTestId("alternatives") }).first().getByTestId("alternatives");
-  await expect(alts.getByTestId("alt-avoids").first()).toContainText("alternativa sem ele");
+  // The banner is the warning at a glance; the flagged line itself is in the ticket's sheet, beside
+  // the backup that avoids him.
+  const flagged = await openTicket(page, main);
+  await expect(flagged.getByTestId("leg-alert").first()).toContainText("em risco: no banco");
+  await expect(flagged.getByTestId("alternatives").getByTestId("alt-avoids").first()).toContainText("alternativa sem ele");
+  await closeTicket(page);
 
   await page.goto("/app/bankroll?lang=pt");
   await expect(page.getByTestId("entry-alert").first()).toContainText("escalação: 1 linha em risco");

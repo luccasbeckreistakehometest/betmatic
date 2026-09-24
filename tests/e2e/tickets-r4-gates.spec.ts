@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { registerUser, setPlan, skipTour, withAiMock } from "./helpers";
+import { closeTicket, openTicket, registerUser, setPlan, skipTour, withAiMock } from "./helpers";
 
 withAiMock();
 
@@ -24,18 +24,25 @@ test("a game slate never leans on one player, and every player leg carries the l
   const tickets = page.getByTestId("ticket");
   await expect(tickets.first()).toBeVisible({ timeout: 60_000 });
 
-  // Alternatives render as a diff, not as linked legs, so a ticket's player links are its own.
-  const shown = await tickets.evaluateAll((els) =>
-    els.map((el) => ({
-      // Counted by player, not by leg: two lines on one player are one bet on one night.
-      players: [...new Set([...el.querySelectorAll('[data-testid="leg-player-link"]')].map((a) => new URL((a as HTMLAnchorElement).href).pathname))],
-      // Every leg row, and whether the ones naming a player also show the measured record.
-      legs: [...el.querySelectorAll("ol > li")].map((li) => ({
-        player: !!li.querySelector('[data-testid="leg-player-link"]'),
-        measured: !!li.querySelector('[data-testid="leg-measured"]'),
+  // The legs and their measured records live in each ticket's sheet now, so the walk opens every
+  // card the way a reader does and reads the sheet it opens.
+  const shown: { players: string[]; legs: { player: boolean; measured: boolean }[] }[] = [];
+  const total = await tickets.count();
+  for (let i = 0; i < total; i += 1) {
+    const sheet = await openTicket(page, i);
+    shown.push(
+      await sheet.getByTestId("ticket-detail-lines").evaluate((ol) => ({
+        // Counted by player, not by leg: two lines on one player are one bet on one night.
+        players: [...new Set([...ol.querySelectorAll('[data-testid="leg-player-link"]')].map((a) => new URL((a as HTMLAnchorElement).href).pathname))],
+        // Every leg row, and whether the ones naming a player also show the measured record.
+        legs: [...ol.querySelectorAll(":scope > li")].map((li) => ({
+          player: !!li.querySelector('[data-testid="leg-player-link"]'),
+          measured: !!li.querySelector('[data-testid="leg-measured"]'),
+        })),
       })),
-    })),
-  );
+    );
+    await closeTicket(page);
+  }
   expect(shown.length).toBeGreaterThan(1);
 
   const seen = new Map<string, number>();

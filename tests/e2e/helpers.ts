@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { expect, request as pwRequest, test, type APIRequestContext, type Page } from "@playwright/test";
+import { expect, request as pwRequest, test, type APIRequestContext, type Locator, type Page } from "@playwright/test";
 
 const MOCK_FLAG = path.join(process.cwd(), "data", "e2e", "ai-mock.on");
 
@@ -64,4 +64,41 @@ export async function loginAs(page: Page, email: string, password: string) {
   const r = await page.request.post("/api/auth/login", { data: { email, password } });
   expect(r.ok(), await r.text()).toBeTruthy();
   return r.json();
+}
+
+/* ── The ticket card and its sheet ──────────────────────────────────────────────────────────────
+ * A ticket card is a betting slip: its name, its combined price and one line per selection. Every
+ * number behind it — the chance, the EV, the evidence, the measured record, "Onde apostar", the
+ * alternatives — is inside the sheet the card opens, so a spec that reads any of them opens it the
+ * way a reader does: by tapping the slip.
+ */
+
+/** Taps the nth ticket card and returns the open dialog (a bottom sheet on a phone). */
+export async function openTicket(page: Page, index = 0): Promise<Locator> {
+  await page.getByTestId("ticket-face").nth(index).click();
+  const sheet = page.locator("dialog[open]");
+  await expect(sheet.getByTestId("ticket-details")).toBeVisible();
+  return sheet;
+}
+
+export async function closeTicket(page: Page) {
+  await page.locator("dialog[open]").getByRole("button", { name: "Fechar o bilhete" }).click();
+  await expect(page.locator("dialog[open]")).toHaveCount(0);
+}
+
+/**
+ * The index of the first ticket whose sheet holds `selector` — the successor to the old
+ * `page.locator("li", { has: … })`, now that "under the ticket" means "inside its sheet". Leaves
+ * that ticket's sheet open, so the caller reads it straight away.
+ */
+export async function openTicketWith(page: Page, selector: string): Promise<{ index: number; sheet: Locator }> {
+  const cards = page.getByTestId("ticket-face");
+  const total = await cards.count();
+  expect(total, "no ticket on the page").toBeGreaterThan(0);
+  for (let index = 0; index < total; index += 1) {
+    const sheet = await openTicket(page, index);
+    if (await sheet.locator(selector).count()) return { index, sheet };
+    await closeTicket(page);
+  }
+  throw new Error(`no ticket sheet holds ${selector}`);
 }

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { registerUser, setPlan, skipTour, withAiMock } from "./helpers";
+import { openTicketWith, registerUser, setPlan, skipTour, withAiMock } from "./helpers";
 
 withAiMock();
 
@@ -11,10 +11,12 @@ test("player deep dive: line drag, with/without split, a read paid once and shar
   await setPlan(email, "pro", 20);
   await skipTour(page);
 
-  // From a ticket leg to the deep dive (a game no other spec counts tickets on).
+  // From a ticket leg to the deep dive (a game no other spec counts tickets on). The legs with
+  // their names live in the ticket's sheet, which the card opens.
   await page.goto("/app/game/990000104?sport=wnba&lang=pt");
-  await expect(page.getByTestId("leg-player-link").first()).toBeVisible({ timeout: 60_000 });
-  await page.getByTestId("leg-player-link").first().click();
+  await expect(page.getByTestId("ticket").first()).toBeVisible({ timeout: 60_000 });
+  const { sheet } = await openTicketWith(page, '[data-testid="leg-player-link"]');
+  await sheet.getByTestId("leg-player-link").first().click();
   await expect(page).toHaveURL(/\/app\/player\/\d+\?/);
   await expect(page.getByTestId("player-name")).toBeVisible();
 

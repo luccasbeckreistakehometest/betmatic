@@ -1,7 +1,7 @@
 import path from "node:path";
 import Database from "better-sqlite3";
 import { test, expect } from "@playwright/test";
-import { registerUser, setPlan, skipTour, withAiMock } from "./helpers";
+import { closeTicket, openTicketWith, registerUser, setPlan, skipTour, withAiMock } from "./helpers";
 
 withAiMock();
 
@@ -19,9 +19,13 @@ test("cross-game parlays are built on request for Pro, once a day, with the real
   await skipTour(page);
   await page.goto("/app/parlays?sport=wnba&lang=pt");
   await page.getByTestId("build-slate").click();
-  await expect(page.getByTestId("expected-losers").first()).toBeVisible({ timeout: 60_000 });
-  await expect(page.getByTestId("expected-losers").first()).toContainText("em 100 bilhetes assim, espere perder ~");
-  await expect(page.getByText(/1\d\dx|[2-4]\d\dx/).first()).toBeVisible();
+  await expect(page.getByTestId("ticket").first()).toBeVisible({ timeout: 60_000 });
+  // The real chance and the multiplier are inside the sheet the card opens, the same sheet a
+  // single-game ticket has. The card itself carries the combined price with its chance beside it.
+  const { sheet } = await openTicketWith(page, '[data-testid="expected-losers"]');
+  await expect(sheet.getByTestId("expected-losers")).toContainText("em 100 bilhetes assim, espere perder ~");
+  await expect(sheet.getByTestId("ticket-numbers").getByText(/1\d\dx|[2-4]\d\dx/).first()).toBeVisible();
+  await closeTicket(page);
   expect(slateRows()).toBe(1);
 
   const again = await page.request.post("/api/parlays/generate?sport=wnba").then((r) => r.json());
@@ -46,14 +50,14 @@ test("a cross-game ticket opens in one betslip, with the three matches in the UR
   const build = page.getByTestId("build-slate");
   await expect(build.or(page.getByTestId("ticket").first())).toBeVisible({ timeout: 60_000 });
   if (await build.count()) await build.click();
-  await expect(page.getByTestId("expected-losers").first()).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByTestId("ticket").first()).toBeVisible({ timeout: 60_000 });
 
   // The prices arrive after the tickets, the same way the game page loads them. The slate can hold
   // more than one cross-game ticket (three matches and two), so the long one is picked by what its
   // link carries, never by its place on the page — the list is sorted by price, not by length.
-  await expect(page.locator('[data-testid="ticket-prices"][data-coverage="full"]').first()).toBeVisible({ timeout: 30_000 });
-  const prices = page.locator('[data-testid="ticket-prices"][data-coverage="full"]')
-    .filter({ has: page.locator('[data-testid="ticket-open-book"][data-carried="3"]') });
+  await expect(page.getByTestId("ticket-create-slip").first()).toBeVisible({ timeout: 30_000 });
+  const { index, sheet } = await openTicketWith(page, '[data-testid="ticket-open-book"][data-carried="3"]');
+  const prices = sheet.locator('[data-testid="ticket-prices"][data-coverage="full"]');
   await expect(prices).toHaveCount(1);
   const link = prices.getByTestId("ticket-open-book").first();
   await expect(link).toContainText("Abrir o bilhete inteiro na Superbet");
@@ -79,9 +83,15 @@ test("a cross-game ticket opens in one betslip, with the three matches in the UR
   await expect(other).toHaveAttribute("data-carried", "0");
 
   // The outbound click is counted with what the reader was offered, and the book opens in a new tab.
+  // It is taken on the card's own button: the múltipla is placed from the face of the slip, and the
+  // face never promises more than the URL carries either.
+  await closeTicket(page);
+  const face = page.getByTestId("ticket").nth(index).getByTestId("ticket-create-slip");
+  await expect(face).toContainText("Abrir o bilhete inteiro na Superbet");
+  await expect(face).toHaveAttribute("data-carried", "3");
   await page.context().route(/^https:\/\/superbet\.bet\.br\//, (route) => route.fulfill({ status: 200, contentType: "text/html", body: "<title>stub</title>" }));
   const clicked = page.waitForResponse((r) => r.url().endsWith("/api/e") && r.status() === 204);
-  const [popup] = await Promise.all([page.waitForEvent("popup"), link.click()]);
+  const [popup] = await Promise.all([page.waitForEvent("popup"), face.click()]);
   await clicked;
   await popup.close();
   await expect(page).toHaveURL(/\/app\/parlays/);
