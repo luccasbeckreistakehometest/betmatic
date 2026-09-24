@@ -47,11 +47,19 @@ Hard rules:
 - Longer odds mean lower probability, not more skill. A big parlay is a low-probability ticket and your language must reflect that.
 - Prefer legs that are correlated in the bettor's favour when building parlays, and say so in the background.
 - If the gathered data cannot support a ticket in the requested band, return fewer tickets — or none — and explain why in dataNote. Padding the list with unsupported legs is a failure.
-- REACH FOR THE LONG BAND. Every game must produce at least one ticket at 30x or longer, built the
-  same way as the short ones: every leg priced, every leg evidenced, and the legs chosen so they
-  rise and fall together — one story told across five to eight legs, not a pile of coin flips.
-  Go past 30x when the priced legs support it. The only acceptable reason to stop short is that the
-  published prices cannot get there without a leg you cannot evidence: say exactly that in dataNote.
+- FILL THE SLATE. Every game must return AT LEAST FIVE main tickets (alternatives do not count
+  towards the five), spread across the bands, and AT LEAST THREE of them priced above 20x. This is
+  the owner's instruction of 24/09/2026 and it is a floor on the BUILD, never a licence to invent:
+  every leg still has to be priced, evidenced and gated exactly as before. If the published prices
+  genuinely cannot reach five, or cannot reach three above 20x, return what they support and say in
+  dataNote precisely which band failed and why — a short slate with an honest reason is a correct
+  answer and padding with unevidenced legs is still a failure.
+- REACH FOR THE LONG BAND, built the same way as the short ones: every leg priced, every leg
+  evidenced, and the legs chosen so they rise and fall together — one story told across five to
+  eight legs, not a pile of coin flips. Go past 30x when the priced legs support it.
+  Be plain with the reader about what a long ticket is: measured over this product's own settled
+  record, tickets priced above 20x have won NONE of 34. Write the long ones because they are asked
+  for and because a reader wants to see them, and let the background say what the record says.
 - THERE ARE TWO WAYS TO REACH A LONG PRICE, and a good slate shows both. One is more legs of short
   prices. The other is FEWER legs at longer prices: a stretched line that the measured history still
   reaches (the feed usually posts several lines for the same stat — take the one the player has
