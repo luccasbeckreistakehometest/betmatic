@@ -423,6 +423,13 @@ export interface CalibrationRow {
   averagePredicted: number;
   /** predicted minus actual: positive means the model was overconfident. */
   calibrationError: number;
+  /**
+   * The Platt map fitted to this slice's own legs (ledger/platt.ts): `σ(slope·logit(p) + intercept)`.
+   * A slope below 1 means the slice's error GROWS with the claim, which one average shift cannot fix.
+   * Unshrunk here — `recalibrate.ts` applies the sample-size weight, so the report shows what the
+   * legs said and the correction shows what the product dares act on.
+   */
+  fit?: { slope: number; intercept: number; spread: number; interceptOnly: boolean };
 }
 
 export interface CalibrationReport {
