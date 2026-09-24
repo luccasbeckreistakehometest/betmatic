@@ -1,11 +1,8 @@
 import { getDb, newId, nowIso } from "@/lib/server/db";
-import { findGameInfo, findPrediction, savePrediction } from "@/lib/server/predictions";
-import { buildSlateBets } from "@/lib/bets/builder";
-import { localiseSlate } from "@/lib/bets/localise";
-import { lastUsage } from "@/lib/ai/extract";
+import { findGameInfo, findPrediction } from "@/lib/server/predictions";
+import { generateSlate, SYSTEM_SLATE_USER } from "@/lib/server/slate-build";
 import { generateGame } from "@/lib/server/generate-game";
 import { onDemandCaps, onDemandVerdict, slateCaps, slateVerdict, type OnDemandVerdict } from "@/lib/server/on-demand-policy";
-import { buildPropCandidates } from "@/lib/props/candidates";
 import { refreshConfig } from "@/lib/server/refresh-policy";
 import { espnDateKey, getGameDetail, getSlateOrNearest, todayKey } from "@/lib/sources/espn";
 import { SPORTS, sportSellsTickets } from "@/lib/sports";
@@ -135,21 +132,30 @@ export type SlateDemandResult =
   | { status: "generated" | "exists" | "too_few_games" | "cap_global" | "cap_user" | "cap_admin" | "not_allowed" | "ai_off" | "unsupported" | "ai_budget" | "error"; dateKey?: string };
 
 const slateInflight = new Map<string, Promise<SlateDemandResult>>();
-export const SLATE_BANDS = ["long", "moonshot", "lottery"];
 
+/**
+ * The on-demand slate's counters. The scheduler's own daily build is excluded from the global one:
+ * it is the platform's bill, bounded by its own once-a-day guard and by AI_DAILY_BUDGET_USD, and
+ * counting it here would spend the readers' shared allowance before any reader asked for anything.
+ */
 const slateCounts = (userId: string) => {
   const db = getDb();
   const since = brasiliaDayStart();
   return {
-    global: (db.prepare("SELECT COUNT(*) n FROM generation_requests WHERE scope='slate' AND createdAt > ?").get(since) as { n: number }).n,
+    global: (db.prepare("SELECT COUNT(*) n FROM generation_requests WHERE scope='slate' AND userId <> ? AND createdAt > ?").get(SYSTEM_SLATE_USER, since) as { n: number }).n,
     user: (db.prepare("SELECT COUNT(*) n FROM generation_requests WHERE scope='slate' AND userId = ? AND createdAt > ?").get(userId, since) as { n: number }).n,
   };
 };
 
 /**
  * Cross-game parlays on demand: one shared slate per sport per day, built when a plan with cross-game
- * tickets asks for it (slateVerdict decides). Up to SLATE_MAX_GAMES upcoming games, with their posted
- * player prices, in the long/moonshot/lottery bands; a ticket with two legs from one game is dropped.
+ * tickets asks for it (slateVerdict decides). Up to SLATE_MAX_GAMES upcoming games with their posted
+ * player prices, in the day's own window (bets/cross-policy.ts); a ticket with two legs from one game
+ * is dropped.
+ *
+ * The scheduler builds the same thing every day for every sport with two games or more
+ * (server/cross-daily.ts), so this is the reader asking for one that is not there yet — a sport the
+ * scheduler skipped, or a grid that filled up after its run.
  */
 export async function ensureSlateGenerated(args: { sportKey: string; user: PublicUser }): Promise<SlateDemandResult> {
   const { sportKey, user } = args;
@@ -165,7 +171,7 @@ export async function ensureSlateGenerated(args: { sportKey: string; user: Publi
     if (!slate) return { status: "error" };
     const caps = slateCaps(process.env);
     const langs = refreshConfig(process.env, SPORTS.map((s) => s.key)).langs as Lang[];
-    const [primary, ...derived] = langs;
+    const primary = langs[0];
     const upcoming = slate.games.filter((g) => g.status === "scheduled" && Date.parse(g.startsAt) > Date.now()).slice(0, caps.maxGames);
     const counts = slateCounts(user.id);
     const verdict = slateVerdict({
@@ -176,35 +182,15 @@ export async function ensureSlateGenerated(args: { sportKey: string; user: Publi
     if (verdict !== "generate") return { status: verdict, dateKey: slate.dateKey };
     if (!aiConfigured()) return { status: "ai_off" };
 
-    const reqId = newId("gr");
-    getDb().prepare("INSERT INTO generation_requests (id,userId,sportKey,gameId,dateKey,status,createdAt,scope) VALUES (?,?,?,?,?,?,?,?)")
-      .run(reqId, user.id, sportKey, key, slate.dateKey, "running", nowIso(), "slate");
     try {
-      const details = (await Promise.all(upcoming.map((g) => getGameDetail(g.id, false, sportKey).catch(() => null))))
-        .filter((d): d is NonNullable<typeof d> => d !== null);
-      const games = [];
-      for (const d of details) {
-        const candidates = await buildPropCandidates(d, { maxPlayers: 4, limit: 12 }).catch(() => null);
-        games.push({ game: d.game, detail: d, props: candidates?.props ?? [] });
-      }
-      if (games.length < 2) throw new Error("fewer than two games with details");
-      let cost = 0;
-      const spend = () => { const c = lastUsage?.costUsd ?? 0; cost += c; return c; };
-      const cross = await buildSlateBets({ games, bands: SLATE_BANDS, lang: primary });
-      const matchup = (lang: Lang) => `${games.length} ${lang === "pt" ? "jogos" : "games"}`;
-      savePrediction({ scope: "slate", sportKey, gameId: null, dateKey: slate.dateKey, lang: primary, matchup: matchup(primary), slate: cross, costUsd: spend() });
-      for (const lang of derived) {
-        try {
-          savePrediction({ scope: "slate", sportKey, gameId: null, dateKey: slate.dateKey, lang, matchup: matchup(lang), slate: await localiseSlate(cross, primary, lang), costUsd: spend() });
-        } catch (error) {
-          reportError("ai.slate.localise", error, { sportKey, lang }, "warn");
-        }
-      }
-      getDb().prepare("UPDATE generation_requests SET status='ok', costUsd=?, finishedAt=? WHERE id=?").run(cost, nowIso(), reqId);
+      // The reader's own múltipla is built in the same window the day's are (bets/cross-policy.ts):
+      // the long bands are the slice of the ledger with no winners in it, and asking for them on a
+      // two-game grid is arithmetically impossible anyway.
+      const out = await generateSlate({ sportKey, dateKey: slate.dateKey, games: upcoming, langs, userId: user.id, key, crossShape: true });
+      if (out.status === "too_few_games") return { status: "too_few_games", dateKey: slate.dateKey };
       return { status: "generated", dateKey: slate.dateKey };
     } catch (error) {
       reportError("ai.slate", error, { sportKey });
-      getDb().prepare("DELETE FROM generation_requests WHERE id = ?").run(reqId);
       return { status: error instanceof AiBudgetExceededError ? "ai_budget" : "error" };
     }
   })();

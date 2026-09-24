@@ -11,10 +11,12 @@ fs.rmSync(DIR, { recursive: true, force: true });
 const refresh = vi.fn(async () => ({ status: "ok" }));
 const featured = vi.fn(async () => ({ status: "ok" }));
 const books = vi.fn(async (opts: unknown) => ({ status: "ok", rows: 0, opts }));
+const cross = vi.fn(async (opts: unknown) => ({ status: "ok", generated: 1, tickets: 2, costUsd: 0, sports: [], note: "", opts }));
 vi.mock("@/lib/server/session", () => ({ requireAdmin: async () => null }));
 vi.mock("@/lib/server/refresh-job", () => ({ runRefresh: () => refresh() }));
 vi.mock("@/lib/server/featured", () => ({ runFeatured: () => featured() }));
 vi.mock("@/lib/server/book-prices", () => ({ runBooksJob: (o: unknown) => books(o) }));
+vi.mock("@/lib/server/cross-daily", () => ({ runCrossDaily: (o: unknown) => cross(o) }));
 
 const { POST } = await import("@/app/api/cron/refresh/route");
 const call = (query: string, secret = "unit-cron-secret") =>
@@ -46,6 +48,26 @@ describe("cron entry point", () => {
     expect((await call("")).status).toBe(200);
     expect(refresh).toHaveBeenCalledTimes(2);
     expect(featured).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("the day's múltiplas entre jogos", () => {
+  it("runs once a Brasília day, from the database, and never touches generation", async () => {
+    const first = await call("?job=cross");
+    expect(first.status).toBe(200);
+    expect(await first.json()).toMatchObject({ job: "cross", ran: true, status: "ok", generated: 1, tickets: 2 });
+    expect(cross).toHaveBeenCalledTimes(1);
+    expect(refresh).not.toHaveBeenCalled();
+
+    // The tick after it: asked again, answers without spending anything.
+    const again = await call("?job=cross");
+    expect(await again.json()).toMatchObject({ job: "cross", ran: false });
+    expect(cross).toHaveBeenCalledTimes(1);
+
+    // force=1 is the operator's own button: asking for it now is not the scheduler asking again.
+    await call("?job=cross&force=1&sports=wnba");
+    expect(cross).toHaveBeenCalledTimes(2);
+    expect(cross).toHaveBeenLastCalledWith({ sports: ["wnba"] });
   });
 });
 

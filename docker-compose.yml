@@ -11,6 +11,7 @@ services:
     shm_size: "1gb"                                   # Chromium needs more than Docker's 64MB default
 
   # Scheduler: settles finished games every hour (no tokens), runs the learning post-mortem daily,
+  # builds the day's múltiplas entre jogos once a day,
   # watches lineups and closing prices every tick, writes the Monday discipline report,
   # the optional background refresh every 4h (off unless CRON_ENABLED=1), and asks for the Telegram
   # digest hourly — the server sends it once a day, after TELEGRAM_DIGEST_HOUR. Ticks every 15 min.
@@ -43,6 +44,11 @@ services:
           curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=attribute"; echo
           # The day's short list: rebuilt from inventory that already exists, every tick, zero tokens.
           curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=today"; echo
+          # As múltiplas do dia entre jogos: one cross-game slate per sport with two upcoming games
+          # or more. Called every tick and gated on job_runs, like learn and evaluate — a tick
+          # counter lives in this shell and resets with the container, which is how the product ran
+          # zero post-mortems on every deploy day. CROSS_DAILY=0 switches it off.
+          curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=cross"; echo
           [ $$((t % 4)) -eq 1 ]  && { curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=weekly"; echo; }
           [ $$((t % 96)) -eq 50 ] && { curl -s -X POST -H "x-cron-secret: $$CRON_SECRET" "http://app:3000/api/cron/refresh?job=cleanup"; echo; }
           t=$$((t + 1)); sleep 900
