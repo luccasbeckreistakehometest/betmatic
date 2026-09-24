@@ -366,3 +366,32 @@ export function reconcileQuarters(narration: QuarterProfiles, subtraction: Subtr
   }
   return { compared, agreed, notes };
 }
+
+/**
+ * Which period a snapshot of the box score is the END of, and how far past that end it was taken.
+ *
+ * This matters because a read is almost never taken exactly on the buzzer. The quarters job fires on
+ * the first cron tick after ESPN advances the period, so a "half-time" read typically lands a few
+ * seconds into Q3 — and the box score it carries already holds those seconds. Storing it as the end
+ * of Q2 without saying so would quietly move a play from one quarter into another.
+ *
+ * `slack` is the minutes of the following period already played when the snapshot was taken. Zero on
+ * the buzzer. A snapshot taken deep inside a period is not the end of anything and returns null: it
+ * is better to have no row for that boundary than a row that says something untrue.
+ */
+export const BOUNDARY_SLACK_MINUTES = 3;
+
+export function boundaryOf(
+  snap: { state: "pre" | "in" | "post"; period: number; clockLeft: number | null },
+  periodMinutes: number,
+  maxSlack = BOUNDARY_SLACK_MINUTES,
+): { through: number; slack: number } | null {
+  if (snap.period <= 0) return null;
+  if (snap.state === "post") return { through: snap.period, slack: 0 };
+  if (snap.state !== "in" || snap.clockLeft === null) return null;
+  // The buzzer: this period is complete and nothing of the next one has been played.
+  if (snap.clockLeft <= 0) return { through: snap.period, slack: 0 };
+  const slack = Math.round((periodMinutes - snap.clockLeft) * 10) / 10;
+  if (snap.period === 1 || slack > maxSlack) return null;
+  return { through: snap.period - 1, slack };
+}
