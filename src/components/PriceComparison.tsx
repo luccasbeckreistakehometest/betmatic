@@ -195,6 +195,63 @@ function CandidateLink({ c, of, lang, ctx, t }: { c: BookCandidate; of: number; 
 }
 
 /**
+ * The one action on the face of a ticket card: open the book with as much of this ticket as its URL
+ * can carry. It is the same link "Onde apostar" builds, drawn as the card's primary button, and it
+ * keeps the three rules that block reads as a promise the product cannot keep:
+ *
+ *  · the label is `candidateLabel`, which counts off `link.selections` — "Abrir o bilhete inteiro
+ *    na Superbet" only when the URL really pre-fills every line, never off what the book prices;
+ *  · the price beside it is the price of what the URL carries, and it is absent when the URL
+ *    carries nothing, because a page has no price of its own;
+ *  · the close line is not here at all. It is a different bet, and a different bet has no business
+ *    on the button a reader taps to place this one — it stays inside the sheet, on its own row.
+ *
+ * With no book able to carry the ticket there is no honest link, so the slot falls back to the door
+ * to "Onde apostar" itself, where the absence is explained in words.
+ */
+export function TicketBookButton({ ticket, lang, ctx = {}, onDetails, detailsLabel }: {
+  ticket: TicketPricesView | null;
+  lang: Lang;
+  ctx?: LinkContext;
+  onDetails: () => void;
+  detailsLabel: string;
+}) {
+  const t = booksCopy(lang);
+  const best = ticket?.slip?.best ?? null;
+  const of = ticket?.slip?.legs ?? ticket?.legs.length ?? 0;
+  if (!best) {
+    return (
+      <button type="button" onClick={onDetails} className={buttonClass("secondary", "max-md:w-full")} data-testid="ticket-no-link">
+        {t("whereToBet")}
+        <span className="sr-only"> — {detailsLabel}</span>
+      </button>
+    );
+  }
+  return (
+    <span className="flex min-w-0 flex-col items-start gap-0.5 max-md:w-full">
+      <BookLink
+        link={best.link}
+        ctx={ctx}
+        what="ticket"
+        lang={lang}
+        coverage={best.full ? "full" : "partial"}
+        covered={best.covered.length}
+        testId="ticket-create-slip"
+        className={buttonClass("primary", "max-md:w-full")}
+      >
+        {candidateLabel(best, of, lang)}
+        <Icon name="external" size={16} />
+      </BookLink>
+      {best.carriedDecimal !== null && (
+        <span className="nums text-micro text-fg-dim">
+          {t("linkPays")} <span className="text-fg">{formatOdds(best.carriedDecimal, lang)}x</span>
+        </span>
+      )}
+    </span>
+  );
+}
+
+/**
  * "Onde apostar", rewritten around one question: where can the reader place THIS ticket in one tap?
  *
  * One primary link, always the most of the ticket a single book can carry, labelled with exactly
