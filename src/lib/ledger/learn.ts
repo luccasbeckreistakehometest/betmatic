@@ -119,6 +119,8 @@ Rules:
 export interface LearningRunRow {
   id: string; status: string; windowStart: string; windowEnd: string; tickets: number; won: number; lost: number; summary: string;
   report: string; promptFeedback: string; applied: number; appliedBatch: string; costUsd: number; note: string; createdAt: string;
+  /** Empty on the daily window sweep; the game a per-game post-mortem read. */
+  gameId: string; matchup: string;
 }
 
 /** Old stored reports and hand-written mocks carry plain strings; both shapes are read here. */

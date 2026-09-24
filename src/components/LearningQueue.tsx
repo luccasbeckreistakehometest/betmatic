@@ -139,7 +139,7 @@ export function LearningQueue() {
       <Section title="Para decidir" empty="Nada esperando por você. A fila enche quando um jogo termina de liquidar.">
         {pending.map((p) => (
           <Row key={p.id} p={p} open={open === p.id} onToggle={() => setOpen(open === p.id ? null : p.id)} minDecided={data?.minDecided ?? 20}>
-            {open === p.id && <Diff diff={p.diff} />}
+            {open === p.id && <Diff diff={p.diff} empty="O texto do prompt sairia idêntico: não há o que aprovar." />}
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <Button variant="primary" onClick={() => void decide(p.id, "approve")} loading={busy === p.id} disabled={busy !== null} data-testid="proposal-approve">Aprovar e aplicar</Button>
               <Button onClick={() => { setRejecting(rejecting === p.id ? null : p.id); setReason(""); }} disabled={busy !== null} data-testid="proposal-reject">Recusar</Button>
@@ -194,7 +194,7 @@ export function LearningQueue() {
             ) : (
               <p className="mt-1 text-tiny text-fg-dim">Ainda sem bilhetes gerados sob esta versão.</p>
             )}
-            {open === p.id && <Diff diff={p.diff} />}
+            {open === p.id && <Diff diff={p.diff} empty="Esta versão não mudou nenhuma linha do prompt." />}
           </Row>
         ))}
       </Section>
@@ -237,7 +237,7 @@ function Row({ p, open, onToggle, minDecided, children }: { p: Proposal; open: b
         <span className="text-fg-dim">{formatDateTime(p.createdAt, "pt")}</span>
         {p.diff && (
           <button onClick={onToggle} className="ml-auto text-fg-muted hover:text-fg" data-testid="proposal-diff-toggle">
-            {open ? "fechar o diff" : `ver o diff (+${formatNumber(p.diff.stats.added, "pt")} / −${formatNumber(p.diff.stats.removed, "pt")})`}
+            {open ? "fechar o diff" : `${p.status === "applied" || p.status === "reverted" ? "ver o que mudou" : "ver o diff"} (+${formatNumber(p.diff.stats.added, "pt")} / −${formatNumber(p.diff.stats.removed, "pt")})`}
           </button>
         )}
       </div>
@@ -256,9 +256,9 @@ function Row({ p, open, onToggle, minDecided, children }: { p: Proposal; open: b
 }
 
 /** The change itself. A hunk gap is drawn, never skipped in silence. */
-function Diff({ diff }: { diff: Proposal["diff"] }) {
+function Diff({ diff, empty }: { diff: Proposal["diff"]; empty: string }) {
   if (!diff) return null;
-  if (!diff.hunks.length) return <p className="mt-2 text-tiny text-fg-dim">O texto do prompt sairia idêntico: não há o que aprovar.</p>;
+  if (!diff.hunks.length) return <p className="mt-2 text-tiny text-fg-dim">{empty}</p>;
   return (
     <div className="mt-2 max-h-[360px] overflow-auto rounded-control border border-line bg-surface-0" data-testid="proposal-diff">
       {diff.hunks.map((hunk, i) => (

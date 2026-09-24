@@ -3,7 +3,10 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/server/session";
 import { approveProposal, appliedToday, listProposals, openProposals, rejectProposal, LEARN_MIN_DECIDED, type ProposalRow } from "@/lib/ledger/proposals";
 import { measureApplied } from "@/lib/ledger/revert";
-import { getPromptVersion, promptFreeze } from "@/lib/server/prompts";
+import { getPromptVersion, previousVersion, promptFreeze } from "@/lib/server/prompts";
+import { DEFAULT_PROMPTS } from "@/lib/bets/prompt-defaults";
+import { getDb } from "@/lib/server/db";
+import type { PromptVersion } from "@/lib/server/prompts";
 import { diffHunks, diffStats, lineDiff } from "@/lib/diff";
 import { describeAiError } from "@/lib/ai/client";
 
@@ -16,9 +19,27 @@ export const dynamic = "force-dynamic";
  * something nobody read is stamping. The diff is the stored rewrite against the prompt that is live
  * right now, so it is the change that would actually land.
  */
+/**
+ * What a proposal's diff is against depends on where it stands.
+ *
+ * Waiting for a decision, the question is "what would this do to the prompt that is live now", so it
+ * is read against the active text. Already applied, that diff is empty by construction — the live
+ * text IS this proposal — and the operator's question becomes "what did this version change", which
+ * is the version it replaced. Showing the first diff on an applied row is how a panel says "nothing
+ * changed" about the change it is describing.
+ */
+function baselineFor(row: ProposalRow, currentPt: string): string {
+  if (row.status !== "applied" && row.status !== "reverted") return currentPt;
+  const applied = row.promptVersionId
+    ? (getDb().prepare("SELECT * FROM prompt_versions WHERE id=?").get(row.promptVersionId) as PromptVersion | undefined)
+    : undefined;
+  if (!applied) return currentPt;
+  return previousVersion(applied.kind, applied.lang, applied.version)?.content ?? DEFAULT_PROMPTS[applied.kind][applied.lang];
+}
+
 const view = (row: ProposalRow, currentPt: string) => {
   const { contentPt, contentEn, evidence, ...rest } = row;
-  const lines = rest.channel === "prompt" && contentPt ? lineDiff(currentPt, contentPt) : [];
+  const lines = rest.channel === "prompt" && contentPt ? lineDiff(baselineFor(row, currentPt), contentPt) : [];
   return {
     ...rest,
     evidence: safeJson(evidence),
