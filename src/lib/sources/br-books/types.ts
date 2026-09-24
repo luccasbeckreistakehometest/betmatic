@@ -52,6 +52,14 @@ export interface BookPrice {
   lay?: number;
   /** "milestone" = an "N+" rung priced as over N−0.5; "total" = a posted over/under pair. */
   kind?: "total" | "milestone";
+  /**
+   * True only for a price the book posted with the game ALREADY UNDER WAY, read from its in-play
+   * feed. The two populations are never mixed: a pre-game row answers "what was the board before
+   * the tip", an in-play row answers "what is the board right now", and the second one is the only
+   * one a live ticket may be priced with. Absent means pre-game, which is what every row stored
+   * before this existed is.
+   */
+  inPlay?: boolean;
   fetchedAt: string;
   url?: string;
   /** The platform's own ids of this exact selection, so a deep link can name it (see deeplinks.ts). */
@@ -86,6 +94,16 @@ export interface FetchArgs {
   signal?: AbortSignal;
 }
 
+/**
+ * What an in-play fetch needs: the sport and the caller's plug. There is no window — an in-play
+ * read is "what is on the board now", and the book's own live feed decides which games those are.
+ */
+export interface LiveFetchArgs {
+  /** Repo sport key (nba, wnba, soccer-bra, …). */
+  sportKey: string;
+  signal?: AbortSignal;
+}
+
 export interface BookAdapter {
   /** Registry id, also the BR_BOOKS token: "superbet", "kambi:kto", "altenar:estrelabet". */
   id: string;
@@ -98,6 +116,14 @@ export interface BookAdapter {
   /** Hosts the adapter talks to: a wall on one of them skips every adapter sharing it for the run. */
   hosts: string[];
   fetchBookOdds(args: FetchArgs): Promise<BookPrice[]>;
+  /**
+   * The same rows, read from the book's IN-PLAY feed, for games already under way. Only the books
+   * proven to serve in-play odds to a plain client implement it; the rest simply have no live
+   * price, and the product says so rather than reusing their pre-game number.
+   */
+  fetchLiveOdds?(args: LiveFetchArgs): Promise<BookPrice[]>;
+  /** Human note for the admin panel: what the in-play feed exposes. Absent when there is none. */
+  liveCoverage?: string;
 }
 
 /** A book refused the plain client (challenge page, 403, 429): the caller records it and moves on. */

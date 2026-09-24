@@ -1,6 +1,6 @@
 import { bookJson } from "@/lib/sources/br-books/http";
 import { cleanDecimal, milestoneLine, milestoneRung, normalisePlayer, normaliseTeam, parseLineValue, sideFromLabel, sportOf, statFromLabel } from "@/lib/sources/br-books/normalise";
-import type { BookAdapter, BookEvent, BookPrice, BookSport, FetchArgs } from "@/lib/sources/br-books/types";
+import type { BookAdapter, BookEvent, BookPrice, BookSport, FetchArgs, LiveFetchArgs } from "@/lib/sources/br-books/types";
 
 /**
  * Altenar's multi-tenant widget API (biahosted.com). EstrelaBet, Aposta Ganha, BetPix365, LotoGreen
@@ -75,12 +75,12 @@ export function selectAltenarEvents(list: AltenarList, sportKey: string, from: s
  * The full offer of one event. Team names ride on `competitorId`; a player's name is the child
  * market's `childName`; the line is the odd's `sv` for pairs and the "N+" label for ladders.
  */
-export function parseAltenarEvent(detail: AltenarEventDetails, event: BookEvent, book: string, fetchedAt: string, url?: string): BookPrice[] {
+export function parseAltenarEvent(detail: AltenarEventDetails, event: BookEvent, book: string, fetchedAt: string, url?: string, inPlay = false): BookPrice[] {
   const odds = new Map((detail.odds ?? []).map((o) => [o.id, o]));
   const comps = detail.competitors ?? [];
   const homeId = comps[0]?.id, awayId = comps[1]?.id;
   const out: BookPrice[] = [];
-  const base = { book, platform: "altenar", sport: event.sport, event, fetchedAt, url } as const;
+  const base = { book, platform: "altenar", sport: event.sport, event, fetchedAt, url, ...(inPlay ? { inPlay: true } : {}) } as const;
   const oddsOf = (m: AltenarMarket) => (m.desktopOddIds ?? []).flat().map((id) => odds.get(id)).filter((o): o is AltenarOdd => !!o && (o.oddStatus ?? 0) === 0);
   const sideOfTeam = (o: AltenarOdd) => (o.competitorId === homeId ? "home" : o.competitorId === awayId ? "away" : null);
   // The platform's own ids of the selection, kept for a deep link (deeplinks.ts).
@@ -141,6 +141,35 @@ export function parseAltenarEvent(detail: AltenarEventDetails, event: BookEvent,
   return out;
 }
 
+/**
+ * The tenant's in-play list. `GetEvents&period=1` is NOT it — that is a time filter over the
+ * pre-match tree, and it answered with fixtures more than a month out (Palmeiras × Vasco on
+ * 01/11) when it was tried. The live method is its own: `GetLiveEvents`, with `GetLiveOverview`
+ * carrying the per-sport counts the site's own live tab renders. Verified 24/09/2026 on the
+ * estrelabet tenant: the live basketball list answered 200 with the game's clock ("10'"), its
+ * period ("4ª parte") and its score, and `GetEventDetails` on that event id came back with the
+ * LIVE board — 13 markets, 49 of 49 outcomes priced, handicap and total re-hung for the state of
+ * the game, plus the current quarter's own markets.
+ */
+export interface AltenarLiveEvent extends AltenarListEvent {
+  /** The live clock as the site prints it ("10'"), the period label ("4ª parte") and the score. */
+  liveTime?: string;
+  ls?: string;
+  score?: string;
+  currentSetScore?: string;
+}
+export interface AltenarLiveList extends AltenarList { events?: AltenarLiveEvent[] }
+
+/** The live events of one repo sport, filtered to the league we carry. */
+export function selectAltenarLiveEvents(list: AltenarLiveList, sportKey: string): { ev: AltenarLiveEvent; league: string }[] {
+  const re = LEAGUES[sportKey];
+  if (!re) return [];
+  const champs = new Map((list.champs ?? []).map((c) => [c.id, c.name]));
+  return (list.events ?? [])
+    .filter((e) => re.test(champs.get(e.champId) ?? ""))
+    .map((ev) => ({ ev, league: champs.get(ev.champId) ?? sportKey }));
+}
+
 export function makeAltenarAdapter(integration: string, book: string): BookAdapter {
   const query = `culture=pt-BR&timezoneOffset=180&integration=${integration}&deviceType=1&numFormat=en-GB&countryCode=BR`;
   const fetchBookOdds = async (args: FetchArgs): Promise<BookPrice[]> => {
@@ -158,7 +187,26 @@ export function makeAltenarAdapter(integration: string, book: string): BookAdapt
     }
     return out;
   };
-  return { id: `altenar:${integration}`, book, platform: "altenar", sports: Object.keys(LEAGUES), coverage: "vencedor, handicap, total e props de jogador (pares e escadas N+)", hosts: ["sb2frontend-altenar2.biahosted.com"], fetchBookOdds };
+  const fetchLiveOdds = async (args: LiveFetchArgs): Promise<BookPrice[]> => {
+    const sport = sportOf(args.sportKey);
+    if (!sport || !LEAGUES[args.sportKey]) return [];
+    const list = await bookJson<AltenarLiveList>(`${ALTENAR_BASE}/GetLiveEvents?${query}&sportId=${SPORT_ID[sport]}`, { ttlMs: 0, signal: args.signal });
+    const competitors = new Map((list.data.competitors ?? []).map((c) => [c.id, c.name]));
+    const out: BookPrice[] = [];
+    for (const { ev, league } of selectAltenarLiveEvents(list.data, args.sportKey)) {
+      const event = altenarEvent(ev, sport, integration, competitors, league);
+      if (!event) continue;
+      const detail = await bookJson<AltenarEventDetails>(`${ALTENAR_BASE}/GetEventDetails?${query}&eventId=${ev.id}`, { ttlMs: 0, signal: args.signal });
+      out.push(...parseAltenarEvent(detail.data, event, book, new Date().toISOString(), undefined, true));
+    }
+    return out;
+  };
+  return {
+    id: `altenar:${integration}`, book, platform: "altenar", sports: Object.keys(LEAGUES),
+    coverage: "vencedor, handicap, total e props de jogador (pares e escadas N+)",
+    liveCoverage: "ao vivo: vencedor, handicap e total pelo `GetLiveEvents`; props de jogador quando a casa as mantém em jogo",
+    hosts: ["sb2frontend-altenar2.biahosted.com"], fetchBookOdds, fetchLiveOdds,
+  };
 }
 
 export const altenarAdapters: BookAdapter[] = ALTENAR_TENANTS.map((t) => makeAltenarAdapter(t.integration, t.book));

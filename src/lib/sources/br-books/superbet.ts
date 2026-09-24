@@ -1,6 +1,6 @@
 import { bookJson } from "@/lib/sources/br-books/http";
 import { cleanDecimal, milestoneLine, milestoneRung, normalisePlayer, normaliseTeam, parseLineValue, sideFromLabel, sportOf, statFromLabel, stripAccents } from "@/lib/sources/br-books/normalise";
-import type { BookAdapter, BookEvent, BookPrice, BookSport, FetchArgs } from "@/lib/sources/br-books/types";
+import type { BookAdapter, BookEvent, BookPrice, BookSport, FetchArgs, LiveFetchArgs } from "@/lib/sources/br-books/types";
 
 /**
  * Superbet's offer API: plain JSON behind Fastly, no wall, the most complete public feed found.
@@ -27,7 +27,12 @@ export const SUPERBET_SERIE_B = { id: 1697, name: /Brasileiro - S[ée]rie B/i };
 export interface SuperbetListEvent {
   event_id: number;
   fixture: { betradar_id?: string; event_name: string; utc_date: string; tournament_id: number; sport_id: number; home_team_id?: string; away_team_id?: string };
-  inplay_stats_metadata?: { status?: string };
+  /**
+   * What the in-play index adds: the game's own status, the period label the site prints ("3Q"),
+   * and how many markets and odds each index holds — `counts.odds["2"]` is the LIVE index, and a
+   * zero there means the book has nothing on the board for this game right now.
+   */
+  inplay_stats_metadata?: { status?: string; event_status_label?: string; period_status?: string; counts?: { markets?: Record<string, number>; odds?: Record<string, number> } };
 }
 export interface SuperbetOdd {
   marketId: number; marketName: string; name: string; price: number; code?: string; status?: string;
@@ -80,11 +85,11 @@ const PARTIAL = /quarto|tempo|1º|2º|3º|4º|intervalo|half|quarter|Primeira eq
  * pair per line ("Jogador - Total de Pontos") and "N+" rungs ("Jogador - Pontos", priced here as
  * over N − 0.5, the same convention the ESPN parser uses).
  */
-export function parseSuperbetEvent(detail: SuperbetEventDetail, event: BookEvent, fetchedAt: string): BookPrice[] {
+export function parseSuperbetEvent(detail: SuperbetEventDetail, event: BookEvent, fetchedAt: string, inPlay = false): BookPrice[] {
   const data = detail.data?.[0];
   const odds = data?.odds ?? [];
   const out: BookPrice[] = [];
-  const base = { book: "Superbet", platform: "superbet", sport: event.sport, event, fetchedAt, url: superbetEventUrl(event) } as const;
+  const base = { book: "Superbet", platform: "superbet", sport: event.sport, event, fetchedAt, url: superbetEventUrl(event), ...(inPlay ? { inPlay: true } : {}) } as const;
   for (const o of odds) {
     if (o.status && o.status !== "active") continue;
     const price = cleanDecimal(o.price);
@@ -190,12 +195,68 @@ export async function fetchSuperbet(args: FetchArgs): Promise<BookPrice[]> {
   return out;
 }
 
+/**
+ * The in-play index of the same event list. `index=live` is a first-class index of the v3 endpoint
+ * (an unknown value answers 400; `live` answered 200 with 1 014 events across a twelve-hour window
+ * on 24/09/2026, WNBA among them), and the per-event document is the SAME `/v2/pt-BR/events/<id>`
+ * the pre-game read already calls — pointed at a game under way it returns that game's live board.
+ * Verified on a basketball game in its third quarter: 29 of 29 outcomes priced and active, winner
+ * 1.02 / 9.50, total re-hung at 149.5, plus the running quarter's own markets.
+ */
+export const SUPERBET_LIVE_INDEX = "live";
+
+/** How many live odds the book must actually hold for an event to be worth a per-event call. */
+const liveOddsCount = (e: SuperbetListEvent): number => Number(e.inplay_stats_metadata?.counts?.odds?.["2"] ?? 0);
+
+/**
+ * The events of one league that are under way AND have a live board. A finished game still sits on
+ * the live index for a while with every count at zero: it is dropped here rather than read, priced
+ * and stored as if the board were open.
+ */
+export function selectSuperbetLiveEvents(events: SuperbetListEvent[], sportKey: string, names: Map<number, string>): { ev: SuperbetListEvent; league: string }[] {
+  const league = LEAGUES[sportKey];
+  if (!league) return [];
+  return events
+    .filter((e) => {
+      const status = e.inplay_stats_metadata?.status ?? "";
+      if (status !== "STARTED" || liveOddsCount(e) < 1) return false;
+      const name = names.get(e.fixture.tournament_id) ?? "";
+      return league.ids.includes(e.fixture.tournament_id) || league.name.test(name);
+    })
+    .map((ev) => ({ ev, league: names.get(ev.fixture.tournament_id) ?? sportKey }));
+}
+
+/** The window the live index is asked for: games that tipped off in the last `LIVE_LOOKBACK_H` hours. */
+const LIVE_LOOKBACK_H = 6;
+
+export async function fetchSuperbetLive(args: LiveFetchArgs): Promise<BookPrice[]> {
+  const sport = sportOf(args.sportKey);
+  if (!sport || !LEAGUES[args.sportKey]) return [];
+  const struct = await bookJson<{ data?: unknown }>(`${SUPERBET_BASE}/v2/pt-BR/struct`, { ttlMs: 24 * 60 * 60_000, signal: args.signal });
+  const names = tournamentNames(struct.data);
+  const now = Date.now();
+  const list = await bookJson<{ events: SuperbetListEvent[] }>(
+    `${SUPERBET_BASE}/v3/pt-BR/events?startDate=${hourFloor(new Date(now - LIVE_LOOKBACK_H * 3_600_000).toISOString())}&endDate=${hourCeil(new Date(now).toISOString())}&index=${SUPERBET_LIVE_INDEX}&sports=${SPORT_ID[sport]}`,
+    { ttlMs: 0, signal: args.signal },
+  );
+  const out: BookPrice[] = [];
+  for (const { ev, league } of selectSuperbetLiveEvents(list.data.events ?? [], args.sportKey, names)) {
+    const event = superbetEvent(ev, sport, league);
+    if (!event) continue;
+    const detail = await bookJson<SuperbetEventDetail>(`${SUPERBET_BASE}/v2/pt-BR/events/${ev.event_id}`, { ttlMs: 0, signal: args.signal });
+    out.push(...parseSuperbetEvent(detail.data, event, new Date().toISOString(), true));
+  }
+  return out;
+}
+
 export const superbetAdapter: BookAdapter = {
   id: "superbet",
   book: "Superbet",
   platform: "superbet",
   sports: Object.keys(LEAGUES),
   coverage: "moneyline, handicap, total e props de jogador (linhas e escadas N+)",
+  liveCoverage: "ao vivo: moneyline, handicap e total pelo índice `live`; props de jogador quando a casa as mantém em jogo",
   hosts: ["production-superbet-offer-br.freetls.fastly.net"],
   fetchBookOdds: fetchSuperbet,
+  fetchLiveOdds: fetchSuperbetLive,
 };

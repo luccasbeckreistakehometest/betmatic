@@ -1,6 +1,6 @@
 import { bookJson } from "@/lib/sources/br-books/http";
 import { cleanDecimal, normalisePlayer, normaliseTeam, sportOf, statFromLabel } from "@/lib/sources/br-books/normalise";
-import type { BookAdapter, BookEvent, BookPrice, BookSport, FetchArgs } from "@/lib/sources/br-books/types";
+import type { BookAdapter, BookEvent, BookPrice, BookSport, FetchArgs, LiveFetchArgs } from "@/lib/sources/br-books/types";
 
 /**
  * Kambi's offering CDN, the public feed behind KTO (and Stake.bet.br, which carries the same event
@@ -60,9 +60,9 @@ const FULL_TIME = (o: KambiBetOffer) => !o.criterion?.lifetime || /FULL_TIME/.te
  * OT_ONE / OT_TWO / OT_CROSS for match markets, OT_OVER / OT_UNDER for totals. A player line is an
  * over/under offer whose outcomes name a participant.
  */
-export function parseKambiOffers(payload: KambiEventOffers, event: BookEvent, book: string, fetchedAt: string, url?: string): BookPrice[] {
+export function parseKambiOffers(payload: KambiEventOffers, event: BookEvent, book: string, fetchedAt: string, url?: string, inPlay = false): BookPrice[] {
   const out: BookPrice[] = [];
-  const base = { book, platform: "kambi", sport: event.sport, event, fetchedAt, url } as const;
+  const base = { book, platform: "kambi", sport: event.sport, event, fetchedAt, url, ...(inPlay ? { inPlay: true } : {}) } as const;
   for (const o of payload.betOffers ?? []) {
     if (!FULL_TIME(o)) continue;
     const label = o.criterion?.englishLabel ?? o.criterion?.label ?? "";
@@ -121,6 +121,40 @@ export function selectKambiEvents(list: KambiListView, from: string, to: string)
     .filter((e) => { const t = Date.parse(e.start); return Number.isFinite(t) && t >= lo && t <= hi && e.state !== "STARTED"; });
 }
 
+/**
+ * The in-play list: every event the operator has open right now, with its clock and its score.
+ * Verified live 24/09/2026 against ktobr: HTTP 200, 29 events in play, and the per-event bet-offer
+ * document of a STARTED event came back 113 of 123 outcomes priced (the ten missing were market
+ * suspensions, which is what a live board does between plays — the parser already drops any
+ * outcome whose status is not OPEN, so a suspension reads as "no price", never as a stale one).
+ */
+export const KAMBI_LIVE_PATH = "event/live/open.json";
+
+export interface KambiLiveEvent {
+  event: KambiEvent & { path?: { termKey?: string }[]; liveBoCount?: number };
+  liveData?: { matchClock?: { minute?: number; period?: string; running?: boolean }; score?: { home?: string; away?: string } };
+}
+export interface KambiLiveView { liveEvents?: KambiLiveEvent[] }
+
+/**
+ * The live events of ONE repo sport. Kambi prints each event's own tree on the event
+ * (`path[].termKey`), and that tree is exactly the listView path the pre-game reader already
+ * names — so the league filter is the same constant for both, not a second list to drift.
+ * An event with no live bet offers is skipped: there is nothing to price it with.
+ */
+export function selectKambiLiveEvents(view: KambiLiveView, sportKey: string): KambiEvent[] {
+  const path = LIST_PATHS[sportKey];
+  if (!path) return [];
+  return (view.liveEvents ?? [])
+    .filter((e) => {
+      const ev = e.event;
+      if (!ev || ev.state !== "STARTED" || (ev.liveBoCount ?? 0) < 1) return false;
+      const tree = (ev.path ?? []).map((p) => p.termKey ?? "").filter(Boolean).join("/");
+      return tree === path || tree.startsWith(`${path}/`);
+    })
+    .map((e) => e.event);
+}
+
 export function makeKambiAdapter(operator: string, book: string): BookAdapter {
   const fetchBookOdds = async (args: FetchArgs): Promise<BookPrice[]> => {
     const sport = sportOf(args.sportKey);
@@ -137,7 +171,34 @@ export function makeKambiAdapter(operator: string, book: string): BookAdapter {
     }
     return out;
   };
-  return { id: `kambi:${operator === "ktobr" ? "kto" : operator}`, book, platform: "kambi", sports: Object.keys(LIST_PATHS), coverage: "vencedor, handicap e total (sem props de jogador na WNBA)", hosts: ["us.offering-api.kambicdn.com"], fetchBookOdds };
+
+  /**
+   * The same two calls as the pre-game read, pointed at the live list. Nothing about the parse
+   * changes: a live bet offer carries no `criterion.lifetime`, which the FULL_TIME filter already
+   * lets through, and a suspended outcome carries no OPEN status, which it already drops.
+   */
+  const fetchLiveOdds = async (args: LiveFetchArgs): Promise<BookPrice[]> => {
+    const sport = sportOf(args.sportKey);
+    if (!sport || !LIST_PATHS[args.sportKey]) return [];
+    const list = await bookJson<KambiLiveView>(`${KAMBI_BASE}/${operator}/${KAMBI_LIVE_PATH}?lang=pt_BR&market=BR`, { ttlMs: 0, signal: args.signal });
+    const out: BookPrice[] = [];
+    for (const ev of selectKambiLiveEvents(list.data, args.sportKey)) {
+      const event = kambiEvent(ev, sport, book, operator);
+      if (!event) continue;
+      const offers = await bookJson<KambiEventOffers>(`${KAMBI_BASE}/${operator}/betoffer/event/${ev.id}.json?lang=pt_BR&market=BR`, { ttlMs: 0, signal: args.signal });
+      // One `fetchedAt` per event, taken after its own document came back: a live price's age is
+      // the age of the call that read it, not of the list that named the game.
+      out.push(...parseKambiOffers(offers.data, event, book, new Date().toISOString(), undefined, true));
+    }
+    return out;
+  };
+
+  return {
+    id: `kambi:${operator === "ktobr" ? "kto" : operator}`, book, platform: "kambi", sports: Object.keys(LIST_PATHS),
+    coverage: "vencedor, handicap e total (sem props de jogador na WNBA)",
+    liveCoverage: "ao vivo: vencedor, handicap e total, pelo feed `event/live/open` (sem props de jogador)",
+    hosts: ["us.offering-api.kambicdn.com"], fetchBookOdds, fetchLiveOdds,
+  };
 }
 
 export const ktoAdapter = makeKambiAdapter("ktobr", "KTO");
