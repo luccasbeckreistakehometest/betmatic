@@ -149,6 +149,23 @@ export function recentRejections(limit = 8): { feedback: string; reason: string 
   return getDb().prepare("SELECT feedback, reason FROM learning_proposals WHERE status='rejected' AND reason<>'' ORDER BY decidedAt DESC LIMIT ?").all(limit) as { feedback: string; reason: string }[];
 }
 
+/**
+ * What the slice behind a proposal measures NOW, not when the proposal was written.
+ *
+ * The ledger moves between the post-mortem and the click: a slice can grow past the gate, and it can
+ * also stop being reportable. The factor ids are stable across rounds (ledger/factor-report.ts), so
+ * the newest retained row for the same id is the current reading.
+ *
+ * A slice with no row in any retained round is ambiguous — the report drops a slice for too few
+ * games or too few days as well as for too few legs — so the number that justified the proposal, and
+ * that the panel showed, stands. It is not treated as evidence that has vanished.
+ */
+export function currentDecided(factorStatId: string, stored: number): number {
+  if (!factorStatId) return stored;
+  const row = getDb().prepare("SELECT legs FROM factor_stats WHERE id=? ORDER BY computedAt DESC LIMIT 1").get(factorStatId) as { legs: number } | undefined;
+  return row ? row.legs : stored;
+}
+
 /** The change already applied today for this prompt kind, if there is one. */
 export function appliedToday(kind: PromptKind, now = new Date()): ProposalRow | null {
   const today = brasiliaDay(now.toISOString());
@@ -181,8 +198,11 @@ export function approveProposal(id: string, admin: string, opts: { override?: bo
     return { ok: false, error: "Esta proposta é portão de código: ela precisa de implementação, não de aprovação. Aprová-la só transformaria uma regra verificável em mais uma frase que o modelo pode ignorar." };
   }
   if (row.status !== "pending") return { ok: false, error: `Esta proposta está como "${row.status}" e não está aberta para decisão.` };
-  if (row.decided < LEARN_MIN_DECIDED) {
-    return { ok: false, error: `A evidência caiu para ${row.decided} linha(s) decidida(s); o portão pede ${LEARN_MIN_DECIDED}.` };
+  // Read again, because the ledger moved since this was written: the gate is about the evidence that
+  // exists at the moment of the click, not about the evidence that existed when it was proposed.
+  const decided = currentDecided(row.factorStatId, row.decided);
+  if (decided < LEARN_MIN_DECIDED) {
+    return { ok: false, error: `A fatia por trás desta proposta está medida agora em ${decided} linha(s) decidida(s); o portão pede ${LEARN_MIN_DECIDED}.` };
   }
   if (!row.contentPt.trim() || !row.contentEn.trim()) {
     return { ok: false, error: "Esta proposta não carrega o texto do prompt que seria aplicado, então não há o que aprovar." };

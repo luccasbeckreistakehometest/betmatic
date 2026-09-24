@@ -241,6 +241,21 @@ describe("the operator's click", () => {
     expect(seen?.[0].reason).toBe("cartão não é o nosso mercado principal");
   });
 
+  it("reads the sample again at the click, not the number it was proposed with", async () => {
+    const proposal = await offer();
+    expect(proposal.decided).toBe(40);
+    // a later round of the factor report measures the same slice at far less
+    getDb().prepare(
+      `INSERT INTO factor_stats (runId,id,scope,dim,value,legs,won,games,days,hitRate,predicted,gap,ciLow,ciHigh,pValue,qValue,flagged,computedAt,codeVersion)
+       VALUES ('run2','f1','pregame-main','stat','PRA',5,1,4,3,0.20,0.70,0.50,0.05,0.60,0.01,0.05,1,?,'factors-1')`,
+    ).run(new Date(Date.now() + 60_000).toISOString());
+
+    const out = approveProposal(proposal.id, admin);
+    expect(out.ok).toBe(false);
+    expect(out.error).toMatch(/5 linha/);
+    expect(getPromptVersion("game", "pt").id).toBeNull();
+  });
+
   it("marks the hypothesis applied, so the same idea is not proposed again tomorrow", async () => {
     const proposal = await offer();
     approveProposal(proposal.id, admin);
