@@ -45,22 +45,38 @@ export function Modal({ open, onClose, title, closeLabel, testId, footer, childr
   /** True while the history entry this overlay pushed is the one on top. */
   const owned = useRef(false);
 
+  /**
+   * The latest onClose, so the listener below can be registered once and never replaced.
+   *
+   * This is not a micro-optimisation, it is the whole reason the sheet closes: a listener removed
+   * while an event is being dispatched is never called, and Next's own popstate handler re-renders
+   * the tree from inside that dispatch (app-router.js dispatches a traverse). A listener that
+   * re-subscribes on every render is therefore torn down mid-flight and misses the very pop it was
+   * waiting for — which is exactly what a phone's back gesture produces.
+   */
+  const latest = useRef(onClose);
+  useEffect(() => { latest.current = onClose; });
+
   // Always listening, never tied to `open`: the pop is what closes the overlay, so the handler has
   // to outlive the closing it causes. `owned` is the guard, so an unrelated back is left alone.
   useEffect(() => {
     const onPop = () => {
       if (!owned.current) return;
       owned.current = false;
-      onClose();
+      latest.current();
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
-  }, [onClose]);
+  }, []);
 
   useEffect(() => {
     if (open && !owned.current) {
-      // The same URL, spelled out: Next patches pushState and wants the third argument.
-      window.history.pushState({ betmaticModal: true }, "", window.location.href);
+      // No URL, on purpose. Next patches pushState, and a patched push that is GIVEN a url — even
+      // the one already in the bar — dispatches a router restore; on a page whose panel sits behind
+      // a Suspense boundary that restore throws the subtree's state away, which took the sheet down
+      // with it the instant it opened. Omitting the url pushes an entry at the same address and
+      // still copies Next's own internal state onto it, so the pop is an ordinary traverse.
+      window.history.pushState({ betmaticModal: true }, "");
       owned.current = true;
       return;
     }
