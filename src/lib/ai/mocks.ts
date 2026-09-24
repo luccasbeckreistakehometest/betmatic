@@ -1,5 +1,6 @@
 import type { RawLeg, RawSuggestion } from "@/lib/bets/builder";
 import { formatAmerican, impliedProbability } from "@/lib/odds";
+import { CROSS_MAX_DECIMAL, CROSS_MIN_DECIMAL } from "@/lib/bets/cross-policy";
 import type { Lang } from "@/lib/i18n";
 import type { Game, GameDetail, PropRow } from "@/lib/types";
 
@@ -103,30 +104,38 @@ export function mockGameSlate(args: { game: Game; detail: GameDetail; props: Pro
   return { suggestions, dataNote: lang === "pt" ? "Dados de teste (AI_MOCK)." : "Test data (AI_MOCK)." };
 }
 
-/** One long cross-game ticket (one leg per game) and, when possible, a moonshot. */
+/**
+ * The day's múltiplas entre jogos, in the window the real build is gated on (bets/cross-policy.ts):
+ * two lines, one per match, on four different players, priced between the floor and the ceiling.
+ *
+ * It walks pairs of matches in order and takes each match's first line whose player is still free,
+ * so the two tickets never share a name — the by-player cap (bets/gates.ts) would drop the second
+ * one otherwise — and a pair whose product falls outside the window is skipped rather than shortened.
+ */
 export function mockSlateBets(args: { games: { game: Game; detail: GameDetail; props?: PropRow[] }[]; lang: Lang }): RawSlate {
   const { lang } = args;
-  const best = (props: PropRow[] | undefined, floor: number, taken: Set<string>) =>
-    (props ?? []).filter((p) => p.priced && p.decimal && p.decimal >= floor && !taken.has(p.player)).sort((x, y) => (y.decimal ?? 0) - (x.decimal ?? 0))[0];
-  const taken = new Set<string>();
-  const perGame = args.games
-    .map(({ game, props }) => {
-      const pick = best(props, 2.2, new Set());
-      if (pick) taken.add(pick.player);
-      return pick ? mockPropLeg(pick, lang, game.id) : null;
-    })
-    .filter((l): l is RawLeg => l !== null);
-  // The second ticket is built on OTHER players, never on a subset of the first: two cross-game
-  // tickets sharing a name would put that player on both, which is over the by-player cap the
-  // builder now enforces (bets/gates.ts), and the shorter one would be dropped before it is shown.
-  const second = args.games
-    .map(({ game, props }) => {
-      const pick = best(props, 1.01, taken);
-      return pick ? mockPropLeg(pick, lang, game.id) : null;
-    })
-    .filter((l): l is RawLeg => l !== null);
+  const perGame = args.games.map(({ game, props }) => ({
+    gameId: game.id,
+    lines: (props ?? []).filter((p) => p.priced && p.odds && p.decimal && p.decimal > 1),
+  }));
+  const used = new Set<string>();
   const suggestions: RawSuggestion[] = [];
-  if (perGame.length >= 2) suggestions.push(ticket(perGame, lang === "pt" ? "Múltipla da rodada" : "Round parlay", lang, { confidence: "low" }));
-  if (second.length >= 2) suggestions.push(ticket(second.slice(0, Math.max(2, second.length - 1)), lang === "pt" ? "Múltipla menor" : "Shorter parlay", lang, { confidence: "low" }));
+  for (let i = 0; i < perGame.length && suggestions.length < 2; i += 1) {
+    for (let j = i + 1; j < perGame.length && suggestions.length < 2; j += 1) {
+      const a = perGame[i].lines.find((p) => !used.has(p.player));
+      const b = perGame[j].lines.find((p) => !used.has(p.player));
+      if (!a || !b) continue;
+      const combined = (a.decimal ?? 0) * (b.decimal ?? 0);
+      if (combined < CROSS_MIN_DECIMAL || combined >= CROSS_MAX_DECIMAL) continue;
+      used.add(a.player);
+      used.add(b.player);
+      suggestions.push(ticket(
+        [mockPropLeg(a, lang, perGame[i].gameId), mockPropLeg(b, lang, perGame[j].gameId)],
+        lang === "pt" ? `Dupla entre jogos ${suggestions.length + 1}` : `Cross-game double ${suggestions.length + 1}`,
+        lang,
+        { confidence: "medium" },
+      ));
+    }
+  }
   return { suggestions, dataNote: "AI_MOCK" };
 }

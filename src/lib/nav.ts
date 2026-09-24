@@ -69,7 +69,7 @@ export const NAV_GROUPS: NavGroup[] = [
       // The short list first: what to bet tonight, and how much. Everything else is still here.
       { href: "/app/hoje", key: "navToday", icon: "calendar", tour: "today", note: { pt: "a lista curta da noite, com quanto colocar em cada bilhete", en: "tonight's short list, with how much to put on each ticket" } },
       { href: "/app", key: "navSlate", icon: "grid", gate: { pt: "1 jogo por dia no grátis", en: "1 game a day on free" }, note: { pt: "todos os jogos do dia e os bilhetes de cada um", en: "the day's games and each one's tickets" } },
-      { href: "/app/parlays", key: "navParlays", icon: "layers", gate: PRO, note: { pt: "uma múltipla que cruza os jogos da rodada", en: "one parlay across the day's games" } },
+      { href: "/app/parlays", key: "navParlays", icon: "layers", gate: PRO, testId: "menu-daily-cross", note: { pt: "as múltiplas de hoje unindo jogos diferentes, prontas todo dia", en: "today's parlays across different games, ready every day" } },
       { href: "/app/slip", key: "mySlip", icon: "receipt", gate: coins(8), note: { pt: "cole o bilhete que você montou e veja qual perna é a mais fraca", en: "paste the slip you built and see which leg is the weakest" } },
       { href: "/app/parlays/custom", key: "customParlay", icon: "target", rail: false, gate: coins(12), testId: "menu-custom-parlay", note: { pt: "você diz quanto quer que pague e a gente monta", en: "you name the payout and we build it" } },
     ],

@@ -22,7 +22,7 @@ import type { BetSuggestion } from "@/lib/types";
 export interface GateDrop {
   /** The ticket's own id, so the log line points at something that existed. */
   ticketId: string;
-  gate: "player_concentration" | "availability";
+  gate: "player_concentration" | "availability" | "cross_shape";
   /** One line, in English like the rest of the code, naming what broke. */
   reason: string;
 }

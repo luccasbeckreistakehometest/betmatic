@@ -21,6 +21,7 @@ import { runTodayJob } from "@/lib/server/daily-list";
 import { runAttributeJob } from "@/lib/server/factors-job";
 import { runEvaluateJob } from "@/lib/server/evaluate-job";
 import { onceADay } from "@/lib/server/job-guard";
+import { runCrossDaily } from "@/lib/server/cross-daily";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,6 +39,9 @@ export const dynamic = "force-dynamic";
  *             (no tokens, idempotent); every tick, right after settle
  *   today   — "os bilhetes de hoje": the day's short list and its stakes, from inventory that already
  *             exists (no generation, no tokens); every tick
+ *   cross   — "as múltiplas do dia entre jogos": one cross-game slate per sport with two upcoming
+ *             games or more, in the short window of bets/cross-policy.ts; called every tick, runs
+ *             once a Brasília day (job_runs decides, not a tick counter)
  *   lineups — vigia de escalação: pending tickets starting within 100 min vs the lineup/injuries; every tick
  *   close   — CLV: the closing price of every pending leg whose game starts within 30 min; every tick
  *   weekly  — relatório semanal de disciplina; safe every tick, writes on Mondays from 12:00 UTC (force=1 to run now)
@@ -99,6 +103,16 @@ export async function POST(request: Request) {
       const result = runTodayJob();
       logEvent("job.today", { ...result, ms: Date.now() - started });
       return NextResponse.json({ job, ...result });
+    }
+    if (job === "cross") {
+      // The day's múltiplas entre jogos. Called every tick and gated on the database, like learn and
+      // evaluate: a counter in the scheduler's shell resets with the container and loses deploy days.
+      const force = url.searchParams.get("force") === "1";
+      const sports = (url.searchParams.get("sports") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+      const once = await onceADay("cross", () => runCrossDaily({ sports }), { force });
+      const run = once.result;
+      logEvent("job.cross", { ran: once.ran, generated: run?.generated, tickets: run?.tickets, costUsd: run?.costUsd, ms: Date.now() - started });
+      return NextResponse.json({ job, ran: once.ran, note: once.note, ...(run ?? {}) }, { status: run?.status === "error" ? 500 : 200 });
     }
     if (job === "lineups") {
       const result = await runLineupWatch();

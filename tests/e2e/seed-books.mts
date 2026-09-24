@@ -61,14 +61,25 @@ const prices: BookPrice[] = [
 ];
 
 /**
- * The CROSS-GAME slate: the mock model builds one ticket with one leg per match (the longest priced
- * prop in each, which in the fake world is a milestone rung), so the books have to be read across
- * matches for that ticket to have a link at all. Two books, two answers:
+ * The CROSS-GAME slate: "as múltiplas do dia entre jogos". The mock builds two doubles inside the
+ * window of src/lib/bets/cross-policy.ts — one line per match, four different players — so the books
+ * have to be read ACROSS matches for either to have a link at all. Two books, two answers:
  *
- *   Superbet     posts all three lines, and its bets[] names the match per selection → ONE slip
- *                with three matches in it, at the product of the three prices.
- *   Betnacional  posts all three too, but its URL scheme opens ONE event page → the honest label is
- *                "abrir a página", and on a cross-game ticket that page holds a third of the bet.
+ *   Superbet     posts both lines of the first double, and its bets[] names the match per selection
+ *                → ONE slip with two matches in it, at the product of the two prices.
+ *   Betnacional  posts the second match's line, and its URL scheme opens ONE event page → the
+ *                honest label is "abrir a página", and on a cross-game ticket that page holds half
+ *                the bet. It is deliberately NOT given the first match's line: the same line carries
+ *                the single-game ticket of game 101, and a third book there would change what that
+ *                game's own specs read.
+ *
+ * The second double (Bia Souza at 6.5 + Lia Teles) is the partial case across matches: Superbet
+ * prices Lia Teles at the rung and Bia Souza one rung away, so the link carries one leg of two and
+ * the near line is offered beside it as a different bet.
+ *
+ * The milestone rungs stay seeded although no ticket reaches them now: they are the prices a reader
+ * sees under "onde apostar" for the long lines the window no longer emits, and dropping them would
+ * quietly change what the book pages hold.
  *
  * The fake world kicks the three games off five, six and seven hours out (tests/e2e/espn-world.ts).
  */
@@ -90,7 +101,16 @@ const bn103 = slateEvent("betnacional:betnacional:88000103", "Estrela Stars", "F
 const bn104 = slateEvent("betnacional:betnacional:88000104", "Garoa Gulls", "Horizonte Hawks", { betnacional: "88000104" }, g104.startsAt);
 const bnRef = (eventId: string, outcomeId: string) => ({ eventId, marketId: "77", outcomeId });
 
+/** A player line as the store holds it, on another match's event. */
+const crossLine = (book: string, platform: string, ev: BookEvent, player: string, stat: string, line: number, decimal: number, ref: BookPrice["ref"]): BookPrice =>
+  row(book, platform, ev, { player, stat, line, side: "over", decimal, ref });
+
 const slatePrices: BookPrice[] = [
+  // The first double's two legs, both at the rung the ticket names: one Superbet slip, two matches.
+  crossLine("Superbet", "superbet", sb103, "Júlia Dias", "rebounds", 7.5, 1.92, { eventId: "99000103", marketId: "233565", outcomeId: "5797", uuid: "e2e0aaaa-0000-5000-8000-000000000010", specialBetValue: "Dias, Júlia-7.5" }),
+  crossLine("Betnacional", "betnacional", bn103, "Júlia Dias", "rebounds", 7.5, 1.88, bnRef("88000103", "203")),
+  // The second double's Lia Teles leg. Bia Souza, its other leg, is posted one rung away above.
+  crossLine("Superbet", "superbet", sb104, "Lia Teles", "rebounds", 9.5, 1.86, { eventId: "99000104", marketId: "233565", outcomeId: "5798", uuid: "e2e0aaaa-0000-5000-8000-000000000011", specialBetValue: "Teles, Lia-9.5" }),
   milestone("Superbet", "superbet", sb, "Ana Lima", 24.5, 4.8, superbetRef("5794", "e2e0aaaa-0000-5000-8000-000000000007", "Lima, Ana-24.5")),
   milestone("Superbet", "superbet", sb103, "Iara Costa", 24.5, 4.7, { eventId: "99000103", marketId: "233565", outcomeId: "5795", uuid: "e2e0aaaa-0000-5000-8000-000000000008", specialBetValue: "Costa, Iara-24.5" }),
   milestone("Superbet", "superbet", sb104, "Kika Pires", 25.5, 4.9, { eventId: "99000104", marketId: "233565", outcomeId: "5796", uuid: "e2e0aaaa-0000-5000-8000-000000000009", specialBetValue: "Pires, Kika-25.5" }),

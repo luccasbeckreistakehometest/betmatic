@@ -34,7 +34,7 @@ import { RAIL_GROUPS } from "@/lib/nav";
 const TABS: { href: string; key: DictKey; icon: IconName }[] = [
   { href: "/app/hoje", key: "navToday", icon: "calendar" },
   { href: "/app", key: "navSlate", icon: "grid" },
-  { href: "/app/parlays", key: "navParlays", icon: "layers" },
+  { href: "/app/parlays", key: "tabParlays", icon: "layers" },
   { href: "/app/bankroll", key: "tabBankroll", icon: "wallet" },
   { href: "/app/conta", key: "tabAccount", icon: "user" },
 ];
