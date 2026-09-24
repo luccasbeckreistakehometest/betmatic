@@ -31,6 +31,7 @@ import { ticketCorrelation, type CorrLeg } from "@/lib/signals/correlation";
 import { matchAthlete, resolveStatLabels } from "@/lib/props/history";
 import { linkAlternatives, ticketId } from "@/lib/bets/alternatives";
 import { capPlayerConcentration, unplayableReason, type GateDrop } from "@/lib/bets/gates";
+import { CROSS_BANDS, CROSS_PER_BAND, crossPromptLines, crossShapeReason, topCrossTickets } from "@/lib/bets/cross-policy";
 import type { ProviderLines } from "@/lib/sources/espn-props";
 import { mockGameSlate, mockSlateBets } from "@/lib/ai/mocks";
 
@@ -417,7 +418,7 @@ function calibrated(leg: BetLeg, calibrator: Calibrator, sportKey: string): BetL
  * log them; pricing's own drops (an unpriced leg, an incoherent settlement, two rungs of one stat)
  * stay silent as they always were, because those are malformed tickets rather than rejected ones.
  */
-export function priceAll(raws: RawSuggestion[], ctx: EnrichContext, opts: { oneLegPerGame?: boolean; live?: boolean; onDrop?: (drop: GateDrop) => void } = {}): BetSuggestion[] {
+export function priceAll(raws: RawSuggestion[], ctx: EnrichContext, opts: { oneLegPerGame?: boolean; live?: boolean; crossShape?: boolean; onDrop?: (drop: GateDrop) => void } = {}): BetSuggestion[] {
   // Read the record once for the whole slate: the correction is the same for every ticket in it.
   // A read taken with the game under way answers to the live record, which is the harsher one.
   const calibrator = calibratorFor(opts.live ? "live" : "pre");
@@ -431,6 +432,15 @@ export function priceAll(raws: RawSuggestion[], ctx: EnrichContext, opts: { oneL
     let priced = priceSuggestion(anchored, band?.key ?? "unbanded");
     // Books discount legs from the same game, so a product of their prices would overstate the payout.
     if (priced && opts.oneLegPerGame && !independentGames(priced)) priced = null;
+    // The daily cross-game window: two or three legs, 2x to 5x, checked here rather than asked for
+    // in prose, for the reason bets/gates.ts gives. See bets/cross-policy.ts for the measurements.
+    if (priced && opts.crossShape) {
+      const reason = crossShapeReason(priced);
+      if (reason) {
+        opts.onDrop?.({ ticketId: priced.id, gate: "cross_shape", reason });
+        priced = null;
+      }
+    }
     // Who is playing, before anything is said about how she plays. Pre-game only: see bets/gates.ts.
     if (priced && !opts.live) {
       const reason = unplayableReason(anchored.legs, ctx);
@@ -590,18 +600,30 @@ export async function buildBets(args: BuildArgs): Promise<BetSlate> {
 
 export interface SlateBuildArgs {
   games: { game: Game; detail: GameDetail; props?: PropRow[] }[];
-  bands: string[];
+  bands?: string[];
   lang: Lang;
   maxPerBand?: number;
+  /**
+   * The day's múltiplas entre jogos: the short window of bets/cross-policy.ts, asked for in the
+   * prompt AND enforced in code, and the list cut to the few that go on the page. Left off, this is
+   * the on-demand slate the reader asks for by hand, which keeps the bands it always had.
+   */
+  crossShape?: boolean;
 }
 
 /**
  * Cross-game tickets. A single game publishes three or four markets, which cannot compound past
  * roughly 20x — reaching 100x or 400x requires stacking independent games, and independence is
  * exactly what makes the probability maths honest here.
+ *
+ * It is also what makes the PRICE honest: a book multiplies the prices of selections from different
+ * matches instead of repricing them the way it reprices a same-game pair, so the combined number
+ * this returns is the number the reader is charged (see sources/br-books/coverage.ts).
  */
 export async function buildSlateBets(args: SlateBuildArgs): Promise<BetSlate> {
-  const { games, bands, lang, maxPerBand = 1 } = args;
+  const { games, lang, crossShape = false } = args;
+  const bands = args.bands ?? (crossShape ? CROSS_BANDS : ["long", "moonshot", "lottery"]);
+  const maxPerBand = args.maxPerBand ?? (crossShape ? CROSS_PER_BAND : 1);
   await settlePending(10).catch(() => null);
   const targets = bands.map((b) => getBand(b));
 
@@ -636,10 +658,16 @@ export async function buildSlateBets(args: SlateBuildArgs): Promise<BetSlate> {
     "",
     calibrationPrompt(),
     "",
-    `REQUESTED ODDS BANDS — build up to ${maxPerBand} tickets per band:`,
-    ...targets.map((b) => `- ${b.key}: combined ${b.min}x to ${b.max}x (${b.typicalLegs})`),
+    ...(crossShape
+      ? [`BUILD UP TO ${maxPerBand} TICKETS.`, ...crossPromptLines()]
+      : [
+          `REQUESTED ODDS BANDS — build up to ${maxPerBand} tickets per band:`,
+          ...targets.map((b) => `- ${b.key}: combined ${b.min}x to ${b.max}x (${b.typicalLegs})`),
+        ]),
     "",
-    "Only use prices that appear above. If a band cannot be reached with the published prices, skip it and say so in dataNote.",
+    crossShape
+      ? "Only use prices that appear above. If no two games offer lines that combine inside the window, return no tickets at all and say so in dataNote — an invented ticket is worse than an empty page."
+      : "Only use prices that appear above. If a band cannot be reached with the published prices, skip it and say so in dataNote.",
     "Every leg must set gameId to the GAME id it belongs to, and a ticket may hold at most ONE leg per game: books discount same-game legs, so a ticket with two legs from one game is discarded.",
   ].join("\n");
 
@@ -653,10 +681,12 @@ export async function buildSlateBets(args: SlateBuildArgs): Promise<BetSlate> {
   });
 
   const allProps = games.flatMap((g) => g.props ?? []);
-  const suggestions = priceAll(result.suggestions, { props: allProps, sportKey: games[0]?.game.sportKey ?? "" }, {
+  const priced = priceAll(result.suggestions, { props: allProps, sportKey: games[0]?.game.sportKey ?? "" }, {
     oneLegPerGame: true,
+    crossShape,
     onDrop: (drop) => logEvent("bets.gate.dropped", { ...drop, gameId: "slate", sportKey: games[0]?.game.sportKey ?? "", scope: "slate" }),
   });
+  const suggestions = crossShape ? topCrossTickets(priced) : priced;
 
   // Cross-game tickets are logged against a synthetic game id so they can still be settled per leg.
   if (games.length) {
