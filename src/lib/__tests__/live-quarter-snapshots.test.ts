@@ -9,7 +9,7 @@ fs.rmSync(DIR, { recursive: true, force: true });
 
 import type { LiveSnapshot } from "@/lib/live/snapshot";
 
-const { boundaryOf } = await import("@/lib/live/quarters");
+const { boundaryOf, EMPTY_QUARTERS } = await import("@/lib/live/quarters");
 const { recordLiveReadSnapshot, storedSnapshots, subtractedQuarters } = await import("@/lib/server/live-quarters");
 
 /**
@@ -21,7 +21,7 @@ const snap = (over: Partial<LiveSnapshot> & { period: number; clockLeft: number 
   gameId: "401857206", sportGroup: "basketball", state: "in", clock: "", elapsed: 0, minute: 0,
   clockUnknown: false, regulationMinutes: 40,
   home: { abbr: "NY", score: 0, stats: {} }, away: { abbr: "ATL", score: 0, stats: {} },
-  players: [], fetchedAt: "2026-09-22T00:40:00.000Z", ...over,
+  players: [], quarters: EMPTY_QUARTERS, fetchedAt: "2026-09-22T00:40:00.000Z", ...over,
 });
 
 const line = (id: string, stats: Record<string, number>) => ({ id, name: `p${id}`, team: "NY", stats });

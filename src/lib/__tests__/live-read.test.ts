@@ -60,7 +60,7 @@ describe("the margin the pre-game read could only guess", () => {
     expect(c).toMatch(/BUILD REAL TICKETS, NOT A BULLETIN/);
     expect(c).toMatch(/at least one at 10x or longer/);
     expect(c).toMatch(/remaining requirement sits below the rate the player has already produced/);
-    expect(c).toContain("LIVE PLAYER LINES:");
+    expect(c).toContain("LIVE PLAYER LINES — ACCUMULATED, for the whole game so far:");
   });
 
   it("drops the tracker block when no ticket is being followed", () => {
@@ -147,3 +147,21 @@ describe("a read at every quarter break", () => {
   });
 });
 
+
+describe("the quarter-by-quarter block in the live context", () => {
+  const snap = parseLiveSnapshot(summary(47, 43), "g", "basketball", 10);
+
+  it("sits straight after the accumulated lines, where it answers them", () => {
+    const c = liveContext(snap, { leaders: "Alyssa Thomas (PHX): PTS 8, REB 6", trackerText: "", quarters: "QUARTER BY QUARTER — the trajectory\n- Alyssa Thomas (PHX, starter): Q1 6pt · Q2 2pt" });
+    expect(c.indexOf("QUARTER BY QUARTER")).toBeGreaterThan(c.indexOf("LIVE PLAYER LINES"));
+    expect(c.indexOf("QUARTER BY QUARTER")).toBeLessThan(c.indexOf("THE MARGIN IS KNOWN"));
+    // The accumulated block now says what it is, because a per-quarter block sits beside it.
+    expect(c).toContain("LIVE PLAYER LINES — ACCUMULATED, for the whole game so far:");
+  });
+
+  it("leaves the context exactly as it was when ESPN has narrated nothing", () => {
+    // A game with no play-by-play is a normal answer, not a failure: the read goes on without it.
+    expect(snap.quarters.players).toEqual([]);
+    expect(liveContext(snap, { leaders: "", trackerText: "", quarters: "" })).toBe(liveContext(snap, { leaders: "", trackerText: "" }));
+  });
+});

@@ -1,3 +1,5 @@
+import { EMPTY_QUARTERS, parseQuarterProfiles, type QuarterProfiles } from "@/lib/live/quarters";
+
 /**
  * An in-play snapshot from ESPN's summary: clock, score, team counts and per-player lines. Pure.
  */
@@ -26,6 +28,12 @@ export interface LiveSnapshot {
   home: { abbr: string; score: number; stats: Record<string, number> };
   away: { abbr: string; score: number; stats: Record<string, number> };
   players: LivePlayer[];
+  /**
+   * The same players split by period, read off the play-by-play in the SAME payload. `players[].stats`
+   * above is accumulated and always will be: a total cannot say whether it was built in the first
+   * quarter or the last. Empty for soccer and for a basketball game ESPN has not narrated yet.
+   */
+  quarters: QuarterProfiles;
   fetchedAt: string;
 }
 
@@ -148,6 +156,8 @@ export function parseLiveSnapshot(summary: Json, gameId: string, sportGroup: "ba
     home: { abbr: homeAbbr, score: n(home.score), stats: teamStats(homeAbbr) },
     away: { abbr: awayAbbr, score: n(away.score), stats: teamStats(awayAbbr) },
     players,
+    // One payload serves the whole game: the narration is walked here rather than fetched again.
+    quarters: sportGroup === "basketball" ? parseQuarterProfiles(summary, periodMinutes) : EMPTY_QUARTERS,
     fetchedAt: now.toISOString(),
   };
 }
