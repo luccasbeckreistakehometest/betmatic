@@ -254,3 +254,13 @@ describe("the block the model reads", () => {
     expect(quartersPrompt(EMPTY_QUARTERS, { lastComplete: 2 })).toBe("QUARTER BY QUARTER: not computed — ESPN has published no play-by-play for this game.");
   });
 });
+
+describe("a game whose rotation the narration never sustains", () => {
+  it("says the minutes are not measured at all, rather than not measured beyond Q0", () => {
+    const doctored = structuredClone(fixture);
+    doctored.boxscore.players[0].statistics[0].athletes.find((a) => a.starter)!.starter = false;
+    const block = quartersPrompt(parseQuarterProfiles(doctored, 10), { lastComplete: 2 });
+    expect(block).toContain("MINUTES ARE NOT MEASURED AT ALL FOR THIS GAME");
+    expect(block).not.toContain("Q0");
+  });
+});

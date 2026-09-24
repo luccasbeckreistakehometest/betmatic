@@ -174,6 +174,58 @@ function propBets(g: FakeGame) {
   return { count: items.length, items };
 }
 
+/**
+ * A play-by-play for the WNBA game under way, so the quarter read has a narration to walk in the
+ * closed world as it does against ESPN. Every per-quarter figure below sums to the box score above:
+ * Gabi Reis 14pt 5rb 5pf 1to 1stl, Hana Melo 8pt 9rb 2pf 2to 1blk — and Gabi's steal is one of
+ * Hana's turnovers, Hana's block one of Gabi's misses, which is how a real feed hangs together.
+ *
+ * It narrates no assist, and the box score's AST column is left standing. An assist needs a
+ * team-mate and each fake team has exactly one player, so a narrated assist here would be a thing
+ * that cannot happen. The parser is held to assists against a real 198-play game in the unit specs;
+ * what this world is for is the path — narration read, quarters split, block built — and the honest
+ * refusal at the end of it: with one player a side the walk cannot field five, so it reports the
+ * minutes as not measured rather than inventing them.
+ */
+function livePlays(g: FakeGame) {
+  const HOME = g.home.players[0].id;
+  const AWAY = g.away.players[0].id;
+  const plays: Record<string, unknown>[] = [];
+  let n = 0;
+  const play = (period: number, clock: string, text: string, participants: string[], over: Record<string, unknown> = {}) =>
+    plays.push({
+      id: `${g.id}${++n}`, sequenceNumber: String(n), type: { id: "92", text: "Jump Shot" }, text,
+      period: { number: period }, clock: { displayValue: clock }, scoringPlay: false, scoreValue: 0,
+      participants: participants.map((id) => ({ athlete: { id } })), ...over,
+    });
+  const bucket = (period: number, clock: string, who: string) =>
+    play(period, clock, `${who === HOME ? g.home.players[0].name : g.away.players[0].name} makes two point shot`, [who], { scoringPlay: true, scoreValue: 2, type: { id: "95", text: "Layup Shot" } });
+  const board = (period: number, clock: string, who: string) =>
+    play(period, clock, `${who === HOME ? g.home.players[0].name : g.away.players[0].name} defensive rebound`, [who], { type: { id: "155", text: "Defensive Rebound" } });
+  const foul = (period: number, clock: string, who: string) =>
+    play(period, clock, `${who === HOME ? g.home.players[0].name : g.away.players[0].name} personal foul`, [who], { type: { id: "45", text: "Personal Foul" } });
+  const lost = (period: number, clock: string, who: string, stolenBy?: string) =>
+    play(period, clock, `${who === HOME ? g.home.players[0].name : g.away.players[0].name} bad pass turnover${stolenBy ? ` (${stolenBy === HOME ? g.home.players[0].name : g.away.players[0].name} steals)` : ""}`,
+      stolenBy ? [who, stolenBy] : [who], { type: { id: "62", text: "Bad Pass Turnover" } });
+  const swat = (period: number, clock: string, who: string, by: string) =>
+    play(period, clock, `${who === HOME ? g.home.players[0].name : g.away.players[0].name} misses layup (${by === HOME ? g.home.players[0].name : g.away.players[0].name} blocks)`, [who, by], { type: { id: "95", text: "Layup Shot" } });
+
+  // Q1 — Gabi 8pt 2rb 1pf 0to 1stl · Hana 2pt 4rb 1pf 1to 0blk
+  bucket(1, "9:41", HOME); board(1, "9:12", AWAY); bucket(1, "8:30", HOME); board(1, "7:58", AWAY);
+  foul(1, "7:20", HOME); bucket(1, "6:44", AWAY); board(1, "6:02", HOME); lost(1, "5:18", AWAY, HOME);
+  bucket(1, "4:33", HOME); board(1, "3:51", AWAY); foul(1, "3:02", AWAY); bucket(1, "2:14", HOME);
+  board(1, "1:30", HOME); board(1, "0:47", AWAY);
+  // Q2 — Gabi 4pt 2rb 2pf 1to 0stl · Hana 4pt 3rb 0pf 1to 1blk
+  bucket(2, "9:35", AWAY); board(2, "9:01", HOME); foul(2, "8:22", HOME); bucket(2, "7:40", HOME);
+  board(2, "7:05", AWAY); swat(2, "6:18", HOME, AWAY); board(2, "6:16", AWAY); lost(2, "5:30", HOME);
+  bucket(2, "4:52", AWAY); board(2, "4:10", HOME); foul(2, "3:26", HOME); bucket(2, "2:48", HOME);
+  lost(2, "1:11", AWAY); board(2, "0:33", AWAY);
+  // Q3, still in play at 5:12 — Gabi 2pt 1rb 2pf · Hana 2pt 2rb 1pf
+  bucket(3, "9:28", HOME); board(3, "8:50", AWAY); foul(3, "8:11", HOME); bucket(3, "7:29", AWAY);
+  board(3, "6:47", HOME); foul(3, "6:10", AWAY); foul(3, "5:41", HOME); board(3, "5:14", AWAY);
+  return plays;
+}
+
 function summary(g: FakeGame) {
   const out: Record<string, unknown> = {
     header: { competitions: [{ date: g.startsAt.toISOString(), status: status(g), competitors: [competitor(g.home, "home", g.score?.[0]), competitor(g.away, "away", g.score?.[1])] }] },
@@ -195,6 +247,7 @@ function summary(g: FakeGame) {
         statistics: [{ labels: ["MIN", "PTS", "FG", "3PT", "FT", "REB", "AST", "TO", "STL", "BLK", "OREB", "DREB", "PF", "+/-"], athletes: t.players.map((p) => ({ athlete: { id: p.id, displayName: p.name }, starter: true, didNotPlay: false, stats: live[p.id] ?? [] })) }],
       })),
     };
+    out.plays = livePlays(g);
   }
   if (g.sport === "soccer") {
     const lineupOut = g.state === "pre" && g.startsAt.getTime() - Date.now() < 2 * HOUR;
