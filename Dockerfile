@@ -29,6 +29,11 @@ COPY --from=build /app/public ./public
 COPY --from=build /app/scripts ./scripts
 # Source definitions read at runtime by the admin research routes (src/lib/config.ts).
 COPY --from=build /app/config ./config
+# next.config.ts names this file as the image loader and Next resolves it at BOOT, not at build:
+# without it the server starts, throws "Specified images.loaderFile does not exist" and restarts
+# for ever. It is the one file under src/ the runtime image needs, and it took production down on
+# 24/09/2026 for exactly this reason.
+COPY --from=build /app/src/lib/plate-loader.ts ./src/lib/plate-loader.ts
 COPY package.json next.config.* ./
 RUN mkdir -p /app/data /app/.browser-profiles
 VOLUME ["/app/data", "/app/.browser-profiles"]
