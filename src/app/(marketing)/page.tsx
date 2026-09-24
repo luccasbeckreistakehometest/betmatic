@@ -272,20 +272,30 @@ export default async function Landing({ searchParams }: PageProps<"/">) {
         </div>
       </section>
 
-      {/* ---- who builds it: a real face and a first-person line, right before the price ---- */}
-      <section className="border-b border-line" data-testid="founder">
+      {/* ---- the closing call, right before the price: the objection answered, then the button.
+           The face is a model, not a byline: nobody is named, because the claim rests on the public
+           record and not on whose face it is. ---- */}
+      <section className="border-b border-line" data-testid="closing-cta">
         <div className="mx-auto grid max-w-shell gap-8 px-4 py-16 sm:px-6 md:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] md:items-center">
           <Plate
             image="/img/plate/founder.webp"
-            alt={c.plates.founder.alt}
+            alt={c.plates.closing.alt}
             ratio="aspect-plate"
             sizes="(min-width: 1280px) 375px, (min-width: 768px) 31vw, calc(100vw - 32px)"
           />
           <div>
-            <span className="text-label u-label text-fg-dim">{c.founderEyebrow}</span>
-            <p className="mt-3 u-title text-lead text-fg">{c.founderName}</p>
-            <p className="mt-1 text-sm text-fg-muted">{c.founderRole}</p>
-            <p className="mt-4 max-w-measure text-base leading-relaxed text-fg-muted">{c.founderLine}</p>
+            <span className="text-label u-label text-fg-dim">{c.closingEyebrow}</span>
+            <p className="mt-3 u-title text-lead text-fg">{c.closingTitle}</p>
+            <p className="mt-4 max-w-measure text-base leading-relaxed text-fg-muted">{c.closingLine}</p>
+            <div className="mt-7 flex flex-wrap items-center gap-3">
+              <LinkButton variant="primary" href={`/signup?lang=${lang}`} data-testid="closing-cta-button" className="h-11 px-6 text-base">
+                {c.closingCta}
+              </LinkButton>
+              <LinkButton href={`/prova?lang=${lang}`} className="h-11 px-5 text-base">
+                {c.closingSecondary}
+              </LinkButton>
+            </div>
+            <p className="mt-3 text-tiny text-fg-dim">{c.closingCtaSub}</p>
           </div>
         </div>
       </section>

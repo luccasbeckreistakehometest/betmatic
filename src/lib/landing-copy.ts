@@ -75,14 +75,16 @@ export interface LandingCopy {
     daily: { alt: string };
     honesty: { alt: string };
     how: { alt: string; caption: string };
-    founder: { alt: string };
+    closing: { alt: string };
   };
 
   /** Who builds it: a real person beside the product, in the first person and promising nothing. */
-  founderEyebrow: string;
-  founderName: string;
-  founderRole: string;
-  founderLine: string;
+  closingEyebrow: string;
+  closingTitle: string;
+  closingLine: string;
+  closingCta: string;
+  closingSecondary: string;
+  closingCtaSub: string;
 }
 
 const PT: LandingCopy = {
@@ -271,14 +273,16 @@ const PT: LandingCopy = {
       alt: "Esquema: dezenas de marcas verticais verdes e vermelhas sobre uma linha de base, uma por bilhete liquidado, e acima delas a linha do acumulado, que desce da esquerda para a direita.",
       caption: "Ilustração do método: cada marca é um bilhete já liquidado, verde ou vermelho, e a linha de cima é o acumulado. Não é o nosso histórico — o nosso fica na prova pública.",
     },
-    founder: { alt: "Luccas Beck, de camisa branca, sentado atrás de um notebook com a luz de uma janela ao lado, olhando para a câmera." },
+    closing: { alt: "Pessoa de camisa branca sentada atrás de um notebook, com a luz de uma janela ao lado, olhando para a câmera." },
   },
 
-  founderEyebrow: "Quem faz",
-  founderName: "Luccas Beck",
-  founderRole: "Desenvolvedor. O Betmatic é feito por mim.",
-  founderLine:
-    "Cansei de grupo que posta o green e apaga o resto. Construí o contrário: todo bilhete que o sistema monta fica registrado na hora e é conferido depois do jogo, tenha dado certo ou não. Quando o número ficar feio, ele vai estar na página de prova do mesmo jeito.",
+  closingEyebrow: "Sem grupo, sem palpite",
+  closingTitle: "Você vê o número feio também",
+  closingLine:
+    "Grupo de aposta posta o green e apaga o resto. Aqui é o contrário: todo bilhete que o sistema monta fica registrado na hora e é conferido depois do jogo, tenha dado certo ou não. Quando o número estiver ruim, ele vai estar na página de prova do mesmo jeito.",
+  closingCta: "Criar conta grátis",
+  closingSecondary: "Ver a prova pública",
+  closingCtaSub: "Sem cartão. Um jogo por dia, você escolhe.",
 };
 
 const EN: LandingCopy = {
@@ -454,14 +458,16 @@ const EN: LandingCopy = {
       alt: "A schematic: dozens of green and red vertical marks along a baseline, one per settled ticket, and above them the running-total line, falling from left to right.",
       caption: "An illustration of the method: each mark is a ticket already settled, green or red, and the line above is the running total. It is not our record — ours is on the track-record page.",
     },
-    founder: { alt: "Luccas Beck in a white shirt, sitting behind a laptop with window light to one side, looking at the camera." },
+    closing: { alt: "A person in a white shirt sitting behind a laptop, window light to one side, looking at the camera." },
   },
 
-  founderEyebrow: "Who builds it",
-  founderName: "Luccas Beck",
-  founderRole: "Developer. Betmatic is built by me.",
-  founderLine:
-    "I got tired of groups that post the winners and delete the rest. So I built the opposite: every ticket the system builds is logged the moment it is built and graded once the game ends, right or wrong. When the numbers look bad, they stay on the track-record page all the same.",
+  closingEyebrow: "No tipster, no hunch",
+  closingTitle: "You see the ugly number too",
+  closingLine:
+    "Tipster groups post the winners and delete the rest. This is the opposite: every ticket the system builds is logged the moment it is built and graded once the game ends, right or wrong. When the numbers look bad, they stay on the track-record page all the same.",
+  closingCta: "Create a free account",
+  closingSecondary: "See the public record",
+  closingCtaSub: "No card. One game a day, your pick.",
 };
 
 export function landingCopy(lang: Lang): LandingCopy {
