@@ -88,8 +88,8 @@ export const CODE_GATE_RULES: CodeGateRule[] = [
     dims: [],
     patterns: [
       // An imperative refusal plus a number plus something countable: a threshold, not judgement.
-      /\b(nunca|jamais|não emit\w*|nao emit\w*|não use|nao use|não inclua|nao inclua|descart\w*|never emit|never use|drop)\b[^.]{0,80}\b\d+(?:[.,]\d+)?\s*(%|por cento|minutos?|linhas?|bilhetes?|legs?|tickets?|minutes?)\b/i,
-      /\b(no máximo|no maximo|máximo de|maximo de|limite de|teto de|cap(?:ped)? at|at most)\s+\d+(?:[.,]\d+)?\s*(%|por cento|minutos?|linhas?|bilhetes?|legs?|tickets?|minutes?)\b/i,
+      /\b(nunca|jamais|não emit\w*|nao emit\w*|não use|nao use|não inclua|nao inclua|descart\w*|never emit|never use|drop)\b[^.]{0,80}\b\d+(?:[.,]\d+)?\s*(?:%|\b(?:por cento|minutos?|linhas?|bilhetes?|legs?|tickets?|minutes?)\b)/i,
+      /\b(no máximo|no maximo|máximo de|maximo de|limite de|teto de|cap(?:ped)? at|at most)\s+\d+(?:[.,]\d+)?\s*(?:%|\b(?:por cento|minutos?|linhas?|bilhetes?|legs?|tickets?|minutes?)\b)/i,
     ],
   },
 ];

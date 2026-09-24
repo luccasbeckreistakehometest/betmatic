@@ -138,7 +138,22 @@ async function promptProposalFor(
     return { proposal: null, note: "A proposta de prompt foi descartada: não citou um fator medido.", costUsd: 0 };
   }
 
-  const base = { runId, gameId: game.gameId, matchup: game.matchup, sportKey: game.sportKey, kind: "game" as const, feedback, factorStatId: factor?.id ?? "", tickets };
+  // The memory of what has already been tried runs before the queue, not after it. A fingerprint
+  // already on file means the operator has seen this idea; a proposal that reverses a live rule is
+  // blocked and stays a hypothesis, because two sentences arguing opposite things inside one prompt
+  // cancel each other in silence and nobody can read the result.
+  const hypothesis = factor ? proposeFromLesson({ factorStatId: factor.id, text: feedback }, factor, runId) : null;
+  if (hypothesis?.status === "duplicate") {
+    return { proposal: null, note: `A proposta repete uma hipótese já registrada (${hypothesis.note}); não foi enfileirada de novo.`, costUsd: 0 };
+  }
+  if (hypothesis?.status === "blocked") {
+    return { proposal: null, note: `A proposta contradiz uma regra já aplicada (${hypothesis.note}); ficou como hipótese bloqueada, para uma pessoa decidir qual das duas vale.`, costUsd: 0 };
+  }
+
+  const base = {
+    runId, gameId: game.gameId, matchup: game.matchup, sportKey: game.sportKey, kind: "game" as const,
+    feedback, factorStatId: factor?.id ?? "", tickets, hypothesisId: hypothesis?.id ?? null,
+  };
   const evidence = factor
     ? { dim: factor.dim, value: factor.value, scope: factor.scope, legs: factor.legs, hitRate: factor.hitRate, predicted: factor.predicted, qValue: factor.qValue }
     : {};
@@ -228,6 +243,15 @@ export async function runGameLearning(game: GameCandidate, deps: GameLearnDeps =
 
     const cited = citedLessons(pm.lessons, byId);
     const proposals: ProposalRow[] = [];
+
+    // The prompt proposal is read FIRST, so that when it and one of the lessons are the same thought
+    // about the same slice — which is the normal case, since the feedback is usually one lesson made
+    // actionable — the one that owns the hypothesis is the one that can be applied. Reversed, the
+    // lesson would take the fingerprint and the proposal would come back a duplicate of itself.
+    const prompt = await promptProposalFor({ pm, factors: byId, runId: id, game, tickets: summary.tickets, rewrite });
+    spent += prompt.costUsd;
+    if (prompt.proposal) proposals.push(prompt.proposal);
+
     const hypotheses = byId.size ? cited.map((l: Lesson) => proposeFromLesson(l, byId.get(l.factorStatId)!, id)) : [];
 
     // A lesson the code can check is not advice, it is an unbuilt gate: it goes to the queue as work
@@ -244,10 +268,6 @@ export async function runGameLearning(game: GameCandidate, deps: GameLearnDeps =
         hypothesisId: hypotheses.find((h) => h.factorStatId === factor.id)?.id ?? null,
       }));
     }
-
-    const prompt = await promptProposalFor({ pm, factors: byId, runId: id, game, tickets: summary.tickets, rewrite });
-    spent += prompt.costUsd;
-    if (prompt.proposal) proposals.push(prompt.proposal);
 
     const report = {
       ...pm,
