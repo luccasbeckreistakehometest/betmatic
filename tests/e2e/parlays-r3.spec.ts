@@ -46,9 +46,13 @@ test("the day's cross-game parlays are doubles inside the window, built once a d
 
   // The real chance and the multiplier are inside the sheet the card opens, the same sheet a
   // single-game ticket has. The card itself carries the combined price with its chance beside it.
-  const { sheet } = await openTicketWith(page, '[data-testid="expected-losers"]');
-  await expect(sheet.getByTestId("expected-losers")).toContainText("em 100 bilhetes assim, espere perder ~");
-  await expect(sheet.getByTestId("ticket-numbers").getByText(/[2-4],\d\dx/).first()).toBeVisible();
+  const { sheet } = await openTicketWith(page, '[data-testid="ticket-numbers"]');
+  const numbers = sheet.getByTestId("ticket-numbers");
+  await expect(numbers.getByText(/[2-4],\d\dx/).first()).toBeVisible();
+  await expect(numbers).toContainText("Chance estimada");
+  // The "espere perder ~N em 100" warning belongs to a ticket at 50x or more. This section never
+  // emits one any more, and a warning nobody needs is not a warning worth printing.
+  await expect(sheet.getByTestId("expected-losers")).toHaveCount(0);
   await closeTicket(page);
   expect(slateRows()).toBe(1);
 
@@ -100,11 +104,15 @@ test("a cross-game ticket opens in one betslip, with both matches in the URL", a
   await expect(prices).toContainText("o link paga 3,74x");
   await expect(prices.getByTestId("ticket-cross-game")).toContainText("a casa multiplica as odds em vez de descontar a combinação");
 
-  // The book that prices every leg and can still only open one match's page says exactly that.
+  // The runners-up, ordered by how much of the ticket each can actually carry: a book with a real
+  // betslip for one of the two lines, then the book whose URL can only open a match's page — which
+  // on a cross-game ticket is half the bet, and which says exactly that instead of implying more.
   await prices.getByTestId("ticket-other-books").locator("summary").click();
-  const other = prices.getByTestId("ticket-other-open").first();
-  await expect(other).toContainText("Abrir a página na Betnacional");
-  await expect(other).toHaveAttribute("data-carried", "0");
+  const others = prices.getByTestId("ticket-other-open");
+  await expect(others.first()).toContainText("Abrir na KTO com 1 das 2 linhas");
+  const pageOnly = others.filter({ hasText: "Betnacional" });
+  await expect(pageOnly).toContainText("Abrir a página na Betnacional");
+  await expect(pageOnly).toHaveAttribute("data-carried", "0");
 
   // The outbound click is counted with what the reader was offered, and the book opens in a new tab.
   // It is taken on the card's own button: the múltipla is placed from the face of the slip, and the

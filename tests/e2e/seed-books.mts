@@ -67,8 +67,11 @@ const prices: BookPrice[] = [
  *
  *   Superbet     posts both lines of the first double, and its bets[] names the match per selection
  *                → ONE slip with two matches in it, at the product of the two prices.
- *   Betnacional  posts both too, but its URL scheme opens ONE event page → the honest label is
- *                "abrir a página", and on a cross-game ticket that page holds half the bet.
+ *   Betnacional  posts the second match's line, and its URL scheme opens ONE event page → the
+ *                honest label is "abrir a página", and on a cross-game ticket that page holds half
+ *                the bet. It is deliberately NOT given the first match's line: the same line carries
+ *                the single-game ticket of game 101, and a third book there would change what that
+ *                game's own specs read.
  *
  * The second double (Bia Souza at 6.5 + Lia Teles) is the partial case across matches: Superbet
  * prices Lia Teles at the rung and Bia Souza one rung away, so the link carries one leg of two and
@@ -106,7 +109,6 @@ const slatePrices: BookPrice[] = [
   // The first double's two legs, both at the rung the ticket names: one Superbet slip, two matches.
   crossLine("Superbet", "superbet", sb103, "Júlia Dias", "rebounds", 7.5, 1.92, { eventId: "99000103", marketId: "233565", outcomeId: "5797", uuid: "e2e0aaaa-0000-5000-8000-000000000010", specialBetValue: "Dias, Júlia-7.5" }),
   crossLine("Betnacional", "betnacional", bn103, "Júlia Dias", "rebounds", 7.5, 1.88, bnRef("88000103", "203")),
-  crossLine("Betnacional", "betnacional", bn101, "Eva Nunes", "rebounds", 7.5, 1.9, bnRef("88000101", "201")),
   // The second double's Lia Teles leg. Bia Souza, its other leg, is posted one rung away above.
   crossLine("Superbet", "superbet", sb104, "Lia Teles", "rebounds", 9.5, 1.86, { eventId: "99000104", marketId: "233565", outcomeId: "5798", uuid: "e2e0aaaa-0000-5000-8000-000000000011", specialBetValue: "Teles, Lia-9.5" }),
   milestone("Superbet", "superbet", sb, "Ana Lima", 24.5, 4.8, superbetRef("5794", "e2e0aaaa-0000-5000-8000-000000000007", "Lima, Ana-24.5")),
