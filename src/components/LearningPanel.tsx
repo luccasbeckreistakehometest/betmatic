@@ -2,10 +2,12 @@
 import { formatNumber, formatPercent, formatUsd } from "@/lib/format";
 
 import { useCallback, useEffect, useState } from "react";
-import { Panel, buttonClass } from "@/components/ui";
+import { Panel } from "@/components/ui";
 
 interface Run {
   id: string; status: string; windowStart: string; windowEnd: string; tickets: number; won: number; lost: number; summary: string;
+  /** Empty on the daily window sweep; the match on a per-game run. */
+  matchup?: string; gameId?: string;
   report: {
     wentRight?: string[]; wentWrong?: string[]; lessons?: string[]; confidence?: string; byMarket?: Record<string, { won: number; lost: number }>;
     /** The measured rows the lessons cited. A lesson with no row behind it never got this far. */
@@ -18,9 +20,12 @@ interface Run {
 }
 
 /**
- * What the agent learned from settled tickets, run by run. Each run can carry a proposed change to
- * the generation prompt; applying it is one click and goes through the same versioned path as
- * typed feedback, so it shows up in the prompt history with its rationale.
+ * What the agent learned, run by run: the diagnosis, and nothing else.
+ *
+ * The apply button used to live here, and it skipped every brake the loop has — it showed the
+ * FEEDBACK rather than the prompt text it would produce, and it knew nothing about the sample gate,
+ * the code-gate routing or the one-a-day cap. Deciding happens in "Fila de aprendizado", where the
+ * exact diff is on screen; this panel is the reading.
  */
 export function LearningPanel() {
   const [runs, setRuns] = useState<Run[] | null>(null);
@@ -38,13 +43,6 @@ export function LearningPanel() {
     setNote(j.error ? j.error : job === "settle" ? `Liquidação: ${j.settled} bilhete(s) liquidado(s), ${j.stillPending} ainda aguardando resultado.` : `Aprendizado: ${j.run.status} — ${j.run.summary || j.run.note}`);
     setBusy(null); await load();
   }
-  async function apply(id: string) {
-    setBusy(id); setNote(null);
-    const r = await fetch("/api/admin/learning", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
-    const j = await r.json();
-    setNote(j.ok ? `Aplicado ao prompt.\n\n${j.rationale}` : j.error);
-    setBusy(null); await load();
-  }
   const fmt = (iso: string) => new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 
   return (
@@ -54,13 +52,13 @@ export function LearningPanel() {
         <button onClick={() => trigger("learn")} disabled={busy !== null} className="rounded-control border border-line-control px-2 py-0.5 text-label text-fg-muted hover:border-line-control hover:text-fg disabled:bg-surface-3 disabled:text-fg-faint disabled:cursor-not-allowed" data-testid="learn-now">{busy === "learn" ? "analisando…" : "Rodar aprendizado"}</button>
       </div>
     }>
-      <p className="text-label text-fg-dim">A cada hora os jogos encerrados são liquidados (sem custo). Uma vez por dia o agente lê o que ganhou e perdeu, escreve o post-mortem e propõe uma mudança no prompt — você aplica com um clique. As taxas de acerto por fonte e mercado já entram em toda geração automaticamente.</p>
+      <p className="text-label text-fg-dim">A cada hora os jogos encerrados são liquidados (sem custo). Ao fim de cada jogo o agente lê aquele jogo, e uma vez por dia relê a janela inteira: o que ele propõe vai pra <span className="text-fg-muted">Fila de aprendizado</span>, acima, com o texto exato e a medição. Aqui fica o diagnóstico. As taxas de acerto por fonte e mercado já entram em toda geração automaticamente.</p>
       {note && <p className="mt-3 whitespace-pre-wrap rounded-control border border-line bg-surface-1 px-3 py-2 text-tiny text-fg-muted" data-testid="learn-note">{note}</p>}
       <ul className="mt-3 divide-y divide-line">
         {runs?.length ? runs.map((r) => (
           <li key={r.id} className="py-3 text-tiny" data-testid="learning-run">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <span className="text-fg-dim">{fmt(r.windowStart)} → {fmt(r.windowEnd)}</span>
+              <span className="text-fg-dim">{r.matchup ? r.matchup : `${fmt(r.windowStart)} → ${fmt(r.windowEnd)}`}</span>
               <span className={r.status === "ok" ? "text-pos" : r.status === "error" ? "text-neg" : "text-fg-dim"}>{r.status}</span>
               <span className="nums text-fg-muted">{r.tickets} bilhetes · {r.won}W {r.lost}L</span>
               {r.report?.confidence && <span className="text-fg-dim">confiança {r.report.confidence}</span>}
@@ -97,10 +95,9 @@ export function LearningPanel() {
               </div>
             )}
             {r.promptFeedback && (
-              <div className="mt-2 rounded-control border border-pos bg-action px-3 py-2">
-                <p className="text-micro u-label text-fg-dim">Proposta pro prompt</p>
+              <div className="mt-2 rounded-control border border-line bg-surface-0 px-3 py-2">
+                <p className="text-micro u-label text-fg-dim">Proposta enviada pra fila</p>
                 <p className="mt-1 whitespace-pre-wrap text-fg">{r.promptFeedback}</p>
-                <div className="mt-2">{r.applied ? <span className="text-pos">aplicada ✓</span> : <button onClick={() => apply(r.id)} disabled={busy !== null} className={buttonClass("primary")} data-testid="learn-apply">{busy === r.id ? "aplicando…" : "Aplicar no prompt"}</button>}</div>
               </div>
             )}
           </li>

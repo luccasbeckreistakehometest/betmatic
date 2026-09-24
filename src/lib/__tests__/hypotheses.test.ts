@@ -74,7 +74,7 @@ describe("a proposal that reverses a live rule", () => {
     markApplied(live.hypothesis!.id, "pv1", "admin");
     const blocked = proposeHypothesis({ ...base, direction: "raise", factorStatId: "f2" }, KNOWN).hypothesis!;
 
-    // LEARN_AUTO_APPLY reaches markApplied; a blocked row refuses it.
+    // only markApplied puts a rule live; a blocked row refuses it, whoever is asking.
     expect(markApplied(blocked.id, "pv2", "agente (aprendizado)")).toBeNull();
     expect(listHypotheses().find((h) => h.id === blocked.id)?.status).toBe("blocked");
 

@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { getDb, newId, nowIso } from "@/lib/server/db";
+import type { FactorStat } from "@/lib/ledger/factor-report";
 
 /**
  * The memory of what has already been tried.
@@ -73,8 +74,8 @@ const byId = (id: string) => (getDb().prepare("SELECT * FROM rule_hypotheses WHE
  *
  * Three refusals, in order: a proposal that cites no measured factor is not a hypothesis; a
  * fingerprint already on file is a repeat; and a proposal that reverses a rule currently applied is
- * `blocked` — the operator decides which of the two is right, and `LEARN_AUTO_APPLY` never touches
- * a blocked row.
+ * `blocked` — the operator decides which of the two is right, and no job ever applies a blocked
+ * row (`markApplied` refuses it outright).
  */
 export function proposeHypothesis(input: ProposeInput, knownFactorIds: Set<string>): ProposeResult {
   if (!input.factorStatId || !knownFactorIds.has(input.factorStatId)) {
@@ -128,3 +129,19 @@ export function recordVerdict(id: string, verdict: HypothesisVerdict, note: stri
 }
 
 export const appliedHypotheses = (): Hypothesis[] => rowsOf("SELECT * FROM rule_hypotheses WHERE status='applied' ORDER BY appliedAt DESC");
+
+/**
+ * Which way a lit factor points is not the model's opinion: a slice whose real hit rate sits below
+ * what was predicted is one the generator should lean away from, and above is one it should lean
+ * into. Deriving the direction from the measurement is what lets `contradicts()` recognise the
+ * reversal later — two sentences arguing opposite things about the same slice collide by fingerprint
+ * instead of quietly cancelling each other inside the prompt.
+ */
+export function proposeFromLesson(lesson: { factorStatId: string; text: string }, factor: FactorStat, runId: string) {
+  const direction: Direction = factor.gap > 0 ? "lower" : "raise";
+  const out = proposeHypothesis(
+    { dim: factor.dim, value: factor.value, direction, bucket: factor.scope, factorStatId: factor.id, text: lesson.text, runId },
+    new Set([factor.id]),
+  );
+  return { status: out.status, note: out.note, id: out.hypothesis?.id ?? null, previous: out.previous?.id ?? null, factorStatId: factor.id, text: lesson.text };
+}
