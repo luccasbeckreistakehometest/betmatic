@@ -3,7 +3,7 @@ import { getAthleteSplits, type AthleteSplits, type SplitLine } from "@/lib/sour
 import { getSport } from "@/lib/sports";
 
 /**
- * The player's own season, cut by where tonight's game is played and by who is in front of her.
+ * The player's own season, cut by where tonight's game is played and by who is in front of them.
  *
  * THE SAMPLE GATE IS THE POINT OF THIS FILE. A split is a smaller sample of the same season the
  * history block already measured, so it only earns a line in the prompt when it is big enough to
@@ -104,13 +104,15 @@ export async function splitsForGame(args: {
   return rows.filter((r): r is PlayerSplits => r !== null);
 }
 
-const per = (line: SplitLine) => `${line.points ?? "?"} pts / ${line.rebounds ?? "?"} reb / ${line.assists ?? "?"} ast${line.threes === null ? "" : ` / ${line.threes} 3pm`} in ${line.games} g`;
+/** ESPN publishes these to one decimal; keeping it stops "24.0 pts" reading as a whole-number count. */
+const one = (x: number | null) => (x === null ? "?" : x.toFixed(1));
+const per = (line: SplitLine) => `${one(line.points)} pts / ${one(line.rebounds)} reb / ${one(line.assists)} ast${line.threes === null ? "" : ` / ${one(line.threes)} 3pm`} in ${line.games} g`;
 const signed = (x: number) => `${x > 0 ? "+" : ""}${x.toFixed(1)}`;
 
 export function splitsPrompt(rows: PlayerSplits[]): string {
   if (!rows.length) return "PLAYER SPLITS: not published for this league.";
   const lines: string[] = [
-    `PLAYER SPLITS — the same player cut by where tonight's game is played and by who is in front of her, as ESPN publishes it. A cut under ${SPLIT_MIN_GAMES} games is named below as too thin and is NOT a fact you may use:`,
+    `PLAYER SPLITS — the same player cut by where tonight's game is played and by who is in front of them, as ESPN publishes it. A cut under ${SPLIT_MIN_GAMES} games is named below as too thin and is NOT a fact you may use:`,
   ];
   for (const row of rows) {
     const where = row.venue === "home" ? "at home tonight" : "on the road tonight";
