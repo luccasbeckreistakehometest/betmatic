@@ -117,7 +117,7 @@ export function LearningQueue() {
   return (
     <Panel
       title="Fila de aprendizado"
-      meta={data ? `${pending.length} para decidir · ${gates.length} portão(ões) de código` : undefined}
+      meta={data ? `prompt ativo v${formatNumber(data.active.version, "pt")} · ${pending.length} para decidir · ${gates.length} portão(ões) de código` : undefined}
       action={<Button onClick={() => void runNow()} loading={busy === "run"} disabled={busy !== null} data-testid="learn-game-now">Rodar agora</Button>}
     >
       <p className="text-label text-fg-dim">

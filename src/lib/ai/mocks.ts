@@ -139,3 +139,54 @@ export function mockSlateBets(args: { games: { game: Game; detail: GameDetail; p
   }
   return { suggestions, dataNote: "AI_MOCK" };
 }
+
+/* ── The learning loop ──────────────────────────────────────────────────────────────────────────
+ * The post-mortem and the prompt rewrite, so the whole closed loop — a finished game read, a
+ * proposal filed, a diff on screen, a click, a measured version — runs end to end in the test world
+ * without a token. Both are deterministic and both are built from the same inputs the real prompts
+ * carry, so what the e2e approves is a real rewrite of the real active prompt.
+ */
+
+/** The slice the mock post-mortem cites: the widest sample on file, so the gate is exercised. */
+function widestFactor(factors: MockFactor[]): MockFactor | null {
+  const eligible = factors.filter((f) => f.legs >= 20);
+  return (eligible.length ? eligible : factors).reduce<MockFactor | null>((a, f) => (!a || f.legs > a.legs ? f : a), null);
+}
+
+export interface MockFactor { id: string; dim: string; value: string; legs: number; hitRate: number; predicted: number }
+
+export interface MockPostMortem {
+  summary: string; wentRight: string[]; wentWrong: string[];
+  lessons: { factorStatId: string; text: string }[];
+  promptFeedback: string; promptFeedbackFactorStatId: string; confidence: "high" | "medium" | "low";
+}
+
+/**
+ * Two findings on purpose, because the queue has two halves and both must be exercised: one that is
+ * genuinely judgement (which evidence to lean on) and goes to the prompt, and one that is a count
+ * the build can check and must therefore land as a code gate with no approve button on it.
+ */
+export function mockPostMortem(args: { summary: { tickets: number; won: number; lost: number }; factors: MockFactor[] }): MockPostMortem {
+  const factor = widestFactor(args.factors);
+  const cite = factor?.id ?? "";
+  return {
+    summary: `${args.summary.tickets} bilhetes liquidados neste jogo: ${args.summary.won} ganhos e ${args.summary.lost} perdidos.`,
+    wentRight: ["as linhas ancoradas em histórico medido seguraram melhor que as de mercado"],
+    wentWrong: [`o fatiamento ${factor ? `${factor.dim}=${factor.value}` : "medido"} entregou bem menos do que prometeu`],
+    lessons: cite ? [{ factorStatId: cite, text: "Nunca ponha a mesma jogadora em mais de 3 bilhetes do mesmo build." }] : [],
+    promptFeedback: "Ancore a projeção no histórico medido da própria jogadora antes de olhar a linha da casa, e diga na justificativa qual das duas está sustentando o número.",
+    promptFeedbackFactorStatId: cite,
+    confidence: "medium",
+  };
+}
+
+export interface MockRewrite { pt: string; en: string; rationale: string }
+
+/** Appends the asked-for rule, so the diff an operator reads is exactly the paragraph that changed. */
+export function mockPromptRewrite(args: { current: { pt: string; en: string }; feedback: string }): MockRewrite {
+  return {
+    pt: `${args.current.pt}\n\nREGRA DO APRENDIZADO: ${args.feedback}`,
+    en: `${args.current.en}\n\nLEARNED RULE: ${args.feedback}`,
+    rationale: "Acrescentei um parágrafo ao fim do prompt, com a regra pedida, e não toquei em mais nada.",
+  };
+}

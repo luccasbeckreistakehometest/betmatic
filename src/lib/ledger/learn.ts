@@ -3,6 +3,7 @@ import { getDb, newId, nowIso } from "@/lib/server/db";
 import { readLedger } from "@/lib/ledger/store";
 import { calibrationPrompt } from "@/lib/ledger/calibrate";
 import { generateStructured, lastUsage } from "@/lib/ai/extract";
+import { mockPostMortem } from "@/lib/ai/mocks";
 import { aiRewrite, type RewriteFn } from "@/lib/server/prompts";
 import { filePromptProposal, fileCodeGates } from "@/lib/ledger/file-proposal";
 import { recentRejections } from "@/lib/ledger/proposals";
@@ -85,6 +86,8 @@ export const aiPostMortem: PostMortemFn = async ({ summary, entries, calibration
   generateStructured({
     schema: PostMortemSchema,
     maxTokens: 6000,
+    label: "post-mortem",
+    mock: () => mockPostMortem({ summary, factors }),
     system: `You are the post-mortem analyst for a betting-ticket generator. You get the tickets it produced that settled recently, with every leg graded, plus its running calibration. Find what the generator should do differently.
 Rules:
 - Ground every claim in the legs given. Name the leg, the market, the evidence source and the predicted probability. Never invent a cause.

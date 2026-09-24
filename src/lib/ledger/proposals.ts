@@ -1,6 +1,6 @@
 import { getDb, newId, nowIso } from "@/lib/server/db";
 import { brasiliaDay } from "@/lib/ledger/day";
-import { markApplied, recordVerdict } from "@/lib/ledger/hypotheses";
+import { markApplied, markRejected, recordVerdict } from "@/lib/ledger/hypotheses";
 import { applyRewrite, getPromptVersion, promptFreeze, revertToPrevious, type FreezeState } from "@/lib/server/prompts";
 import type { PromptKind } from "@/lib/bets/prompt-defaults";
 import type { Channel } from "@/lib/ledger/code-gate";
@@ -236,7 +236,7 @@ export function rejectProposal(id: string, admin: string, reason: string): { ok:
 
   getDb().prepare("UPDATE learning_proposals SET status='rejected', reason=?, decidedBy=?, decidedAt=? WHERE id=?")
     .run(text.slice(0, 600), admin, nowIso(), id);
-  if (row.hypothesisId) recordVerdict(row.hypothesisId, "no_change", `recusada pelo operador: ${text}`);
+  if (row.hypothesisId) markRejected(row.hypothesisId, `recusada pelo operador: ${text}`);
   return { ok: true };
 }
 

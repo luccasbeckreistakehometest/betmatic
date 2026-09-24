@@ -123,6 +123,19 @@ export function unblockHypothesis(id: string, createdBy: string): Hypothesis | n
   return byId(id);
 }
 
+/**
+ * The operator turned it down. The row stays — nothing is deleted here — but it stops being a live
+ * claim, so the fingerprint no longer blocks the idea from being raised again if the measurement
+ * comes back stronger. What keeps the agent from simply re-proposing it tomorrow is not this table:
+ * it is the refusal's own reason, which the next post-mortem is shown.
+ */
+export function markRejected(id: string, note: string): Hypothesis | null {
+  const row = byId(id);
+  if (!row) return null;
+  getDb().prepare("UPDATE rule_hypotheses SET status='rejected', verdict='no_change', verdictNote=?, evaluatedAt=? WHERE id=?").run(note.slice(0, 400), nowIso(), id);
+  return byId(id);
+}
+
 export function recordVerdict(id: string, verdict: HypothesisVerdict, note: string): Hypothesis | null {
   getDb().prepare("UPDATE rule_hypotheses SET verdict=?, verdictNote=?, evaluatedAt=? WHERE id=?").run(verdict, note.slice(0, 400), nowIso(), id);
   return byId(id);

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { getDb, newId, nowIso } from "@/lib/server/db";
 import { DEFAULT_PROMPTS, GLOSSARY_RULE, UNDER_MARGIN_RULE, type PromptKind } from "@/lib/bets/prompt-defaults";
 import { generateStructured } from "@/lib/ai/extract";
+import { mockPromptRewrite } from "@/lib/ai/mocks";
 import { readLedger } from "@/lib/ledger/store";
 import { mainTickets } from "@/lib/ledger/proof";
 import type { Lang } from "@/lib/i18n";
@@ -187,6 +188,8 @@ export const aiRewrite: RewriteFn = async ({ kind, current, feedback }) =>
   generateStructured({
     schema: RewriteSchema,
     maxTokens: 16000,
+    label: "prompt-rewrite",
+    mock: () => mockPromptRewrite({ current, feedback }),
     system: `You maintain the system prompt of a betting-ticket generator. An admin has given feedback on how the generated tickets should change. Produce the revised prompt.
 Rules:
 - Apply the feedback precisely and minimally: change what the feedback asks for, keep everything else word for word. Do not shorten, summarise or restyle untouched sections.

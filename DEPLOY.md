@@ -75,7 +75,7 @@ compra real de valor baixo e confira em `/admin → Pagamentos`.
 ## 6b. Jobs da rodada 3 (sidecar)
 O sidecar chama `POST /api/cron/refresh?job=…` com `x-cron-secret`. Todos são idempotentes e escrevem uma
 linha JSON no log (`job.lineups`, `job.close`, `job.weekly`, `job.cleanup`, `job.featured`, `job.books`,
-`job.cross`):
+`job.cross`, `job.learn-game`):
 
 | job | quando | o que faz |
 |---|---|---|
@@ -85,6 +85,7 @@ linha JSON no log (`job.lineups`, `job.close`, `job.weekly`, `job.cleanup`, `job
 | `cleanup` | 1 vez por dia | apaga eventos de medição com mais de 180 dias |
 | `featured` | junto do refresh (a cada 4 h) | destaques do dia; roda mesmo com `CRON_ENABLED=0` |
 | `cross` | a cada tick, roda 1 vez por dia | **as múltiplas do dia entre jogos**: uma múltipla por esporte com 2 ou mais jogos por começar, sempre 2 ou 3 linhas de jogos diferentes e preço entre 2,00x e 5,00x (`src/lib/bets/cross-policy.ts`). A guarda de "uma vez por dia" é o `job_runs`, não um contador do shell; a grade que não permite uma boa combinação não chega no modelo e a tela diz isso. Não consome o `SLATE_DAILY_CAP` dos leitores — o teto dele é o `AI_DAILY_BUDGET_USD`. `CROSS_DAILY=0` desliga; `force=1` roda agora |
+| `learn-game` | a cada tick | **o laço de aprendizado**: primeiro reverte, sozinha, qualquer versão de prompt já medida abaixo da que ela substituiu (aritmética sobre o ledger, zero tokens); depois lê os jogos que terminaram de liquidar e ainda não foram lidos — `LEARN_GAME_MAX_PER_TICK` por tique (2), até `LEARN_GAME_LOOKBACK_HOURS` atrás (36 h), e nunca passando do `AI_DAILY_BUDGET_USD` do dia. Nada que ele encontra vai pro prompt: vira linha na **Fila de aprendizado** do `/admin`, com o diff exato, quantos bilhetes decididos sustentam (portão de 20) e a medição contra a versão anterior. Proposta que o código consegue checar (concentração, disponibilidade, coerência de mercado, qualquer teto numérico) não tem botão de aprovar: entra como "portão de código", pra alguém implementar. Teto de uma versão por dia, sem override. `LEARN_PER_GAME=0` desliga sem deploy; `gameId=…` relê um jogo específico |
 | `books` | a cada tick | preços das casas brasileiras (Superbet, KTO, EstrelaBet e as outras da Altenar, Betfair Exchange, Sportingbet, Betnacional) para todo jogo das próximas 48 h, só pré-jogo. **Desligado até `BR_BOOKS` ser definido** (`all` ou a lista de ids em `.env.example`); cada casa tem timeout com cancelamento e erro isolados, o tick inteiro respeita `BOOKS_JOB_BUDGET_MS`, o histórico é apagado depois de `BOOKS_RETENTION_DAYS`; o painel admin liga/desliga cada casa; `pnpm tsx scripts/books-run.mts wnba` roda o mesmo job no shell; cada linha e cada bilhete ganham um link "Abrir na casa" (bilhete já montado na Superbet, KTO e Sportingbet; página do mercado na Betfair Exchange; página do jogo na Betnacional), com tag de afiliado opcional por casa em `BOOK_AFFILIATE_<CASA>` (`.env.example`) |
 
 No stack de produção (`/srv/apps/stack/docker-compose.yml`, serviço `betmatic-cron`) acrescente as mesmas
