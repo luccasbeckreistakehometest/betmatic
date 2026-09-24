@@ -20,6 +20,8 @@ import { duelsPrompt } from "@/lib/duels";
 import type { Duel } from "@/lib/duels";
 import { refereePrompt, type RefereeSignal } from "@/lib/signals/referee";
 import { dvpPrompt, type DvpProfile } from "@/lib/signals/dvp";
+import { splitsPrompt, type PlayerSplits } from "@/lib/signals/splits";
+import { teamSeasonPrompt, type TeamSeasonMatchup } from "@/lib/signals/team-season";
 import { consensusPrompt, type ConsensusProp } from "@/lib/props/consensus";
 import { livePrompt, type LiveState } from "@/lib/live/state";
 import { rolePrompt, type RoleProfile } from "@/lib/props/role";
@@ -186,6 +188,13 @@ export interface BuildArgs {
   referee?: RefereeSignal | null;
   /** What each defence concedes by position. The defensible form of "player vs team". */
   dvp?: { home: DvpProfile | null; away: DvpProfile | null };
+  /**
+   * The players' own seasons cut by venue and by tonight's opponent, already through the sample
+   * gate. Pre-game only: a live read has the night's real production, which beats a season average.
+   */
+  splits?: PlayerSplits[];
+  /** Both sides' season rates with their league ranks — what "fast" and "slow" mean in this league. */
+  teamSeason?: TeamSeasonMatchup | null;
   /** The same prop as posted by every source, for line shopping and disagreement. */
   consensus?: ConsensusProp[];
   /** Minutes and role, which gate whether any matchup edge can be reached. */
@@ -497,7 +506,7 @@ function minutesBlock(projections: MinutesProjection[]): string {
 }
 
 export async function buildBets(args: BuildArgs): Promise<BetSlate> {
-  const { game, detail, props, picks, dimers, x, bands, lang, duels = [], referee = null, dvp, consensus = [], roles = [], live = null, maxPerBand = 2, effort, lines = [], record = true } = args;
+  const { game, detail, props, picks, dimers, x, bands, lang, duels = [], referee = null, dvp, splits = [], teamSeason = null, consensus = [], roles = [], live = null, maxPerBand = 2, effort, lines = [], record = true } = args;
   // Grade anything finished first, so this build reasons over the newest track record.
   await settlePending(10).catch(() => null);
   const targets = bands.map((b) => getBand(b));
@@ -544,6 +553,11 @@ export async function buildBets(args: BuildArgs): Promise<BetSlate> {
     refereePrompt(referee),
     "",
     dvpPrompt(dvp?.home ?? null, dvp?.away ?? null),
+    "",
+    // Both blocks are season context: pre-game only, because a read taken with the game under way
+    // already carries the night's real production, which beats any season average.
+    isBasketball && !inPlay ? teamSeasonPrompt(teamSeason) : "",
+    isBasketball && !inPlay ? splitsPrompt(splits) : "",
     "",
     duelsPrompt(duels),
     "",
