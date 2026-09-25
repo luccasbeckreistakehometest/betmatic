@@ -102,10 +102,14 @@ describe("the shape gate", () => {
 
 describe("the day's short list", () => {
   it("keeps the best-evidenced tickets and leaves the rest", () => {
+    // Sem teto, a lista do dia devolve tudo o que passou nos portões; o que ela garante é a ORDEM,
+    // e o piso de dez do dono. O backstop só existe contra acidente aritmético.
     const ids = "abcdefghijklmnopqrst".split("");
     const bets = ids.map((id, i) => ticket(id, 3, 2, 50 + i));
     const kept = topCrossTickets(bets);
-    expect(kept).toHaveLength(CROSS_MAX_TICKETS);
+    expect(kept).toHaveLength(ids.length);
+    expect(ids.length).toBeGreaterThanOrEqual(CROSS_MIN_TICKETS_PER_DAY);
+    expect(CROSS_MAX_TICKETS).toBeGreaterThan(100);
     // The best-evidenced survive, and there are more of them now: the day's floor is ten.
     expect(CROSS_MAX_TICKETS).toBeGreaterThanOrEqual(CROSS_MIN_TICKETS_PER_DAY);
     // Kept by evidence, returned in the CALLER order — linkAlternatives has already sorted it.
