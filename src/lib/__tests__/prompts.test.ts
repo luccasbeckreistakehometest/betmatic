@@ -214,3 +214,29 @@ describe("alternatives rule upgrade", async () => {
     expect(upgradeUnderMarginRule(DEFAULT_PROMPTS.game.pt)).toBeNull();
   });
 });
+
+describe("a carteira que o dono desenhou em 25/09/2026", () => {
+  it("diz que sete é piso e não teto", () => {
+    for (const lang of ["pt", "en"] as const) {
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/SEVEN IS A FLOOR AND NOT A CEILING/);
+      // Sem número de teto, mas com teto: o material do jogo, e o portão por jogadora que já
+      // existe em código. "Ao menos 5" não pode virar licença para encher de repetição.
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/the ceiling is the GAME rather than a number/);
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/no player may carry more than HALF the tickets/);
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/does not support fifteen tickets/);
+    }
+  });
+
+  // A forma mais bem sustentada de tudo que foi pedido: dez das 25 lições do laço apontaram
+  // concentração como causa dominante das derrotas. Espalhar é o remédio exato.
+  it("prefere pontos de um, rebotes de outro e assistências de um terceiro", () => {
+    for (const lang of ["pt", "en"] as const) {
+      const prompt = DEFAULT_PROMPTS.game[lang];
+      expect(prompt).toMatch(/THE SHAPE THAT SPREADS/);
+      expect(prompt).toMatch(/POINTS from one player, REBOUNDS from a second and ASSISTS from a third/);
+      expect(prompt).toMatch(/one leg per player and one stat per player/);
+      // Repetir a mesma linha não conta como cobertura; mudar de degrau conta.
+      expect(prompt).toMatch(/the same line twice is not/);
+    }
+  });
+});

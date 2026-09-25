@@ -54,10 +54,32 @@ Hard rules:
       one or two legs on the best-measured lines on the board, and nothing stretched.
     · FIVE LONG TICKETS at 5x or more — exactly ONE priced between 5x and 10x, and the other FOUR
       priced above 10x.
+  SEVEN IS A FLOOR AND NOT A CEILING, and the ceiling is the GAME rather than a number. When the
+  board genuinely supports more distinct, well-evidenced combinations than seven, return them: the
+  owner's instruction of 25/09/2026 is that coverage is worth having and a fixed cap was arbitrary.
+  What bounds the count is the material, and you must judge it honestly: a game where four players
+  have published lines does not support fifteen tickets, and pretending otherwise means repeating a
+  thesis in new packaging. Two tests, both of which you apply before returning:
+    · every ticket has to be a bet someone could explain differently from every other one — a
+      different set of players, a different stat mix, or a genuinely different rung;
+    · no player may carry more than HALF the tickets you return. This one is also counted in code
+      and tickets are dropped by it (bets/gates.ts), so a slate that ignores it comes back shorter
+      than you wrote it, and the ones lost are chosen by the code and not by you.
+  Say in dataNote how many the board supported and why you stopped there.
+
   It is a floor on the BUILD and never a licence to invent. Every leg still has to be priced,
   evidenced and gated exactly as before, and a stretched rung the measured history does not support
   is not a ticket at any price. When the published prices genuinely cannot fill a front, return what
   they support and say in dataNote which front fell short, by how much, and why.
+- THE SHAPE THAT SPREADS, and prefer it over every other way of reaching a price. A ticket that takes
+  POINTS from one player, REBOUNDS from a second and ASSISTS from a third is worth more than the same
+  price built by stacking one player's ladder, and it is the single best-supported thing in this
+  file: of the 25 lessons the loop drew from 21 games, ten named concentration as the dominant cause
+  of losses — the same selection riding many tickets, or one player carrying every leg of one.
+  So: inside a ticket, prefer one leg per player and one stat per player. Across the slate, two
+  tickets may share a thesis only when they move a rung — "A over 10 points" in one and
+  "A over 20 points" in another is a different bet; the same line twice is not, and it is the thing
+  that turned single reading errors into correlated losses on 22, 23 and 24/09.
   Say plainly what the record says about the long front: measured over this product's own settled
   pre-game tickets, 5-10x has returned -65%, 10-20x is 0 for 5, and above 20x is 1 green in 63. The
   reader is owed that number in the background of a long ticket, in the same breath as the price.

@@ -91,8 +91,22 @@ export const CROSS_MIN_LEGS = 2;
 export const CROSS_MAX_LEGS = 12;
 /** The owner's floor of 25/09/2026: at least ten a day, mixing tickets from different matches. */
 export const CROSS_MIN_TICKETS_PER_DAY = 10;
-/** How many go on the page a day. */
-export const CROSS_MAX_TICKETS = 14;
+/**
+ * There is no maximum any more — the owner removed it on 25/09/2026, in these words: "nao vamos
+ * colocar quantidade maxima de bilhetes ou multiplas, apenas qtd minima".
+ *
+ * The reasoning offered was that a 0.5 u stake on a long price pays for several attempts, so more
+ * combinations cover more of the board. The arithmetic of that is worth writing down beside it,
+ * because it is the thing a count cannot fix: staking 0.5 u on N tickets costs 0.5N and one winner
+ * at X returns 0.5X, so the portfolio profits only when X > N. The measured 20-50x band is 1 green
+ * in 42 and returns -32.5% — which IS that calculation, done on what happened. Adding tickets does
+ * not move the expectation, it moves the variance: it covers more of the board and makes the same
+ * edge arrive more regularly.
+ *
+ * The number is kept as a very high backstop rather than deleted, so an arithmetic accident cannot
+ * publish ten thousand rows, and `topCrossTickets` still orders by evidence so the best are first.
+ */
+export const CROSS_MAX_TICKETS = 200;
 /** Asked of the model, so it proposes more than survives the gate below. */
 export const CROSS_PER_BAND = 4;
 /** The grid this needs: two games, which is the whole point of "entre jogos". */
