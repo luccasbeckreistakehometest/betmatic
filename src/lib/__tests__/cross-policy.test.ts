@@ -4,7 +4,8 @@ import { readFileSync } from "node:fs";
 
 process.env.DATA_DIR = path.join(process.cwd(), "data", "unit-cross-policy");
 const {
-  CROSS_BANDS, CROSS_MAX_DECIMAL, CROSS_MAX_LEGS, CROSS_MAX_TICKETS, CROSS_MIN_DECIMAL, CROSS_MIN_GAMES, CROSS_MIN_LEGS,
+  CROSS_BANDS, CROSS_HARD_MAX_DECIMAL, CROSS_MAX_DECIMAL, CROSS_MAX_LEGS, CROSS_MAX_TICKETS, CROSS_MEASURED_MAX_DECIMAL,
+  CROSS_MIN_DECIMAL, CROSS_MIN_GAMES, CROSS_MIN_LEGS, CROSS_MIN_TICKETS_PER_DAY,
   crossDailyEnabled, crossPromptLines, crossShapeReason, dailyCrossVerdict, topCrossTickets,
 } = await import("@/lib/bets/cross-policy");
 const { getBand } = await import("@/lib/odds");
@@ -72,17 +73,26 @@ describe("the shape gate", () => {
     expect(CROSS_MIN_LEGS).toBe(2);
   });
 
-  it("refuses the long ticket by its length before it argues about its price", () => {
-    const reason = crossShapeReason(ticket("long", 45, 6));
-    expect(reason).toMatch(/6 legs/);
-    expect(reason).not.toMatch(/ceiling/);
-    expect(CROSS_MAX_LEGS).toBe(3);
+  // A combination of whole tickets carries the legs of both, so the leg cap had to rise with the
+  // owner's rule of 25/09/2026. It is still a cap: past it the ticket is a pile, not a story.
+  it("refuses a ticket by its length before it argues about its price", () => {
+    const reason = crossShapeReason(ticket("long", 45, CROSS_MAX_LEGS + 1));
+    expect(reason).toMatch(new RegExp(`${CROSS_MAX_LEGS + 1} legs`));
+    expect(reason).not.toMatch(/backstop/);
+    expect(CROSS_MAX_LEGS).toBe(12);
   });
 
-  it("refuses a price under the floor and at or over the ceiling", () => {
+  // A 4-leg ticket combined with a 3-leg one is what the rule asks for, and it must pass.
+  it("lets a combination of two whole tickets through", () => {
+    expect(crossShapeReason(ticket("30x com 25x", 750, 7))).toBeNull();
+  });
+
+  it("refuses a price under the floor, and only an arithmetic accident above", () => {
     expect(crossShapeReason(ticket("short", 1.96, 2))).toMatch(/under the 2.00x floor/);
-    expect(crossShapeReason(ticket("edge", CROSS_MAX_DECIMAL, 2))).toMatch(/at or over the 5.00x ceiling/);
-    expect(crossShapeReason(ticket("just-in", CROSS_MAX_DECIMAL - 0.01, 2))).toBeNull();
+    // The measured ceiling stopped being a refusal on 25/09: past it is a label, not a gate.
+    expect(crossShapeReason(ticket("was-refused", CROSS_MEASURED_MAX_DECIMAL, 2))).toBeNull();
+    expect(crossShapeReason(ticket("long", 900, 4))).toBeNull();
+    expect(crossShapeReason(ticket("absurd", CROSS_HARD_MAX_DECIMAL, 4))).toMatch(/backstop/);
   });
 
   it("refuses a ticket with no computed price rather than guessing one", () => {
@@ -92,10 +102,14 @@ describe("the shape gate", () => {
 
 describe("the day's short list", () => {
   it("keeps the best-evidenced tickets and leaves the rest", () => {
-    const bets = [ticket("a", 3, 2, 60), ticket("b", 3, 2, 95), ticket("c", 3, 2, 80), ticket("d", 3, 2, 70)];
+    const ids = "abcdefghijklmnopqrst".split("");
+    const bets = ids.map((id, i) => ticket(id, 3, 2, 50 + i));
     const kept = topCrossTickets(bets);
     expect(kept).toHaveLength(CROSS_MAX_TICKETS);
-    expect(kept.map((b) => b.id)).toEqual(["b", "c", "d"]);
+    // The best-evidenced survive, and there are more of them now: the day's floor is ten.
+    expect(CROSS_MAX_TICKETS).toBeGreaterThanOrEqual(CROSS_MIN_TICKETS_PER_DAY);
+    // Kept by evidence, returned in the CALLER order — linkAlternatives has already sorted it.
+    expect(kept.map((b) => b.id)).toEqual(ids.slice(-CROSS_MAX_TICKETS));
   });
 
   it("breaks a tie on evidence and chance with the id, so two runs pick the same pair", () => {
