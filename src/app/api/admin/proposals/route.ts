@@ -76,6 +76,12 @@ const Body = z.object({
   action: z.enum(["approve", "reject"]),
   reason: z.string().max(600).optional(),
   override: z.boolean().optional(),
+  /**
+   * A platform release: apply everything learned at once, past the one-a-day cap. It costs the day's
+   * attribution — the before/after cannot say which of several versions did what — so it is asked
+   * for explicitly, never defaulted, and it signs every version it writes.
+   */
+  release: z.boolean().optional(),
 });
 
 /** Approve or refuse one proposal. A refusal carries its reason, because that reason is data. */
@@ -87,7 +93,7 @@ export async function POST(request: Request) {
 
   try {
     const out = parsed.data.action === "approve"
-      ? approveProposal(parsed.data.id, admin.email, { override: parsed.data.override })
+      ? approveProposal(parsed.data.id, admin.email, { override: parsed.data.override, release: parsed.data.release })
       : rejectProposal(parsed.data.id, admin.email, parsed.data.reason ?? "");
     return NextResponse.json(out, { status: out.ok ? 200 : 400 });
   } catch (error) {

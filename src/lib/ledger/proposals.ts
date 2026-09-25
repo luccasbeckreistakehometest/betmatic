@@ -189,7 +189,7 @@ export interface ApproveResult {
  * worth spending. The one-per-day cap has no override at all: two versions in a day make the
  * before/after unable to say which one did anything, and an operator cannot see that by looking.
  */
-export function approveProposal(id: string, admin: string, opts: { override?: boolean; now?: Date } = {}): ApproveResult {
+export function approveProposal(id: string, admin: string, opts: { override?: boolean; release?: boolean; now?: Date } = {}): ApproveResult {
   const row = byId(id);
   if (!row) return { ok: false, error: "Proposta não encontrada." };
   if (row.channel === "code_gate") {
@@ -215,8 +215,17 @@ export function approveProposal(id: string, admin: string, opts: { override?: bo
     return { ok: false, error: "O prompt ativo mudou desde que esta proposta foi escrita. Ela foi marcada como vencida em vez de aplicada." };
   }
 
+  // The one-a-day cap. It exists so the before/after can attribute an effect to a change: two
+  // versions in a day make the comparison unable to say which one did anything, and an operator
+  // cannot see that by looking. It is still the default, and still has no per-proposal override.
+  //
+  // `release` is the exception the owner asked for on 25/09/2026, in those words: a new release of
+  // the platform applies everything that has been learned at once and accepts that the day cannot be
+  // attributed. It is a deliberate trade of measurement for speed, it has to be asked for
+  // explicitly, and it is signed on every version it writes so the history says why that day has
+  // more than one.
   const already = appliedToday(row.kind, opts.now);
-  if (already) {
+  if (already && !opts.release) {
     return { ok: false, error: `Já houve uma versão aplicada hoje (${already.id}). O teto é de uma por dia, para o comparador conseguir dizer qual mudança fez o quê.` };
   }
 
@@ -224,7 +233,9 @@ export function approveProposal(id: string, admin: string, opts: { override?: bo
   try {
     out = applyRewrite({
       kind: row.kind, pt: row.contentPt, en: row.contentEn, feedback: row.feedback,
-      rationale: row.rationale, createdBy: admin, override: opts.override,
+      rationale: row.rationale, override: opts.override,
+      // Whoever spent the day's attribution signs the version, the way the freeze override does.
+      createdBy: opts.release && already ? `${admin} (release: fora do teto diário)` : admin,
     });
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : "falhou", freeze: promptFreeze(row.kind) };
