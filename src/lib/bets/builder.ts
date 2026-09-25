@@ -33,7 +33,7 @@ import { environmentPrompt, gameEnvironment, type GameEnvironment } from "@/lib/
 import { ticketCorrelation, type CorrLeg } from "@/lib/signals/correlation";
 import { matchAthlete, resolveStatLabels } from "@/lib/props/history";
 import { linkAlternatives, ticketId } from "@/lib/bets/alternatives";
-import { capPlayerConcentration, unplayableReason, type GateDrop } from "@/lib/bets/gates";
+import { applyMeasuredCaps, capPlayerConcentration, unplayableReason, type GateDrop } from "@/lib/bets/gates";
 import { CROSS_BANDS, CROSS_PER_BAND, crossPromptLines, crossShapeReason, topCrossTickets } from "@/lib/bets/cross-policy";
 import type { ProviderLines } from "@/lib/sources/espn-props";
 import { mockGameSlate, mockSlateBets } from "@/lib/ai/mocks";
@@ -490,7 +490,16 @@ export function priceAll(raws: RawSuggestion[], ctx: EnrichContext, opts: { oneL
     if (priced) {
       // The computed probability anchors fairProbability inside enrichLeg, so the ticket's numbers are
       // recomputed from the anchored legs before correlation is applied.
-      const legs = priced.legs.map((leg, j) => calibrated(enrichLeg(leg, anchored.legs[j], ctx), calibrator, ctx.sportKey));
+      // Calibração primeiro (corrige a fatia pela média), tetos medidos depois (corrigem o extremo,
+      // que é onde a média não chega). Os tetos só puxam para baixo — bets/gates.ts diz por quê.
+      const legs = priced.legs.map((leg, j) => {
+        const enriched = calibrated(enrichLeg(leg, anchored.legs[j], ctx), calibrator, ctx.sportKey);
+        const capped = applyMeasuredCaps(enriched, opts.live ? "live" : "pre");
+        for (const c of capped.applied) {
+          opts.onDrop?.({ ticketId: priced!.id, gate: `cap:${c.id}`, reason: `${(c.from * 100).toFixed(0)}% → ${(c.to * 100).toFixed(0)}%: ${c.why}` });
+        }
+        return capped.applied.length ? { ...enriched, fairProbability: capped.fairProbability } : enriched;
+      });
       const modelled = legs.reduce((acc, l) => acc * l.fairProbability, 1);
       priced = applyCorrelation({
         ...priced, legs, modelledProbability: modelled,

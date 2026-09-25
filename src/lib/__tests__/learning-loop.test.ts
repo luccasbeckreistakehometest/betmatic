@@ -222,6 +222,18 @@ describe("the operator's click", () => {
     const blocked = approveProposal(second.id, admin, { override: true });
     expect(blocked.ok).toBe(false);
     expect(blocked.error).toMatch(/uma por dia/);
+
+    // 25/09/2026, palavras do dono: "aplica todos, é uma nova release da plataforma, entao
+    // sobrescreve a regra". O teto segue sendo o padrão — `override`, que solta o congelamento, não
+    // o solta — e a release é a exceção que precisa ser pedida por nome.
+    // Uma release precisa dos DOIS: `release` solta o teto do dia, `override` solta o congelamento
+    // que protege a janela de medição. Pedir um sem o outro continua barrando, de propósito.
+    expect(approveProposal(second.id, admin, { release: true }).error).toMatch(/está no ar há/);
+    const release = approveProposal(second.id, admin, { release: true, override: true });
+    expect(release.ok).toBe(true);
+    // Quem gastou a atribuição do dia assina a versão, como o override do congelamento já fazia.
+    const versao = getDb().prepare("SELECT createdBy FROM prompt_versions WHERE id=?").get(release.versions![0].id) as { createdBy: string };
+    expect(versao.createdBy).toMatch(/release: fora do teto diário/);
   });
 
   it("refuses to apply a text the prompt has moved out from under", async () => {

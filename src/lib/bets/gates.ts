@@ -22,7 +22,12 @@ import type { BetSuggestion } from "@/lib/types";
 export interface GateDrop {
   /** The ticket's own id, so the log line points at something that existed. */
   ticketId: string;
-  gate: "player_concentration" | "availability" | "cross_shape";
+  /**
+   * O portão que agiu. `cap:<id>` não é um descarte: é um teto medido que baixou o número de uma
+   * perna (ver MEASURED_CAPS no fim deste arquivo). Fica no mesmo canal porque quem lê o log de
+   * portões quer ver as duas coisas, e a razão já diz qual foi.
+   */
+  gate: "player_concentration" | "availability" | "cross_shape" | `cap:${string}`;
   /** One line, in English like the rest of the code, naming what broke. */
   reason: string;
 }
@@ -203,4 +208,115 @@ export function unplayableReason(legs: LegKey[], ctx: EnrichContext): string | n
     }
   }
   return null;
+}
+
+/* ── Tetos medidos ──────────────────────────────────────────────────────────────────────────────
+ *
+ * O que o laço de aprendizado aprendeu em 21 jogos, escrito como código em vez de como frase.
+ *
+ * Em 25/09/2026 o laço leu os 14 jogos com bilhete liquidado desde o dia 21 e devolveu 25
+ * propostas. TODAS foram classificadas como portão de código, nenhuma como mudança de prompt — e
+ * isso não é um acaso desta rodada: em 21 jogos lidos o agente nunca propôs uma frase. Toda lição
+ * que ele tira é contagem ou comparação, e o prompt já dizia várias delas sem efeito.
+ *
+ * Estes tetos são de MÃO ÚNICA: só puxam uma estimativa para baixo, nunca para cima. É uma escolha
+ * deliberada. Uma correção que pode subir número precisa estar certa nas duas direções para não
+ * fazer mal, e a medição que temos (ledger/recalibrate.ts, 573 decididos) não sustenta isso — mas
+ * sustenta com folga que certas fatias prometem muito mais do que entregam.
+ *
+ * Entram só as fatias com amostra de 100 pernas ou mais e desvio de 10 pontos ou mais. As outras
+ * lições do laço continuam na fila do /admin esperando implementação, e é onde devem estar.
+ */
+
+/** Pernas mínimas para uma fatia poder impor teto. Abaixo disso é ruído com opinião. */
+export const CAP_MIN_LEGS = 100;
+/** Pontos mínimos entre prometido e entregue. Abaixo disso não vale mexer no número de ninguém. */
+export const CAP_MIN_GAP = 10;
+
+export interface MeasuredCap {
+  id: string;
+  scope: "pre" | "live" | "both";
+  /** O teto imposto à fairProbability da perna. */
+  cap: number;
+  legs: number;
+  claimed: number;
+  delivered: number;
+  /** Em português, para o log e para quem for auditar depois. */
+  why: string;
+  applies: (leg: { fairProbability: number; settlement?: { side?: string } | null; sourceBasis?: string }) => boolean;
+}
+
+const side = (leg: { settlement?: { side?: string } | null }) => leg.settlement?.side ?? "";
+
+export const MEASURED_CAPS: MeasuredCap[] = [
+  {
+    id: "pre_zona_morta",
+    scope: "pre",
+    // O teto É a entrega medida. Uma perna que o modelo lê como 62% e que a história paga a 31% não
+    // pode ancorar bilhete nenhum pelo número que ela alega; deixá-la visível com o número honesto é
+    // melhor que escondê-la, e o corte de vantagem da lista do dia decide o resto.
+    cap: 0.31,
+    legs: 106, claimed: 0.62, delivered: 0.31,
+    why: "No pré-jogo, as pernas cotadas entre 60% e 70% entregaram 31% contra 62% prometidos em 106 pernas decididas. A faixa logo abaixo (50-60%, 352 pernas) está calibrada em −2 pontos e a de cima também, então é um buraco isolado e não uma inclinação.",
+    applies: (leg) => leg.fairProbability >= 0.6 && leg.fairProbability < 0.7,
+  },
+  {
+    id: "live_alta_confianca",
+    scope: "live",
+    // Uma regra só para toda a região acima de 80%, porque as duas faixas que a compõem erram para o
+    // mesmo lado: 80-90% entrega 63% (191 pernas) e 90-100% entrega 81% (338 pernas). O teto de 80%
+    // é generoso com a primeira de propósito — teto de mão única não deve tentar acertar na mosca.
+    cap: 0.8,
+    legs: 529, claimed: 0.9, delivered: 0.75,
+    why: "Ao vivo, tudo acima de 80% promete mais do que entrega: a faixa 80-90% entregou 63% em 191 pernas e a de 90-100% entregou 81% em 338. Nada in-play sai acima de 80%.",
+    applies: (leg) => leg.fairProbability >= 0.8,
+  },
+];
+
+/*
+ * O que NÃO virou teto, e por quê — para ninguém reabrir a discussão sem medir de novo:
+ *
+ * · Pré-jogo 80-90%: uma proposta do laço pedia teto de 82% citando 191 pernas a 63%. Aquelas 191
+ *   pernas são do AO VIVO; no pré-jogo essa faixa tem 17 pernas e entrega 100%, ou seja, é
+ *   SUBconfiante. O teto teria cortado bilhete bom por causa de uma fatia lida do escopo errado.
+ * · Pré-jogo 0-40%: erra 11 pontos, mas são 71 pernas — abaixo do piso de 100 desta lista.
+ * · Ao vivo 60-70% e 70-80%: erram 1 e 7 pontos. Não há o que corrigir.
+ * · Linha de casa cotada em 1,5-2x: 166 pernas, mas o desvio é de 9 pontos — abaixo do piso de 10
+ *   desta lista. Foi escrita, o próprio teste de invariante a reprovou, e ficou de fora. Baixar o
+ *   piso para ela caber seria escolher o limiar pelo resultado que se quer.
+ */
+
+export interface CapApplied {
+  id: string;
+  from: number;
+  to: number;
+  why: string;
+}
+
+/**
+ * Aplica os tetos medidos a uma perna já calibrada, e diz quais pegaram.
+ *
+ * Roda DEPOIS da calibração de propósito: a calibração corrige a fatia inteira pela média, e estes
+ * tetos são sobre o extremo, que é onde a média não chega. Nenhum deles inventa número para cima.
+ */
+export function applyMeasuredCaps(
+  leg: { fairProbability: number; settlement?: { side?: string } | null; sourceBasis?: string },
+  scope: "pre" | "live",
+  caps: MeasuredCap[] = MEASURED_CAPS,
+): { fairProbability: number; applied: CapApplied[] } {
+  let p = leg.fairProbability;
+  const applied: CapApplied[] = [];
+  if (!Number.isFinite(p)) return { fairProbability: p, applied };
+
+  for (const c of caps) {
+    if (c.scope !== "both" && c.scope !== scope) continue;
+    if (c.legs < CAP_MIN_LEGS || Math.abs(c.claimed - c.delivered) * 100 < CAP_MIN_GAP) continue;
+    // O teste de aplicabilidade lê a probabilidade CORRENTE, para um teto já aplicado poder tirar a
+    // perna do alcance do seguinte em vez de os dois brigarem pela mesma casa decimal.
+    if (!c.applies({ ...leg, fairProbability: p })) continue;
+    if (p <= c.cap) continue;
+    applied.push({ id: c.id, from: p, to: c.cap, why: c.why });
+    p = c.cap;
+  }
+  return { fairProbability: p, applied };
 }

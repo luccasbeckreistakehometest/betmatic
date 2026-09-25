@@ -148,17 +148,20 @@ describe("the computed probability in the builder", () => {
   it("applies the same-game correlation to the ticket's probability and prints it", () => {
     const series = (values: number[]) => values.map((v, i) => ({ eventId: `e${i}`, value: v, minutes: 30 }));
     const together = Array.from({ length: 20 }, (_, i) => (i < 12 ? 25 : 10));
-    const ctx = { props: [prop("Ana Lima", "11", 0.6, series(together)), prop("Bia Souza", "22", 0.6, series(together))], sportKey: "wnba" };
-    const [bet] = priceAll([raw([propLeg("Ana Lima", 0.6), propLeg("Bia Souza", 0.6)])], ctx);
+    // 0,55 e não 0,60: a partir de 25/09/2026 a faixa 60-70% do pré-jogo é uma zona morta medida e
+    // leva teto (bets/gates.ts). Este teste é sobre CORRELAÇÃO, então o fixture fica fora dela em vez
+    // de medir duas coisas de uma vez.
+    const ctx = { props: [prop("Ana Lima", "11", 0.55, series(together)), prop("Bia Souza", "22", 0.55, series(together))], sportKey: "wnba" };
+    const [bet] = priceAll([raw([propLeg("Ana Lima", 0.55), propLeg("Bia Souza", 0.55)])], ctx);
     expect(bet.correlation).toBeDefined();
-    expect(bet.correlation!.independentProbability).toBeCloseTo(0.36, 6);
+    expect(bet.correlation!.independentProbability).toBeCloseTo(0.3025, 6);
     expect(bet.correlation!.factor).toBeGreaterThan(1);
-    expect(bet.modelledProbability).toBeCloseTo(0.36 * bet.correlation!.factor, 2);
+    expect(bet.modelledProbability).toBeCloseTo(0.3025 * bet.correlation!.factor, 2);
     expect(bet.correlation!.note).toMatch(/measured ×/);
     // A cross-game ticket keeps its legs independent.
-    const apart = priceAll([raw([{ ...propLeg("Ana Lima", 0.6), gameId: "g1" }, { ...propLeg("Bia Souza", 0.6), gameId: "g2" }])], ctx, { oneLegPerGame: true });
+    const apart = priceAll([raw([{ ...propLeg("Ana Lima", 0.55), gameId: "g1" }, { ...propLeg("Bia Souza", 0.55), gameId: "g2" }])], ctx, { oneLegPerGame: true });
     expect(apart[0].correlation).toBeUndefined();
-    expect(apart[0].modelledProbability).toBeCloseTo(0.36, 6);
+    expect(apart[0].modelledProbability).toBeCloseTo(0.3025, 6);
   });
 
   it("describes the computed side of a candidate, before tip-off and in play", () => {
