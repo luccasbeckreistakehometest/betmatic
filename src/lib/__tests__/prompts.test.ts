@@ -13,11 +13,28 @@ const { DEFAULT_PROMPTS, GLOSSARY_RULE } = await import("@/lib/bets/prompt-defau
 describe("what the default prompt must keep saying", () => {
   // The owner's rule: a game must always offer a long ticket, reached honestly — more legs, or
   // fewer legs on a stretched line the player has actually hit.
-  it("asks every game for a ticket of 30x or longer, by either route", () => {
+  // The owner's standing instruction of 25/09/2026 replaced the single long ticket with two fronts.
+  // It is held here because a prompt that quietly loses a front is a product that quietly changes.
+  it("asks every game for both fronts: two short tickets and five long ones", () => {
     for (const lang of ["pt", "en"] as const) {
-      expect(DEFAULT_PROMPTS.game[lang]).toContain("30x");
-      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/TWO WAYS TO REACH A LONG PRICE/);
-      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/every leg priced/);
+      const prompt = DEFAULT_PROMPTS.game[lang];
+      expect(prompt).toMatch(/SEVEN main tickets/);
+      expect(prompt).toMatch(/TWO SHORT TICKETS/);
+      expect(prompt).toMatch(/FIVE LONG TICKETS/);
+      // One in 5-10x and four above 10x: the split is the instruction, not the total.
+      expect(prompt).toMatch(/ONE priced between 5x and 10x/);
+      expect(prompt).toMatch(/FOUR\s+priced above 10x/);
+      expect(prompt).toMatch(/TWO WAYS TO REACH A LONG PRICE|two ways to reach a long price/i);
+      expect(prompt).toMatch(/every leg priced/);
+    }
+  });
+
+  // The long front is measured as a loser. The prompt has to carry that number to the reader, or the
+  // product is selling a band it knows about and does not mention.
+  it("makes the long front quote its own measured record", () => {
+    for (const lang of ["pt", "en"] as const) {
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/-65%/);
+      expect(DEFAULT_PROMPTS.game[lang]).toMatch(/1 green in 63/);
     }
   });
 

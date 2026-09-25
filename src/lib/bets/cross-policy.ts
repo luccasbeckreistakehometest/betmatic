@@ -45,16 +45,54 @@ import type { BetSuggestion } from "@/lib/types";
  * three, and above 20x there is nothing to defend.
  */
 
+/**
+ * ── 25/09/2026: the owner widened this window, knowing what is measured above. ────────────────────
+ *
+ * Everything written above this line is the measurement and it still stands: on the production
+ * ledger the short double is the only cross-game shape that ever paid, and above 20x there is
+ * nothing to defend. Re-measured on the corrected ledger of 25/09 (573 decided, after the settling
+ * bug that had voided 99 tickets was repaired) the pre-game picture did not improve:
+ *
+ *   3-5x     36 tickets, 30.6% green,   +1.3%   <- still the only band above water
+ *   5-10x    43 tickets,  4.7% green,  -65.3%
+ *   10-20x    5 tickets,    0 green,   -100%
+ *   20-50x   42 tickets,  2.4% green,  -32.5%
+ *   50x+     21 tickets,    0 green,   -100%
+ *
+ * The instruction is to build the day's múltiplas from WHOLE TICKETS of different games — game A's
+ * 30x with game B's 25x — and to publish at least ten a day. That is a deliberate product decision
+ * taken with these numbers on the table, not an oversight, and it is recorded here so nobody later
+ * "fixes" it back by accident. What the code still refuses to do is invent: a combination is only
+ * ever formed from tickets that already cleared every gate on their own.
+ */
+
 /** The floor. Below it the ledger says -24.8% over 21 settled tickets: a short double is not a bet. */
 export const CROSS_MIN_DECIMAL = 2;
-/** The ceiling. Above it the ledger says 2 green in 52 and -71.3%. It is also `value`'s own top. */
-export const CROSS_MAX_DECIMAL = 5;
+/**
+ * The ceiling, as MEASURED. Kept as the honest marker of where the evidence stops, and used to flag
+ * a combination as beyond it — no longer to refuse one. See `CROSS_HARD_MAX_DECIMAL`.
+ */
+export const CROSS_MEASURED_MAX_DECIMAL = 5;
+/**
+ * The ceiling the code enforces. Two whole tickets of 30x and 25x multiply to 750x, which is the
+ * shape asked for; this exists only so an arithmetic accident cannot publish a number in the
+ * millions.
+ */
+export const CROSS_HARD_MAX_DECIMAL = 2000;
+/** Kept for the callers that still read it; it is the measured ceiling, not a gate. */
+export const CROSS_MAX_DECIMAL = CROSS_MEASURED_MAX_DECIMAL;
 /** A múltipla entre jogos is at least a double — a single is not a combination. */
 export const CROSS_MIN_LEGS = 2;
-/** The third leg is the exception, not the shape. It exists to reach the floor, never to chase price. */
-export const CROSS_MAX_LEGS = 3;
-/** How many go on the page a day. Enough to be a section, few enough that each one was chosen. */
-export const CROSS_MAX_TICKETS = 3;
+/**
+ * A combination of whole tickets carries the legs of both, so a 4-leg ticket with a 3-leg one is a
+ * 7-leg múltipla. The cap is the two fronts' worst case plus room, and it is still a cap: past it
+ * the ticket is a pile, not a story.
+ */
+export const CROSS_MAX_LEGS = 12;
+/** The owner's floor of 25/09/2026: at least ten a day, mixing tickets from different matches. */
+export const CROSS_MIN_TICKETS_PER_DAY = 10;
+/** How many go on the page a day. */
+export const CROSS_MAX_TICKETS = 14;
 /** Asked of the model, so it proposes more than survives the gate below. */
 export const CROSS_PER_BAND = 4;
 /** The grid this needs: two games, which is the whole point of "entre jogos". */
@@ -90,7 +128,9 @@ export function crossShapeReason(bet: Pick<BetSuggestion, "legs" | "combinedDeci
   const d = bet.combinedDecimal;
   if (!Number.isFinite(d)) return "no computed price";
   if (d < CROSS_MIN_DECIMAL) return `${d.toFixed(2)}x, under the ${CROSS_MIN_DECIMAL.toFixed(2)}x floor`;
-  if (d >= CROSS_MAX_DECIMAL) return `${d.toFixed(2)}x, at or over the ${CROSS_MAX_DECIMAL.toFixed(2)}x ceiling`;
+  // The measured ceiling is no longer a refusal (see the 25/09 note above): it is a label the reader
+  // gets, not a gate. Only the arithmetic backstop refuses.
+  if (d >= CROSS_HARD_MAX_DECIMAL) return `${d.toFixed(2)}x, past the ${CROSS_HARD_MAX_DECIMAL}x backstop`;
   return null;
 }
 
