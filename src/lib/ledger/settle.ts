@@ -96,10 +96,27 @@ async function gradeLeg(leg: SettledLeg, final: FinalGame, parsed: ParsedSelecti
       ? { ...leg, outcome: "void", actual: "player not on either roster" }
       : unmeasured(leg, final);
 
-    const history = await getPlayerHistory(final.sportKey, match.id).catch(() => null);
     // The game is found by its event id, never taken as "the newest logged one": until ESPN
     // publishes this game, the newest entry is the player's PREVIOUS game and grading it is wrong.
-    const played = history?.games.find((g) => g.eventId === final.gameId);
+    const cached = await getPlayerHistory(final.sportKey, match.id).catch(() => null);
+    let played = cached?.games.find((g) => g.eventId === final.gameId);
+
+    // The cached log is usually the one fetched while the TICKET was being built, and the gamelog
+    // cache lives exactly as long as the settlement grace (six hours). For a ticket built the day
+    // before that never mattered: the cache had long expired by the final whistle. For one built
+    // close to tip-off — which is what the pre-match refresh does — the cached log is from BEFORE
+    // the game and can never contain it, the grace runs out first, and the whole ticket is written
+    // off as unmeasurable minutes before the cache would have refreshed.
+    //
+    // On 24/09/2026 that cost 84 of the night's 133 tickets: two games voided whole, every live
+    // read voided, `awaitingBoxscore` stuck at 121 for hours with nothing settled and not one error
+    // logged — and ESPN had the gamelog all along. So a miss is not a verdict: ask again, past the
+    // cache, and only then conclude. It costs one request per leg that would otherwise be lost.
+    if (!played) {
+      const fresh = await getPlayerHistory(final.sportKey, match.id, true).catch(() => null);
+      played = fresh?.games.find((g) => g.eventId === final.gameId);
+    }
+
     const value = played ? statTotal(played, labels) : Number.NaN;
     if (!Number.isFinite(value)) return unmeasured(leg, final);
 
