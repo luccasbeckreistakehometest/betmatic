@@ -133,7 +133,13 @@ export async function POST(request: Request) {
       // evaluate: a counter in the scheduler's shell resets with the container and loses deploy days.
       const force = url.searchParams.get("force") === "1";
       const sports = (url.searchParams.get("sports") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
-      const once = await onceADay("cross", () => runCrossDaily({ sports }), { force });
+      // O dia só é gasto quando havia material. Em 27/09/2026 este job rodou às 03:00 UTC, que ainda
+      // é o dia anterior na chave da ESPN, viu zero jogos, gerou nada e marcou o dia como feito — e
+      // a seção inteira de múltiplas ficou vazia enquanto quatro jogos aconteciam.
+      const once = await onceADay("cross", () => runCrossDaily({ sports }), {
+        force,
+        spendsDay: (r) => r.generated > 0 || r.sports.some((s) => s.verdict === "generate" || s.verdict === "exists"),
+      });
       const run = once.result;
       logEvent("job.cross", { ran: once.ran, generated: run?.generated, tickets: run?.tickets, costUsd: run?.costUsd, ms: Date.now() - started });
       return NextResponse.json({ job, ran: once.ran, note: once.note, ...(run ?? {}) }, { status: run?.status === "error" ? 500 : 200 });

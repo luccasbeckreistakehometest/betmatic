@@ -14,9 +14,15 @@ import { brasiliaDay } from "@/lib/ledger/proof";
  * outlives the process: the job is called every tick and decides for itself whether today is done.
  */
 
-/** Brasília days, because that is the day the rest of the product means by "today". */
+/**
+ * Brasília days, because that is the day the rest of the product means by "today".
+ *
+ * `error` and `skipped` do not count as having spent the day: an error is a run that has to be
+ * retried, and a skip is a run that found nothing to do. Both leave the day open on purpose — see
+ * `onceADay`'s `spendsDay` for the night that taught this.
+ */
 export function lastRunDay(job: string): string | null {
-  const row = getDb().prepare("SELECT startedAt FROM job_runs WHERE job=? AND status<>'error' ORDER BY startedAt DESC LIMIT 1").get(job) as
+  const row = getDb().prepare("SELECT startedAt FROM job_runs WHERE job=? AND status NOT IN ('error','skipped') ORDER BY startedAt DESC LIMIT 1").get(job) as
     | { startedAt: string }
     | undefined;
   return row ? brasiliaDay(row.startedAt) : null;
@@ -82,15 +88,38 @@ export async function oncePerKey<T>(job: string, key: string, fn: () => Promise<
  * Runs `fn` at most once per Brasília day. `force` is the panel's button: an operator asking for it
  * now is not the scheduler asking for it again.
  */
-export async function onceADay<T>(job: string, fn: () => Promise<T> | T, opts: { force?: boolean; now?: Date } = {}): Promise<{ ran: boolean; result: T | null; note: string }> {
+export async function onceADay<T>(
+  job: string,
+  fn: () => Promise<T> | T,
+  opts: {
+    force?: boolean;
+    now?: Date;
+    /**
+     * Whether this run should spend the day.
+     *
+     * Without it, a run that found nothing to do still marks the day done — and on 27/09/2026 that
+     * cost the product its whole cross-game section. The job fires at 03:00 UTC, which is still the
+     * previous day in the Eastern-time key the slate is addressed by, so it looked at a day with no
+     * games, generated nothing, and burned the guard. By the time the four games were on the board
+     * it was already "done for today".
+     *
+     * A run that did nothing should leave the day open for the next tick. The default keeps the old
+     * behaviour, so only callers that can tell the difference have to think about it.
+     */
+    spendsDay?: (result: T) => boolean;
+  } = {},
+): Promise<{ ran: boolean; result: T | null; note: string }> {
   if (!opts.force && alreadyRanToday(job, opts.now)) {
     return { ran: false, result: null, note: `job=${job} já rodou hoje (${lastRunDay(job)})` };
   }
   const id = startJobRun(job);
   try {
     const result = await fn();
-    finishJobRun(id, "ok");
-    return { ran: true, result, note: "" };
+    const spends = opts.spendsDay ? opts.spendsDay(result) : true;
+    // A run that did not spend the day is recorded as `skipped`, which `alreadyRanToday` does not
+    // count — same contract the per-game guard uses for an error.
+    finishJobRun(id, spends ? "ok" : "skipped", spends ? "" : "nada a fazer ainda; o dia segue aberto");
+    return { ran: spends, result, note: spends ? "" : `job=${job} não tinha material ainda; tentará de novo no próximo tique` };
   } catch (error) {
     finishJobRun(id, "error", error instanceof Error ? error.message : "falhou");
     throw error;
